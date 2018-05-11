@@ -37,7 +37,7 @@ class HudsonClient(object):
             'client_secret': client_secret,
             'grant_type': 'client_credentials'
         }
-        response = self._session.post(url, data=payload)
+        response = self._session.post(url, json=payload)
         response.raise_for_status()
         body = response.json()
 

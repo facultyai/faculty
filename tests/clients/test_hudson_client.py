@@ -34,5 +34,10 @@ def test_get_access_token(mock_datetime_now):
             MOCK_CLIENT_ID, MOCK_CLIENT_SECRET
         )
 
+    assert mock.last_request.json() == {
+        'client_id': MOCK_CLIENT_ID,
+        'client_secret': MOCK_CLIENT_SECRET,
+        'grant_type': 'client_credentials'
+    }
     assert access_token.token == MOCK_ACCESS_TOKEN
     assert access_token.expires_at == MOCK_NOW + timedelta(minutes=10)
