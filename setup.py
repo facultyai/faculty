@@ -28,7 +28,9 @@ setup(
         'pytest-runner'
     ],
     tests_require=[
-        'pytest'
+        'pytest',
+        'pytest-mock',
+        'requests_mock'
     ],
     install_requires=[
         'requests',
