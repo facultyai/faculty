@@ -13,11 +13,11 @@
 # limitations under the License.
 
 
-from datetime import datetime, timedelta
-import pytz
 from collections import namedtuple
+from datetime import datetime, timedelta
 
 import requests
+import pytz
 
 
 AccessToken = namedtuple('AccessToken', ['token', 'expires_at'])
