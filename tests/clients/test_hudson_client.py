@@ -15,9 +15,8 @@
 
 from datetime import datetime, timedelta
 
-import pytz
 import pytest
-import requests_mock
+import pytz
 
 from sherlockml.clients.auth import HudsonClient
 
@@ -36,20 +35,19 @@ def mock_datetime_now(mocker):
     return datetime_mock
 
 
-def test_get_access_token(mock_datetime_now):
+def test_get_access_token(requests_mock, mock_datetime_now):
+
+    requests_mock.post(
+        '{}/access_token'.format(MOCK_HUDSON_URL),
+        json={'access_token': MOCK_ACCESS_TOKEN, 'expires_in': 600}
+    )
 
     client = HudsonClient(MOCK_HUDSON_URL)
+    access_token = client.get_access_token(
+        MOCK_CLIENT_ID, MOCK_CLIENT_SECRET
+    )
 
-    with requests_mock.Mocker() as mock:
-        mock.post(
-            '{}/access_token'.format(MOCK_HUDSON_URL),
-            json={'access_token': MOCK_ACCESS_TOKEN, 'expires_in': 600}
-        )
-        access_token = client.get_access_token(
-            MOCK_CLIENT_ID, MOCK_CLIENT_SECRET
-        )
-
-    assert mock.last_request.json() == {
+    assert requests_mock.last_request.json() == {
         'client_id': MOCK_CLIENT_ID,
         'client_secret': MOCK_CLIENT_SECRET,
         'grant_type': 'client_credentials'
