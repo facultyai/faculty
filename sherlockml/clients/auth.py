@@ -31,13 +31,13 @@ class HudsonClient(object):
         self.url = url
 
     def get_access_token(self, client_id, client_secret):
-        url = '{}/access_token'.format(self.url)
+        endpoint = '{}/access_token'.format(self.url)
         payload = {
             'client_id': client_id,
             'client_secret': client_secret,
             'grant_type': 'client_credentials'
         }
-        response = self._session.post(url, json=payload)
+        response = self._session.post(endpoint, json=payload)
         response.raise_for_status()
         body = response.json()
 
