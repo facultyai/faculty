@@ -23,15 +23,15 @@ import pytz
 AccessToken = namedtuple('AccessToken', ['token', 'expires_at'])
 
 
-class HudsonClient(object):
-    """Session with the SherlockML authentication service."""
+class AccessTokenClient(object):
+    """Client for getting access tokens for accessing SherlockML services."""
 
-    def __init__(self, url):
+    def __init__(self, hudson_url):
         self._session = requests.Session()
-        self.url = url
+        self.hudson_url = hudson_url
 
     def get_access_token(self, client_id, client_secret):
-        endpoint = '{}/access_token'.format(self.url)
+        endpoint = '{}/access_token'.format(self.hudson_url)
         payload = {
             'client_id': client_id,
             'client_secret': client_secret,
