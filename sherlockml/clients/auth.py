@@ -60,6 +60,21 @@ class SherlockMLAuth(AuthBase):
         The SherlockML client ID to use for authentication
     client_secret : str
         The client secret associated with the client ID
+
+    To perform an authenticated request against a SherlockML service, first
+    construct an instance of this class:
+
+    >>> auth = SherlockMLAuth('https://hudson.example.sherlockml.net',
+                              your_client_id, your_client_secret)
+
+    then pass it as the ``auth`` argument when constructing a ``requests``
+    session:
+
+    >>> import requests
+    >>> session = requests.Session(auth=auth)
+
+    subsequent requests made using this session will be authenticated
+    automatically.
     """
 
     def __init__(self, auth_service_url, client_id, client_secret):
