@@ -35,7 +35,7 @@ def mock_datetime_now(mocker):
     return datetime_mock
 
 
-def test_get_access_token(requests_mock, mock_datetime_now):
+def test_access_token_client(requests_mock, mock_datetime_now):
 
     requests_mock.post(
         '{}/access_token'.format(MOCK_HUDSON_URL),
