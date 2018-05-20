@@ -16,9 +16,9 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
 
+import pytz
 import requests
 from requests.auth import AuthBase
-import pytz
 
 
 AccessToken = namedtuple('AccessToken', ['token', 'expires_at'])
