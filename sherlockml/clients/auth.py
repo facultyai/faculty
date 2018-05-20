@@ -67,14 +67,18 @@ class SherlockMLAuth(AuthBase):
     >>> auth = SherlockMLAuth('https://hudson.example.sherlockml.net',
                               your_client_id, your_client_secret)
 
-    then pass it as the ``auth`` argument when constructing a ``requests``
-    session:
+    then pass it as the ``auth`` argument when making a request with
+    ``requests``:
+
+    >>> import requests
+    >>> requests.get('http://service.example.sherlockml.net', auth=auth)
+
+    You can also set it as the ``auth`` attribute on a
+    :class:`requests.Session`, so that subsequent requests will be
+    authenticated automatically:
 
     >>> import requests
     >>> session = requests.Session(auth=auth)
-
-    subsequent requests made using this session will be authenticated
-    automatically.
     """
 
     def __init__(self, auth_service_url, client_id, client_secret):
