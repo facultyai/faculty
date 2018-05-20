@@ -78,7 +78,8 @@ class SherlockMLAuth(AuthBase):
     authenticated automatically:
 
     >>> import requests
-    >>> session = requests.Session(auth=auth)
+    >>> session = requests.Session()
+    >>> session.auth = auth
     """
 
     def __init__(self, auth_service_url, client_id, client_secret):
