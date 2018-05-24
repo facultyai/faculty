@@ -2,7 +2,7 @@ import os
 from collections import namedtuple
 from functools import wraps
 
-from six.moves.configparser import ConfigParser
+from six.moves.configparser import ConfigParser, NoSectionError, NoOptionError
 
 
 Config = namedtuple('Config', ['default_deployment', 'deployments'])
@@ -21,19 +21,25 @@ def load(path):
     parser = ConfigParser()
     parser.read(str(path))
 
-    default_deployment = parser.get('default', 'deployment', fallback=None)
+    def _get(section, option, fallback=None):
+        try:
+            return parser.get(section, option)
+        except (NoSectionError, NoOptionError):
+            return fallback
+
+    default_deployment = _get('default', 'deployment')
     deployments = {}
 
-    for name, section in parser.items():
+    for section in parser.sections():
 
-        if name.lower() == 'default':
+        if section.lower() == 'default':
             continue
 
-        deployments[name] = Deployment(
-            domain=section.get('domain', DEFAULT_DOMAIN),
-            protocol=section.get('protocol', DEFAULT_PROTOCOL),
-            client_id=section.get('client_id'),
-            client_secret=section.get('client_secret')
+        deployments[section] = Deployment(
+            domain=_get(section, 'domain', DEFAULT_DOMAIN),
+            protocol=_get(section, 'protocol', DEFAULT_PROTOCOL),
+            client_id=_get(section, 'client_id'),
+            client_secret=_get(section, 'client_secret')
         )
 
     return Config(default_deployment, deployments)
