@@ -5,12 +5,12 @@ from functools import wraps
 from six.moves.configparser import ConfigParser, NoSectionError, NoOptionError
 
 
-Config = namedtuple('Config', ['default_deployment', 'deployments'])
-Deployment = namedtuple(
-    'Deployment',
+Profile = namedtuple(
+    'Profile',
     ['domain', 'protocol', 'client_id', 'client_secret']
 )
 
+DEFAULT_PROFILE = 'default'
 DEFAULT_DOMAIN = 'sherlockml.com'
 DEFAULT_PROTOCOL = 'https'
 
@@ -27,22 +27,17 @@ def load(path):
         except (NoSectionError, NoOptionError):
             return fallback
 
-    default_deployment = _get('default', 'deployment')
-    deployments = {}
+    profiles = {}
 
     for section in parser.sections():
-
-        if section.lower() == 'default':
-            continue
-
-        deployments[section] = Deployment(
+        profiles[section] = Profile(
             domain=_get(section, 'domain', DEFAULT_DOMAIN),
             protocol=_get(section, 'protocol', DEFAULT_PROTOCOL),
             client_id=_get(section, 'client_id'),
             client_secret=_get(section, 'client_secret')
         )
 
-    return Config(default_deployment, deployments)
+    return profiles
 
 
 def env_override(environment_variable):
@@ -64,30 +59,30 @@ def _configuration_path():
     return os.path.join(xdg_config_home, 'sherlockml', 'configuration')
 
 
-def _default_deployment_config():
+def _default_profile():
     config = load(_configuration_path())
-    return config.deployments[config.default_deployment]
+    return config['default']
 
 
 @env_override('SHERLOCKML_DOMAIN')
 def domain():
-    """Return the domain for the default deployment."""
-    return _default_deployment_config().domain
+    """Return the domain for the default profile."""
+    return _default_profile().domain
 
 
 @env_override('SHERLOCKML_PROTOCOL')
 def protocol():
-    """Return the protocol for the default deployment."""
-    return _default_deployment_config().protocol
+    """Return the protocol for the default profile."""
+    return _default_profile().protocol
 
 
 @env_override('SHERLOCKML_CLIENT_ID')
 def client_id():
-    """Return the client ID for the default deployment."""
-    return _default_deployment_config().client_id
+    """Return the client ID for the default profile."""
+    return _default_profile().client_id
 
 
 @env_override('SHERLOCKML_CLIENT_SECRET')
 def client_secret():
-    """Return the client secret for the default deployment."""
-    return _default_deployment_config().client_secret
+    """Return the client secret for the default profile."""
+    return _default_profile().client_secret

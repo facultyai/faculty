@@ -5,34 +5,28 @@ from sherlockml import config
 
 SAMPLE_CONFIG_CONTENT = """
 [default]
-deployment = A Deployment
-
-[A Deployment]
 domain = test.domain.com
 protocol = test-protocol
 client_id = test-client-id
 client_secret = test-client-secret
 
-[Deployment with Defaults]
+[Profile with Defaults]
 """
 
-SAMPLE_CONFIG = config.Config(
-    default_deployment='A Deployment',
-    deployments={
-        'A Deployment': config.Deployment(
-            domain='test.domain.com',
-            protocol='test-protocol',
-            client_id='test-client-id',
-            client_secret='test-client-secret'
-        ),
-        'Deployment with Defaults': config.Deployment(
-            domain='sherlockml.com',
-            protocol='https',
-            client_id=None,
-            client_secret=None
-        )
-    }
-)
+SAMPLE_CONFIG = {
+    'default': config.Profile(
+        domain='test.domain.com',
+        protocol='test-protocol',
+        client_id='test-client-id',
+        client_secret='test-client-secret'
+    ),
+    'Profile with Defaults': config.Profile(
+        domain='sherlockml.com',
+        protocol='https',
+        client_id=None,
+        client_secret=None
+    )
+}
 
 
 @pytest.fixture
@@ -47,12 +41,16 @@ def test_load(sample_config):
 
 
 def test_load_missing():
-    assert config.load('does-not-exist') == config.Config(None, {})
+    assert config.load('does-not-exist') == {}
 
 
 @pytest.mark.parametrize(
     'override_value, expected_return_value',
-    [('override', 'override'), ('', 'normal'), (None, 'normal')]
+    [
+        ('override', 'override'),
+        ('', 'normal'),
+        (None, 'normal')
+    ]
 )
 def test_env_override(monkeypatch, override_value, expected_return_value):
 
