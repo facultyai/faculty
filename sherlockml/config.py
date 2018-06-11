@@ -1,6 +1,5 @@
 import os
 from collections import namedtuple
-from functools import wraps
 
 from six.moves.configparser import ConfigParser, NoSectionError, NoOptionError
 
@@ -21,18 +20,18 @@ def load(path):
     parser = ConfigParser()
     parser.read(str(path))
 
-    def _get(section, option, fallback=None):
+    def _get(section, option):
         try:
             return parser.get(section, option)
         except (NoSectionError, NoOptionError):
-            return fallback
+            return None
 
     profiles = {}
 
     for section in parser.sections():
         profiles[section] = Profile(
-            domain=_get(section, 'domain', DEFAULT_DOMAIN),
-            protocol=_get(section, 'protocol', DEFAULT_PROTOCOL),
+            domain=_get(section, 'domain'),
+            protocol=_get(section, 'protocol'),
             client_id=_get(section, 'client_id'),
             client_secret=_get(section, 'client_secret')
         )
@@ -40,49 +39,80 @@ def load(path):
     return profiles
 
 
-def env_override(environment_variable):
-    """Override the return value of a function when an env variable is set."""
-    def decorator(func):
-        @wraps(func)
-        def wrapped(*args, **kwargs):
-            env_value = os.environ.get(environment_variable)
-            return env_value or func(*args, **kwargs)
-        return wrapped
-    return decorator
+def load_profile(path, profile):
+    """Read a SherlockML profile from a file."""
+    profiles = load(path)
+    try:
+        return profiles[profile]
+    except KeyError:
+        return Profile(None, None, None, None)
 
 
-@env_override('SHERLOCKML_CONFIGURATION')
-def _configuration_path():
+def _default_configuration_path():
     xdg_config_home = os.environ.get('XDG_CONFIG_HOME')
     if not xdg_config_home:
         xdg_config_home = os.path.expanduser('~/.config')
     return os.path.join(xdg_config_home, 'sherlockml', 'configuration')
 
 
-def _default_profile():
-    config = load(_configuration_path())
-    return config['default']
+class CredentialsError(RuntimeError):
+    pass
 
 
-@env_override('SHERLOCKML_DOMAIN')
-def domain():
-    """Return the domain for the default profile."""
-    return _default_profile().domain
+def _missing_credentials(type_):
+    raise CredentialsError('No {} found'.format(type_))
 
 
-@env_override('SHERLOCKML_PROTOCOL')
-def protocol():
-    """Return the protocol for the default profile."""
-    return _default_profile().protocol
+def resolve_profile(configuration_path_override=None,
+                    profile_name_override=None, domain_override=None,
+                    protocol_override=None, client_id_override=None,
+                    client_secret_override=None):
 
+    configuration_path = (
+        configuration_path_override
+        or os.getenv('SHERLOCKML_CONFIGURATION')
+        or _default_configuration_path()
+    )
 
-@env_override('SHERLOCKML_CLIENT_ID')
-def client_id():
-    """Return the client ID for the default profile."""
-    return _default_profile().client_id
+    profile_name = (
+        profile_name_override
+        or os.getenv('SHERLOCKML_PROFILE')
+        or DEFAULT_PROFILE
+    )
 
+    profile = load_profile(configuration_path, profile_name)
 
-@env_override('SHERLOCKML_CLIENT_SECRET')
-def client_secret():
-    """Return the client secret for the default profile."""
-    return _default_profile().client_secret
+    domain = (
+        domain_override
+        or os.getenv('SHERLOCKML_DOMAIN')
+        or profile.domain
+        or DEFAULT_DOMAIN
+    )
+
+    protocol = (
+        protocol_override
+        or os.getenv('SHERLOCKML_PROTOCOL')
+        or profile.protocol
+        or DEFAULT_PROTOCOL
+    )
+
+    client_id = (
+        client_id_override
+        or os.getenv('SHERLOCKML_CLIENT_ID')
+        or profile.client_id
+        or _missing_credentials('client_id')
+    )
+
+    client_secret = (
+        client_secret_override
+        or os.getenv('SHERLOCKML_CLIENT_SECRET')
+        or profile.client_secret
+        or _missing_credentials('client_secret')
+    )
+
+    return Profile(
+        domain=domain,
+        protocol=protocol,
+        client_id=client_id,
+        client_secret=client_secret
+    )
