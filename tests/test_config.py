@@ -68,11 +68,10 @@ def test_load_missing():
 ])
 def test_load_profile(mocker, profile_name, expected_profile):
     mocker.patch('sherlockml.config.load', return_value=SAMPLE_CONFIG)
-    path = mocker.Mock()
 
-    assert config.load_profile(path, profile_name) == expected_profile
+    assert config.load_profile('test/path', profile_name) == expected_profile
 
-    config.load.assert_called_once_with(path)
+    config.load.assert_called_once_with('test/path')
 
 
 def test_default_configuration_path(mocker):
@@ -102,12 +101,11 @@ def test_resolve_profile(mocker):
 def test_resolve_profile_configuration_path_override(mocker):
     mocker.patch('sherlockml.config.load_profile',
                  return_value=DEFAULT_PROFILE)
-    path = mocker.Mock()
 
-    profile = config.resolve_profile(configuration_path_override=path)
+    profile = config.resolve_profile(configuration_path_override='test/path')
     assert profile == DEFAULT_PROFILE
 
-    config.load_profile.assert_called_once_with(path, 'default')
+    config.load_profile.assert_called_once_with('test/path', 'default')
 
 
 def test_resolve_profile_configuration_path_env(mocker):
