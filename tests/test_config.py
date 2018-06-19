@@ -52,15 +52,10 @@ EMPTY_PROFILE = config.Profile(
 SAMPLE_CONFIG = {'default': DEFAULT_PROFILE, 'empty profile': EMPTY_PROFILE}
 
 
-@pytest.fixture
-def sample_config(tmpdir):
+def test_load(tmpdir):
     file = tmpdir.join('config')
     file.write(SAMPLE_CONFIG_CONTENT)
-    return file
-
-
-def test_load(sample_config):
-    assert config.load(sample_config) == SAMPLE_CONFIG
+    assert config.load(file) == SAMPLE_CONFIG
 
 
 def test_load_missing():
