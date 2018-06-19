@@ -185,12 +185,12 @@ def test_resolve_profile_defaults(mocker):
 def test_resolve_profile_missing_client_id(mocker):
     mocker.patch('sherlockml.config.load_profile',
                  return_value=PROFILE_WITHOUT_ID)
-    with pytest.raises(config.CredentialsError):
+    with pytest.raises(config.CredentialsError, match='client_id'):
         config.resolve_profile()
 
 
 def test_resolve_profile_missing_client_secret(mocker):
     mocker.patch('sherlockml.config.load_profile',
                  return_value=PROFILE_WITHOUT_SECRET)
-    with pytest.raises(config.CredentialsError):
+    with pytest.raises(config.CredentialsError, match='client_secret'):
         config.resolve_profile()
