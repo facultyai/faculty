@@ -63,56 +63,54 @@ def _missing_credentials(type_):
     raise CredentialsError('No {} found'.format(type_))
 
 
-def resolve_profile(configuration_path_override=None,
-                    profile_name_override=None, domain_override=None,
-                    protocol_override=None, client_id_override=None,
-                    client_secret_override=None):
+def resolve_profile(configuration_path=None, profile_name=None, domain=None,
+                    protocol=None, client_id=None, client_secret=None):
 
-    configuration_path = (
-        configuration_path_override
+    resolved_configuration_path = (
+        configuration_path
         or os.getenv('SHERLOCKML_CONFIGURATION')
         or _default_configuration_path()
     )
 
-    profile_name = (
-        profile_name_override
+    resolved_profile_name = (
+        profile_name
         or os.getenv('SHERLOCKML_PROFILE')
         or DEFAULT_PROFILE
     )
 
-    profile = load_profile(configuration_path, profile_name)
+    profile = load_profile(resolved_configuration_path, resolved_profile_name)
 
-    domain = (
-        domain_override
+    resolved_domain = (
+        domain
         or os.getenv('SHERLOCKML_DOMAIN')
         or profile.domain
         or DEFAULT_DOMAIN
     )
 
-    protocol = (
-        protocol_override
+    resolved_protocol = (
+        protocol
         or os.getenv('SHERLOCKML_PROTOCOL')
         or profile.protocol
         or DEFAULT_PROTOCOL
     )
 
-    client_id = (
-        client_id_override
+    resolved_client_id = (
+        client_id
         or os.getenv('SHERLOCKML_CLIENT_ID')
         or profile.client_id
         or _missing_credentials('client_id')
     )
 
-    client_secret = (
-        client_secret_override
+    resolved_client_secret = (
+        client_secret
         or os.getenv('SHERLOCKML_CLIENT_SECRET')
         or profile.client_secret
         or _missing_credentials('client_secret')
     )
 
     return Profile(
-        domain=domain,
-        protocol=protocol,
-        client_id=client_id,
-        client_secret=client_secret
+        domain=resolved_domain,
+        protocol=resolved_protocol,
+        client_id=resolved_client_id,
+        client_secret=resolved_client_secret
     )

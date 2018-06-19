@@ -102,7 +102,7 @@ def test_resolve_profile_configuration_path_override(mocker):
     mocker.patch('sherlockml.config.load_profile',
                  return_value=DEFAULT_PROFILE)
 
-    profile = config.resolve_profile(configuration_path_override='test/path')
+    profile = config.resolve_profile(configuration_path='test/path')
     assert profile == DEFAULT_PROFILE
 
     config.load_profile.assert_called_once_with('test/path', 'default')
@@ -123,7 +123,7 @@ def test_resolve_profile_profile_name_override(mocker):
     mocker.patch('sherlockml.config.load_profile', return_value=OTHER_PROFILE)
     mocker.patch('sherlockml.config._default_configuration_path')
 
-    profile = config.resolve_profile(profile_name_override='other')
+    profile = config.resolve_profile(profile_name='other')
     assert profile == OTHER_PROFILE
 
     config.load_profile.assert_called_once_with(
@@ -147,10 +147,10 @@ def test_resolve_profile_overrides(mocker):
     mocker.patch('sherlockml.config.load_profile',
                  return_value=DEFAULT_PROFILE)
     profile = config.resolve_profile(
-        domain_override='other.domain.com',
-        protocol_override='other-protocol',
-        client_id_override='other-client-id',
-        client_secret_override='other-client-secret'
+        domain='other.domain.com',
+        protocol='other-protocol',
+        client_id='other-client-id',
+        client_secret='other-client-secret'
     )
     assert profile == OTHER_PROFILE
 
