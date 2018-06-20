@@ -34,6 +34,7 @@ setup(
     ],
     install_requires=[
         'requests',
-        'pytz'
+        'pytz',
+        'six'
     ]
 )
