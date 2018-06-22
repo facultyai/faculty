@@ -68,7 +68,7 @@ def resolve_profile(credentials_path=None, profile_name=None, domain=None,
 
     resolved_credentials_path = (
         credentials_path
-        or os.getenv('SHERLOCKML_CREDENTIALS')
+        or os.getenv('SHERLOCKML_CREDENTIALS_PATH')
         or _default_credentials_path()
     )
 

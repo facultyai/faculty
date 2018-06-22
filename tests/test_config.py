@@ -112,7 +112,7 @@ def test_resolve_profile_credentials_path_env(mocker):
     mocker.patch('sherlockml.config.load_profile',
                  return_value=DEFAULT_PROFILE)
     path = '/path/to/credentials'
-    mocker.patch.dict(os.environ, {'SHERLOCKML_CREDENTIALS': path})
+    mocker.patch.dict(os.environ, {'SHERLOCKML_CREDENTIALS_PATH': path})
 
     assert config.resolve_profile() == DEFAULT_PROFILE
 
