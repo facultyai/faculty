@@ -59,7 +59,7 @@ class CredentialsError(RuntimeError):
     pass
 
 
-def _missing_credentials(type_):
+def _raise_credentials_error(type_):
     raise CredentialsError('No {} found'.format(type_))
 
 
@@ -98,14 +98,14 @@ def resolve_profile(credentials_path=None, profile_name=None, domain=None,
         client_id
         or os.getenv('SHERLOCKML_CLIENT_ID')
         or profile.client_id
-        or _missing_credentials('client_id')
+        or _raise_credentials_error('client_id')
     )
 
     resolved_client_secret = (
         client_secret
         or os.getenv('SHERLOCKML_CLIENT_SECRET')
         or profile.client_secret
-        or _missing_credentials('client_secret')
+        or _raise_credentials_error('client_secret')
     )
 
     return Profile(
