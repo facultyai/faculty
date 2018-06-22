@@ -48,11 +48,11 @@ def load_profile(path, profile):
         return Profile(None, None, None, None)
 
 
-def _default_configuration_path():
+def _default_credentials_path():
     xdg_config_home = os.environ.get('XDG_CONFIG_HOME')
     if not xdg_config_home:
         xdg_config_home = os.path.expanduser('~/.config')
-    return os.path.join(xdg_config_home, 'sherlockml', 'configuration')
+    return os.path.join(xdg_config_home, 'sherlockml', 'credentials')
 
 
 class CredentialsError(RuntimeError):
@@ -63,13 +63,13 @@ def _missing_credentials(type_):
     raise CredentialsError('No {} found'.format(type_))
 
 
-def resolve_profile(configuration_path=None, profile_name=None, domain=None,
+def resolve_profile(credentials_path=None, profile_name=None, domain=None,
                     protocol=None, client_id=None, client_secret=None):
 
-    resolved_configuration_path = (
-        configuration_path
-        or os.getenv('SHERLOCKML_CONFIGURATION')
-        or _default_configuration_path()
+    resolved_credentials_path = (
+        credentials_path
+        or os.getenv('SHERLOCKML_CREDENTIALS')
+        or _default_credentials_path()
     )
 
     resolved_profile_name = (
@@ -78,7 +78,7 @@ def resolve_profile(configuration_path=None, profile_name=None, domain=None,
         or DEFAULT_PROFILE
     )
 
-    profile = load_profile(resolved_configuration_path, resolved_profile_name)
+    profile = load_profile(resolved_credentials_path, resolved_profile_name)
 
     resolved_domain = (
         domain
