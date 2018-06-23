@@ -20,7 +20,7 @@ from six.moves import urllib
 from sherlockml.clients.auth import SherlockMLAuth
 
 
-def _service_url(profile, service, endpoint='/'):
+def _service_url(profile, service, endpoint=''):
     host = '{}.{}'.format(service, profile.domain)
     url_parts = (profile.protocol, host, endpoint, None, None)
     return urllib.parse.urlunsplit(url_parts)
