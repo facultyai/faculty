@@ -20,6 +20,10 @@ from six.moves import urllib
 from sherlockml.clients.auth import SherlockMLAuth
 
 
+class InvalidResponseBody(ValueError):
+    pass
+
+
 def _service_url(profile, service, endpoint=''):
     host = '{}.{}'.format(service, profile.domain)
     url_parts = (profile.protocol, host, endpoint, None, None)

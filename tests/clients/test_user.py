@@ -13,8 +13,13 @@
 # limitations under the License.
 
 
+import json
 import uuid
 
+import pytest
+import requests
+
+from sherlockml.clients.base import InvalidResponseBody
 from sherlockml.clients.user import UserClient
 from tests.clients.fixtures import (
     patch_sherlockmlauth, PROFILE, HUDSON_URL, AUTHORIZATION_HEADER
@@ -33,3 +38,38 @@ def test_authenticated_user_id(requests_mock, patch_sherlockmlauth):
 
     client = UserClient(PROFILE)
     assert client.authenticated_user_id() == TEST_USER_ID
+
+
+def test_authenticated_user_id_error_response(
+    requests_mock, patch_sherlockmlauth
+):
+
+    requests_mock.get(
+        '{}/authenticate'.format(HUDSON_URL),
+        request_headers=AUTHORIZATION_HEADER,
+        status_code=400
+    )
+
+    client = UserClient(PROFILE)
+    with pytest.raises(requests.HTTPError):
+        client.authenticated_user_id()
+
+
+@pytest.mark.parametrize('mock_kwargs', [
+    {'text': 'invalid-json'},
+    {'json': {}},
+    {'json': {'account': {'userId': 'invalid-uuid'}}}
+])
+def test_authenticated_user_id_bad_response(
+    requests_mock, patch_sherlockmlauth, mock_kwargs
+):
+
+    requests_mock.get(
+        '{}/authenticate'.format(HUDSON_URL),
+        request_headers=AUTHORIZATION_HEADER,
+        **mock_kwargs
+    )
+
+    client = UserClient(PROFILE)
+    with pytest.raises(InvalidResponseBody):
+        client.authenticated_user_id()

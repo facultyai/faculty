@@ -13,9 +13,10 @@
 # limitations under the License.
 
 
+import json
 from uuid import UUID
 
-from sherlockml.clients.base import BaseClient
+from sherlockml.clients.base import BaseClient, InvalidResponseBody
 
 
 class UserClient(BaseClient):
@@ -24,5 +25,21 @@ class UserClient(BaseClient):
 
     def authenticated_user_id(self):
         response = self._get('/authenticate')
-        data = response.json()
-        return UUID(data['account']['userId'])
+        response.raise_for_status()
+
+        try:
+            data = response.json()
+        except json.JSONDecodeError:
+            raise InvalidResponseBody('received malformed JSON from server')
+
+        try:
+            user_id_string = data['account']['userId']
+        except (KeyError, TypeError):
+            raise InvalidResponseBody('received malformed JSON from server')
+
+        try:
+            user_id = UUID(user_id_string)
+        except ValueError:
+            raise InvalidResponseBody('received invalid user id from server')
+
+        return user_id
