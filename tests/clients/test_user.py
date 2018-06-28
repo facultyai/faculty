@@ -18,8 +18,8 @@ import uuid
 
 import pytest
 import requests
+import marshmallow
 
-from sherlockml.clients.base import InvalidResponseBody
 from sherlockml.clients.user import UserClient
 from tests.clients.fixtures import (
     patch_sherlockmlauth, PROFILE, HUDSON_URL, AUTHORIZATION_HEADER
@@ -55,21 +55,31 @@ def test_authenticated_user_id_error_response(
         client.authenticated_user_id()
 
 
-@pytest.mark.parametrize('mock_kwargs', [
-    {'text': 'invalid-json'},
-    {'json': {}},
-    {'json': {'account': {'userId': 'invalid-uuid'}}}
-])
-def test_authenticated_user_id_bad_response(
-    requests_mock, patch_sherlockmlauth, mock_kwargs
+def test_authenticated_user_id_invalid_json(
+    requests_mock, patch_sherlockmlauth
 ):
 
     requests_mock.get(
         '{}/authenticate'.format(HUDSON_URL),
         request_headers=AUTHORIZATION_HEADER,
-        **mock_kwargs
+        text='invalid-json'
     )
 
     client = UserClient(PROFILE)
-    with pytest.raises(InvalidResponseBody):
+    with pytest.raises(json.JSONDecodeError):
+        client.authenticated_user_id()
+
+
+def test_authenticated_user_id_malformed_json(
+    requests_mock, patch_sherlockmlauth
+):
+
+    requests_mock.get(
+        '{}/authenticate'.format(HUDSON_URL),
+        request_headers=AUTHORIZATION_HEADER,
+        json={}
+    )
+
+    client = UserClient(PROFILE)
+    with pytest.raises(marshmallow.ValidationError):
         client.authenticated_user_id()

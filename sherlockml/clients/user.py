@@ -13,10 +13,33 @@
 # limitations under the License.
 
 
-import json
-from uuid import UUID
+from collections import namedtuple
 
-from sherlockml.clients.base import BaseClient, InvalidResponseBody
+from marshmallow import fields, post_load
+
+from sherlockml.clients.base import BaseSchema, BaseClient
+
+
+User = namedtuple('User', ['id'])
+
+
+class UserSchema(BaseSchema):
+    id = fields.UUID(load_from='userId', required=True)
+
+    @post_load
+    def make_user(self, data):
+        return User(**data)
+
+
+AuthenticationResponse = namedtuple('AuthenticationResponse', ['user'])
+
+
+class AuthenticationResponseSchema(BaseSchema):
+    user = fields.Nested(UserSchema, load_from='account', required=True)
+
+    @post_load
+    def make_authentication_response(self, data):
+        return AuthenticationResponse(**data)
 
 
 class UserClient(BaseClient):
@@ -24,22 +47,5 @@ class UserClient(BaseClient):
     SERVICE_NAME = 'hudson'
 
     def authenticated_user_id(self):
-        response = self._get('/authenticate')
-        response.raise_for_status()
-
-        try:
-            data = response.json()
-        except json.JSONDecodeError:
-            raise InvalidResponseBody('received malformed JSON from server')
-
-        try:
-            user_id_string = data['account']['userId']
-        except (KeyError, TypeError):
-            raise InvalidResponseBody('received malformed JSON from server')
-
-        try:
-            user_id = UUID(user_id_string)
-        except ValueError:
-            raise InvalidResponseBody('received invalid user id from server')
-
-        return user_id
+        data = self._get('/authenticate', AuthenticationResponseSchema())
+        return data.user.id
