@@ -62,13 +62,17 @@ def _check_status(response):
 
 def _deserialise_response(schema, response):
     try:
-        data, _ = schema.loads(response.text)
-    except json.JSONDecodeError:
+        response_json = response.json()
+    except ValueError:
         raise InvalidResponse('response body was not valid JSON')
+
+    try:
+        data, _ = schema.load(response_json)
     except marshmallow.ValidationError:
         # TODO: log validation errors and possibly include them in raised
         # exception
         raise InvalidResponse('response content did not match expected format')
+
     return data
 
 
