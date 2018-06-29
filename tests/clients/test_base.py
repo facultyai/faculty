@@ -13,23 +13,41 @@
 # limitations under the License.
 
 
-import json
-import uuid
 from collections import namedtuple
 
 import pytest
-import requests
 from marshmallow import fields, post_load
 
 from sherlockml.clients.base import (
     BaseSchema, BaseClient, Unauthorized, NotFound, BadResponseStatus,
     InvalidResponse
 )
-from tests.clients.fixtures import (
-    patch_sherlockmlauth, PROFILE, HUDSON_URL, AUTHORIZATION_HEADER
-)
+from tests.clients.fixtures import PROFILE
 
-TEST_USER_ID = uuid.uuid4()
+AUTHORIZATION_HEADER_VALUE = 'Bearer mock-token'
+AUTHORIZATION_HEADER = {'Authorization': AUTHORIZATION_HEADER_VALUE}
+
+HUDSON_URL = 'https://hudson.test.domain.com'
+
+
+@pytest.fixture
+def patch_sherlockmlauth(mocker):
+
+    def _add_auth_headers(request):
+        request.headers['Authorization'] = AUTHORIZATION_HEADER_VALUE
+        return request
+
+    mock_auth = mocker.patch('sherlockml.clients.base.SherlockMLAuth',
+                             return_value=_add_auth_headers)
+
+    yield
+
+    mock_auth.assert_called_once_with(
+        HUDSON_URL,
+        PROFILE.client_id,
+        PROFILE.client_secret
+    )
+
 
 DummyObject = namedtuple('DummyObject', ['foo'])
 
@@ -79,6 +97,7 @@ def test_get_unauthorized(
     client = DummyClient(PROFILE)
     with pytest.raises(exception):
         client._get('/test', DummySchema())
+
 
 def test_get_invalid_json(
     requests_mock, patch_sherlockmlauth

@@ -13,10 +13,7 @@
 # limitations under the License.
 
 
-import pytest
-
 from sherlockml.config import Profile
-
 
 PROFILE = Profile(
     domain='test.domain.com',
@@ -24,27 +21,3 @@ PROFILE = Profile(
     client_id='test-client-id',
     client_secret='test-client-secret'
 )
-
-AUTHORIZATION_HEADER_VALUE = 'Bearer mock-token'
-AUTHORIZATION_HEADER = {'Authorization': AUTHORIZATION_HEADER_VALUE}
-
-HUDSON_URL = 'https://hudson.test.domain.com'
-
-
-@pytest.fixture
-def patch_sherlockmlauth(mocker):
-
-    def _add_auth_headers(request):
-        request.headers['Authorization'] = AUTHORIZATION_HEADER_VALUE
-        return request
-
-    mock_auth = mocker.patch('sherlockml.clients.base.SherlockMLAuth',
-                             return_value=_add_auth_headers)
-
-    yield
-
-    mock_auth.assert_called_once_with(
-        HUDSON_URL,
-        PROFILE.client_id,
-        PROFILE.client_secret
-    )
