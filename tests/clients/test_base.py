@@ -84,7 +84,7 @@ def test_get(requests_mock, patch_sherlockmlauth):
                           (404, NotFound),
                           (400, BadResponseStatus),
                           (500, BadResponseStatus)])
-def test_get_unauthorized(
+def test_get_bad_responses(
     requests_mock, patch_sherlockmlauth, status_code, exception
 ):
 
