@@ -36,6 +36,6 @@ setup(
         'requests',
         'pytz',
         'six',
-        'marshmallow'
+        'marshmallow<3.0.0'
     ]
 )
