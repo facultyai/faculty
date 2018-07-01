@@ -36,6 +36,8 @@ setup(
         'requests',
         'pytz',
         'six',
-        'marshmallow<3.0.0'
+        "enum34; python_version<'3.4'",
+        'marshmallow<3.0.0',
+        'marshmallow_enum'
     ]
 )
