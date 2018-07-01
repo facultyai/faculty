@@ -30,7 +30,8 @@ setup(
     tests_require=[
         'pytest',
         'pytest-mock',
-        'requests_mock'
+        'requests_mock',
+        'python-dateutil'
     ],
     install_requires=[
         'requests',
