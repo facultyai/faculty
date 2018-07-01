@@ -13,29 +13,11 @@
 # limitations under the License.
 
 
-from setuptools import setup, find_packages
+from sherlockml.config import Profile
 
-
-setup(
-    name='sherlockml',
-    description='Python library for interacting with SherlockML.',
-    url='https://sherlockml.com',
-    author='ASI Data Science',
-    author_email='engineering@asidatascience.com',
-    license='Apache Software License',
-    packages=find_packages(),
-    setup_requires=[
-        'pytest-runner'
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-mock',
-        'requests_mock'
-    ],
-    install_requires=[
-        'requests',
-        'pytz',
-        'six',
-        'marshmallow<3.0.0'
-    ]
+PROFILE = Profile(
+    domain='test.domain.com',
+    protocol='https',
+    client_id='test-client-id',
+    client_secret='test-client-secret'
 )
