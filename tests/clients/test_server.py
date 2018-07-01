@@ -21,8 +21,9 @@ from marshmallow import ValidationError
 from dateutil.tz import UTC
 
 from sherlockml.clients.server import (
-    Server, ServerStatus, Service, ServerSchema, ServiceSchema
+    Server, ServerStatus, Service, ServerSchema, ServiceSchema, ServerClient
 )
+from tests.clients.fixtures import PROFILE
 
 
 SERVICE = Service(
@@ -41,13 +42,16 @@ SERVICE_BODY = {
     'uri': SERVICE.uri
 }
 
+PROJECT_ID = uuid.uuid4()
+OWNER_ID = uuid.uuid4()
+SERVER_ID = uuid.uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 CREATED_AT_STRING = '2018-03-10T11:32:06.247Z'
 
 SERVER = Server(
-    id=uuid.uuid4(),
-    project_id=uuid.uuid4(),
-    owner_id=uuid.uuid4(),
+    id=SERVER_ID,
+    project_id=PROJECT_ID,
+    owner_id=OWNER_ID,
     name='test server',
     type='jupyter',
     milli_cpus=1000,
@@ -58,9 +62,9 @@ SERVER = Server(
 )
 
 SERVER_BODY = {
-    'instanceId': str(SERVER.id),
-    'projectId': str(SERVER.project_id),
-    'ownerId': str(SERVER.owner_id),
+    'instanceId': str(SERVER_ID),
+    'projectId': str(PROJECT_ID),
+    'ownerId': str(OWNER_ID),
     'name': SERVER.name,
     'instanceType': SERVER.type,
     'milliCpus': SERVER.milli_cpus,
@@ -89,3 +93,50 @@ def test_server_schema():
 def test_server_schema_invalid():
     with pytest.raises(ValidationError):
         ServerSchema().load({})
+
+
+def test_server_client_get(mocker):
+    mocker.patch.object(ServerClient, '_get', return_value=SERVER)
+    schema_mock = mocker.patch('sherlockml.clients.server.ServerSchema')
+
+    client = ServerClient(PROFILE)
+
+    assert client.get(PROJECT_ID, SERVER_ID) == SERVER
+
+    schema_mock.assert_called_once_with()
+    ServerClient._get.assert_called_once_with(
+        '/instance/{}/{}'.format(PROJECT_ID, SERVER_ID),
+        schema_mock.return_value
+    )
+
+
+def test_server_client_list(mocker):
+    mocker.patch.object(ServerClient, '_get', return_value=[SERVER])
+    schema_mock = mocker.patch('sherlockml.clients.server.ServerSchema')
+
+    client = ServerClient(PROFILE)
+
+    assert client.list(PROJECT_ID) == [SERVER]
+
+    schema_mock.assert_called_once_with(many=True)
+    ServerClient._get.assert_called_once_with(
+        '/instance/{}'.format(PROJECT_ID),
+        schema_mock.return_value,
+        params=None
+    )
+
+
+def test_server_client_list_filter_name(mocker):
+    mocker.patch.object(ServerClient, '_get', return_value=[SERVER])
+    schema_mock = mocker.patch('sherlockml.clients.server.ServerSchema')
+
+    client = ServerClient(PROFILE)
+
+    assert client.list(PROJECT_ID, name='foo') == [SERVER]
+
+    schema_mock.assert_called_once_with(many=True)
+    ServerClient._get.assert_called_once_with(
+        '/instance/{}'.format(PROJECT_ID),
+        schema_mock.return_value,
+        params={'name': 'foo'}
+    )
