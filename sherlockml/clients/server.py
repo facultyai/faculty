@@ -80,9 +80,41 @@ class ServerSchema(BaseSchema):
         )
 
 
+class ServerIdSchema(BaseSchema):
+
+    instanceId = fields.UUID(required=True)
+
+    @post_load
+    def make_server_id(self, data):
+        return data['instanceId']
+
+
 class ServerClient(BaseClient):
 
     SERVICE_NAME = 'galleon'
+
+    def create(self, project_id, server_type, milli_cpus, memory_mb, name=None,
+               image_version=None, initial_environment_ids=None):
+
+        payload = {
+            'instanceType': server_type,
+            'milliCpus': milli_cpus,
+            'memoryMb': memory_mb
+        }
+        if name:
+            payload['name'] = name
+        if image_version:
+            payload['typeVersion'] = image_version
+        if initial_environment_ids:
+            payload['environmentIds'] = [
+                str(env_id) for env_id in initial_environment_ids
+            ]
+
+        return self._post(
+            '/instance/{}'.format(project_id),
+            ServerIdSchema(),
+            json=payload
+        )
 
     def get(self, project_id, server_id):
         endpoint = '/instance/{}/{}'.format(project_id, server_id)

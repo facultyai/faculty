@@ -108,3 +108,11 @@ class BaseClient(object):
         response = self._get_raw(endpoint, **kwargs)
         _check_status(response)
         return _deserialise_response(schema, response)
+
+    def _post_raw(self, endpoint, *args, **kwargs):
+        return self._request('POST', endpoint, *args, **kwargs)
+
+    def _post(self, endpoint, schema, **kwargs):
+        response = self._post_raw(endpoint, **kwargs)
+        _check_status(response)
+        return _deserialise_response(schema, response)

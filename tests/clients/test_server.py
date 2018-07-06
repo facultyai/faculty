@@ -21,7 +21,8 @@ from marshmallow import ValidationError
 from dateutil.tz import UTC
 
 from sherlockml.clients.server import (
-    Server, ServerStatus, Service, ServerSchema, ServiceSchema, ServerClient
+    Server, ServerStatus, Service, ServerSchema, ServiceSchema, ServerClient,
+    ServerIdSchema
 )
 from tests.clients.fixtures import PROFILE
 
@@ -74,6 +75,8 @@ SERVER_BODY = {
     'services': [SERVICE_BODY]
 }
 
+SERVER_ID_BODY = {'instanceId': str(SERVER_ID)}
+
 
 def test_service_schema():
     data, _ = ServiceSchema().load(SERVICE_BODY)
@@ -93,6 +96,77 @@ def test_server_schema():
 def test_server_schema_invalid():
     with pytest.raises(ValidationError):
         ServerSchema().load({})
+
+
+def test_server_id_schema():
+    data, _ = ServerIdSchema().load(SERVER_ID_BODY)
+    assert data == SERVER_ID
+
+
+def test_server_id_schema_invalid():
+    with pytest.raises(ValidationError):
+        ServerIdSchema().load({})
+
+
+def test_server_client_create(mocker):
+    mocker.patch.object(ServerClient, '_post', return_value=SERVER_ID)
+    schema_mock = mocker.patch('sherlockml.clients.server.ServerIdSchema')
+
+    client = ServerClient(PROFILE)
+
+    server_type = 'jupyter'
+    milli_cpus = 1000
+    memory_mb = 4096
+    name = 'test server'
+    image_version = 'version'
+    initial_environment_ids = [uuid.uuid4(), uuid.uuid4()]
+
+    assert client.create(
+        PROJECT_ID, server_type, milli_cpus, memory_mb, name, image_version,
+        initial_environment_ids
+    ) == SERVER_ID
+
+    schema_mock.assert_called_once_with()
+    ServerClient._post.assert_called_once_with(
+        '/instance/{}'.format(PROJECT_ID),
+        schema_mock.return_value,
+        json={
+            'instanceType': server_type,
+            'milliCpus': milli_cpus,
+            'memoryMb': memory_mb,
+            'name': name,
+            'typeVersion': image_version,
+            'environmentIds': [
+                str(env_id) for env_id in initial_environment_ids
+            ]
+        }
+    )
+
+
+def test_server_client_create_minimal(mocker):
+    mocker.patch.object(ServerClient, '_post', return_value=SERVER_ID)
+    schema_mock = mocker.patch('sherlockml.clients.server.ServerIdSchema')
+
+    client = ServerClient(PROFILE)
+
+    server_type = 'jupyter'
+    milli_cpus = 1000
+    memory_mb = 4096
+
+    assert client.create(
+        PROJECT_ID, server_type, milli_cpus, memory_mb
+    ) == SERVER_ID
+
+    schema_mock.assert_called_once_with()
+    ServerClient._post.assert_called_once_with(
+        '/instance/{}'.format(PROJECT_ID),
+        schema_mock.return_value,
+        json={
+            'instanceType': server_type,
+            'milliCpus': milli_cpus,
+            'memoryMb': memory_mb
+        }
+    )
 
 
 def test_server_client_get(mocker):
