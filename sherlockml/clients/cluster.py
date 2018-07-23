@@ -31,8 +31,8 @@ NodeType = namedtuple(
 class NodeTypeSchema(BaseSchema):
 
     nodeTypeId = fields.String(required=True)
-    name = fields.String(required=True)
-    instanceGroup = fields.String(required=True)
+    name = fields.String(missing=None)
+    instanceGroup = fields.String(missing=None)
     maxInteractiveInstances = fields.Integer(required=True)
     maxJobInstances = fields.Integer(required=True)
     milliCpus = fields.Integer(required=True)

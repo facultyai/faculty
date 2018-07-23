@@ -48,10 +48,41 @@ NODE_TYPE_BODY = {
     'maxJobInstances': 0
 }
 
+NODE_TYPE_DEFAULT = NodeType(
+    id='other-test-id',
+    name=None,
+    instance_group=None,
+    max_interactive_instances=0,
+    max_job_instances=0,
+    milli_cpus=1000,
+    memory_mb=4096,
+    num_gpus=0,
+    gpu_name=None,
+    cost_usd_per_hour=Decimal('4.2')
+)
+
+NODE_TYPE_BODY_DEFAULT = {
+    'nodeTypeId': 'other-test-id',
+    'name': None,
+    'instanceGroup': None,
+    'milliCpus': 1000,
+    'memoryMb': 4096,
+    'numGpus': 0,
+    'gpuName': None,
+    'costUsdPerHour': 4.2,
+    'maxInteractiveInstances': 0,
+    'maxJobInstances': 0
+}
+
 
 def test_node_type_schema():
     data, _ = NodeTypeSchema().load(NODE_TYPE_BODY)
     assert data == NODE_TYPE
+
+
+def test_node_type_schema_with_defaults():
+    data, _ = NodeTypeSchema().load(NODE_TYPE_BODY_DEFAULT)
+    assert data == NODE_TYPE_DEFAULT
 
 
 def test_node_type_schema_load_invalid():
