@@ -92,3 +92,16 @@ def test_cluster_client_configure_single_tenanted_node_type(mocker):
             'maxJobInstances': NODE_TYPE.max_job_instances
         }
     )
+
+
+def test_cluster_client_disable_single_tenanted_node_type(mocker):
+    delete_raw_mock = mocker.patch.object(ClusterClient, '_delete_raw')
+
+    client = ClusterClient(PROFILE)
+    response = client.disable_single_tenanted_node_type(NODE_TYPE.id)
+
+    assert response == delete_raw_mock.return_value
+
+    ClusterClient._delete_raw.assert_called_once_with(
+        '/node-type/single-tenanted/{}/configuration'.format(NODE_TYPE.id)
+    )

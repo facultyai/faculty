@@ -81,3 +81,8 @@ class ClusterClient(BaseClient):
             '/node-type/single-tenanted/{}/configuration'.format(node_type_id),
             json=payload
         )
+
+    def disable_single_tenanted_node_type(self, node_type_id):
+        return self._delete_raw(
+            '/node-type/single-tenanted/{}/configuration'.format(node_type_id)
+        )
