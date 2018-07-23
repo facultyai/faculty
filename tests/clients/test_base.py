@@ -240,3 +240,59 @@ def test_put_malformatted_json(requests_mock, patch_sherlockmlauth):
     client = DummyClient(PROFILE)
     with pytest.raises(InvalidResponse, match='not match expected format'):
         client._put('/test', DummySchema())
+
+
+def test_delete(requests_mock, patch_sherlockmlauth):
+
+    requests_mock.delete(
+        '{}/test'.format(SERVICE_URL),
+        request_headers=AUTHORIZATION_HEADER,
+        json={'foo': 'bar'}
+    )
+
+    client = DummyClient(PROFILE)
+    response = client._delete('/test', DummySchema())
+
+    assert response == DummyObject(foo='bar')
+
+
+@pytest.mark.parametrize('status_code, exception', BAD_RESPONSE_STATUSES)
+def test_delete_bad_responses(
+    requests_mock, patch_sherlockmlauth, status_code, exception
+):
+
+    requests_mock.delete(
+        '{}/test'.format(SERVICE_URL),
+        request_headers=AUTHORIZATION_HEADER,
+        status_code=status_code
+    )
+
+    client = DummyClient(PROFILE)
+    with pytest.raises(exception):
+        client._delete('/test', DummySchema())
+
+
+def test_delete_invalid_json(requests_mock, patch_sherlockmlauth):
+
+    requests_mock.delete(
+        '{}/test'.format(SERVICE_URL),
+        request_headers=AUTHORIZATION_HEADER,
+        text='invalid-json'
+    )
+
+    client = DummyClient(PROFILE)
+    with pytest.raises(InvalidResponse, match='not valid JSON'):
+        client._delete('/test', DummySchema())
+
+
+def test_delete_malformatted_json(requests_mock, patch_sherlockmlauth):
+
+    requests_mock.delete(
+        '{}/test'.format(SERVICE_URL),
+        request_headers=AUTHORIZATION_HEADER,
+        json={'bad': 'json'}
+    )
+
+    client = DummyClient(PROFILE)
+    with pytest.raises(InvalidResponse, match='not match expected format'):
+        client._delete('/test', DummySchema())
