@@ -30,12 +30,15 @@ setup(
     tests_require=[
         'pytest',
         'pytest-mock',
-        'requests_mock'
+        'requests_mock',
+        'python-dateutil'
     ],
     install_requires=[
         'requests',
         'pytz',
         'six',
-        'marshmallow<3.0.0'
+        "enum34; python_version<'3.4'",
+        'marshmallow<3.0.0',
+        'marshmallow_enum'
     ]
 )
