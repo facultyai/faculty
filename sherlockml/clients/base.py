@@ -19,12 +19,6 @@ from six.moves import urllib
 from sherlockml.clients.auth import SherlockMLAuth
 
 
-class BaseSchema(marshmallow.Schema):
-
-    def __init__(self, *args, **kwargs):
-        super(BaseSchema, self).__init__(*args, strict=True, **kwargs)
-
-
 class BadResponseStatus(Exception):
 
     def __init__(self, response):
@@ -65,7 +59,7 @@ def _deserialise_response(schema, response):
         raise InvalidResponse('response body was not valid JSON')
 
     try:
-        data, _ = schema.load(response_json)
+        data = schema.load(response_json)
     except marshmallow.ValidationError:
         # TODO: log validation errors and possibly include them in raised
         # exception

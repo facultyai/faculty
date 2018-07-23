@@ -16,10 +16,10 @@
 from collections import namedtuple
 from enum import Enum
 
-from marshmallow import fields, post_load
+from marshmallow import Schema, fields, post_load
 from marshmallow_enum import EnumField
 
-from sherlockml.clients.base import BaseSchema, BaseClient
+from sherlockml.clients.base import BaseClient
 
 
 class ServerStatus(Enum):
@@ -32,7 +32,7 @@ class ServerStatus(Enum):
 Service = namedtuple('Service', ['name', 'host', 'port', 'scheme', 'uri'])
 
 
-class ServiceSchema(BaseSchema):
+class ServiceSchema(Schema):
 
     name = fields.Str(required=True)
     host = fields.Str(required=True)
@@ -51,7 +51,7 @@ Server = namedtuple('Server', [
 ])
 
 
-class ServerSchema(BaseSchema):
+class ServerSchema(Schema):
 
     instanceId = fields.UUID(required=True)
     projectId = fields.UUID(required=True)
@@ -80,7 +80,7 @@ class ServerSchema(BaseSchema):
         )
 
 
-class ServerIdSchema(BaseSchema):
+class ServerIdSchema(Schema):
 
     instanceId = fields.UUID(required=True)
 

@@ -76,12 +76,12 @@ NODE_TYPE_BODY_DEFAULT = {
 
 
 def test_node_type_schema():
-    data, _ = NodeTypeSchema().load(NODE_TYPE_BODY)
+    data = NodeTypeSchema().load(NODE_TYPE_BODY)
     assert data == NODE_TYPE
 
 
 def test_node_type_schema_with_defaults():
-    data, _ = NodeTypeSchema().load(NODE_TYPE_BODY_DEFAULT)
+    data = NodeTypeSchema().load(NODE_TYPE_BODY_DEFAULT)
     assert data == NODE_TYPE_DEFAULT
 
 

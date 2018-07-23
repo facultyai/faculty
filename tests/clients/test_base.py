@@ -16,11 +16,10 @@
 from collections import namedtuple
 
 import pytest
-from marshmallow import fields, post_load
+from marshmallow import Schema, fields, post_load
 
 from sherlockml.clients.base import (
-    BaseSchema, BaseClient, Unauthorized, NotFound, BadResponseStatus,
-    InvalidResponse
+    BaseClient, Unauthorized, NotFound, BadResponseStatus, InvalidResponse
 )
 from tests.clients.fixtures import PROFILE
 
@@ -59,7 +58,7 @@ def patch_sherlockmlauth(mocker):
 DummyObject = namedtuple('DummyObject', ['foo'])
 
 
-class DummySchema(BaseSchema):
+class DummySchema(Schema):
     foo = fields.String(required=True)
 
     @post_load
