@@ -31,9 +31,9 @@ PROJECT = Project(
 )
 
 PROJECT_BODY = {
-    'id': str(PROJECT.id),
+    'projectId': str(PROJECT.id),
     'name': PROJECT.name,
-    'owner_id': str(PROJECT.owner_id)
+    'ownerId': str(PROJECT.owner_id)
 }
 
 
