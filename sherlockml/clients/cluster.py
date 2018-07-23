@@ -66,3 +66,18 @@ class ClusterClient(BaseClient):
             '/node-type/single-tenanted',
             NodeTypeSchema(many=True)
         )
+
+    def configure_single_tenanted_node_type(
+        self, node_type_id, name, instance_group, max_interactive_instances,
+        max_job_instances
+    ):
+        payload = {
+            'name': name,
+            'instanceGroup': instance_group,
+            'maxInteractiveInstances': max_interactive_instances,
+            'maxJobInstances': max_job_instances
+        }
+        return self._put_raw(
+            '/node-type/single-tenanted/{}/configuration'.format(node_type_id),
+            json=payload
+        )

@@ -70,3 +70,25 @@ def test_cluster_client_list_single_tenanted_node_types(mocker):
     ClusterClient._get.assert_called_once_with(
         '/node-type/single-tenanted', schema_mock.return_value
     )
+
+
+def test_cluster_client_configure_single_tenanted_node_type(mocker):
+    put_raw_mock = mocker.patch.object(ClusterClient, '_put_raw')
+
+    client = ClusterClient(PROFILE)
+    response = client.configure_single_tenanted_node_type(
+        NODE_TYPE.id, NODE_TYPE.name, NODE_TYPE.instance_group,
+        NODE_TYPE.max_interactive_instances, NODE_TYPE.max_job_instances
+    )
+
+    assert response == put_raw_mock.return_value
+
+    ClusterClient._put_raw.assert_called_once_with(
+        '/node-type/single-tenanted/{}/configuration'.format(NODE_TYPE.id),
+        json={
+            'name': NODE_TYPE.name,
+            'instanceGroup': NODE_TYPE.instance_group,
+            'maxInteractiveInstances': NODE_TYPE.max_interactive_instances,
+            'maxJobInstances': NODE_TYPE.max_job_instances
+        }
+    )
