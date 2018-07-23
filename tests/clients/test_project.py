@@ -48,17 +48,10 @@ def test_project_schema_load_invalid():
 
 
 def test_project_client_list_accessible_by_user(mocker):
-    mocker.patch.object(
-        ProjectClient, '_get',
-        return_value=[PROJECT]
-    )
-
-    schema_mock = mocker.patch(
-        'sherlockml.clients.project.ProjectSchema'
-    )
+    mocker.patch.object(ProjectClient, '_get', return_value=[PROJECT])
+    schema_mock = mocker.patch('sherlockml.clients.project.ProjectSchema')
 
     client = ProjectClient(PROFILE)
-
     assert client.list_accessible_by_user(USER_ID) == [PROJECT]
 
     schema_mock.assert_called_once_with(many=True)

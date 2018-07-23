@@ -62,5 +62,7 @@ class ClusterClient(BaseClient):
     SERVICE_NAME = 'klostermann'
 
     def list_single_tenanted_node_types(self):
-        return self._get('/node-type/single-tenanted',
-                         NodeTypeSchema(many=True))
+        return self._get(
+            '/node-type/single-tenanted',
+            NodeTypeSchema(many=True)
+        )
