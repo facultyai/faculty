@@ -116,3 +116,11 @@ class BaseClient(object):
         response = self._post_raw(endpoint, **kwargs)
         _check_status(response)
         return _deserialise_response(schema, response)
+
+    def _put_raw(self, endpoint, *args, **kwargs):
+        return self._request('PUT', endpoint, *args, **kwargs)
+
+    def _put(self, endpoint, schema, **kwargs):
+        response = self._put_raw(endpoint, **kwargs)
+        _check_status(response)
+        return _deserialise_response(schema, response)
