@@ -91,16 +91,18 @@ class BaseClient(object):
             )
         return self._http_session_cache
 
-    def _request(self, method, endpoint, *args, **kwargs):
+    def _request(self, method, endpoint, check_status=True, *args, **kwargs):
         url = _service_url(self.profile, self.SERVICE_NAME, endpoint)
-        return self.http_session.request(method, url, *args, **kwargs)
+        response = self.http_session.request(method, url, *args, **kwargs)
+        if check_status:
+            _check_status(response)
+        return response
 
     def _get_raw(self, endpoint, *args, **kwargs):
         return self._request('GET', endpoint, *args, **kwargs)
 
     def _get(self, endpoint, schema, **kwargs):
         response = self._get_raw(endpoint, **kwargs)
-        _check_status(response)
         return _deserialise_response(schema, response)
 
     def _post_raw(self, endpoint, *args, **kwargs):
@@ -108,7 +110,6 @@ class BaseClient(object):
 
     def _post(self, endpoint, schema, **kwargs):
         response = self._post_raw(endpoint, **kwargs)
-        _check_status(response)
         return _deserialise_response(schema, response)
 
     def _put_raw(self, endpoint, *args, **kwargs):
@@ -116,7 +117,6 @@ class BaseClient(object):
 
     def _put(self, endpoint, schema, **kwargs):
         response = self._put_raw(endpoint, **kwargs)
-        _check_status(response)
         return _deserialise_response(schema, response)
 
     def _delete_raw(self, endpoint, *args, **kwargs):
@@ -124,5 +124,4 @@ class BaseClient(object):
 
     def _delete(self, endpoint, schema, **kwargs):
         response = self._delete_raw(endpoint, **kwargs)
-        _check_status(response)
         return _deserialise_response(schema, response)

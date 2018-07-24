@@ -35,6 +35,8 @@ BAD_RESPONSE_STATUSES = [
     (500, BadResponseStatus)
 ]
 
+HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE']
+
 
 @pytest.fixture
 def patch_sherlockmlauth(mocker):
@@ -85,48 +87,6 @@ def test_get(requests_mock, patch_sherlockmlauth):
     assert client._get('/test', DummySchema()) == DummyObject(foo='bar')
 
 
-@pytest.mark.parametrize('status_code, exception', BAD_RESPONSE_STATUSES)
-def test_get_bad_responses(
-    requests_mock, patch_sherlockmlauth, status_code, exception
-):
-
-    requests_mock.get(
-        '{}/test'.format(SERVICE_URL),
-        request_headers=AUTHORIZATION_HEADER,
-        status_code=status_code
-    )
-
-    client = DummyClient(PROFILE)
-    with pytest.raises(exception):
-        client._get('/test', DummySchema())
-
-
-def test_get_invalid_json(requests_mock, patch_sherlockmlauth):
-
-    requests_mock.get(
-        '{}/test'.format(SERVICE_URL),
-        request_headers=AUTHORIZATION_HEADER,
-        text='invalid-json'
-    )
-
-    client = DummyClient(PROFILE)
-    with pytest.raises(InvalidResponse, match='not valid JSON'):
-        client._get('/test', DummySchema())
-
-
-def test_get_malformatted_json(requests_mock, patch_sherlockmlauth):
-
-    requests_mock.get(
-        '{}/test'.format(SERVICE_URL),
-        request_headers=AUTHORIZATION_HEADER,
-        json={'bad': 'json'}
-    )
-
-    client = DummyClient(PROFILE)
-    with pytest.raises(InvalidResponse, match='not match expected format'):
-        client._get('/test', DummySchema())
-
-
 def test_post(requests_mock, patch_sherlockmlauth):
 
     mock = requests_mock.post(
@@ -140,48 +100,6 @@ def test_post(requests_mock, patch_sherlockmlauth):
 
     assert response == DummyObject(foo='bar')
     assert mock.last_request.json() == {'test': 'payload'}
-
-
-@pytest.mark.parametrize('status_code, exception', BAD_RESPONSE_STATUSES)
-def test_post_bad_responses(
-    requests_mock, patch_sherlockmlauth, status_code, exception
-):
-
-    requests_mock.post(
-        '{}/test'.format(SERVICE_URL),
-        request_headers=AUTHORIZATION_HEADER,
-        status_code=status_code
-    )
-
-    client = DummyClient(PROFILE)
-    with pytest.raises(exception):
-        client._post('/test', DummySchema())
-
-
-def test_post_invalid_json(requests_mock, patch_sherlockmlauth):
-
-    requests_mock.post(
-        '{}/test'.format(SERVICE_URL),
-        request_headers=AUTHORIZATION_HEADER,
-        text='invalid-json'
-    )
-
-    client = DummyClient(PROFILE)
-    with pytest.raises(InvalidResponse, match='not valid JSON'):
-        client._post('/test', DummySchema())
-
-
-def test_post_malformatted_json(requests_mock, patch_sherlockmlauth):
-
-    requests_mock.post(
-        '{}/test'.format(SERVICE_URL),
-        request_headers=AUTHORIZATION_HEADER,
-        json={'bad': 'json'}
-    )
-
-    client = DummyClient(PROFILE)
-    with pytest.raises(InvalidResponse, match='not match expected format'):
-        client._post('/test', DummySchema())
 
 
 def test_put(requests_mock, patch_sherlockmlauth):
@@ -199,48 +117,6 @@ def test_put(requests_mock, patch_sherlockmlauth):
     assert mock.last_request.json() == {'test': 'payload'}
 
 
-@pytest.mark.parametrize('status_code, exception', BAD_RESPONSE_STATUSES)
-def test_put_bad_responses(
-    requests_mock, patch_sherlockmlauth, status_code, exception
-):
-
-    requests_mock.put(
-        '{}/test'.format(SERVICE_URL),
-        request_headers=AUTHORIZATION_HEADER,
-        status_code=status_code
-    )
-
-    client = DummyClient(PROFILE)
-    with pytest.raises(exception):
-        client._put('/test', DummySchema())
-
-
-def test_put_invalid_json(requests_mock, patch_sherlockmlauth):
-
-    requests_mock.put(
-        '{}/test'.format(SERVICE_URL),
-        request_headers=AUTHORIZATION_HEADER,
-        text='invalid-json'
-    )
-
-    client = DummyClient(PROFILE)
-    with pytest.raises(InvalidResponse, match='not valid JSON'):
-        client._put('/test', DummySchema())
-
-
-def test_put_malformatted_json(requests_mock, patch_sherlockmlauth):
-
-    requests_mock.put(
-        '{}/test'.format(SERVICE_URL),
-        request_headers=AUTHORIZATION_HEADER,
-        json={'bad': 'json'}
-    )
-
-    client = DummyClient(PROFILE)
-    with pytest.raises(InvalidResponse, match='not match expected format'):
-        client._put('/test', DummySchema())
-
-
 def test_delete(requests_mock, patch_sherlockmlauth):
 
     requests_mock.delete(
@@ -256,42 +132,83 @@ def test_delete(requests_mock, patch_sherlockmlauth):
 
 
 @pytest.mark.parametrize('status_code, exception', BAD_RESPONSE_STATUSES)
-def test_delete_bad_responses(
-    requests_mock, patch_sherlockmlauth, status_code, exception
+@pytest.mark.parametrize('http_method', HTTP_METHODS)
+@pytest.mark.parametrize('check_status', [True, False])
+def test_bad_responses(
+    requests_mock, patch_sherlockmlauth, status_code, exception, http_method,
+    check_status
 ):
 
-    requests_mock.delete(
+    mock_method = getattr(requests_mock, http_method.lower())
+    mock_method(
+        '{}/test'.format(SERVICE_URL),
+        request_headers=AUTHORIZATION_HEADER,
+        status_code=status_code,
+        json={'foo': 'bar'}
+    )
+
+    client = DummyClient(PROFILE)
+    method = getattr(client, '_{}'.format(http_method.lower()))
+    if check_status:
+        with pytest.raises(exception):
+            method('/test', DummySchema(), check_status=check_status)
+    else:
+        method('/test', DummySchema(), check_status=check_status)
+
+
+@pytest.mark.parametrize('status_code, exception', BAD_RESPONSE_STATUSES)
+@pytest.mark.parametrize('http_method', HTTP_METHODS)
+@pytest.mark.parametrize('check_status', [True, False])
+def test_raw_bad_responses(
+    requests_mock, patch_sherlockmlauth, status_code, exception, http_method,
+    check_status
+):
+
+    mock_method = getattr(requests_mock, http_method.lower())
+    mock_method(
         '{}/test'.format(SERVICE_URL),
         request_headers=AUTHORIZATION_HEADER,
         status_code=status_code
     )
 
     client = DummyClient(PROFILE)
-    with pytest.raises(exception):
-        client._delete('/test', DummySchema())
+    method = getattr(client, '_{}_raw'.format(http_method.lower()))
+    if check_status:
+        with pytest.raises(exception):
+            method('/test', check_status=check_status)
+    else:
+        method('/test', check_status=check_status)
 
 
-def test_delete_invalid_json(requests_mock, patch_sherlockmlauth):
+@pytest.mark.parametrize('http_method', HTTP_METHODS)
+def test_invalid_json(requests_mock, patch_sherlockmlauth, http_method):
 
-    requests_mock.delete(
+    mock_method = getattr(requests_mock, http_method.lower())
+    mock_method(
         '{}/test'.format(SERVICE_URL),
         request_headers=AUTHORIZATION_HEADER,
         text='invalid-json'
     )
 
     client = DummyClient(PROFILE)
+    method = getattr(client, '_{}'.format(http_method.lower()))
     with pytest.raises(InvalidResponse, match='not valid JSON'):
-        client._delete('/test', DummySchema())
+        method('/test', DummySchema())
 
 
-def test_delete_malformatted_json(requests_mock, patch_sherlockmlauth):
+@pytest.mark.parametrize('http_method', HTTP_METHODS)
+def test_malformatted_json(
+    requests_mock, patch_sherlockmlauth, http_method
+):
 
-    requests_mock.delete(
+    mock_method = getattr(requests_mock, http_method.lower())
+    mock_method(
         '{}/test'.format(SERVICE_URL),
         request_headers=AUTHORIZATION_HEADER,
         json={'bad': 'json'}
     )
 
     client = DummyClient(PROFILE)
+    method = getattr(client, '_{}'.format(http_method.lower()))
     with pytest.raises(InvalidResponse, match='not match expected format'):
-        client._delete('/test', DummySchema())
+        method('/test', DummySchema())
