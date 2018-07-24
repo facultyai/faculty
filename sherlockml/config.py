@@ -10,7 +10,7 @@ Profile = namedtuple(
 )
 
 DEFAULT_PROFILE = 'default'
-DEFAULT_DOMAIN = 'platform.asidata.science'
+DEFAULT_DOMAIN = 'clients.sherlockml.com'
 DEFAULT_PROTOCOL = 'https'
 
 
