@@ -15,15 +15,15 @@
 
 from collections import namedtuple
 
-from marshmallow import fields, post_load
+from marshmallow import Schema, fields, post_load
 
-from sherlockml.clients.base import BaseSchema, BaseClient
+from sherlockml.clients.base import BaseClient
 
 
 User = namedtuple('User', ['id'])
 
 
-class UserSchema(BaseSchema):
+class UserSchema(Schema):
     userId = fields.UUID(required=True)
 
     @post_load
@@ -34,7 +34,7 @@ class UserSchema(BaseSchema):
 AuthenticationResponse = namedtuple('AuthenticationResponse', ['user'])
 
 
-class AuthenticationResponseSchema(BaseSchema):
+class AuthenticationResponseSchema(Schema):
     account = fields.Nested(UserSchema, required=True)
 
     @post_load

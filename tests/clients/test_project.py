@@ -38,7 +38,7 @@ PROJECT_BODY = {
 
 
 def test_project_schema():
-    data, _ = ProjectSchema().load(PROJECT_BODY)
+    data = ProjectSchema().load(PROJECT_BODY)
     assert data == PROJECT
 
 

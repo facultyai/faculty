@@ -79,7 +79,7 @@ SERVER_ID_BODY = {'instanceId': str(SERVER_ID)}
 
 
 def test_service_schema():
-    data, _ = ServiceSchema().load(SERVICE_BODY)
+    data = ServiceSchema().load(SERVICE_BODY)
     assert data == SERVICE
 
 
@@ -89,7 +89,7 @@ def test_service_schema_invalid():
 
 
 def test_server_schema():
-    data, _ = ServerSchema().load(SERVER_BODY)
+    data = ServerSchema().load(SERVER_BODY)
     assert data == SERVER
 
 
@@ -99,7 +99,7 @@ def test_server_schema_invalid():
 
 
 def test_server_id_schema():
-    data, _ = ServerIdSchema().load(SERVER_ID_BODY)
+    data = ServerIdSchema().load(SERVER_ID_BODY)
     assert data == SERVER_ID
 
 

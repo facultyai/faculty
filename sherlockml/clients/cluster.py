@@ -15,9 +15,9 @@
 
 from collections import namedtuple
 
-from marshmallow import fields, post_load
+from marshmallow import Schema, fields, post_load
 
-from sherlockml.clients.base import BaseSchema, BaseClient
+from sherlockml.clients.base import BaseClient
 
 
 NodeType = namedtuple(
@@ -28,7 +28,7 @@ NodeType = namedtuple(
 )
 
 
-class NodeTypeSchema(BaseSchema):
+class NodeTypeSchema(Schema):
 
     nodeTypeId = fields.String(required=True)
     name = fields.String(missing=None)

@@ -38,7 +38,11 @@ setup(
         'pytz',
         'six',
         "enum34; python_version<'3.4'",
-        'marshmallow<3.0.0',
+        'marshmallow==3.0.0b12',
         'marshmallow_enum'
+    ],
+    dependency_links=[
+        'git+https://github.com/marshmallow-code/marshmallow'
+        '@3.0.0b12#egg=marshmallow'
     ]
 )

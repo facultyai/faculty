@@ -15,15 +15,15 @@
 
 from collections import namedtuple
 
-from marshmallow import fields, post_load
+from marshmallow import Schema, fields, post_load
 
-from sherlockml.clients.base import BaseSchema, BaseClient
+from sherlockml.clients.base import BaseClient
 
 
 Project = namedtuple('Project', ['id', 'name', 'owner_id'])
 
 
-class ProjectSchema(BaseSchema):
+class ProjectSchema(Schema):
     projectId = fields.UUID(required=True)
     name = fields.Str(required=True)
     ownerId = fields.UUID(required=True)

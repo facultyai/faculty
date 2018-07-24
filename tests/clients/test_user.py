@@ -28,7 +28,7 @@ USER_ID = uuid.uuid4()
 
 
 def test_user_schema():
-    data, _ = UserSchema().load({'userId': str(USER_ID)})
+    data = UserSchema().load({'userId': str(USER_ID)})
     assert data == User(id=USER_ID)
 
 
@@ -41,7 +41,7 @@ def test_user_schema_invalid(data):
 
 
 def test_authentication_response_schema():
-    data, _ = AuthenticationResponseSchema().load(
+    data = AuthenticationResponseSchema().load(
         {'account': {'userId': str(USER_ID)}}
     )
     assert data == AuthenticationResponse(user=User(id=USER_ID))
