@@ -90,16 +90,47 @@ def test_node_type_schema_load_invalid():
         NodeTypeSchema().load({})
 
 
-def test_cluster_client_list_single_tenanted_node_types(mocker):
+@pytest.mark.parametrize('kwargs, query_params', [
+    ({}, {}),
+    (
+        {'has_interactive_instances': True},
+        {'hasInteractiveInstances': 'true'}
+    ),
+    (
+        {'has_interactive_instances': False},
+        {'hasInteractiveInstances': 'false'}
+    ),
+    (
+        {'has_job_instances': True},
+        {'hasJobInstances': 'true'}
+    ),
+    (
+        {'has_job_instances': False},
+        {'hasJobInstances': 'false'}
+    ),
+    (
+        {'has_interactive_instances': True, 'has_job_instances': True},
+        {'hasInteractiveInstances': 'true', 'hasJobInstances': 'true'}
+    ),
+    (
+        {'has_interactive_instances': True, 'has_job_instances': False},
+        {'hasInteractiveInstances': 'true', 'hasJobInstances': 'false'}
+    )
+])
+def test_cluster_client_list_single_tenanted_node_types(
+    mocker, kwargs, query_params
+):
     mocker.patch.object(ClusterClient, '_get', return_value=[NODE_TYPE])
     schema_mock = mocker.patch('sherlockml.clients.cluster.NodeTypeSchema')
 
     client = ClusterClient(PROFILE)
-    assert client.list_single_tenanted_node_types() == [NODE_TYPE]
+    assert client.list_single_tenanted_node_types(**kwargs) == [NODE_TYPE]
 
     schema_mock.assert_called_once_with(many=True)
     ClusterClient._get.assert_called_once_with(
-        '/node-type/single-tenanted', schema_mock.return_value
+        '/node-type/single-tenanted',
+        schema_mock.return_value,
+        params=query_params
     )
 
 
