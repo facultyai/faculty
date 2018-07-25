@@ -61,10 +61,22 @@ class ClusterClient(BaseClient):
 
     SERVICE_NAME = 'klostermann'
 
-    def list_single_tenanted_node_types(self):
+    def list_single_tenanted_node_types(
+        self, has_interactive_instances=None, has_job_instances=None
+    ):
+        query_params = {}
+        if has_interactive_instances is not None:
+            query_params['hasInteractiveInstances'] = (
+                'true' if has_interactive_instances else 'false'
+            )
+        if has_job_instances is not None:
+            query_params['hasJobInstances'] = (
+                'true' if has_job_instances else 'false'
+            )
         return self._get(
             '/node-type/single-tenanted',
-            NodeTypeSchema(many=True)
+            NodeTypeSchema(many=True),
+            params=query_params
         )
 
     def configure_single_tenanted_node_type(
