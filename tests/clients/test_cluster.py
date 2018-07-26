@@ -93,28 +93,32 @@ def test_node_type_schema_load_invalid():
 @pytest.mark.parametrize('kwargs, query_params', [
     ({}, {}),
     (
-        {'has_interactive_instances': True},
-        {'hasInteractiveInstances': 'true'}
+        {'interactive_instances_configured': True},
+        {'interactiveInstancesConfigured': 'true'}
     ),
     (
-        {'has_interactive_instances': False},
-        {'hasInteractiveInstances': 'false'}
+        {'interactive_instances_configured': False},
+        {'interactiveInstancesConfigured': 'false'}
     ),
     (
-        {'has_job_instances': True},
-        {'hasJobInstances': 'true'}
+        {'job_instances_configured': True},
+        {'jobInstancesConfigured': 'true'}
     ),
     (
-        {'has_job_instances': False},
-        {'hasJobInstances': 'false'}
+        {'job_instances_configured': False},
+        {'jobInstancesConfigured': 'false'}
     ),
     (
-        {'has_interactive_instances': True, 'has_job_instances': True},
-        {'hasInteractiveInstances': 'true', 'hasJobInstances': 'true'}
+        {'interactive_instances_configured': True,
+         'job_instances_configured': True},
+        {'interactiveInstancesConfigured': 'true',
+         'jobInstancesConfigured': 'true'}
     ),
     (
-        {'has_interactive_instances': True, 'has_job_instances': False},
-        {'hasInteractiveInstances': 'true', 'hasJobInstances': 'false'}
+        {'interactive_instances_configured': True,
+         'job_instances_configured': False},
+        {'interactiveInstancesConfigured': 'true',
+         'jobInstancesConfigured': 'false'}
     )
 ])
 def test_cluster_client_list_single_tenanted_node_types(
