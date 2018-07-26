@@ -62,17 +62,18 @@ class ClusterClient(BaseClient):
     SERVICE_NAME = 'klostermann'
 
     def list_single_tenanted_node_types(
-        self, has_interactive_instances=None, has_job_instances=None
+        self, interactive_instances_configured=None,
+        job_instances_configured=None
     ):
         """Get information on single tenanted node types from the cluster.
 
         Parameters
         ----------
-        has_interactive_instances : bool, optional
+        interactive_instances_configured : bool, optional
             If True, only get node types which are configured to support
             interactive instances, or if False, those which are not configured
             to support interactive instances
-        has_job_instances : bool, optional
+        job_instances_configured : bool, optional
             If True, only get node types which are configured to support job
             instances, or if False, those which are not configured to support
             job instances
@@ -83,13 +84,13 @@ class ClusterClient(BaseClient):
         """
 
         query_params = {}
-        if has_interactive_instances is not None:
-            query_params['hasInteractiveInstances'] = (
-                'true' if has_interactive_instances else 'false'
+        if interactive_instances_configured is not None:
+            query_params['interactiveInstancesConfigured'] = (
+                'true' if interactive_instances_configured else 'false'
             )
-        if has_job_instances is not None:
-            query_params['hasJobInstances'] = (
-                'true' if has_job_instances else 'false'
+        if job_instances_configured is not None:
+            query_params['jobInstancesConfigured'] = (
+                'true' if job_instances_configured else 'false'
             )
 
         return self._get(
