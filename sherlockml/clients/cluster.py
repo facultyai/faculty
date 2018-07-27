@@ -30,31 +30,26 @@ NodeType = namedtuple(
 
 class NodeTypeSchema(Schema):
 
-    nodeTypeId = fields.String(required=True)
+    id = fields.String(data_key='nodeTypeId', required=True)
     name = fields.String(missing=None)
-    instanceGroup = fields.String(missing=None)
-    maxInteractiveInstances = fields.Integer(required=True)
-    maxJobInstances = fields.Integer(required=True)
-    milliCpus = fields.Integer(required=True)
-    memoryMb = fields.Integer(required=True)
-    numGpus = fields.Integer(required=True)
-    gpuName = fields.String(missing=None)
-    costUsdPerHour = fields.Decimal(required=True)
+    instance_group = fields.String(data_key='instanceGroup', missing=None)
+    max_interactive_instances = fields.Integer(
+        data_key='maxInteractiveInstances', required=True
+    )
+    max_job_instances = fields.Integer(
+        data_key='maxJobInstances', required=True
+    )
+    milli_cpus = fields.Integer(data_key='milliCpus', required=True)
+    memory_mb = fields.Integer(data_key='memoryMb', required=True)
+    num_gpus = fields.Integer(data_key='numGpus', required=True)
+    gpu_name = fields.String(data_key='gpuName', missing=None)
+    cost_usd_per_hour = fields.Decimal(
+        data_key='costUsdPerHour', required=True
+    )
 
     @post_load
     def make_node_type(self, data):
-        return NodeType(
-            id=data['nodeTypeId'],
-            name=data['name'],
-            instance_group=data['instanceGroup'],
-            max_interactive_instances=data['maxInteractiveInstances'],
-            max_job_instances=data['maxJobInstances'],
-            milli_cpus=data['milliCpus'],
-            memory_mb=data['memoryMb'],
-            num_gpus=data['numGpus'],
-            gpu_name=data['gpuName'],
-            cost_usd_per_hour=data['costUsdPerHour']
-        )
+        return NodeType(**data)
 
 
 class ClusterClient(BaseClient):

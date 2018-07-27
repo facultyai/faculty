@@ -53,31 +53,20 @@ Server = namedtuple('Server', [
 
 class ServerSchema(Schema):
 
-    instanceId = fields.UUID(required=True)
-    projectId = fields.UUID(required=True)
-    ownerId = fields.UUID(required=True)
+    id = fields.UUID(data_key='instanceId', required=True)
+    project_id = fields.UUID(data_key='projectId', required=True)
+    owner_id = fields.UUID(data_key='ownerId', required=True)
     name = fields.Str(required=True)
-    instanceType = fields.Str(required=True)
-    milliCpus = fields.Int(required=True)
-    memoryMb = fields.Int(required=True)
-    createdAt = fields.DateTime(required=True)
+    type = fields.Str(data_key='instanceType', required=True)
+    milli_cpus = fields.Int(data_key='milliCpus', required=True)
+    memory_mb = fields.Int(data_key='memoryMb', required=True)
+    created_at = fields.DateTime(data_key='createdAt', required=True)
     status = EnumField(ServerStatus, by_value=True, required=True)
     services = fields.Nested(ServiceSchema, many=True, required=True)
 
     @post_load
     def make_server(self, data):
-        return Server(
-            id=data['instanceId'],
-            project_id=data['projectId'],
-            owner_id=data['ownerId'],
-            name=data['name'],
-            type=data['instanceType'],
-            milli_cpus=data['milliCpus'],
-            memory_mb=data['memoryMb'],
-            created_at=data['createdAt'],
-            status=data['status'],
-            services=data['services']
-        )
+        return Server(**data)
 
 
 class ServerIdSchema(Schema):
