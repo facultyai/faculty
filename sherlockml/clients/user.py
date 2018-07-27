@@ -24,22 +24,22 @@ User = namedtuple('User', ['id'])
 
 
 class UserSchema(Schema):
-    userId = fields.UUID(required=True)
+    id = fields.UUID(data_key='userId', required=True)
 
     @post_load
     def make_user(self, data):
-        return User(id=data['userId'])
+        return User(**data)
 
 
 AuthenticationResponse = namedtuple('AuthenticationResponse', ['user'])
 
 
 class AuthenticationResponseSchema(Schema):
-    account = fields.Nested(UserSchema, required=True)
+    user = fields.Nested(UserSchema, data_key='account', required=True)
 
     @post_load
     def make_authentication_response(self, data):
-        return AuthenticationResponse(user=data['account'])
+        return AuthenticationResponse(**data)
 
 
 class UserClient(BaseClient):

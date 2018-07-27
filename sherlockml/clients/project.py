@@ -24,17 +24,14 @@ Project = namedtuple('Project', ['id', 'name', 'owner_id'])
 
 
 class ProjectSchema(Schema):
-    projectId = fields.UUID(required=True)
+
+    id = fields.UUID(data_key='projectId', required=True)
     name = fields.Str(required=True)
-    ownerId = fields.UUID(required=True)
+    owner_id = fields.UUID(data_key='ownerId', required=True)
 
     @post_load
     def make_project(self, data):
-        return Project(
-            id=data['projectId'],
-            name=data['name'],
-            owner_id=data['ownerId']
-        )
+        return Project(**data)
 
 
 class ProjectClient(BaseClient):
