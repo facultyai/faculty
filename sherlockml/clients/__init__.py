@@ -17,13 +17,15 @@ from sherlockml.clients.user import UserClient
 from sherlockml.clients.project import ProjectClient
 from sherlockml.clients.server import ServerClient
 from sherlockml.clients.cluster import ClusterClient
+from sherlockml.clients.secret import SecretClient
 
 
 CLIENT_FOR_RESOURCE = {
     'user': UserClient,
     'project': ProjectClient,
     'server': ServerClient,
-    'cluster': ClusterClient
+    'cluster': ClusterClient,
+    'secret': SecretClient
 }
 
 
