@@ -31,7 +31,7 @@ SherlockMLFileSystemError = SherlockMLDatasetsError
 
 
 def _s3_client(project_id=None):
-    """ Generate a boto S3 client to access this project's SFS directory. """
+    """Generate a boto S3 client to access this project's datasets."""
 
     # At present, calls to the interface of this module run this function once
     # to generate an S3 client, then pass it around to avoid making many calls
@@ -48,18 +48,17 @@ def _s3_client(project_id=None):
 
 
 def _bucket(project_id=None):
-    """ Get SFS bucket from Secret Service. """
     return session.get().bucket(project_id)
 
 
 def ls(prefix='/', project_id=None, show_hidden=False, s3_client=None):
-    """ List contents of project SFS directory.
+    """List contents of project datasets.
 
     Parameters
     ----------
     prefix : str, optional
-        List only files in the project directory matching this prefix. Default
-        behaviour is to list all files.
+        List only files in the datasets matching this prefix. Default behaviour
+        is to list all files.
     project_id : str, optional
         The project to list files from. You need to have access to this project
         for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
@@ -72,7 +71,7 @@ def ls(prefix='/', project_id=None, show_hidden=False, s3_client=None):
     Returns
     -------
     list
-        The list of files from the project.
+        The list of files from the project datasets.
     """
 
     if s3_client is None:
@@ -116,21 +115,19 @@ def ls(prefix='/', project_id=None, show_hidden=False, s3_client=None):
 
 def glob(pattern, prefix='/', project_id=None, show_hidden=False,
          s3_client=None):
-    """
-    List contents of project SFS directory that match
-    a glob pattern.
+    """List contents of project datasets that match a glob pattern.
 
     Parameters
     ----------
     pattern : str
         The pattern that contents need to match.
     prefix : str, optional
-        List only files in the project directory that have
-        this prefix. Default behaviour is to list all files.
+        List only files in the project datasets that have this prefix. Default
+        behaviour is to list all files.
     project_id : str, optional
-        The project to list files from. You need to have access
-        to this project for it to work. Defaults to the project
-        set by SHERLOCK_PROJECT_ID in your environment.
+        The project to list files from. You need to have access to this project
+        for it to work. Defaults to the project set by SHERLOCK_PROJECT_ID in
+        your environment.
     show_hidden : bool, optional
         Include hidden files in the output. Defaults to False.
     s3_client : botocore.client.S3, optional
@@ -139,8 +136,7 @@ def glob(pattern, prefix='/', project_id=None, show_hidden=False,
     Returns
     -------
     list
-        The list of files from the project that match
-        the glob pattern.
+        The list of files from the project that match the glob pattern.
     """
 
     contents = ls(prefix=prefix, project_id=project_id,
@@ -150,12 +146,12 @@ def glob(pattern, prefix='/', project_id=None, show_hidden=False,
 
 
 def _isdir(project_path, project_id=None, s3_client=None):
-    """ Determine if a path in the project directory is a directory.
+    """Determine if a path in a project's datasets is a directory.
 
     Parameters
     ----------
     project_path : str
-        The path in the project directory to test.
+        The path in the project datasets to test.
     project_id : str, optional
         The project to list files from. You need to have access to this project
         for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
@@ -180,7 +176,7 @@ def _isdir(project_path, project_id=None, s3_client=None):
 
 
 def _isfile(project_path, project_id=None, s3_client=None):
-    """ Determine if a path in the project directory is a file.
+    """Determine if a path in a project's datasets is a file.
 
     Parameters
     ----------
@@ -278,8 +274,7 @@ def _put_directory(local_path, project_path, project_id, s3_client):
 
 
 def _put_recursive(local_path, project_path, project_id, s3_client):
-    """ Puts a file/directory without checking that parent directory exists.
-    """
+    """Puts a file/directory without checking that parent directory exists."""
     if os.path.isdir(local_path):
         _put_directory(local_path, project_path, project_id, s3_client)
     else:
@@ -287,7 +282,7 @@ def _put_recursive(local_path, project_path, project_id, s3_client):
 
 
 def put(local_path, project_path, project_id=None):
-    """ Copy from the local filesystem to the project directory.
+    """Copy from the local filesystem to a project's datasets.
 
     Parameters
     ----------
@@ -367,12 +362,12 @@ def _get_directory(project_path, local_path, project_id, s3_client):
 
 
 def get(project_path, local_path, project_id=None):
-    """ Copy from the project directory to the local filesystem.
+    """Copy from a project's datasets to the local filesystem.
 
     Parameters
     ----------
     project_path : str
-        The source path in the project directory to copy.
+        The source path in the project datasets to copy.
     local_path : str or os.PathLike
         The destination path in the local filesystem.
     project_id : str, optional
@@ -393,14 +388,14 @@ def get(project_path, local_path, project_id=None):
 
 
 def mv(source_path, destination_path, project_id=None):
-    """ Move a file within the project directory.
+    """Move a file within a project's datasets.
 
     Parameters
     ----------
     source_path : str
-        The source path in the project directory to move.
+        The source path in the project datasets to move.
     destination_path : str
-        The destination path in the project directory.
+        The destination path in the project datasets.
     project_id : str, optional
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
@@ -414,14 +409,14 @@ def mv(source_path, destination_path, project_id=None):
 
 
 def cp(source_path, destination_path, project_id=None, s3_client=None):
-    """ Copy a file within the project directory.
+    """Copy a file within a project's datasets.
 
     Parameters
     ----------
     source_path : str
-        The source path in the project directory to copy.
+        The source path in the project datasets to copy.
     destination_path : str
-        The destination path in the project directory.
+        The destination path in the project datasets.
     project_id : str, optional
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
@@ -460,12 +455,12 @@ def cp(source_path, destination_path, project_id=None, s3_client=None):
 
 
 def rm(project_path, project_id=None, s3_client=None):
-    """ Remove a file from the project directory.
+    """Remove a file from the project directory.
 
     Parameters
     ----------
     project_path : str
-        The path in the project directory to remove.
+        The path in the project datasets to remove.
     project_id : str, optional
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
@@ -487,7 +482,7 @@ def rm(project_path, project_id=None, s3_client=None):
 
 
 def rmdir(project_path, project_id=None):
-    """ Remove a directory from the project directory.
+    """Remove a directory from the project datasets.
 
     Parameters
     ----------
@@ -520,12 +515,12 @@ def rmdir(project_path, project_id=None):
 
 
 def etag(project_path, project_id=None):
-    """ Get a unique identifier for the current version of a file.
+    """Get a unique identifier for the current version of a file.
 
     Parameters
     ----------
     project_path : str
-        The path in the project directory.
+        The path in the project datasets.
     project_id : str, optional
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
@@ -548,8 +543,7 @@ def etag(project_path, project_id=None):
 
 @contextlib.contextmanager
 def open(project_path, mode='r', temp_dir=None, **kwargs):
-    """
-    Open a file from SherlockML filesystem for reading.
+    """Open a file from a project's datasets for reading.
 
     This downloads the file into a temporary directory before opening it, so if
     your files are very large, this function can take a long time.
@@ -557,8 +551,7 @@ def open(project_path, mode='r', temp_dir=None, **kwargs):
     Parameters
     ----------
     project_path : str
-        The path on the SherlockML filesystem. Needs to be a file that exists
-        on the filesystem.
+        The path of the file in the project's datasets to open.
     mode : str
         The opening mode, either 'r' or 'rb'. This is passed down to the
         standard python open function. Writing is currently not supported.
@@ -570,11 +563,14 @@ def open(project_path, mode='r', temp_dir=None, **kwargs):
     """
 
     if _isdir(project_path):
-        raise SherlockMLDatasetsError('Can\'t open a directory.')
+        raise SherlockMLDatasetsError("Can't open directories.")
+
     if any(char in mode for char in ('w', 'a', 'x')):
-        raise NotImplementedError('Currently, only read-mode is implemented.')
+        raise NotImplementedError('Currently, only reading is implemented.')
+
     tmpdir = tempfile.mkdtemp(prefix='.', dir=temp_dir)
     local_path = os.path.join(tmpdir, os.path.basename(project_path))
+
     try:
         local_path = os.path.join(tmpdir, os.path.basename(project_path))
         get(project_path, local_path)
