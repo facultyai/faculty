@@ -18,7 +18,7 @@ import os
 import posixpath
 import pytest
 
-import sherlockml.datasets as sfs
+from sherlockml import datasets
 
 from tests.datasets.fixtures import (  # noqa: F401
     mock_secret_client,
@@ -55,7 +55,7 @@ pytestmark = pytest.mark.usefixtures('project_directory')
     [(path, False, TEST_TREE_NO_HIDDEN_FILES) for path in VALID_ROOT_PATHS]
 )
 def test_ls_root(remote_tree, path, show_hidden, expected):
-    assert set(sfs.ls(path, show_hidden=show_hidden)) == set(
+    assert set(datasets.ls(path, show_hidden=show_hidden)) == set(
         '/' + path for path in expected)
 
 
@@ -70,7 +70,7 @@ def test_ls_subdirectory(remote_tree, prefix, show_hidden, expected):
         prefix = prefix[2:]
     prefix = prefix.lstrip('/')
     matches = ['/' + path for path in expected if path.startswith(prefix)]
-    assert set(sfs.ls(prefix, show_hidden=show_hidden)) == set(matches)
+    assert set(datasets.ls(prefix, show_hidden=show_hidden)) == set(matches)
 
 
 @pytest.mark.parametrize(  # noqa: F811
@@ -86,8 +86,9 @@ def test_glob(pattern, remote_tree, prefix, show_hidden, expected):
     prefix = prefix.lstrip('/')
     matches = ['/' + path for path in expected
                if path.startswith(prefix) and fnmatch.fnmatch(path, pattern)]
-    assert set(sfs.glob(pattern, prefix,
-                        show_hidden=show_hidden)) == set(matches)
+    assert set(
+        datasets.glob(pattern, prefix, show_hidden=show_hidden)
+    ) == set(matches)
 
 
 @pytest.mark.parametrize(  # noqa: F811
@@ -95,7 +96,7 @@ def test_glob(pattern, remote_tree, prefix, show_hidden, expected):
     [(path, True) for path in VALID_DIRECTORIES] +
     [(path, False) for path in VALID_FILES + INVALID_PATHS])
 def test_isdir(remote_tree, path, result):
-    assert sfs._isdir(path) is result
+    assert datasets._isdir(path) is result
 
 
 @pytest.mark.parametrize(  # noqa: F811
@@ -103,7 +104,7 @@ def test_isdir(remote_tree, path, result):
     [(path, True) for path in VALID_FILES] +
     [(path, False) for path in VALID_DIRECTORIES + INVALID_PATHS])
 def test_isfile(remote_tree, path, result):
-    assert sfs._isfile(path) is result
+    assert datasets._isfile(path) is result
 
 
 @pytest.mark.parametrize('destination', [  # noqa: F811
@@ -112,13 +113,13 @@ def test_isfile(remote_tree, path, result):
     './' + TEST_FILE_NAME
 ])
 def test_put_file(local_file, destination):
-    sfs.put(local_file, destination)
+    datasets.put(local_file, destination)
     content = read_remote_object(TEST_FILE_NAME)
     assert content == TEST_FILE_CONTENT
 
 
 def test_put_file_nonexistent_directory(local_file):  # noqa: F811
-    sfs.put(local_file, '/path/to/newdir/test_file')
+    datasets.put(local_file, '/path/to/newdir/test_file')
     for path in ['/path/', '/path/to/', '/path/to/newdir/']:
         content = read_remote_object(path)
         assert content == b''
@@ -133,8 +134,8 @@ def test_put_file_nonexistent_directory(local_file):  # noqa: F811
     '/' + TEST_DIRECTORY + '/'
 ])
 def test_put_file_in_directory(local_file, destination):
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        sfs.put(local_file, destination)
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        datasets.put(local_file, destination)
 
 
 @pytest.mark.parametrize('destination,resolved_destination', [  # noqa: F811
@@ -149,7 +150,7 @@ def test_put_file_in_directory(local_file, destination):
     ('/' + TEST_DIRECTORY + '/', TEST_DIRECTORY)
 ])
 def test_put_tree(local_tree, destination, resolved_destination):
-    sfs.put(local_tree, destination)
+    datasets.put(local_tree, destination)
     for filename in TEST_TREE:
         path = posixpath.join(resolved_destination, filename)
         content = read_remote_object(path)
@@ -162,7 +163,7 @@ def test_put_tree(local_tree, destination, resolved_destination):
 def test_get_file(remote_file):  # noqa: F811
     with temporary_directory() as dirname:
         path = os.path.join(dirname, TEST_FILE_NAME)
-        sfs.get(remote_file, path)
+        datasets.get(remote_file, path)
         with open(path, 'rb') as f:
             content = f.read()
     assert content == TEST_FILE_CONTENT
@@ -172,15 +173,15 @@ def test_get_file_in_directory(remote_file):  # noqa: F811
     with temporary_directory() as dirname:
         # Ensure dirname ends with exactly one '/'
         dirname = dirname.rstrip('/') + '/'
-        with pytest.raises(sfs.SherlockMLFileSystemError):
-            sfs.get(remote_file, dirname)
+        with pytest.raises(datasets.SherlockMLDatasetsError):
+            datasets.get(remote_file, dirname)
 
 
 def test_get_file_bad_local_path(remote_file):  # noqa: F811
     with temporary_directory() as dirname:
         path = os.path.join(dirname, 'directory/does/not/exist')
         with pytest.raises(IOError):
-            sfs.get(remote_file, path)
+            datasets.get(remote_file, path)
 
 
 def _validate_local_tree(root, tree):
@@ -197,7 +198,7 @@ def _validate_local_tree(root, tree):
 @pytest.mark.parametrize('path', VALID_ROOT_PATHS)  # noqa: F811
 def test_get_tree(remote_tree, path):
     with temporary_directory() as dirname:
-        sfs.get(path, dirname)
+        datasets.get(path, dirname)
         _validate_local_tree(dirname, TEST_TREE)
 
 
@@ -206,7 +207,7 @@ def test_get_tree_in_directory(remote_tree, path):
     with temporary_directory() as dirname:
         # Ensure dirname ends with exactly one '/'
         dirname = dirname.rstrip('/') + '/'
-        sfs.get(path, dirname)
+        datasets.get(path, dirname)
         _validate_local_tree(dirname, TEST_TREE)
 
 
@@ -216,7 +217,7 @@ def test_get_subtree(remote_tree, path):
     subtree = [tree_path[len(prefix):] for tree_path in TEST_TREE
                if tree_path.startswith(prefix)]
     with temporary_directory() as dirname:
-        sfs.get(path, dirname)
+        datasets.get(path, dirname)
         _validate_local_tree(dirname, subtree)
 
 
@@ -228,7 +229,7 @@ def test_get_subtree_in_directory(remote_tree, path):
     with temporary_directory() as dirname:
         # Ensure dirname ends with exactly one '/'
         dirname = dirname.rstrip('/') + '/'
-        sfs.get(path, dirname)
+        datasets.get(path, dirname)
         _validate_local_tree(dirname, subtree)
 
 
@@ -237,22 +238,22 @@ def test_get_tree_bad_local_path(remote_tree, path):
     with temporary_directory() as dirname:
         local_path = os.path.join(dirname, 'directory/does/not/exist/')
         with pytest.raises(IOError):
-            sfs.get(path, local_path)
+            datasets.get(path, local_path)
 
 
 def test_get_non_existent():
     with temporary_directory() as dirname:
-        with pytest.raises(sfs.SherlockMLFileSystemError):
-            sfs.get(TEST_NON_EXISTENT,
-                    os.path.join(dirname, TEST_NON_EXISTENT))
+        with pytest.raises(datasets.SherlockMLDatasetsError):
+            datasets.get(TEST_NON_EXISTENT,
+                         os.path.join(dirname, TEST_NON_EXISTENT))
 
 
 @pytest.mark.parametrize('destination', ['new_file'])  # noqa: F811
 def test_mv(remote_file, destination):
-    sfs.mv(remote_file, destination)
+    datasets.mv(remote_file, destination)
     content = read_remote_object(destination)
-    assert '/' + destination in sfs.ls()
-    assert '/' + remote_file not in sfs.ls()
+    assert '/' + destination in datasets.ls()
+    assert '/' + remote_file not in datasets.ls()
     assert content == TEST_FILE_CONTENT
 
 
@@ -260,22 +261,22 @@ def test_mv(remote_file, destination):
     ('/input/', '/output/')
 ])
 def test_mv_directory_source(remote_dir, destination):
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        sfs.mv(remote_dir, destination)
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        datasets.mv(remote_dir, destination)
 
 
 @pytest.mark.parametrize('destination', ['/output/'])  # noqa: F811
 def test_mv_directory_destination(remote_file, destination):
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        sfs.mv(remote_file, destination)
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        datasets.mv(remote_file, destination)
 
 
 @pytest.mark.parametrize('destination', ['new_file'])  # noqa: F811
 def test_cp(remote_file, destination):
-    sfs.cp(remote_file, destination)
+    datasets.cp(remote_file, destination)
     destination_content = read_remote_object(destination)
     source_content = read_remote_object(remote_file)
-    assert '/' + destination in sfs.ls()
+    assert '/' + destination in datasets.ls()
     assert destination_content == source_content
 
 
@@ -284,79 +285,79 @@ def test_cp(remote_file, destination):
     ('/input/', '/output/')
 ])
 def test_cp_directory_source(remote_dir, destination):
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        sfs.cp(remote_dir, destination)
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        datasets.cp(remote_dir, destination)
 
 
 @pytest.mark.parametrize('destination', ['/output/'])  # noqa: F811
 def test_cp_directory_destination(remote_file, destination):
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        sfs.cp(remote_file, destination)
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        datasets.cp(remote_file, destination)
 
 
 def test_rm(remote_file):  # noqa: F811
-    assert '/' + remote_file in sfs.ls()
-    sfs.rm(remote_file)
-    assert '/' + remote_file not in sfs.ls()
+    assert '/' + remote_file in datasets.ls()
+    datasets.rm(remote_file)
+    assert '/' + remote_file not in datasets.ls()
 
 
 @pytest.mark.parametrize('remote_dir', ['/input/', '/input/no-such-file'])
 def test_rm_directory_source(remote_dir):
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        sfs.rm(remote_dir)
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        datasets.rm(remote_dir)
 
 
 def test_rmdir(remote_tree):  # noqa: F811
-    assert '/' + EMPTY_DIRECTORY in sfs.ls()
-    sfs.rmdir(EMPTY_DIRECTORY)
-    assert '/' + EMPTY_DIRECTORY not in sfs.ls()
+    assert '/' + EMPTY_DIRECTORY in datasets.ls()
+    datasets.rmdir(EMPTY_DIRECTORY)
+    assert '/' + EMPTY_DIRECTORY not in datasets.ls()
 
 
 def test_rmdir_missing():
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        sfs.rmdir('missing/directory')
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        datasets.rmdir('missing/directory')
 
 
 def test_rmdir_filetype(remote_tree):  # noqa: F811
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        sfs.rmdir(VALID_FILES[0])
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        datasets.rmdir(VALID_FILES[0])
 
 
 def test_rmdir_nonempty(remote_tree):  # noqa: F811
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        sfs.rmdir('input/')
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        datasets.rmdir('input/')
 
 
 def test_etag(remote_file):  # noqa: F811
-    etag = sfs.etag(remote_file)
+    etag = datasets.etag(remote_file)
     assert isinstance(etag, str)
     assert len(etag) > 0
 
 
 def test_etag_change(remote_file, local_file_changed):  # noqa: F811
-    initial_etag = sfs.etag(remote_file)
-    sfs.put(local_file_changed, remote_file)
-    final_etag = sfs.etag(remote_file)
+    initial_etag = datasets.etag(remote_file)
+    datasets.put(local_file_changed, remote_file)
+    final_etag = datasets.etag(remote_file)
     assert final_etag != initial_etag
 
 
 def test_open_read(remote_file):  # noqa: F811
-    with sfs.open(remote_file, 'rb') as fp:
+    with datasets.open(remote_file, 'rb') as fp:
         assert fp.read() == TEST_FILE_CONTENT
 
 
 def test_open_defaultmode(remote_file):  # noqa: F811
-    with sfs.open(remote_file) as fp:
+    with datasets.open(remote_file) as fp:
         assert fp.read() == TEST_FILE_CONTENT.decode('utf-8')
 
 
 def test_open_missing():
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        with sfs.open('missing/file', 'r'):
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        with datasets.open('missing/file', 'r'):
             pass
 
 
 def test_open_directory(remote_tree):  # noqa: F811
-    with pytest.raises(sfs.SherlockMLFileSystemError):
-        with sfs.open('/input', 'r'):
+    with pytest.raises(datasets.SherlockMLDatasetsError):
+        with datasets.open('/input', 'r'):
             pass
