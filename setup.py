@@ -39,7 +39,9 @@ setup(
         'six',
         "enum34; python_version<'3.4'",
         'marshmallow==3.0.0b12',
-        'marshmallow_enum'
+        'marshmallow_enum',
+        'boto3',
+        'botocore'
     ],
     dependency_links=[
         'git+https://github.com/marshmallow-code/marshmallow'
