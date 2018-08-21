@@ -77,10 +77,9 @@ def _test_secrets():
 
 @pytest.fixture
 def mock_secret_client(mocker):
-    mocker.patch(
-        'sherlockml.clients.secret.SecretClient.datasets_secrets',
-        return_value=_test_secrets()
-    )
+    mock_client = mocker.Mock()
+    mock_client.datasets_secrets.return_value = _test_secrets()
+    mocker.patch('sherlockml.client', return_value=mock_client)
 
 
 @pytest.fixture
