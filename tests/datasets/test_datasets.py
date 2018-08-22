@@ -55,8 +55,10 @@ pytestmark = pytest.mark.usefixtures('project_directory')
     [(path, False, TEST_TREE_NO_HIDDEN_FILES) for path in VALID_ROOT_PATHS]
 )
 def test_ls_root(remote_tree, path, show_hidden, expected):
-    assert set(datasets.ls(path, show_hidden=show_hidden)) == set(
-        '/' + path for path in expected)
+    assert (
+        set(datasets.ls(path, show_hidden=show_hidden)) ==
+        {'/' + path for path in expected}
+    )
 
 
 @pytest.mark.parametrize(  # noqa: F811
