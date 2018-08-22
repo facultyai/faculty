@@ -106,9 +106,7 @@ def ls(prefix='/', project_id=None, show_hidden=False, s3_client=None):
     else:
         non_hidden_paths = [
             path_ for path_ in paths
-            if not any(
-                [element.startswith('.') for element in path_.split('/')]
-            )
+            if not any(element.startswith('.') for element in path_.split('/'))
         ]
         return non_hidden_paths
 
@@ -202,7 +200,7 @@ def _isfile(project_path, project_id=None, s3_client=None):
         s3_client=s3_client
     )
     rationalised_path = path.rationalise_projectpath(project_path)
-    return any([match == rationalised_path for match in matches])
+    return any(match == rationalised_path for match in matches)
 
 
 def _create_parent_directories(project_path, project_id, s3_client):
