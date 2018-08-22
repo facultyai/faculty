@@ -122,20 +122,20 @@ def remote_tree(request, project_directory):
     return TEST_TREE
 
 
-_s3_client_cache = None
+_S3_CLIENT_CACHE = None
 
 
 def _s3_client():
-    global _s3_client_cache
-    if _s3_client_cache is None:
+    global _S3_CLIENT_CACHE
+    if _S3_CLIENT_CACHE is None:
         secrets = _test_secrets()
         boto_session = boto3.session.Session(
             aws_access_key_id=secrets.access_key,
             aws_secret_access_key=secrets.secret_key,
             region_name='eu-west-1'
         )
-        _s3_client_cache = boto_session.client('s3')
-    return _s3_client_cache
+        _S3_CLIENT_CACHE = boto_session.client('s3')
+    return _S3_CLIENT_CACHE
 
 
 def _path_in_bucket(path):
