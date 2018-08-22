@@ -17,7 +17,7 @@ import pytest
 from sherlockml.datasets import path
 
 
-@pytest.mark.parametrize('path,rationalised_path', [
+@pytest.mark.parametrize('path, rationalised_path', [
     ('', '/'),
     ('./', '/'),
     ('/', '/'),
@@ -32,7 +32,7 @@ def test_rationalise_projectpath(path, rationalised_path):
     assert path.rationalise_projectpath(path) == rationalised_path
 
 
-@pytest.mark.parametrize('project_path,project_id,bucket_path', [
+@pytest.mark.parametrize('project_path, project_id, bucket_path', [
     ('', 'id', 'id/'),
     ('./', 'id', 'id/'),
     ('/', 'id', 'id/'),
@@ -48,7 +48,7 @@ def test_projectpath_to_bucketpath(project_path, project_id, bucket_path):
     assert result == bucket_path
 
 
-@pytest.mark.parametrize('bucket_path,project_path', [
+@pytest.mark.parametrize('bucket_path, project_path', [
     ('id/', '/'),
     ('id/path', '/path'),
     ('id/path/', '/path/'),

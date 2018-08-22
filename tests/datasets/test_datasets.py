@@ -50,7 +50,7 @@ pytestmark = pytest.mark.usefixtures('project_directory')
 
 
 @pytest.mark.parametrize(  # noqa: F811
-    'path,show_hidden,expected',
+    'path, show_hidden, expected',
     [(path, True, TEST_TREE) for path in VALID_ROOT_PATHS] +
     [(path, False, TEST_TREE_NO_HIDDEN_FILES) for path in VALID_ROOT_PATHS]
 )
@@ -62,7 +62,7 @@ def test_ls_root(remote_tree, path, show_hidden, expected):
 
 
 @pytest.mark.parametrize(  # noqa: F811
-    'prefix,show_hidden,expected',
+    'prefix, show_hidden, expected',
     [(directory, True, TEST_TREE) for directory in VALID_DIRECTORIES] +
     [(directory, False, TEST_TREE_NO_HIDDEN_FILES)
      for directory in VALID_DIRECTORIES]
@@ -76,7 +76,7 @@ def test_ls_subdirectory(remote_tree, prefix, show_hidden, expected):
 
 
 @pytest.mark.parametrize(  # noqa: F811
-    'pattern,prefix,show_hidden,expected',
+    'pattern, prefix, show_hidden, expected',
     [('*dir2*', directory, True, TEST_TREE)
      for directory in VALID_DIRECTORIES] +
     [('*file1', directory, False, TEST_TREE_NO_HIDDEN_FILES)
@@ -94,7 +94,7 @@ def test_glob(pattern, remote_tree, prefix, show_hidden, expected):
 
 
 @pytest.mark.parametrize(  # noqa: F811
-    'path,result',
+    'path, result',
     [(path, True) for path in VALID_DIRECTORIES] +
     [(path, False) for path in VALID_FILES + INVALID_PATHS])
 def test_isdir(remote_tree, path, result):
@@ -102,7 +102,7 @@ def test_isdir(remote_tree, path, result):
 
 
 @pytest.mark.parametrize(  # noqa: F811
-    'path,result',
+    'path, result',
     [(path, True) for path in VALID_FILES] +
     [(path, False) for path in VALID_DIRECTORIES + INVALID_PATHS])
 def test_isfile(remote_tree, path, result):
@@ -140,7 +140,7 @@ def test_put_file_in_directory(local_file, destination):
         datasets.put(local_file, destination)
 
 
-@pytest.mark.parametrize('destination,resolved_destination', [  # noqa: F811
+@pytest.mark.parametrize('destination, resolved_destination', [  # noqa: F811
     ('', ''),
     ('./', ''),
     ('/', ''),
@@ -259,7 +259,7 @@ def test_mv(remote_file, destination):
     assert content == TEST_FILE_CONTENT
 
 
-@pytest.mark.parametrize('remote_dir,destination', [
+@pytest.mark.parametrize('remote_dir, destination', [
     ('/input/', '/output/')
 ])
 def test_mv_directory_source(remote_dir, destination):
@@ -282,7 +282,7 @@ def test_cp(remote_file, destination):
     assert destination_content == source_content
 
 
-@pytest.mark.parametrize('remote_dir,destination', [
+@pytest.mark.parametrize('remote_dir, destination', [
     ('/input/no-such-file', '/output/new-file'),
     ('/input/', '/output/')
 ])
