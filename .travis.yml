@@ -1,10 +1,33 @@
 language: python
-python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-script:
+cache: pip
+install:
   - pip install flake8
-  - flake8
-  - python setup.py test
+jobs:
+  include:
+    - stage: test
+      script:
+        - flake8
+        - python setup.py test
+      python: "2.7"
+    - stage: test
+      script:
+        - flake8
+        - python setup.py test
+      python: "3.4"
+    - stage: test
+      script:
+        - flake8
+        - python setup.py test
+      python: "3.5"
+    - stage: test
+      script:
+        - flake8
+        - python setup.py test
+      python: "3.6"
+    - stage: test
+      script:
+        - flake8
+        - python setup.py test
+      dist: xenial
+      sudo: true
+      python: "3.7"
