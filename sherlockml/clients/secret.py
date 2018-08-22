@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from collections import namedtuple
 
 from marshmallow import Schema, fields, post_load
 
 from sherlockml.clients.base import BaseClient
-
 
 DatasetsSecrets = namedtuple(
     'DatasetsSecrets', ['bucket', 'access_key', 'secret_key', 'verified']
