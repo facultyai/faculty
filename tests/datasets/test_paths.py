@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import pytest
 
 from sherlockml.datasets import path
 
 
-@pytest.mark.parametrize('input,output', [
+@pytest.mark.parametrize('path,rationalised_path', [
     ('', '/'),
     ('./', '/'),
     ('/', '/'),
@@ -29,8 +28,8 @@ from sherlockml.datasets import path
     ('./path/', '/path/'),
     ('/path/', '/path/')
 ])
-def test_rationalise_projectpath(input, output):
-    assert path.rationalise_projectpath(input) == output
+def test_rationalise_projectpath(path, rationalised_path):
+    assert path.rationalise_projectpath(path) == rationalised_path
 
 
 @pytest.mark.parametrize('project_path,project_id,bucket_path', [
