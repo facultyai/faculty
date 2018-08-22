@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import posixpath
 
 from sherlockml.datasets import session
@@ -43,7 +42,7 @@ def projectpath_to_bucketpath(project_path, project_id=None):
 
 
 def bucketpath_to_projectpath(path):
-    """ Drop the project ID from the front of the path. """
+    """Drop the project ID from the front of the path."""
     parts = path.split('/')
     return posixpath.join('/', *parts[1:])
 
@@ -67,7 +66,7 @@ def project_relative_path(project_root, project_path):
 
 
 def project_parent_directories(project_path):
-    """ List all the directories in the tree containing this file.
+    """List all the directories in the tree containing this file.
 
     Parameters
     ----------
