@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from warnings import warn as _warn
+import warnings
 
 _WARNING_MESSAGE = (
     'sherlockml.filesystem has been renamed sherlockml.datasets - please '
     'update your code to use the new import location'
 )
-_warn(_WARNING_MESSAGE)
+warnings.warn(_WARNING_MESSAGE)
 
 from sherlockml.datasets import *  # noqa: F401, F403
