@@ -329,7 +329,7 @@ def _get_directory(project_path, local_path, project_id, s3_client):
 
     # Firstly, make sure that the location to write to locally exists
     containing_dir = os.path.dirname(local_path)
-    if len(containing_dir) == 0:
+    if not containing_dir:
         containing_dir = '.'
     if not os.path.isdir(containing_dir):
         msg = 'No such directory: {}'.format(repr(containing_dir))
