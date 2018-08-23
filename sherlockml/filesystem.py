@@ -15,8 +15,8 @@
 import warnings
 
 _WARNING_MESSAGE = (
-    'sherlockml.filesystem has been renamed sherlockml.datasets - please '
-    'update your code to use the new import location'
+    "sherlockml.filesystem has been renamed sherlockml.datasets - please "
+    "update your code to use the new import location"
 )
 warnings.warn(_WARNING_MESSAGE)
 

@@ -20,12 +20,12 @@ from sherlockml.datasets import session
 def rationalise_projectpath(path):
 
     # All paths should be relative to root
-    path = posixpath.join('/', path)
+    path = posixpath.join("/", path)
 
     normed = posixpath.normpath(path)
 
-    if path.endswith('/') and not normed.endswith('/'):
-        normed += '/'
+    if path.endswith("/") and not normed.endswith("/"):
+        normed += "/"
 
     return normed
 
@@ -43,8 +43,8 @@ def projectpath_to_bucketpath(project_path, project_id=None):
 
 def bucketpath_to_projectpath(path):
     """Drop the project ID from the front of the path."""
-    parts = path.split('/')
-    return posixpath.join('/', *parts[1:])
+    parts = path.split("/")
+    return posixpath.join("/", *parts[1:])
 
 
 def project_relative_path(project_root, project_path):
@@ -53,14 +53,14 @@ def project_relative_path(project_root, project_path):
     project_path = rationalise_projectpath(project_path)
 
     if not project_path.startswith(project_root):
-        tpl = '{} is not a sub path of {}'
+        tpl = "{} is not a sub path of {}"
         raise ValueError(tpl.format(project_path, project_root))
 
     # Remove the root
-    relative_path = project_path[len(project_root):]
+    relative_path = project_path[len(project_root) :]
 
     # Get rid of any leading '/'es
-    relative_path = relative_path.lstrip('/')
+    relative_path = relative_path.lstrip("/")
 
     return relative_path
 
@@ -84,12 +84,12 @@ def project_parent_directories(project_path):
 
     # Stripping trailing slashes as if it's a directory we still just want to
     # get its parent
-    dirname = posixpath.dirname(project_path.rstrip('/'))
+    dirname = posixpath.dirname(project_path.rstrip("/"))
 
     directories = []
 
-    parts = dirname.split('/')
+    parts = dirname.split("/")
     for i_last in range(1, len(parts) + 1):
-        directories.append('/'.join(parts[:i_last]) + '/')
+        directories.append("/".join(parts[:i_last]) + "/")
 
     return directories

@@ -21,11 +21,11 @@ from sherlockml.clients.secret import SecretClient
 
 
 CLIENT_FOR_RESOURCE = {
-    'user': UserClient,
-    'project': ProjectClient,
-    'server': ServerClient,
-    'cluster': ClusterClient,
-    'secret': SecretClient
+    "user": UserClient,
+    "project": ProjectClient,
+    "server": ServerClient,
+    "cluster": ClusterClient,
+    "secret": SecretClient,
 }
 
 
@@ -34,7 +34,7 @@ def for_resource(resource):
         return CLIENT_FOR_RESOURCE[resource]
     except KeyError:
         raise ValueError(
-            'unsupported resource {}, choose one of {}'.format(
+            "unsupported resource {}, choose one of {}".format(
                 resource, set(CLIENT_FOR_RESOURCE.keys())
             )
         )

@@ -16,8 +16,8 @@
 from sherlockml.config import Profile
 
 PROFILE = Profile(
-    domain='test.domain.com',
-    protocol='https',
-    client_id='test-client-id',
-    client_secret='test-client-secret'
+    domain="test.domain.com",
+    protocol="https",
+    client_id="test-client-id",
+    client_secret="test-client-secret",
 )

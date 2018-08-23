@@ -26,11 +26,11 @@ class SherlockMLDatasetsError(Exception):
 
 def project_id_from_environment():
     try:
-        project_id = os.environ['SHERLOCKML_PROJECT_ID']
+        project_id = os.environ["SHERLOCKML_PROJECT_ID"]
     except KeyError:
         raise SherlockMLDatasetsError(
-            'No SHERLOCKML_PROJECT_ID in environment - set the project ID '
-            'explicitly to use outside of SherlockML'
+            "No SHERLOCKML_PROJECT_ID in environment - set the project ID "
+            "explicitly to use outside of SherlockML"
         )
     return project_id
 
@@ -39,9 +39,8 @@ SECRETS_CACHE_TTL = 10
 
 
 class DatasetsSession(object):
-
     def __init__(self):
-        self.secret_client = sherlockml.client('secret')
+        self.secret_client = sherlockml.client("secret")
         self.bucket_cache = {}
         self.secrets_cache = {}
 
@@ -58,7 +57,7 @@ class DatasetsSession(object):
         tries = 1
         while not secrets.verified:
             if tries >= 30:
-                raise ValueError('Secrets not verified after 60 seconds')
+                raise ValueError("Secrets not verified after 60 seconds")
             time.sleep(2)
             secrets = self.secret_client.datasets_secrets(project_id)
             tries += 1
@@ -66,8 +65,9 @@ class DatasetsSession(object):
 
     def _cached_secrets(self, project_id):
         if (
-            project_id not in self.secrets_cache or
-            self.secrets_cache[project_id][1] + SECRETS_CACHE_TTL < time.time()
+            project_id not in self.secrets_cache
+            or self.secrets_cache[project_id][1] + SECRETS_CACHE_TTL
+            < time.time()
         ):
             secrets = self._get_verified_secrets(project_id)
             self.secrets_cache[project_id] = secrets, time.time()
@@ -83,10 +83,10 @@ class DatasetsSession(object):
         boto_session = boto3.session.Session(
             aws_access_key_id=secrets.access_key,
             aws_secret_access_key=secrets.secret_key,
-            region_name='eu-west-1'
+            region_name="eu-west-1",
         )
 
-        return boto_session.client('s3')
+        return boto_session.client("s3")
 
 
 DATASETS_SESSION = None

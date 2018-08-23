@@ -4,6 +4,13 @@ install:
   - pip install flake8
 jobs:
   include:
+    - name: Check black formatting
+      stage: test
+      install:
+        - pip install black
+      script:
+        - black --check .
+      python: "3.6"
     - stage: test
       script:
         - flake8
