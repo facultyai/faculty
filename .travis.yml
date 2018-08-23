@@ -1,37 +1,39 @@
 language: python
 cache: pip
 install:
-  - pip install flake8 black
+  - pip install flake8
 jobs:
   include:
+    - name: Check black formatting
+      stage: test
+      install:
+        - pip install black
+      script:
+        - black --check .
+      python: "3.6"
     - stage: test
       script:
         - flake8
-        - black --check .
         - python setup.py test
       python: "2.7"
     - stage: test
       script:
         - flake8
-        - black --check .
         - python setup.py test
       python: "3.4"
     - stage: test
       script:
         - flake8
-        - black --check .
         - python setup.py test
       python: "3.5"
     - stage: test
       script:
         - flake8
-        - black --check .
         - python setup.py test
       python: "3.6"
     - stage: test
       script:
         - flake8
-        - black --check .
         - python setup.py test
       dist: xenial
       sudo: true
