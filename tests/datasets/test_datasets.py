@@ -116,9 +116,9 @@ def test_isfile(remote_tree, path, result):
     assert datasets._isfile(path) is result
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # noqa: F811
     "destination",
-    [  # noqa: F811
+    [
         TEST_FILE_NAME,
         "/" + TEST_FILE_NAME,
         "./" + TEST_FILE_NAME,
@@ -139,9 +139,9 @@ def test_put_file_nonexistent_directory(local_file):  # noqa: F811
     assert content == TEST_FILE_CONTENT
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # noqa: F811
     "destination",
-    [  # noqa: F811
+    [
         "",
         "./",
         "/",
@@ -155,9 +155,9 @@ def test_put_file_in_directory(local_file, destination):
         datasets.put(local_file, destination)
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # noqa: F811
     "destination, resolved_destination",
-    [  # noqa: F811
+    [
         ("", ""),
         ("./", ""),
         ("/", ""),
