@@ -118,11 +118,7 @@ def test_isfile(remote_tree, path, result):
 
 @pytest.mark.parametrize(  # noqa: F811
     "destination",
-    [
-        TEST_FILE_NAME,
-        "/" + TEST_FILE_NAME,
-        "./" + TEST_FILE_NAME,
-    ],
+    [TEST_FILE_NAME, "/" + TEST_FILE_NAME, "./" + TEST_FILE_NAME],
 )
 def test_put_file(local_file, destination):
     datasets.put(local_file, destination)
