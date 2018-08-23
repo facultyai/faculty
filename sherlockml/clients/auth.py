@@ -21,7 +21,7 @@ import requests
 from requests.auth import AuthBase
 
 
-AccessToken = namedtuple('AccessToken', ['token', 'expires_at'])
+AccessToken = namedtuple("AccessToken", ["token", "expires_at"])
 
 
 class AccessTokenClient(object):
@@ -32,19 +32,19 @@ class AccessTokenClient(object):
         self.hudson_url = hudson_url
 
     def get_access_token(self, client_id, client_secret):
-        endpoint = '{}/access_token'.format(self.hudson_url)
+        endpoint = "{}/access_token".format(self.hudson_url)
         payload = {
-            'client_id': client_id,
-            'client_secret': client_secret,
-            'grant_type': 'client_credentials'
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "grant_type": "client_credentials",
         }
         response = self._session.post(endpoint, json=payload)
         response.raise_for_status()
         body = response.json()
 
-        token = body['access_token']
+        token = body["access_token"]
         now = datetime.now(tz=pytz.utc)
-        expires_at = now + timedelta(seconds=body['expires_in'])
+        expires_at = now + timedelta(seconds=body["expires_in"])
 
         return AccessToken(token, expires_at)
 
@@ -99,7 +99,7 @@ class SherlockMLAuth(AuthBase):
         if self.access_token.expires_at < datetime.now(tz=pytz.utc):
             self.access_token = self._get_token()
 
-        header_content = 'Bearer {}'.format(self.access_token.token)
-        request.headers['Authorization'] = header_content
+        header_content = "Bearer {}".format(self.access_token.token)
+        request.headers["Authorization"] = header_content
 
         return request

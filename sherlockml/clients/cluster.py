@@ -21,30 +21,39 @@ from sherlockml.clients.base import BaseClient
 
 
 NodeType = namedtuple(
-    'NodeType',
-    ['id', 'name', 'instance_group', 'max_interactive_instances',
-     'max_job_instances', 'milli_cpus', 'memory_mb', 'num_gpus',
-     'gpu_name', 'cost_usd_per_hour']
+    "NodeType",
+    [
+        "id",
+        "name",
+        "instance_group",
+        "max_interactive_instances",
+        "max_job_instances",
+        "milli_cpus",
+        "memory_mb",
+        "num_gpus",
+        "gpu_name",
+        "cost_usd_per_hour",
+    ],
 )
 
 
 class NodeTypeSchema(Schema):
 
-    id = fields.String(data_key='nodeTypeId', required=True)
+    id = fields.String(data_key="nodeTypeId", required=True)
     name = fields.String(missing=None)
-    instance_group = fields.String(data_key='instanceGroup', missing=None)
+    instance_group = fields.String(data_key="instanceGroup", missing=None)
     max_interactive_instances = fields.Integer(
-        data_key='maxInteractiveInstances', required=True
+        data_key="maxInteractiveInstances", required=True
     )
     max_job_instances = fields.Integer(
-        data_key='maxJobInstances', required=True
+        data_key="maxJobInstances", required=True
     )
-    milli_cpus = fields.Integer(data_key='milliCpus', required=True)
-    memory_mb = fields.Integer(data_key='memoryMb', required=True)
-    num_gpus = fields.Integer(data_key='numGpus', required=True)
-    gpu_name = fields.String(data_key='gpuName', missing=None)
+    milli_cpus = fields.Integer(data_key="milliCpus", required=True)
+    memory_mb = fields.Integer(data_key="memoryMb", required=True)
+    num_gpus = fields.Integer(data_key="numGpus", required=True)
+    gpu_name = fields.String(data_key="gpuName", missing=None)
     cost_usd_per_hour = fields.Decimal(
-        data_key='costUsdPerHour', required=True
+        data_key="costUsdPerHour", required=True
     )
 
     @post_load
@@ -54,11 +63,12 @@ class NodeTypeSchema(Schema):
 
 class ClusterClient(BaseClient):
 
-    SERVICE_NAME = 'klostermann'
+    SERVICE_NAME = "klostermann"
 
     def list_single_tenanted_node_types(
-        self, interactive_instances_configured=None,
-        job_instances_configured=None
+        self,
+        interactive_instances_configured=None,
+        job_instances_configured=None,
     ):
         """Get information on single tenanted node types from the cluster.
 
@@ -80,36 +90,40 @@ class ClusterClient(BaseClient):
 
         query_params = {}
         if interactive_instances_configured is not None:
-            query_params['interactiveInstancesConfigured'] = (
-                'true' if interactive_instances_configured else 'false'
+            query_params["interactiveInstancesConfigured"] = (
+                "true" if interactive_instances_configured else "false"
             )
         if job_instances_configured is not None:
-            query_params['jobInstancesConfigured'] = (
-                'true' if job_instances_configured else 'false'
+            query_params["jobInstancesConfigured"] = (
+                "true" if job_instances_configured else "false"
             )
 
         return self._get(
-            '/node-type/single-tenanted',
+            "/node-type/single-tenanted",
             NodeTypeSchema(many=True),
-            params=query_params
+            params=query_params,
         )
 
     def configure_single_tenanted_node_type(
-        self, node_type_id, name, instance_group, max_interactive_instances,
-        max_job_instances
+        self,
+        node_type_id,
+        name,
+        instance_group,
+        max_interactive_instances,
+        max_job_instances,
     ):
         payload = {
-            'name': name,
-            'instanceGroup': instance_group,
-            'maxInteractiveInstances': max_interactive_instances,
-            'maxJobInstances': max_job_instances
+            "name": name,
+            "instanceGroup": instance_group,
+            "maxInteractiveInstances": max_interactive_instances,
+            "maxJobInstances": max_job_instances,
         }
         return self._put_raw(
-            '/node-type/single-tenanted/{}/configuration'.format(node_type_id),
-            json=payload
+            "/node-type/single-tenanted/{}/configuration".format(node_type_id),
+            json=payload,
         )
 
     def disable_single_tenanted_node_type(self, node_type_id):
         return self._delete_raw(
-            '/node-type/single-tenanted/{}/configuration'.format(node_type_id)
+            "/node-type/single-tenanted/{}/configuration".format(node_type_id)
         )

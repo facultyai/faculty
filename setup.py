@@ -17,34 +17,32 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='sherlockml',
-    description='Python library for interacting with SherlockML.',
-    url='https://sherlockml.com',
-    author='ASI Data Science',
-    author_email='engineering@asidatascience.com',
-    license='Apache Software License',
+    name="sherlockml",
+    description="Python library for interacting with SherlockML.",
+    url="https://sherlockml.com",
+    author="ASI Data Science",
+    author_email="engineering@asidatascience.com",
+    license="Apache Software License",
     packages=find_packages(),
-    setup_requires=[
-        'pytest-runner'
-    ],
+    setup_requires=["pytest-runner"],
     tests_require=[
-        'pytest',
-        'pytest-mock',
-        'requests_mock',
-        'python-dateutil'
+        "pytest",
+        "pytest-mock",
+        "requests_mock",
+        "python-dateutil",
     ],
     install_requires=[
-        'requests',
-        'pytz',
-        'six',
+        "requests",
+        "pytz",
+        "six",
         "enum34; python_version<'3.4'",
-        'marshmallow==3.0.0b12',
-        'marshmallow_enum',
-        'boto3',
-        'botocore'
+        "marshmallow==3.0.0b12",
+        "marshmallow_enum",
+        "boto3",
+        "botocore",
     ],
     dependency_links=[
-        'git+https://github.com/marshmallow-code/marshmallow'
-        '@3.0.0b12#egg=marshmallow'
-    ]
+        "git+https://github.com/marshmallow-code/marshmallow"
+        "@3.0.0b12#egg=marshmallow"
+    ],
 )

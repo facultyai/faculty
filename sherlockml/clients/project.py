@@ -20,14 +20,14 @@ from marshmallow import Schema, fields, post_load
 from sherlockml.clients.base import BaseClient
 
 
-Project = namedtuple('Project', ['id', 'name', 'owner_id'])
+Project = namedtuple("Project", ["id", "name", "owner_id"])
 
 
 class ProjectSchema(Schema):
 
-    id = fields.UUID(data_key='projectId', required=True)
+    id = fields.UUID(data_key="projectId", required=True)
     name = fields.Str(required=True)
-    owner_id = fields.UUID(data_key='ownerId', required=True)
+    owner_id = fields.UUID(data_key="ownerId", required=True)
 
     @post_load
     def make_project(self, data):
@@ -36,8 +36,8 @@ class ProjectSchema(Schema):
 
 class ProjectClient(BaseClient):
 
-    SERVICE_NAME = 'casebook'
+    SERVICE_NAME = "casebook"
 
     def list_accessible_by_user(self, user_id):
-        endpoint = '/user/{}'.format(user_id)
+        endpoint = "/user/{}".format(user_id)
         return self._get(endpoint, ProjectSchema(many=True))

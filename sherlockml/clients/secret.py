@@ -19,7 +19,7 @@ from marshmallow import Schema, fields, post_load
 from sherlockml.clients.base import BaseClient
 
 DatasetsSecrets = namedtuple(
-    'DatasetsSecrets', ['bucket', 'access_key', 'secret_key', 'verified']
+    "DatasetsSecrets", ["bucket", "access_key", "secret_key", "verified"]
 )
 
 
@@ -36,8 +36,8 @@ class DatasetsSecretsSchema(Schema):
 
 class SecretClient(BaseClient):
 
-    SERVICE_NAME = 'secret-service'
+    SERVICE_NAME = "secret-service"
 
     def datasets_secrets(self, project_id):
-        endpoint = 'sfs/{}'.format(project_id)
+        endpoint = "sfs/{}".format(project_id)
         return self._get(endpoint, DatasetsSecretsSchema())

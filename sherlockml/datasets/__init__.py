@@ -51,7 +51,7 @@ def _bucket(project_id=None):
     return session.get().bucket(project_id)
 
 
-def ls(prefix='/', project_id=None, show_hidden=False, s3_client=None):
+def ls(prefix="/", project_id=None, show_hidden=False, s3_client=None):
     """List contents of project datasets.
 
     Parameters
@@ -80,39 +80,41 @@ def ls(prefix='/', project_id=None, show_hidden=False, s3_client=None):
     bucket = _bucket(project_id)
 
     # Use a paginator to enable listing projects with more than 1000 files
-    paginator = s3_client.get_paginator('list_objects_v2')
+    paginator = s3_client.get_paginator("list_objects_v2")
     response_iterator = paginator.paginate(
         Bucket=bucket,
-        Prefix=path.projectpath_to_bucketpath(prefix, project_id)
+        Prefix=path.projectpath_to_bucketpath(prefix, project_id),
     )
 
     paths = []
     for part in response_iterator:
 
         try:
-            objects = part['Contents']
+            objects = part["Contents"]
         except KeyError:
             continue
 
         for obj in objects:
-            project_path = path.bucketpath_to_projectpath(obj['Key'])
+            project_path = path.bucketpath_to_projectpath(obj["Key"])
 
             # Ignore the root of the project directory
-            if project_path != '/':
+            if project_path != "/":
                 paths.append(project_path)
 
     if show_hidden:
         return paths
     else:
         non_hidden_paths = [
-            path_ for path_ in paths
-            if not any(element.startswith('.') for element in path_.split('/'))
+            path_
+            for path_ in paths
+            if not any(element.startswith(".") for element in path_.split("/"))
         ]
         return non_hidden_paths
 
 
-def glob(pattern, prefix='/', project_id=None, show_hidden=False,
-         s3_client=None):
+def glob(
+    pattern, prefix="/", project_id=None, show_hidden=False, s3_client=None
+):
     """List contents of project datasets that match a glob pattern.
 
     Parameters
@@ -137,8 +139,12 @@ def glob(pattern, prefix='/', project_id=None, show_hidden=False,
         The list of files from the project that match the glob pattern.
     """
 
-    contents = ls(prefix=prefix, project_id=project_id,
-                  show_hidden=show_hidden, s3_client=s3_client)
+    contents = ls(
+        prefix=prefix,
+        project_id=project_id,
+        show_hidden=show_hidden,
+        s3_client=s3_client,
+    )
 
     return fnmatch.filter(contents, pattern)
 
@@ -162,13 +168,13 @@ def _isdir(project_path, project_id=None, s3_client=None):
     bool
     """
     # 'Directories' in the S3 bucket always end in a '/'
-    if not project_path.endswith('/'):
-        project_path += '/'
+    if not project_path.endswith("/"):
+        project_path += "/"
     matches = ls(
         project_path,
         project_id=project_id,
         show_hidden=True,
-        s3_client=s3_client
+        s3_client=s3_client,
     )
     return len(matches) >= 1
 
@@ -197,7 +203,7 @@ def _isfile(project_path, project_id=None, s3_client=None):
         project_path,
         project_id=project_id,
         show_hidden=True,
-        s3_client=s3_client
+        s3_client=s3_client,
     )
     rationalised_path = path.rationalise_projectpath(project_path)
     return any(match == rationalised_path for match in matches)
@@ -210,12 +216,12 @@ def _create_parent_directories(project_path, project_id, s3_client):
     # Make sure empty objects exist for directories
     # List once for speed
     all_objects = set(
-        ls('/', project_id=project_id, show_hidden=True, s3_client=s3_client)
+        ls("/", project_id=project_id, show_hidden=True, s3_client=s3_client)
     )
 
     for dirname in path.project_parent_directories(project_path):
 
-        if dirname == '/':
+        if dirname == "/":
             # Root is not returned by ls
             continue
 
@@ -224,9 +230,9 @@ def _create_parent_directories(project_path, project_id, s3_client):
         if dirname not in all_objects:
             bucket_path = path.projectpath_to_bucketpath(dirname, project_id)
             # Directories on S3 are empty objects with trailing '/' on the key
-            s3_client.put_object(Bucket=bucket,
-                                 Key=bucket_path,
-                                 ServerSideEncryption='AES256')
+            s3_client.put_object(
+                Bucket=bucket, Key=bucket_path, ServerSideEncryption="AES256"
+            )
 
 
 def _put_file(local_path, project_path, project_id, s3_client):
@@ -234,18 +240,19 @@ def _put_file(local_path, project_path, project_id, s3_client):
     bucket = _bucket(project_id)
     bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
 
-    if bucket_path.endswith('/'):
-        msg = ('the destination path {} indicates a directory but the '
-               'source path {} is a normal file - please provide a full '
-               'destination path').format(repr(project_path),
-                                          repr(local_path))
+    if bucket_path.endswith("/"):
+        msg = (
+            "the destination path {} indicates a directory but the "
+            "source path {} is a normal file - please provide a full "
+            "destination path"
+        ).format(repr(project_path), repr(local_path))
         raise SherlockMLDatasetsError(msg)
 
     s3_client.upload_file(
         local_path,
         bucket,
         bucket_path,
-        ExtraArgs={'ServerSideEncryption': 'AES256'}
+        ExtraArgs={"ServerSideEncryption": "AES256"},
     )
 
 
@@ -255,11 +262,11 @@ def _put_directory(local_path, project_path, project_id, s3_client):
     bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
 
     # Directories on S3 are empty objects with trailing '/' on the key
-    if not bucket_path.endswith('/'):
-        bucket_path += '/'
-    s3_client.put_object(Bucket=bucket,
-                         Key=bucket_path,
-                         ServerSideEncryption='AES256')
+    if not bucket_path.endswith("/"):
+        bucket_path += "/"
+    s3_client.put_object(
+        Bucket=bucket, Key=bucket_path, ServerSideEncryption="AES256"
+    )
 
     # Recursively put the contents of the directory
     for entry in os.listdir(local_path):
@@ -267,7 +274,7 @@ def _put_directory(local_path, project_path, project_id, s3_client):
             os.path.join(local_path, entry),
             posixpath.join(project_path, entry),
             project_id,
-            s3_client
+            s3_client,
         )
 
 
@@ -294,7 +301,7 @@ def put(local_path, project_path, project_id=None):
         your environment.
     """
 
-    if hasattr(os, 'fspath'):
+    if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
 
     s3_client = _s3_client(project_id)
@@ -305,11 +312,12 @@ def put(local_path, project_path, project_id=None):
 
 def _get_file(project_path, local_path, project_id, s3_client):
 
-    if local_path.endswith('/'):
-        msg = ('the destination path {} indicates a directory but the '
-               'source path {} is a normal file - please provide a full '
-               'destination path').format(repr(project_path),
-                                          repr(local_path))
+    if local_path.endswith("/"):
+        msg = (
+            "the destination path {} indicates a directory but the "
+            "source path {} is a normal file - please provide a full "
+            "destination path"
+        ).format(repr(project_path), repr(local_path))
         raise SherlockMLDatasetsError(msg)
 
     bucket = _bucket(project_id)
@@ -318,8 +326,8 @@ def _get_file(project_path, local_path, project_id, s3_client):
     try:
         s3_client.download_file(bucket, bucket_path, local_path)
     except ClientError as err:
-        if '404' in err.args[0]:
-            msg = 'no file {} in project'.format(repr(project_path))
+        if "404" in err.args[0]:
+            msg = "no file {} in project".format(repr(project_path))
             raise SherlockMLDatasetsError(msg)
         else:
             raise
@@ -330,24 +338,24 @@ def _get_directory(project_path, local_path, project_id, s3_client):
     # Firstly, make sure that the location to write to locally exists
     containing_dir = os.path.dirname(local_path)
     if not containing_dir:
-        containing_dir = '.'
+        containing_dir = "."
     if not os.path.isdir(containing_dir):
-        msg = 'No such directory: {}'.format(repr(containing_dir))
+        msg = "No such directory: {}".format(repr(containing_dir))
         raise IOError(msg)
 
     paths_to_get = ls(
         project_path,
         project_id=project_id,
         show_hidden=True,
-        s3_client=s3_client
+        s3_client=s3_client,
     )
     for object_path in paths_to_get:
 
         local_dest = os.path.join(
-            local_path,
-            path.project_relative_path(project_path, object_path))
+            local_path, path.project_relative_path(project_path, object_path)
+        )
 
-        if object_path.endswith('/'):
+        if object_path.endswith("/"):
             # Objects with a trailing '/' on S3 indicate directories
             if not os.path.exists(local_dest):
                 os.makedirs(local_dest)
@@ -374,7 +382,7 @@ def get(project_path, local_path, project_id=None):
         your environment.
     """
 
-    if hasattr(os, 'fspath'):
+    if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
 
     client = _s3_client(project_id)
@@ -427,10 +435,10 @@ def cp(source_path, destination_path, project_id=None, s3_client=None):
         s3_client = _s3_client(project_id)
 
     if not _isfile(source_path, project_id, s3_client):
-        raise SherlockMLDatasetsError('source_path must be a file')
+        raise SherlockMLDatasetsError("source_path must be a file")
 
-    if destination_path.endswith('/'):
-        raise SherlockMLDatasetsError('destination_path must be a file path')
+    if destination_path.endswith("/"):
+        raise SherlockMLDatasetsError("destination_path must be a file path")
 
     bucket = _bucket(project_id)
     source_bucket_path = path.projectpath_to_bucketpath(
@@ -440,15 +448,12 @@ def cp(source_path, destination_path, project_id=None, s3_client=None):
         destination_path, project_id
     )
 
-    copy_source = {
-        'Bucket': bucket,
-        'Key': source_bucket_path
-    }
+    copy_source = {"Bucket": bucket, "Key": source_bucket_path}
     s3_client.copy(
         copy_source,
         bucket,
         destination_bucket_path,
-        ExtraArgs={'ServerSideEncryption': 'AES256'}
+        ExtraArgs={"ServerSideEncryption": "AES256"},
     )
 
 
@@ -471,7 +476,7 @@ def rm(project_path, project_id=None, s3_client=None):
         s3_client = _s3_client(project_id)
 
     if not _isfile(project_path, project_id, s3_client):
-        raise SherlockMLDatasetsError('not a file')
+        raise SherlockMLDatasetsError("not a file")
 
     bucket = _bucket(project_id)
     bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
@@ -495,16 +500,17 @@ def rmdir(project_path, project_id=None):
     s3_client = _s3_client(project_id)
 
     if not _isdir(project_path, project_id, s3_client):
-        raise SherlockMLDatasetsError('not a directory')
+        raise SherlockMLDatasetsError("not a directory")
 
-    contents = ls(project_path, project_id, show_hidden=True,
-                  s3_client=s3_client)
+    contents = ls(
+        project_path, project_id, show_hidden=True, s3_client=s3_client
+    )
     if not len(contents) == 1:
-        raise SherlockMLDatasetsError('directory is not empty')
+        raise SherlockMLDatasetsError("directory is not empty")
 
     # Directory paths must end with '/'
-    if not project_path.endswith('/'):
-        project_path += '/'
+    if not project_path.endswith("/"):
+        project_path += "/"
 
     bucket = _bucket(project_id)
     bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
@@ -536,11 +542,11 @@ def etag(project_path, project_id=None):
 
     s3_object = client.get_object(Bucket=bucket, Key=bucket_path)
 
-    return s3_object['ETag'].strip('"')
+    return s3_object["ETag"].strip('"')
 
 
 @contextlib.contextmanager
-def open(project_path, mode='r', temp_dir=None, **kwargs):
+def open(project_path, mode="r", temp_dir=None, **kwargs):
     """Open a file from a project's datasets for reading.
 
     This downloads the file into a temporary directory before opening it, so if
@@ -563,10 +569,10 @@ def open(project_path, mode='r', temp_dir=None, **kwargs):
     if _isdir(project_path):
         raise SherlockMLDatasetsError("Can't open directories.")
 
-    if any(char in mode for char in ('w', 'a', 'x')):
-        raise NotImplementedError('Currently, only reading is implemented.')
+    if any(char in mode for char in ("w", "a", "x")):
+        raise NotImplementedError("Currently, only reading is implemented.")
 
-    tmpdir = tempfile.mkdtemp(prefix='.', dir=temp_dir)
+    tmpdir = tempfile.mkdtemp(prefix=".", dir=temp_dir)
     local_path = os.path.join(tmpdir, os.path.basename(project_path))
 
     try:
