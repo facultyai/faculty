@@ -18,7 +18,7 @@ from datetime import datetime
 
 import pytest
 from marshmallow import ValidationError
-from dateutil.tz import UTC
+from dateutil.tz import UTC  # type: ignore
 
 from sherlockml.clients.server import (
     Server,
