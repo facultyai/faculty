@@ -20,47 +20,47 @@ from marshmallow import Schema, fields, post_load
 from sherlockml.clients.base import BaseClient
 
 
-Path = namedtuple("Path", ["project_id", "path", "content"])
+ListResponse = namedtuple("ListResponse", ["project_id", "path", "content"])
 
 
-SubPath = namedtuple(
-    "SubPath",
+FileNode = namedtuple(
+    "FileNode",
     ["path", "name", "type", "last_modified", "size", "truncated", "content"],
 )
-SubPath.__new__.__defaults__ = (None,) * len(SubPath._fields)
+FileNode.__new__.__defaults__ = (None,) * len(FileNode._fields)
 
 
-class SubPathSchema(Schema):
+class FileNodeSchema(Schema):
 
     path = fields.Str(required=True)
     name = fields.Str(required=True)
     type = fields.Str(required=True)
     last_modified = fields.DateTime(required=True)
     size = fields.Integer(required=True)
-    truncated = fields.Boolean(required=False)
-    content = fields.Nested("self", many=True, required=False)
+    truncated = fields.Boolean()
+    content = fields.Nested("self", many=True)
 
     @post_load
     def make_path(self, data):
-        return SubPath(**data)
+        return FileNode(**data)
 
 
-class PathSchema(Schema):
+class ListResponseSchema(Schema):
 
     project_id = fields.UUID(data_key="project_id", required=True)
     path = fields.Str(required=True)
-    content = fields.List(fields.Nested(SubPathSchema))
+    content = fields.List(fields.Nested(FileNodeSchema))
 
     @post_load
     def make_base_path(self, data):
-        return Path(**data)
+        return ListResponse(**data)
 
 
 class WorkspaceClient(BaseClient):
 
     SERVICE_NAME = "workspace"
 
-    def list_files(self, project_id, prefix, depth):
+    def list(self, project_id, prefix, depth):
         endpoint = "/project/{}/file".format(project_id)
         params = {"depth": depth, "prefix": prefix}
-        return self._get(endpoint, PathSchema(), params=params)
+        return self._get(endpoint, ListResponseSchema(), params=params)
