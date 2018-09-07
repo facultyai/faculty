@@ -29,11 +29,16 @@ class FileNodeType(Enum):
 ListResponse = namedtuple("ListResponse", ["project_id", "path", "content"])
 
 
-FileNode = namedtuple(
-    "FileNode",
+File = namedtuple(
+    "File",
+    ["path", "name", "type", "last_modified", "size"] 
+)
+
+
+Directory = namedtuple(
+    "Directory",
     ["path", "name", "type", "last_modified", "size", "truncated", "content"],
 )
-FileNode.__new__.__defaults__ = (None,) * len(FileNode._fields)
 
 
 class FileNodeSchema(Schema):
@@ -47,8 +52,13 @@ class FileNodeSchema(Schema):
     content = fields.Nested("self", many=True)
 
     @post_load
-    def make_path(self, data):
-        return FileNode(**data)
+    def make_file_node(self, data):
+        if data['type'] == FileNodeType.DIRECTORY:
+            return Directory(**data)
+        elif data['type'] == FileNodeType.FILE:
+            return File(**data)
+        else:
+            raise ValueError("Invalid file node type.")
 
 
 class ListResponseSchema(Schema):
@@ -58,7 +68,7 @@ class ListResponseSchema(Schema):
     content = fields.List(fields.Nested(FileNodeSchema))
 
     @post_load
-    def make_base_path(self, data):
+    def make_list_response(self, data):
         return ListResponse(**data)
 
 
