@@ -56,7 +56,7 @@ class FileNodeSchema(Schema):
             required_fields = Directory._fields
         elif data["type"] == FileNodeType.FILE:
             required_fields = File._fields
-        if set(data.keys()) != set(required_fields + ["type"]):
+        if set(data.keys()) != set(required_fields).union({"type"}):
             raise ValidationError("Wrong fields for {}.".format(data["type"]))
 
     @post_load
