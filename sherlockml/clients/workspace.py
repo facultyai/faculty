@@ -32,22 +32,12 @@ class FileNodeType(Enum):
     DIRECTORY = "directory"
 
 
+File = namedtuple("File", ["path", "name", "last_modified", "size"])
+Directory = namedtuple(
+    "Directory",
+    ["path", "name", "last_modified", "size", "truncated", "content"],
+)
 ListResponse = namedtuple("ListResponse", ["project_id", "path", "content"])
-
-
-FILE_FIELDS = ["path", "name", "last_modified", "size"]
-File = namedtuple("File", FILE_FIELDS)
-
-
-DIRECTORY_FIELDS = [
-    "path",
-    "name",
-    "last_modified",
-    "size",
-    "truncated",
-    "content",
-]
-Directory = namedtuple("Directory", DIRECTORY_FIELDS)
 
 
 class FileNodeSchema(Schema):
@@ -63,18 +53,18 @@ class FileNodeSchema(Schema):
     @validates_schema
     def validate_type(self, data):
         if data["type"] == FileNodeType.DIRECTORY:
-            required_fields = DIRECTORY_FIELDS
+            required_fields = Directory._fields
         elif data["type"] == FileNodeType.FILE:
-            required_fields = FILE_FIELDS
+            required_fields = File._fields
         if set(data.keys()) != set(required_fields + ["type"]):
             raise ValidationError("Wrong fields for {}.".format(data["type"]))
 
     @post_load
     def make_file_node(self, data):
         if data["type"] == FileNodeType.DIRECTORY:
-            return Directory(**{key: data[key] for key in DIRECTORY_FIELDS})
+            return Directory(**{key: data[key] for key in Directory._fields})
         elif data["type"] == FileNodeType.FILE:
-            return File(**{key: data[key] for key in FILE_FIELDS})
+            return File(**{key: data[key] for key in File._fields})
         else:
             raise ValueError("Invalid file node type.")
 
