@@ -17,7 +17,7 @@ from datetime import datetime
 
 from dateutil.tz import UTC  # type: ignore
 
-from sherlockml.clients.workspace import FileNodeSchema, File
+from sherlockml.clients.workspace import FileNodeSchema, File, Directory
 
 
 FILE = File(
@@ -35,6 +35,29 @@ FILE_BODY = {
     "type": "file",
 }
 
+DIRECTORY = Directory(
+    path="/path/to/test-directory",
+    name="test-directory",
+    last_modified=datetime(2018, 1, 15, 15, 18, 45, tzinfo=UTC),
+    size=6144,
+    truncated=False,
+    content=[FILE],
+)
+
+DIRECTORY_BODY = {
+    "path": DIRECTORY.path,
+    "name": DIRECTORY.name,
+    "last_modified": "2018-01-15T15:18:45Z",
+    "size": DIRECTORY.size,
+    "type": "directory",
+    "truncated": DIRECTORY.truncated,
+    "content": [FILE_BODY],
+}
+
 
 def test_file_node_schema_file():
     assert FileNodeSchema().load(FILE_BODY) == FILE
+
+
+def test_file_node_schema_directory():
+    assert FileNodeSchema().load(DIRECTORY_BODY) == DIRECTORY
