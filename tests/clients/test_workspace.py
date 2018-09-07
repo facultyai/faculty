@@ -14,11 +14,20 @@
 
 
 from datetime import datetime
+from uuid import uuid4
 
 from dateutil.tz import UTC  # type: ignore
 
-from sherlockml.clients.workspace import FileNodeSchema, File, Directory
+from sherlockml.clients.workspace import (
+    FileNodeSchema,
+    ListResponseSchema,
+    File,
+    Directory,
+    ListResponse,
+)
 
+
+PROJECT_ID = uuid4()
 
 FILE = File(
     path="/path/to/test-directory/test-file",
@@ -54,6 +63,16 @@ DIRECTORY_BODY = {
     "content": [FILE_BODY],
 }
 
+LIST_RESPONSE = ListResponse(
+    project_id=uuid4(), path="/path/to/test-directory/", content=[DIRECTORY]
+)
+
+LIST_RESPONSE_BODY = {
+    "project_id": str(LIST_RESPONSE.project_id),
+    "path": LIST_RESPONSE.path,
+    "content": [DIRECTORY_BODY],
+}
+
 
 def test_file_node_schema_file():
     assert FileNodeSchema().load(FILE_BODY) == FILE
@@ -61,3 +80,7 @@ def test_file_node_schema_file():
 
 def test_file_node_schema_directory():
     assert FileNodeSchema().load(DIRECTORY_BODY) == DIRECTORY
+
+
+def test_list_response_schema():
+    assert ListResponseSchema().load(LIST_RESPONSE_BODY) == LIST_RESPONSE
