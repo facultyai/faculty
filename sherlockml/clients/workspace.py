@@ -12,12 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+from enum import Enum
 from collections import namedtuple
 
 from marshmallow import Schema, fields, post_load
+from marshmallow_enum import EnumField
 
 from sherlockml.clients.base import BaseClient
+
+
+class FileNodeType(Enum):
+    FILE = "file"
+    DIRECTORY = "directory"
 
 
 ListResponse = namedtuple("ListResponse", ["project_id", "path", "content"])
@@ -32,9 +38,9 @@ FileNode.__new__.__defaults__ = (None,) * len(FileNode._fields)
 
 class FileNodeSchema(Schema):
 
-    path = fields.Str(required=True)
-    name = fields.Str(required=True)
-    type = fields.Str(required=True)
+    path = fields.String(required=True)
+    name = fields.String(required=True)
+    type = EnumField(FileNodeType, by_value=True, required=True)
     last_modified = fields.DateTime(required=True)
     size = fields.Integer(required=True)
     truncated = fields.Boolean()
