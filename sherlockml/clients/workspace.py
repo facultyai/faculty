@@ -20,16 +20,12 @@ from marshmallow import Schema, fields, post_load
 from sherlockml.clients.base import BaseClient
 
 
-Path = namedtuple(
-    'Path',
-    ['project_id', 'path', 'content']
-)
+Path = namedtuple("Path", ["project_id", "path", "content"])
 
 
 SubPath = namedtuple(
-    'SubPath',
-    ['path', 'name', 'type', 'last_modified',
-     'size', 'truncated', 'content']
+    "SubPath",
+    ["path", "name", "type", "last_modified", "size", "truncated", "content"],
 )
 SubPath.__new__.__defaults__ = (None,) * len(SubPath._fields)
 
@@ -42,7 +38,7 @@ class SubPathSchema(Schema):
     last_modified = fields.DateTime(required=True)
     size = fields.Integer(required=True)
     truncated = fields.Boolean(required=False)
-    content = fields.Nested('self', many=True, required=False)
+    content = fields.Nested("self", many=True, required=False)
 
     @post_load
     def make_path(self, data):
@@ -51,7 +47,7 @@ class SubPathSchema(Schema):
 
 class PathSchema(Schema):
 
-    project_id = fields.UUID(data_key='project_id', required=True)
+    project_id = fields.UUID(data_key="project_id", required=True)
     path = fields.Str(required=True)
     content = fields.List(fields.Nested(SubPathSchema))
 
@@ -62,12 +58,9 @@ class PathSchema(Schema):
 
 class WorkspaceClient(BaseClient):
 
-    SERVICE_NAME = 'workspace'
+    SERVICE_NAME = "workspace"
 
     def list_files(self, project_id, prefix, depth):
-        endpoint = '/project/{}/file'.format(project_id)
-        params = {
-            'depth': depth,
-            'prefix': prefix
-        }
+        endpoint = "/project/{}/file".format(project_id)
+        params = {"depth": depth, "prefix": prefix}
         return self._get(endpoint, PathSchema(), params=params)
