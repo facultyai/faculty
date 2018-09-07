@@ -15,7 +15,13 @@
 from enum import Enum
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import (
+    Schema,
+    fields,
+    post_load,
+    validates_schema,
+    ValidationError,
+)
 from marshmallow_enum import EnumField
 
 from sherlockml.clients.base import BaseClient
@@ -29,16 +35,19 @@ class FileNodeType(Enum):
 ListResponse = namedtuple("ListResponse", ["project_id", "path", "content"])
 
 
-File = namedtuple(
-    "File",
-    ["path", "name", "type", "last_modified", "size"] 
-)
+FILE_FIELDS = ["path", "name", "last_modified", "size"]
+File = namedtuple("File", FILE_FIELDS)
 
 
-Directory = namedtuple(
-    "Directory",
-    ["path", "name", "type", "last_modified", "size", "truncated", "content"],
-)
+DIRECTORY_FIELDS = [
+    "path",
+    "name",
+    "last_modified",
+    "size",
+    "truncated",
+    "content",
+]
+Directory = namedtuple("Directory", DIRECTORY_FIELDS)
 
 
 class FileNodeSchema(Schema):
@@ -51,12 +60,21 @@ class FileNodeSchema(Schema):
     truncated = fields.Boolean()
     content = fields.Nested("self", many=True)
 
+    @validates_schema
+    def validate_type(self, data):
+        if data["type"] == FileNodeType.DIRECTORY:
+            required_fields = DIRECTORY_FIELDS
+        elif data["type"] == FileNodeType.FILE:
+            required_fields = FILE_FIELDS
+        if set(data.keys()) != set(required_fields + ["type"]):
+            raise ValidationError("Wrong fields for {}.".format(data["type"]))
+
     @post_load
     def make_file_node(self, data):
-        if data['type'] == FileNodeType.DIRECTORY:
-            return Directory(**data)
-        elif data['type'] == FileNodeType.FILE:
-            return File(**data)
+        if data["type"] == FileNodeType.DIRECTORY:
+            return Directory(**{key: data[key] for key in DIRECTORY_FIELDS})
+        elif data["type"] == FileNodeType.FILE:
+            return File(**{key: data[key] for key in FILE_FIELDS})
         else:
             raise ValueError("Invalid file node type.")
 
@@ -65,7 +83,7 @@ class ListResponseSchema(Schema):
 
     project_id = fields.UUID(data_key="project_id", required=True)
     path = fields.Str(required=True)
-    content = fields.List(fields.Nested(FileNodeSchema))
+    content = fields.List(fields.Nested(FileNodeSchema), required=True)
 
     @post_load
     def make_list_response(self, data):
@@ -79,4 +97,5 @@ class WorkspaceClient(BaseClient):
     def list(self, project_id, prefix, depth):
         endpoint = "/project/{}/file".format(project_id)
         params = {"depth": depth, "prefix": prefix}
-        return self._get(endpoint, ListResponseSchema(), params=params)
+        response = self._get(endpoint, ListResponseSchema(), params=params)
+        return response.content
