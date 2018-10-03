@@ -84,7 +84,8 @@ class ReportSchema(Schema):
 
     @pre_load
     def add_report_id_to_context(self, data):
-        self.context["report_id"] = data["report_id"]
+        if "report_id" in data:
+            self.context["report_id"] = data["report_id"]
         return data
 
     @post_load
@@ -103,7 +104,8 @@ class VersionedReportSchema(Schema):
 
     @pre_load
     def add_report_id_to_context(self, data):
-        self.context["report_id"] = data["report_id"]
+        if "report_id" in data:
+            self.context["report_id"] = data["report_id"]
         return data
 
     @post_load
@@ -166,7 +168,6 @@ class ReportClient(BaseClient):
             "notebook_path": notebook_path,
             "author_id": author_id,
             "show_input_cells": show_code,
-            "draft": False,
         }
 
         endpoint = "/report/{report_id}/version".format(report_id=report_id)
