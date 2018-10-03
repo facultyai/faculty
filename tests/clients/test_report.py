@@ -19,8 +19,8 @@ import pytest
 from marshmallow import ValidationError
 
 from sherlockml.clients.report import (
-    ActiveReport,
-    ActiveReportSchema,
+    Report,
+    ReportSchema,
     VersionedReport,
     VersionedReportSchema,
     ReportVersion,
@@ -43,10 +43,11 @@ ACTIVE_VERSION = ReportVersion(
     report_key=f"{PROJECT_ID}/.sml/tavern/{REPORT_ID}/{VERSION_ID}/index.html",
     report_bucket="sml-projects-test-bucket",
     notebook_path="/test-notebook-path.ipynb",
+    report_id=REPORT_ID,
     id=VERSION_ID,
 )
 
-ACTIVE_REPORT = ActiveReport(
+ACTIVE_REPORT = Report(
     id=REPORT_ID,
     name="Test Report Name",
     description="Looking forward to the test reports on this Test Report",
@@ -109,7 +110,7 @@ VERSIONED_REPORT_BODY = {
 
 
 def test_active_report_schema():
-    data = ActiveReportSchema().load(ACTIVE_REPORT_BODY)
+    data = ReportSchema().load(ACTIVE_REPORT_BODY)
     assert data == ACTIVE_REPORT
 
 
