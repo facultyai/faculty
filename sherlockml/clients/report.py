@@ -51,7 +51,7 @@ ReportVersion = namedtuple(
 
 class ReportVersionSchema(Schema):
     def __init__(self, report_id=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(ReportVersionSchema, self).__init__(*args, **kwargs)
         if report_id is not None:
             self.context["report_id"] = report_id
 
