@@ -41,3 +41,7 @@ class ProjectClient(BaseClient):
     def list_accessible_by_user(self, user_id):
         endpoint = "/user/{}".format(user_id)
         return self._get(endpoint, ProjectSchema(many=True))
+
+    def get(self, project_id):
+        endpoint = "/project/{}".format(project_id)
+        return self._get(endpoint, ProjectSchema())
