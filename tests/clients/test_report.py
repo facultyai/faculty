@@ -24,7 +24,6 @@ from sherlockml.clients.report import (
     VersionedReport,
     VersionedReportSchema,
     ReportVersion,
-    ReportVersionSchema,
     ReportClient,
 )
 
@@ -40,8 +39,10 @@ PROJECT_ID = uuid.uuid4()
 ACTIVE_VERSION = ReportVersion(
     created_at=datetime.datetime(2018, 10, 3, 9, 23, 5, 0),
     author_id=USER_ID,
-    report_path=f"/.sml/tavern/{REPORT_ID}/{VERSION_ID}/index.html",
-    report_key=f"{PROJECT_ID}/.sml/tavern/{REPORT_ID}/{VERSION_ID}/index.html",
+    report_path="/.sml/tavern/{}/{}/index.html".format(REPORT_ID, VERSION_ID),
+    report_key="{}/.sml/tavern/{}/{}/index.html".format(
+        PROJECT_ID, REPORT_ID, VERSION_ID
+    ),
     report_bucket="sml-projects-test-bucket",
     notebook_path="/test-notebook-path.ipynb",
     report_id=REPORT_ID,
@@ -194,25 +195,19 @@ def test_report_client_create(mocker):
             "author_id": USER_ID,
             "notebook_path": "/test-notebook-path.ipynb",
             "description": REPORT.description,
-            "show_input_cells": False
-        }
+            "show_input_cells": False,
+        },
     )
 
 
 def test_report_client_create_version(mocker):
-    mocker.patch.object(
-        ReportClient, "_post", return_value=ACTIVE_VERSION
-    )
+    mocker.patch.object(ReportClient, "_post", return_value=ACTIVE_VERSION)
     schema_mock = mocker.patch("sherlockml.clients.report.ReportVersionSchema")
 
     client = ReportClient(PROFILE)
 
     assert (
-        client.create_version(
-            REPORT.id,
-            "/test-notebook-path.ipynb",
-            USER_ID,
-        )
+        client.create_version(REPORT.id, "/test-notebook-path.ipynb", USER_ID)
         == ACTIVE_VERSION
     )
 
@@ -225,5 +220,5 @@ def test_report_client_create_version(mocker):
             "author_id": USER_ID,
             "notebook_path": "/test-notebook-path.ipynb",
             "show_input_cells": False,
-        }
+        },
     )
