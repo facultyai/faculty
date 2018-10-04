@@ -56,7 +56,6 @@ class ReportVersionSchema(Schema):
     report_key = fields.String(required=True)
     report_bucket = fields.String(required=True)
     notebook_path = fields.String(required=True)
-    report_id = fields.UUID()
 
     @post_load
     def make_report_version(self, data):
@@ -133,6 +132,7 @@ class ReportClient(BaseClient):
             "notebook_path": str(notebook_path),
             "author_id": str(author_id),
             "show_input_cells": show_code,
+            "draft": False,
         }
 
         endpoint = "/report/{report_id}/version".format(report_id=report_id)
