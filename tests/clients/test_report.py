@@ -16,13 +16,13 @@ import uuid
 import datetime
 
 import pytest
-from marshmallow import ValidationError
+from marshmallow import ValidationError, EXCLUDE
 
 from sherlockml.clients.report import (
     Report,
     ReportSchema,
-    VersionedReport,
-    VersionedReportSchema,
+    ReportWithVersions,
+    ReportWithVersionsSchema,
     ReportVersion,
     ReportClient,
 )
@@ -45,7 +45,6 @@ ACTIVE_VERSION = ReportVersion(
     ),
     report_bucket="sml-projects-test-bucket",
     notebook_path="/test-notebook-path.ipynb",
-    report_id=REPORT_ID,
     id=VERSION_ID,
 )
 
@@ -57,7 +56,7 @@ REPORT = Report(
     active_version=ACTIVE_VERSION,
 )
 
-VERSIONED_REPORT = VersionedReport(
+VERSIONED_REPORT = ReportWithVersions(
     id=REPORT_ID,
     name="Test Report Name",
     description="Looking forward to the test reports on this Test Report",
@@ -66,23 +65,24 @@ VERSIONED_REPORT = VersionedReport(
     versions=[ACTIVE_VERSION],
 )
 
+VERSION_BODY = {
+    "created_at": ACTIVE_VERSION.created_at.strftime("%Y-%m-%dT%H:%M:%S.%f")[
+        :-3
+    ],
+    "author_id": str(USER_ID),
+    "report_path": ACTIVE_VERSION.report_path,
+    "report_key": ACTIVE_VERSION.report_key,
+    "report_bucket": ACTIVE_VERSION.report_bucket,
+    "notebook_path": ACTIVE_VERSION.notebook_path,
+    "version_id": str(ACTIVE_VERSION.id),
+}
 
 REPORT_BODY = {
     "created_at": REPORT.created_at.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3],
     "report_name": REPORT.name,
     "report_id": str(REPORT.id),
     "description": REPORT.description,
-    "active_version": {
-        "created_at": ACTIVE_VERSION.created_at.strftime(
-            "%Y-%m-%dT%H:%M:%S.%f"
-        )[:-3],
-        "author_id": str(USER_ID),
-        "report_path": ACTIVE_VERSION.report_path,
-        "report_key": ACTIVE_VERSION.report_key,
-        "report_bucket": ACTIVE_VERSION.report_bucket,
-        "notebook_path": ACTIVE_VERSION.notebook_path,
-        "version_id": str(ACTIVE_VERSION.id),
-    },
+    "active_version": VERSION_BODY,
 }
 
 VERSIONED_REPORT_BODY = {
@@ -90,20 +90,8 @@ VERSIONED_REPORT_BODY = {
     "report_name": REPORT.name,
     "report_id": str(REPORT.id),
     "description": REPORT.description,
-    "active_version_id": ACTIVE_VERSION.id,
-    "versions": [
-        {
-            "created_at": ACTIVE_VERSION.created_at.strftime(
-                "%Y-%m-%dT%H:%M:%S.%f"
-            )[:-3],
-            "author_id": str(USER_ID),
-            "report_path": ACTIVE_VERSION.report_path,
-            "report_key": ACTIVE_VERSION.report_key,
-            "report_bucket": ACTIVE_VERSION.report_bucket,
-            "notebook_path": ACTIVE_VERSION.notebook_path,
-            "version_id": str(ACTIVE_VERSION.id),
-        }
-    ],
+    "active_version_id": str(ACTIVE_VERSION.id),
+    "versions": [VERSION_BODY],
 }
 
 
@@ -115,10 +103,10 @@ def test_report_schema():
 
 
 def test_versioned_report_schema():
-    data = VersionedReportSchema().load(VERSIONED_REPORT_BODY)
+    data = ReportWithVersionsSchema().load(VERSIONED_REPORT_BODY)
     assert data == VERSIONED_REPORT
     with pytest.raises(ValidationError):
-        VersionedReportSchema().load({})
+        ReportWithVersionsSchema().load({})
 
 
 def test_report_client_list(mocker):
@@ -151,15 +139,15 @@ def test_report_client_get(mocker):
     )
 
 
-def test_report_client_list_report_versions(mocker):
+def test_report_client_get_with_versions(mocker):
     mocker.patch.object(ReportClient, "_get", return_value=VERSIONED_REPORT)
     schema_mock = mocker.patch(
-        "sherlockml.clients.report.VersionedReportSchema"
+        "sherlockml.clients.report.ReportWithVersionsSchema"
     )
 
     client = ReportClient(PROFILE)
 
-    assert client.list_report_versions(REPORT.id) == VERSIONED_REPORT
+    assert client.get_with_versions(REPORT.id) == VERSIONED_REPORT
 
     schema_mock.assert_called_once_with()
 
@@ -176,9 +164,9 @@ def test_report_client_create(mocker):
 
     assert (
         client.create(
+            PROJECT_ID,
             REPORT.name,
             "/test-notebook-path.ipynb",
-            PROJECT_ID,
             USER_ID,
             description=REPORT.description,
         )
@@ -192,7 +180,7 @@ def test_report_client_create(mocker):
         schema_mock.return_value,
         json={
             "report_name": REPORT.name,
-            "author_id": USER_ID,
+            "author_id": str(USER_ID),
             "notebook_path": "/test-notebook-path.ipynb",
             "description": REPORT.description,
             "show_input_cells": False,
@@ -211,13 +199,13 @@ def test_report_client_create_version(mocker):
         == ACTIVE_VERSION
     )
 
-    schema_mock.assert_called_once_with()
+    schema_mock.assert_called_once_with(unknown=EXCLUDE)
 
     ReportClient._post.assert_called_once_with(
         "/report/{}/version".format(REPORT.id),
         schema_mock.return_value,
         json={
-            "author_id": USER_ID,
+            "author_id": str(USER_ID),
             "notebook_path": "/test-notebook-path.ipynb",
             "show_input_cells": False,
         },

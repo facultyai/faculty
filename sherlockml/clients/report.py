@@ -14,7 +14,7 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load, pre_load
+from marshmallow import Schema, fields, post_load, EXCLUDE
 
 from sherlockml.clients.base import BaseClient
 
@@ -22,7 +22,7 @@ Report = namedtuple(
     "Report", ["created_at", "name", "id", "description", "active_version"]
 )
 
-VersionedReport = namedtuple(
+ReportWithVersions = namedtuple(
     "VersionedReport",
     [
         "created_at",
@@ -44,17 +44,11 @@ ReportVersion = namedtuple(
         "report_bucket",
         "notebook_path",
         "id",
-        "report_id",
     ],
 )
 
 
 class ReportVersionSchema(Schema):
-    def __init__(self, report_id=None, *args, **kwargs):
-        super(ReportVersionSchema, self).__init__(*args, **kwargs)
-        if report_id is not None:
-            self.context["report_id"] = report_id
-
     id = fields.UUID(data_key="version_id", required=True)
     created_at = fields.DateTime(required=True)
     author_id = fields.UUID(required=True)
@@ -63,12 +57,6 @@ class ReportVersionSchema(Schema):
     report_bucket = fields.String(required=True)
     notebook_path = fields.String(required=True)
     report_id = fields.UUID()
-
-    @pre_load
-    def set_report_id(self, data):
-        if data.get("report_id") is None and "report_id" in self.context:
-            data["report_id"] = self.context["report_id"]
-        return data
 
     @post_load
     def make_report_version(self, data):
@@ -82,19 +70,12 @@ class ReportSchema(Schema):
     description = fields.String(required=True)
     active_version = fields.Nested(ReportVersionSchema, required=True)
 
-    @pre_load
-    def add_report_id_to_context(self, data):
-        if "report_id" in data:
-            self.context["report_id"] = data["report_id"]
-        return data
-
     @post_load
     def make_active_report(self, data):
         return Report(**data)
 
 
-class VersionedReportSchema(Schema):
-
+class ReportWithVersionsSchema(Schema):
     created_at = fields.DateTime(required=True)
     name = fields.String(required=True, data_key="report_name")
     id = fields.UUID(required=True, data_key="report_id")
@@ -102,22 +83,9 @@ class VersionedReportSchema(Schema):
     active_version_id = fields.UUID(required=True)
     versions = fields.Nested(ReportVersionSchema, required=True, many=True)
 
-    @pre_load
-    def add_report_id_to_context(self, data):
-        if "report_id" in data:
-            self.context["report_id"] = data["report_id"]
-        return data
-
     @post_load
     def make_versioned_report(self, data):
-        return VersionedReport(**data)
-
-
-def _relative_project_path(path):
-    if path.startswith("/project/"):
-        return path[8:]
-    else:
-        return path
+        return ReportWithVersions(**data)
 
 
 class ReportClient(BaseClient):
@@ -128,9 +96,9 @@ class ReportClient(BaseClient):
         endpoint = "/project/{}".format(project_id)
         return self._get(endpoint, ReportSchema(many=True))
 
-    def list_report_versions(self, report_id):
+    def get_with_versions(self, report_id):
         endpoint = "/report/{}/versions".format(report_id)
-        return self._get(endpoint, VersionedReportSchema())
+        return self._get(endpoint, ReportWithVersionsSchema())
 
     def get(self, report_id):
         endpoint = "/report/{}/active".format(report_id)
@@ -138,20 +106,19 @@ class ReportClient(BaseClient):
 
     def create(
         self,
+        project_id,
         name,
         notebook_path,
-        project_id,
         author_id,
         description=None,
         show_code=False,
     ):
-        notebook_path = _relative_project_path(notebook_path)
 
         payload = {
             "report_name": name,
-            "author_id": author_id,
-            "notebook_path": notebook_path,
-            "description": description if description is not None else "",
+            "author_id": str(author_id),
+            "notebook_path": str(notebook_path),
+            "description": description,
             "show_input_cells": show_code,
         }
 
@@ -162,13 +129,13 @@ class ReportClient(BaseClient):
         self, report_id, notebook_path, author_id, show_code=False
     ):
 
-        notebook_path = _relative_project_path(notebook_path)
-
         payload = {
-            "notebook_path": notebook_path,
-            "author_id": author_id,
+            "notebook_path": str(notebook_path),
+            "author_id": str(author_id),
             "show_input_cells": show_code,
         }
 
         endpoint = "/report/{report_id}/version".format(report_id=report_id)
-        return self._post(endpoint, ReportVersionSchema(), json=payload)
+        return self._post(
+            endpoint, ReportVersionSchema(unknown=EXCLUDE), json=payload
+        )
