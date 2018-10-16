@@ -24,7 +24,8 @@ setup(
     author_email="engineering@asidatascience.com",
     license="Apache Software License",
     packages=find_packages(),
-    setup_requires=["pytest-runner"],
+    use_scm_version={"version_scheme": "post-release"},
+    setup_requires=["setuptools_scm", "pytest-runner"],
     tests_require=[
         "pytest",
         "pytest-mock",
