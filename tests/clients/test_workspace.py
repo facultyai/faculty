@@ -14,18 +14,21 @@
 
 
 from datetime import datetime
+import pytest
 from uuid import uuid4
+from marshmallow import ValidationError
 
 from dateutil.tz import UTC  # type: ignore
 
 from sherlockml.clients.workspace import (
-    FileNodeSchema,
-    ListResponseSchema,
-    File,
     Directory,
+    File,
+    FileNodeSchema,
     ListResponse,
+    ListResponseSchema,
+    WorkspaceClient,
 )
-
+from tests.clients.fixtures import PROFILE
 
 PROJECT_ID = uuid4()
 
@@ -82,5 +85,34 @@ def test_file_node_schema_directory():
     assert FileNodeSchema().load(DIRECTORY_BODY) == DIRECTORY
 
 
+def test_file_node_schema_invalid():
+    with pytest.raises(ValidationError):
+        FileNodeSchema().load({})
+
+
 def test_list_response_schema():
     assert ListResponseSchema().load(LIST_RESPONSE_BODY) == LIST_RESPONSE
+
+
+def test_list_response_schema_invalid():
+    with pytest.raises(ValidationError):
+        ListResponseSchema().load({})
+
+
+def test_workspace_client_get(mocker):
+    mocker.patch.object(WorkspaceClient, "_get", return_value=LIST_RESPONSE)
+    schema_mock = mocker.patch(
+        "sherlockml.clients.workspace.ListResponseSchema"
+    )
+
+    client = WorkspaceClient(PROFILE)
+    assert client.list(
+        PROJECT_ID, prefix="/path/to/test-directory/", depth=1
+    ) == [DIRECTORY]
+
+    schema_mock.assert_called_once_with()
+    WorkspaceClient._get.assert_called_once_with(
+        "/project/{}/file".format(PROJECT_ID),
+        schema_mock.return_value,
+        params={"prefix": "/path/to/test-directory/", "depth": 1},
+    )
