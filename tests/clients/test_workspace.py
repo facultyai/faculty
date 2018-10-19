@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 
 from datetime import datetime
-import pytest
+from dateutil.tz import UTC  # type: ignore
 from uuid import uuid4
+
 from marshmallow import ValidationError
 
-from dateutil.tz import UTC  # type: ignore
 
 from sherlockml.clients.workspace import (
     Directory,
