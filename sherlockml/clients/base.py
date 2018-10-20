@@ -15,7 +15,6 @@
 import requests
 import marshmallow
 from six.moves import urllib
-from typing import Optional  # noqa: F401
 
 from sherlockml.clients.auth import SherlockMLAuth
 
@@ -70,7 +69,7 @@ def _deserialise_response(schema, response):
 
 class BaseClient(object):
 
-    SERVICE_NAME = None  # type: Optional[str]
+    SERVICE_NAME = None
 
     def __init__(self, profile):
         if self.SERVICE_NAME is None:
