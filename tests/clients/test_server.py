@@ -18,7 +18,7 @@ from datetime import datetime
 
 import pytest
 from marshmallow import ValidationError
-from dateutil.tz import UTC  # type: ignore
+from dateutil.tz import UTC
 
 from sherlockml.clients.server import (
     Server,
@@ -28,6 +28,8 @@ from sherlockml.clients.server import (
     ServiceSchema,
     ServerClient,
     ServerIdSchema,
+    SharedServerResources,
+    DedicatedServerResources,
 )
 from tests.clients.fixtures import PROFILE
 
@@ -54,27 +56,53 @@ SERVER_ID = uuid.uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 CREATED_AT_STRING = "2018-03-10T11:32:06.247Z"
 
-SERVER = Server(
+SHARED_RESOURCES = SharedServerResources(milli_cpus=1000, memory_mb=4000)
+SHARED_SERVER = Server(
     id=SERVER_ID,
     project_id=PROJECT_ID,
     owner_id=OWNER_ID,
     name="test server",
     type="jupyter",
-    milli_cpus=1000,
-    memory_mb=4096,
+    resources=SHARED_RESOURCES,
     created_at=CREATED_AT,
     status=ServerStatus.RUNNING,
     services=[SERVICE],
 )
-
-SERVER_BODY = {
+SHARED_SERVER_BODY = {
     "instanceId": str(SERVER_ID),
     "projectId": str(PROJECT_ID),
     "ownerId": str(OWNER_ID),
-    "name": SERVER.name,
-    "instanceType": SERVER.type,
-    "milliCpus": SERVER.milli_cpus,
-    "memoryMb": SERVER.memory_mb,
+    "name": SHARED_SERVER.name,
+    "instanceType": SHARED_SERVER.type,
+    "instanceSizeType": "custom",
+    "instanceSize": {
+        "milliCpus": SHARED_RESOURCES.milli_cpus,
+        "memoryMb": SHARED_RESOURCES.memory_mb,
+    },
+    "createdAt": CREATED_AT_STRING,
+    "status": "running",
+    "services": [SERVICE_BODY],
+}
+
+DEDICATED_RESOURCES = DedicatedServerResources(machine_type="m4.xlarge")
+DEDICATED_SERVER = Server(
+    id=SERVER_ID,
+    project_id=PROJECT_ID,
+    owner_id=OWNER_ID,
+    name="test server",
+    type="jupyter",
+    resources=DEDICATED_RESOURCES,
+    created_at=CREATED_AT,
+    status=ServerStatus.RUNNING,
+    services=[SERVICE],
+)
+DEDICATED_SERVER_BODY = {
+    "instanceId": str(SERVER_ID),
+    "projectId": str(PROJECT_ID),
+    "ownerId": str(OWNER_ID),
+    "name": DEDICATED_SERVER.name,
+    "instanceType": DEDICATED_SERVER.type,
+    "instanceSizeType": DEDICATED_RESOURCES.machine_type,
     "createdAt": CREATED_AT_STRING,
     "status": "running",
     "services": [SERVICE_BODY],
@@ -93,14 +121,28 @@ def test_service_schema_invalid():
         ServiceSchema().load({})
 
 
-def test_server_schema():
-    data = ServerSchema().load(SERVER_BODY)
-    assert data == SERVER
+@pytest.mark.parametrize(
+    "body, expected",
+    [
+        (SHARED_SERVER_BODY, SHARED_SERVER),
+        (DEDICATED_SERVER_BODY, DEDICATED_SERVER),
+    ],
+)
+def test_server_schema(body, expected):
+    data = ServerSchema().load(body)
+    assert data == expected
 
 
 def test_server_schema_invalid():
     with pytest.raises(ValidationError):
         ServerSchema().load({})
+
+
+def test_server_schema_invalid_missing_instance_size():
+    body = SHARED_SERVER_BODY.copy()
+    del body["instanceSize"]
+    with pytest.raises(ValidationError):
+        ServerSchema().load(body)
 
 
 def test_server_id_schema():
@@ -113,15 +155,13 @@ def test_server_id_schema_invalid():
         ServerIdSchema().load({})
 
 
-def test_server_client_create(mocker):
+def test_server_client_create_shared(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
     schema_mock = mocker.patch("sherlockml.clients.server.ServerIdSchema")
 
     client = ServerClient(PROFILE)
 
     server_type = "jupyter"
-    milli_cpus = 1000
-    memory_mb = 4096
     name = "test server"
     image_version = "version"
     initial_environment_ids = [uuid.uuid4(), uuid.uuid4()]
@@ -130,8 +170,7 @@ def test_server_client_create(mocker):
         client.create(
             PROJECT_ID,
             server_type,
-            milli_cpus,
-            memory_mb,
+            SHARED_RESOURCES,
             name,
             image_version,
             initial_environment_ids,
@@ -145,8 +184,50 @@ def test_server_client_create(mocker):
         schema_mock.return_value,
         json={
             "instanceType": server_type,
-            "milliCpus": milli_cpus,
-            "memoryMb": memory_mb,
+            "instanceSizeType": "custom",
+            "instanceSize": {
+                "milliCpus": SHARED_RESOURCES.milli_cpus,
+                "memoryMb": SHARED_RESOURCES.memory_mb,
+            },
+            "name": name,
+            "typeVersion": image_version,
+            "environmentIds": [
+                str(env_id) for env_id in initial_environment_ids
+            ],
+        },
+    )
+
+
+def test_server_client_create_dedicated(mocker):
+    mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
+    schema_mock = mocker.patch("sherlockml.clients.server.ServerIdSchema")
+
+    client = ServerClient(PROFILE)
+
+    server_type = "jupyter"
+    name = "test server"
+    image_version = "version"
+    initial_environment_ids = [uuid.uuid4(), uuid.uuid4()]
+
+    assert (
+        client.create(
+            PROJECT_ID,
+            server_type,
+            DEDICATED_RESOURCES,
+            name,
+            image_version,
+            initial_environment_ids,
+        )
+        == SERVER_ID
+    )
+
+    schema_mock.assert_called_once_with()
+    ServerClient._post.assert_called_once_with(
+        "/instance/{}".format(PROJECT_ID),
+        schema_mock.return_value,
+        json={
+            "instanceType": server_type,
+            "instanceSizeType": DEDICATED_RESOURCES.machine_type,
             "name": name,
             "typeVersion": image_version,
             "environmentIds": [
@@ -163,12 +244,9 @@ def test_server_client_create_minimal(mocker):
     client = ServerClient(PROFILE)
 
     server_type = "jupyter"
-    milli_cpus = 1000
-    memory_mb = 4096
 
     assert (
-        client.create(PROJECT_ID, server_type, milli_cpus, memory_mb)
-        == SERVER_ID
+        client.create(PROJECT_ID, server_type, SHARED_RESOURCES) == SERVER_ID
     )
 
     schema_mock.assert_called_once_with()
@@ -177,19 +255,22 @@ def test_server_client_create_minimal(mocker):
         schema_mock.return_value,
         json={
             "instanceType": server_type,
-            "milliCpus": milli_cpus,
-            "memoryMb": memory_mb,
+            "instanceSizeType": "custom",
+            "instanceSize": {
+                "milliCpus": SHARED_RESOURCES.milli_cpus,
+                "memoryMb": SHARED_RESOURCES.memory_mb,
+            },
         },
     )
 
 
 def test_server_client_get(mocker):
-    mocker.patch.object(ServerClient, "_get", return_value=SERVER)
+    mocker.patch.object(ServerClient, "_get", return_value=SHARED_SERVER)
     schema_mock = mocker.patch("sherlockml.clients.server.ServerSchema")
 
     client = ServerClient(PROFILE)
 
-    assert client.get(PROJECT_ID, SERVER_ID) == SERVER
+    assert client.get(PROJECT_ID, SERVER_ID) == SHARED_SERVER
 
     schema_mock.assert_called_once_with()
     ServerClient._get.assert_called_once_with(
@@ -199,12 +280,12 @@ def test_server_client_get(mocker):
 
 
 def test_server_client_list(mocker):
-    mocker.patch.object(ServerClient, "_get", return_value=[SERVER])
+    mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
     schema_mock = mocker.patch("sherlockml.clients.server.ServerSchema")
 
     client = ServerClient(PROFILE)
 
-    assert client.list(PROJECT_ID) == [SERVER]
+    assert client.list(PROJECT_ID) == [SHARED_SERVER]
 
     schema_mock.assert_called_once_with(many=True)
     ServerClient._get.assert_called_once_with(
@@ -215,12 +296,12 @@ def test_server_client_list(mocker):
 
 
 def test_server_client_list_filter_name(mocker):
-    mocker.patch.object(ServerClient, "_get", return_value=[SERVER])
+    mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
     schema_mock = mocker.patch("sherlockml.clients.server.ServerSchema")
 
     client = ServerClient(PROFILE)
 
-    assert client.list(PROJECT_ID, name="foo") == [SERVER]
+    assert client.list(PROJECT_ID, name="foo") == [SHARED_SERVER]
 
     schema_mock.assert_called_once_with(many=True)
     ServerClient._get.assert_called_once_with(
