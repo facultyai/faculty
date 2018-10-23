@@ -72,7 +72,7 @@ class FileNodeSchema(Schema):
 class ListResponseSchema(Schema):
 
     project_id = fields.UUID(data_key="project_id", required=True)
-    path = fields.Str(required=True)
+    path = fields.String(required=True)
     content = fields.List(fields.Nested(FileNodeSchema), required=True)
 
     @post_load
