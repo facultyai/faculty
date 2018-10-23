@@ -15,7 +15,7 @@
 import pytest
 
 from datetime import datetime
-from dateutil.tz import UTC  # type: ignore
+from dateutil.tz import UTC
 from uuid import uuid4
 
 from marshmallow import ValidationError
