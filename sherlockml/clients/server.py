@@ -62,7 +62,7 @@ SharedServerResources = namedtuple(
     "SharedServerResources", ["milli_cpus", "memory_mb"]
 )
 DedicatedServerResources = namedtuple(
-    "DedicatedServerResources", ["machine_type"]
+    "DedicatedServerResources", ["node_type"]
 )
 Server = namedtuple(
     "Server",
@@ -159,7 +159,7 @@ class ServerClient(BaseClient):
                 "memoryMb": server_resources.memory_mb,
             }
         elif isinstance(server_resources, DedicatedServerResources):
-            payload["instanceSizeType"] = server_resources.machine_type
+            payload["instanceSizeType"] = server_resources.node_type
         else:
             raise ValueError(
                 "Invalid server_resources {}".format(server_resources)

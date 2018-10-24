@@ -84,7 +84,7 @@ SHARED_SERVER_BODY = {
     "services": [SERVICE_BODY],
 }
 
-DEDICATED_RESOURCES = DedicatedServerResources(machine_type="m4.xlarge")
+DEDICATED_RESOURCES = DedicatedServerResources(node_type="m4.xlarge")
 DEDICATED_SERVER = Server(
     id=SERVER_ID,
     project_id=PROJECT_ID,
@@ -102,7 +102,7 @@ DEDICATED_SERVER_BODY = {
     "ownerId": str(OWNER_ID),
     "name": DEDICATED_SERVER.name,
     "instanceType": DEDICATED_SERVER.type,
-    "instanceSizeType": DEDICATED_RESOURCES.machine_type,
+    "instanceSizeType": DEDICATED_RESOURCES.node_type,
     "createdAt": CREATED_AT_STRING,
     "status": "running",
     "services": [SERVICE_BODY],
@@ -227,7 +227,7 @@ def test_server_client_create_dedicated(mocker):
         schema_mock.return_value,
         json={
             "instanceType": server_type,
-            "instanceSizeType": DEDICATED_RESOURCES.machine_type,
+            "instanceSizeType": DEDICATED_RESOURCES.node_type,
             "name": name,
             "typeVersion": image_version,
             "environmentIds": [
