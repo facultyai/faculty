@@ -13,26 +13,59 @@
 # limitations under the License.
 
 import requests
-import marshmallow
+from marshmallow import Schema, fields, ValidationError
 from six.moves import urllib
 
 from sherlockml.clients.auth import SherlockMLAuth
 
 
-class BadResponseStatus(Exception):
-    def __init__(self, response):
-        self.response = response
-
-
-class Unauthorized(BadResponseStatus):
-    pass
-
-
-class NotFound(BadResponseStatus):
-    pass
-
-
 class InvalidResponse(Exception):
+    pass
+
+
+class HTTPError(Exception):
+    def __init__(self, response, error=None):
+        self.response = response
+        self.error = error
+
+
+class BadRequest(HTTPError):
+    pass
+
+
+class Unauthorized(HTTPError):
+    pass
+
+
+class Forbidden(HTTPError):
+    pass
+
+
+class NotFound(HTTPError):
+    pass
+
+
+class MethodNotAllowed(HTTPError):
+    pass
+
+
+class Conflict(HTTPError):
+    pass
+
+
+class InternalServerError(HTTPError):
+    pass
+
+
+class BadGateway(HTTPError):
+    pass
+
+
+class ServiceUnavailable(HTTPError):
+    pass
+
+
+class GatewayTimeout(HTTPError):
     pass
 
 
@@ -42,13 +75,36 @@ def _service_url(profile, service, endpoint=""):
     return urllib.parse.urlunsplit(url_parts)
 
 
+HTTP_ERRORS = {
+    400: BadRequest,
+    401: Unauthorized,
+    403: Forbidden,
+    404: NotFound,
+    405: MethodNotAllowed,
+    409: Conflict,
+    500: InternalServerError,
+    502: BadGateway,
+    503: ServiceUnavailable,
+    504: GatewayTimeout,
+}
+
+
+class ErrorSchema(Schema):
+    error = fields.String(required=True)
+
+
+def _extract_error(response):
+    try:
+        data = response.json()
+        return ErrorSchema().load(data)["error"]
+    except (ValueError, ValidationError):
+        return None
+
+
 def _check_status(response):
-    if response.status_code == 401:
-        raise Unauthorized(response)
-    elif response.status_code == 404:
-        raise NotFound(response)
-    elif response.status_code >= 400:
-        raise BadResponseStatus(response)
+    if response.status_code >= 400:
+        cls = HTTP_ERRORS.get(response.status_code, HTTPError)
+        raise cls(response, _extract_error(response))
 
 
 def _deserialise_response(schema, response):
@@ -59,7 +115,7 @@ def _deserialise_response(schema, response):
 
     try:
         data = schema.load(response_json)
-    except marshmallow.ValidationError:
+    except ValidationError:
         # TODO: log validation errors and possibly include them in raised
         # exception
         raise InvalidResponse("response content did not match expected format")
