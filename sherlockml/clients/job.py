@@ -13,13 +13,31 @@
 # limitations under the License.
 
 from collections import namedtuple
+from enum import Enum
 
 from marshmallow import Schema, fields, post_load
+from marshmallow_enum import EnumField
 
 from sherlockml.clients.base import BaseClient
 
 JobMetadata = namedtuple("JobMetadata", ["name", "description"])
 JobIdAndMetadata = namedtuple("JobIdAndMetadata", ["id", "metadata"])
+Page = namedtuple("Page", ["start", "limit"])
+Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
+Run = namedtuple(
+    "Run",
+    ["id", "run_number", "submitted_at", "started_at", "ended_at", "state"],
+)
+ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
+
+
+class RunState(Enum):
+    QUEUED = "queued"
+    STARTING = "starting"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    ERROR = "error"
 
 
 class JobMetadataSchema(Schema):
@@ -48,6 +66,48 @@ class RunIdSchema(Schema):
         return data["runId"]
 
 
+class PageSchema(Schema):
+    start = fields.Integer(required=True)
+    limit = fields.Integer(required=True)
+
+    @post_load
+    def make_page(self, data):
+        return Page(**data)
+
+
+class PaginationSchema(Schema):
+    start = fields.Integer(required=True)
+    size = fields.Integer(required=True)
+    previous = fields.Nested(PageSchema, missing=None)
+    next = fields.Nested(PageSchema, missing=None)
+
+    @post_load
+    def make_pagination(self, data):
+        return Pagination(**data)
+
+
+class RunSchema(Schema):
+    id = fields.UUID(data_key="runId", required=True)
+    run_number = fields.Integer(data_key="runNumber", required=True)
+    submitted_at = fields.DateTime(data_key="submittedAt", required=True)
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    state = EnumField(RunState, by_value=True, required=True)
+
+    @post_load
+    def make_run(self, data):
+        return Run(**data)
+
+
+class ListRunsResponseSchema(Schema):
+    pagination = fields.Nested(PaginationSchema, required=True)
+    runs = fields.Nested(RunSchema, many=True, required=True)
+
+    @post_load
+    def make_list_runs_response_schema(self, data):
+        return ListRunsResponse(**data)
+
+
 class JobClient(BaseClient):
 
     SERVICE_NAME = "steve"
@@ -71,3 +131,12 @@ class JobClient(BaseClient):
             ]
         }
         return self._post(endpoint, RunIdSchema(), json=payload)
+
+    def list_runs(self, project_id, job_id, start=None, limit=None):
+        endpoint = "/project/{}/job/{}/run".format(project_id, job_id)
+        params = {}
+        if start is not None:
+            params["start"] = start
+        if limit is not None:
+            params["limit"] = limit
+        return self._get(endpoint, ListRunsResponseSchema(), params=params)

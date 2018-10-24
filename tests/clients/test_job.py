@@ -12,18 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from datetime import datetime
 from uuid import uuid4
 
 import pytest
+from dateutil.tz import UTC
 from marshmallow import ValidationError
 
 from sherlockml.clients.job import (
     JobMetadata,
-    JobIdAndMetadata,
     JobMetadataSchema,
+    JobIdAndMetadata,
     JobIdAndMetadataSchema,
     JobClient,
     RunIdSchema,
+    Page,
+    PageSchema,
+    Pagination,
+    PaginationSchema,
+    Run,
+    RunSchema,
+    RunState,
+    ListRunsResponse,
+    ListRunsResponseSchema,
 )
 from tests.clients.fixtures import PROFILE
 
@@ -40,15 +51,56 @@ JOB_METADATA_BODY = {
 JOB_ID_AND_METADATA = JobIdAndMetadata(id=JOB_ID, metadata=JOB_METADATA)
 JOB_ID_AND_METADATA_BODY = {"jobId": str(JOB_ID), "meta": JOB_METADATA_BODY}
 
+PAGE = Page(start=3, limit=10)
+PAGE_BODY = {"start": PAGE.start, "limit": PAGE.limit}
+
+PAGINATION = Pagination(
+    start=20,
+    size=10,
+    previous=Page(start=10, limit=10),
+    next=Page(start=30, limit=10),
+)
+PAGINATION_BODY = {
+    "start": PAGINATION.start,
+    "size": PAGINATION.size,
+    "previous": {
+        "start": PAGINATION.previous.start,
+        "limit": PAGINATION.previous.limit,
+    },
+    "next": {"start": PAGINATION.next.start, "limit": PAGINATION.next.limit},
+}
+
+SUBMITTED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
+SUBMITTED_AT_STRING = "2018-03-10T11:32:06.247Z"
+STARTED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
+STARTED_AT_STRING = "2018-03-10T11:32:30.172Z"
+ENDED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
+ENDED_AT_STRING = "2018-03-10T11:37:42.482Z"
+
+RUN = Run(
+    id=RUN_ID,
+    run_number=3,
+    submitted_at=SUBMITTED_AT,
+    started_at=STARTED_AT,
+    ended_at=ENDED_AT,
+    state=RunState.COMPLETED,
+)
+RUN_BODY = {
+    "runId": str(RUN_ID),
+    "runNumber": RUN.run_number,
+    "submittedAt": SUBMITTED_AT_STRING,
+    "startedAt": STARTED_AT_STRING,
+    "endedAt": ENDED_AT_STRING,
+    "state": "completed",
+}
+
+LIST_RUNS_RESPONSE = ListRunsResponse(runs=[RUN], pagination=PAGINATION)
+LIST_RUNS_RESPONSE_BODY = {"runs": [RUN_BODY], "pagination": PAGINATION_BODY}
+
 
 def test_job_metadata_schema():
     data = JobMetadataSchema().load(JOB_METADATA_BODY)
     assert data == JOB_METADATA
-
-
-def test_job_metadata_schema_invalid():
-    with pytest.raises(ValidationError):
-        JobMetadataSchema().load({})
 
 
 def test_job_id_and_metadata_schema():
@@ -56,19 +108,64 @@ def test_job_id_and_metadata_schema():
     assert data == JOB_ID_AND_METADATA
 
 
-def test_job_id_and_metadata_schema_invalid():
-    with pytest.raises(ValidationError):
-        JobIdAndMetadataSchema().load({})
-
-
 def test_run_id_schema():
     data = RunIdSchema().load({"runId": str(RUN_ID)})
     assert data == RUN_ID
 
 
-def test_run_id_schema_invalid():
+def test_page_schema():
+    data = PageSchema().load(PAGE_BODY)
+    assert data == PAGE
+
+
+def test_pagination_schema():
+    data = PaginationSchema().load(PAGINATION_BODY)
+    assert data == PAGINATION
+
+
+@pytest.mark.parametrize("field", ["previous", "next"])
+def test_pagination_schema_nullable_field(field):
+    body = PAGINATION_BODY.copy()
+    del body[field]
+    data = PaginationSchema().load(body)
+    assert getattr(data, field) is None
+
+
+def test_run_schema():
+    data = RunSchema().load(RUN_BODY)
+    assert data == RUN
+
+
+@pytest.mark.parametrize(
+    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
+)
+def test_run_schema_nullable_field(data_key, field):
+    body = RUN_BODY.copy()
+    del body[data_key]
+    data = RunSchema().load(body)
+    assert getattr(data, field) is None
+
+
+def test_list_runs_response_schema():
+    data = ListRunsResponseSchema().load(LIST_RUNS_RESPONSE_BODY)
+    assert data == LIST_RUNS_RESPONSE
+
+
+@pytest.mark.parametrize(
+    "schema_class",
+    [
+        JobMetadataSchema,
+        JobIdAndMetadataSchema,
+        RunIdSchema,
+        PageSchema,
+        PaginationSchema,
+        RunSchema,
+        ListRunsResponseSchema,
+    ],
+)
+def test_schemas_invalid_data(schema_class):
     with pytest.raises(ValidationError):
-        RunIdSchema().load({})
+        schema_class().load({})
 
 
 def test_job_client_list(mocker):
@@ -136,4 +233,37 @@ def test_job_client_create_run_array(mocker):
                 [{"name": "param", "value": "three"}],
             ]
         },
+    )
+
+
+def test_job_client_list_runs(mocker):
+    mocker.patch.object(JobClient, "_get", return_value=LIST_RUNS_RESPONSE)
+    schema_mock = mocker.patch("sherlockml.clients.job.ListRunsResponseSchema")
+
+    client = JobClient(PROFILE)
+    assert client.list_runs(PROJECT_ID, JOB_ID) == LIST_RUNS_RESPONSE
+
+    schema_mock.assert_called_once_with()
+    JobClient._get.assert_called_once_with(
+        "/project/{}/job/{}/run".format(PROJECT_ID, JOB_ID),
+        schema_mock.return_value,
+        params={},
+    )
+
+
+def test_job_client_list_runs_page(mocker):
+    mocker.patch.object(JobClient, "_get", return_value=LIST_RUNS_RESPONSE)
+    schema_mock = mocker.patch("sherlockml.clients.job.ListRunsResponseSchema")
+
+    client = JobClient(PROFILE)
+    assert (
+        client.list_runs(PROJECT_ID, JOB_ID, start=20, limit=10)
+        == LIST_RUNS_RESPONSE
+    )
+
+    schema_mock.assert_called_once_with()
+    JobClient._get.assert_called_once_with(
+        "/project/{}/job/{}/run".format(PROJECT_ID, JOB_ID),
+        schema_mock.return_value,
+        params={"start": 20, "limit": 10},
     )
