@@ -14,22 +14,22 @@
 
 
 from sherlockml.clients.account import AccountClient
-from sherlockml.clients.project import ProjectClient
-from sherlockml.clients.server import ServerClient
 from sherlockml.clients.cluster import ClusterClient
+from sherlockml.clients.project import ProjectClient
 from sherlockml.clients.secret import SecretClient
-from sherlockml.clients.workspace import WorkspaceClient
+from sherlockml.clients.server import ServerClient
 from sherlockml.clients.user import UserClient
+from sherlockml.clients.workspace import WorkspaceClient
 
 
 CLIENT_FOR_RESOURCE = {
     "account": AccountClient,
-    "project": ProjectClient,
-    "server": ServerClient,
     "cluster": ClusterClient,
+    "project": ProjectClient,
     "secret": SecretClient,
-    "workspace": WorkspaceClient,
+    "server": ServerClient,
     "user": UserClient,
+    "workspace": WorkspaceClient,
 }
 
 
