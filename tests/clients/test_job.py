@@ -23,11 +23,13 @@ from sherlockml.clients.job import (
     JobMetadataSchema,
     JobIdAndMetadataSchema,
     JobClient,
+    RunIdSchema,
 )
 from tests.clients.fixtures import PROFILE
 
 PROJECT_ID = uuid4()
 JOB_ID = uuid4()
+RUN_ID = uuid4()
 
 JOB_METADATA = JobMetadata(name="job name", description="job description")
 JOB_METADATA_BODY = {
@@ -59,6 +61,16 @@ def test_job_id_and_metadata_schema_invalid():
         JobIdAndMetadataSchema().load({})
 
 
+def test_run_id_schema():
+    data = RunIdSchema().load({"runId": str(RUN_ID)})
+    assert data == RUN_ID
+
+
+def test_run_id_schema_invalid():
+    with pytest.raises(ValidationError):
+        RunIdSchema().load({})
+
+
 def test_job_client_list(mocker):
     mocker.patch.object(JobClient, "_get", return_value=[JOB_ID_AND_METADATA])
     schema_mock = mocker.patch("sherlockml.clients.job.JobIdAndMetadataSchema")
@@ -69,4 +81,59 @@ def test_job_client_list(mocker):
     schema_mock.assert_called_once_with(many=True)
     JobClient._get.assert_called_once_with(
         "/project/{}/job".format(PROJECT_ID), schema_mock.return_value
+    )
+
+
+def test_job_client_create_run(mocker):
+    mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
+    schema_mock = mocker.patch("sherlockml.clients.job.RunIdSchema")
+
+    client = JobClient(PROFILE)
+    assert (
+        client.create_run(PROJECT_ID, JOB_ID, {"param": "one", "other": "two"})
+        == RUN_ID
+    )
+
+    schema_mock.assert_called_once_with()
+    JobClient._post.assert_called_once_with(
+        "/project/{}/job/{}/run".format(PROJECT_ID, JOB_ID),
+        schema_mock.return_value,
+        json={
+            "parameterValues": [
+                [
+                    {"name": "param", "value": "one"},
+                    {"name": "other", "value": "two"},
+                ]
+            ]
+        },
+    )
+
+
+def test_job_client_create_run_array(mocker):
+    mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
+    schema_mock = mocker.patch("sherlockml.clients.job.RunIdSchema")
+
+    client = JobClient(PROFILE)
+    assert (
+        client.create_run_array(
+            PROJECT_ID,
+            JOB_ID,
+            [{"param": "one", "other": "two"}, {"param": "three"}],
+        )
+        == RUN_ID
+    )
+
+    schema_mock.assert_called_once_with()
+    JobClient._post.assert_called_once_with(
+        "/project/{}/job/{}/run".format(PROJECT_ID, JOB_ID),
+        schema_mock.return_value,
+        json={
+            "parameterValues": [
+                [
+                    {"name": "param", "value": "one"},
+                    {"name": "other", "value": "two"},
+                ],
+                [{"name": "param", "value": "three"}],
+            ]
+        },
     )

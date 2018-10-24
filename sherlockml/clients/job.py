@@ -40,6 +40,14 @@ class JobIdAndMetadataSchema(Schema):
         return JobIdAndMetadata(**data)
 
 
+class RunIdSchema(Schema):
+    runId = fields.UUID(required=True)
+
+    @post_load
+    def make_run_id(self, data):
+        return data["runId"]
+
+
 class JobClient(BaseClient):
 
     SERVICE_NAME = "steve"
@@ -47,3 +55,19 @@ class JobClient(BaseClient):
     def list(self, project_id):
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobIdAndMetadataSchema(many=True))
+
+    def create_run(self, project_id, job_id, parameter_values):
+        return self.create_run_array(project_id, job_id, [parameter_values])
+
+    def create_run_array(self, project_id, job_id, parameter_value_sets):
+        endpoint = "/project/{}/job/{}/run".format(project_id, job_id)
+        payload = {
+            "parameterValues": [
+                [
+                    {"name": name, "value": value}
+                    for name, value in parameter_values.items()
+                ]
+                for parameter_values in parameter_value_sets
+            ]
+        }
+        return self._post(endpoint, RunIdSchema(), json=payload)
