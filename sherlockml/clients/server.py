@@ -16,10 +16,23 @@
 from collections import namedtuple
 from enum import Enum
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow_enum import EnumField
 
 from sherlockml.clients.base import BaseClient
+
+
+ServerSize = namedtuple("ServerSize", ["milli_cpus", "memory_mb"])
+
+
+class ServerSizeSchema(Schema):
+
+    milli_cpus = fields.Integer(data_key="milliCpus", required=True)
+    memory_mb = fields.Integer(data_key="memoryMb", required=True)
+
+    @post_load
+    def make_server_size(self, data):
+        return ServerSize(**data)
 
 
 class ServerStatus(Enum):
@@ -34,17 +47,23 @@ Service = namedtuple("Service", ["name", "host", "port", "scheme", "uri"])
 
 class ServiceSchema(Schema):
 
-    name = fields.Str(required=True)
-    host = fields.Str(required=True)
-    port = fields.Int(required=True)
-    scheme = fields.Str(required=True)
-    uri = fields.Str(required=True)
+    name = fields.String(required=True)
+    host = fields.String(required=True)
+    port = fields.Integer(required=True)
+    scheme = fields.String(required=True)
+    uri = fields.String(required=True)
 
     @post_load
     def make_service(self, data):
         return Service(**data)
 
 
+SharedServerResources = namedtuple(
+    "SharedServerResources", ["milli_cpus", "memory_mb"]
+)
+DedicatedServerResources = namedtuple(
+    "DedicatedServerResources", ["node_type"]
+)
 Server = namedtuple(
     "Server",
     [
@@ -53,8 +72,7 @@ Server = namedtuple(
         "owner_id",
         "name",
         "type",
-        "milli_cpus",
-        "memory_mb",
+        "resources",
         "created_at",
         "status",
         "services",
@@ -67,17 +85,46 @@ class ServerSchema(Schema):
     id = fields.UUID(data_key="instanceId", required=True)
     project_id = fields.UUID(data_key="projectId", required=True)
     owner_id = fields.UUID(data_key="ownerId", required=True)
-    name = fields.Str(required=True)
-    type = fields.Str(data_key="instanceType", required=True)
-    milli_cpus = fields.Int(data_key="milliCpus", required=True)
-    memory_mb = fields.Int(data_key="memoryMb", required=True)
+    name = fields.String(required=True)
+    type = fields.String(data_key="instanceType", required=True)
+    server_size_type = fields.String(
+        data_key="instanceSizeType", required=True
+    )
+    server_size = fields.Nested(ServerSizeSchema, data_key="instanceSize")
     created_at = fields.DateTime(data_key="createdAt", required=True)
     status = EnumField(ServerStatus, by_value=True, required=True)
     services = fields.Nested(ServiceSchema, many=True, required=True)
 
     @post_load
     def make_server(self, data):
-        return Server(**data)
+
+        server_size_type = data["server_size_type"]
+        server_size = data.get("server_size")
+
+        if server_size_type == "custom":
+            if server_size is not None:
+                server_resources = SharedServerResources(
+                    milli_cpus=server_size.milli_cpus,
+                    memory_mb=server_size.memory_mb,
+                )
+            else:
+                raise ValidationError(
+                    "server_size must be provided for custom server_size_type"
+                )
+        else:
+            server_resources = DedicatedServerResources(server_size_type)
+
+        return Server(
+            id=data["id"],
+            project_id=data["project_id"],
+            owner_id=data["owner_id"],
+            name=data["name"],
+            type=data["type"],
+            resources=server_resources,
+            created_at=data["created_at"],
+            status=data["status"],
+            services=data["services"],
+        )
 
 
 class ServerIdSchema(Schema):
@@ -97,18 +144,27 @@ class ServerClient(BaseClient):
         self,
         project_id,
         server_type,
-        milli_cpus,
-        memory_mb,
+        server_resources,
         name=None,
         image_version=None,
         initial_environment_ids=None,
     ):
 
-        payload = {
-            "instanceType": server_type,
-            "milliCpus": milli_cpus,
-            "memoryMb": memory_mb,
-        }
+        payload = {"instanceType": server_type}
+
+        if isinstance(server_resources, SharedServerResources):
+            payload["instanceSizeType"] = "custom"
+            payload["instanceSize"] = {
+                "milliCpus": server_resources.milli_cpus,
+                "memoryMb": server_resources.memory_mb,
+            }
+        elif isinstance(server_resources, DedicatedServerResources):
+            payload["instanceSizeType"] = server_resources.node_type
+        else:
+            raise ValueError(
+                "Invalid server_resources {}".format(server_resources)
+            )
+
         if name:
             payload["name"] = name
         if image_version:
