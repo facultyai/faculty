@@ -33,6 +33,9 @@ from sherlockml.clients.job import (
     RunIdAndMetadata,
     RunIdAndMetadataSchema,
     RunState,
+    SubrunIdAndMetadata,
+    SubrunIdAndMetadataSchema,
+    SubrunState,
     ListRunsResponse,
     ListRunsResponseSchema,
 )
@@ -41,6 +44,7 @@ from tests.clients.fixtures import PROFILE
 PROJECT_ID = uuid4()
 JOB_ID = uuid4()
 RUN_ID = uuid4()
+SUBRUN_ID = uuid4()
 
 JOB_METADATA = JobMetadata(name="job name", description="job description")
 JOB_METADATA_BODY = {
@@ -80,18 +84,35 @@ ENDED_AT_STRING = "2018-03-10T11:37:42.482Z"
 RUN_ID_AND_METADATA = RunIdAndMetadata(
     id=RUN_ID,
     run_number=3,
+    state=RunState.COMPLETED,
     submitted_at=SUBMITTED_AT,
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
-    state=RunState.COMPLETED,
 )
 RUN_ID_AND_METADATA_BODY = {
     "runId": str(RUN_ID),
     "runNumber": RUN_ID_AND_METADATA.run_number,
+    "state": "completed",
     "submittedAt": SUBMITTED_AT_STRING,
     "startedAt": STARTED_AT_STRING,
     "endedAt": ENDED_AT_STRING,
-    "state": "completed",
+}
+
+SUBRUN_ID_AND_METADATA = SubrunIdAndMetadata(
+    id=SUBRUN_ID,
+    subrun_number=1,
+    state=SubrunState.COMMAND_SUCCEEDED,
+    submitted_at=SUBMITTED_AT,
+    started_at=STARTED_AT,
+    ended_at=ENDED_AT,
+)
+SUBRUN_ID_AND_METADATA_BODY = {
+    "subrunId": str(SUBRUN_ID),
+    "subrunNumber": SUBRUN_ID_AND_METADATA.subrun_number,
+    "state": "command-succeeded",
+    "submittedAt": SUBMITTED_AT_STRING,
+    "startedAt": STARTED_AT_STRING,
+    "endedAt": ENDED_AT_STRING,
 }
 
 LIST_RUNS_RESPONSE = ListRunsResponse(
@@ -144,10 +165,25 @@ def test_run_id_and_metadata_schema():
 @pytest.mark.parametrize(
     "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
 )
-def test_run_schema_nullable_field(data_key, field):
+def test_run_id_and_metadata_schema_nullable_field(data_key, field):
     body = RUN_ID_AND_METADATA_BODY.copy()
     del body[data_key]
     data = RunIdAndMetadataSchema().load(body)
+    assert getattr(data, field) is None
+
+
+def test_subrun_id_and_metadata_schema():
+    data = SubrunIdAndMetadataSchema().load(SUBRUN_ID_AND_METADATA_BODY)
+    assert data == SUBRUN_ID_AND_METADATA
+
+
+@pytest.mark.parametrize(
+    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
+)
+def test_subrun_id_and_metadata_schema_nullable_field(data_key, field):
+    body = SUBRUN_ID_AND_METADATA_BODY.copy()
+    del body[data_key]
+    data = SubrunIdAndMetadataSchema().load(body)
     assert getattr(data, field) is None
 
 
@@ -165,6 +201,7 @@ def test_list_runs_response_schema():
         PageSchema,
         PaginationSchema,
         RunIdAndMetadataSchema,
+        SubrunIdAndMetadataSchema,
         ListRunsResponseSchema,
     ],
 )

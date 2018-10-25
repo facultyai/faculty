@@ -26,10 +26,13 @@ Page = namedtuple("Page", ["start", "limit"])
 Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
 RunIdAndMetadata = namedtuple(
     "Run",
-    ["id", "run_number", "submitted_at", "started_at", "ended_at", "state"],
+    ["id", "run_number", "state", "submitted_at", "started_at", "ended_at"],
 )
 ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
-
+SubrunIdAndMetadata = namedtuple(
+    "Subrun",
+    ["id", "subrun_number", "state", "submitted_at", "started_at", "ended_at"]
+)
 
 class RunState(Enum):
     QUEUED = "queued"
@@ -38,6 +41,18 @@ class RunState(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
     ERROR = "error"
+
+class SubrunState(Enum):
+    QUEUED = "queued"
+    SUBMITTED = "submitted"  # TODO: Remove once replaced with 'starting'
+    STARTING = "starting"
+    ENVIRONMENT_APPLICATION_STARTED = "environment-application-started"
+    COMMAND_STARTED = "command-started"
+    COMMAND_SUCCEEDED = "command-succeeded"
+    COMMAND_FAILED = "command-failed"
+    ENVIRONMENT_APPLICATION_FAILED = "environment-application-failed"
+    ERROR = "error"
+    CANCELLED = "cancelled"
 
 
 class JobMetadataSchema(Schema):
@@ -89,14 +104,27 @@ class PaginationSchema(Schema):
 class RunIdAndMetadataSchema(Schema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
+    state = EnumField(RunState, by_value=True, required=True)
     submitted_at = fields.DateTime(data_key="submittedAt", required=True)
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
-    state = EnumField(RunState, by_value=True, required=True)
 
     @post_load
     def make_run_id_and_metadata(self, data):
         return RunIdAndMetadata(**data)
+
+
+class SubrunIdAndMetadataSchema(Schema):
+    id = fields.UUID(data_key="subrunId", required=True)
+    subrun_number = fields.Integer(data_key="subrunNumber", required=True)
+    state = EnumField(SubrunState, by_value=True, required=True)
+    submitted_at = fields.DateTime(data_key="submittedAt", required=True)
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+
+    @post_load
+    def make_subrun_id_and_metadata(self, data):
+        return SubrunIdAndMetadata(**data)
 
 
 class ListRunsResponseSchema(Schema):
