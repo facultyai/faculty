@@ -31,7 +31,7 @@ RunIdAndMetadata = namedtuple(
 ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
 SubrunIdAndMetadata = namedtuple(
     "Subrun",
-    ["id", "subrun_number", "state", "submitted_at", "started_at", "ended_at"],
+    ["id", "subrun_number", "state", "started_at", "ended_at"],
 )
 Run = namedtuple(
     "Run",
@@ -132,7 +132,6 @@ class SubrunIdAndMetadataSchema(Schema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
     state = EnumField(SubrunState, by_value=True, required=True)
-    submitted_at = fields.DateTime(data_key="submittedAt", required=True)
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
 

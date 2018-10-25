@@ -104,7 +104,6 @@ SUBRUN_ID_AND_METADATA = SubrunIdAndMetadata(
     id=SUBRUN_ID,
     subrun_number=1,
     state=SubrunState.COMMAND_SUCCEEDED,
-    submitted_at=SUBMITTED_AT,
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
 )
@@ -112,7 +111,6 @@ SUBRUN_ID_AND_METADATA_BODY = {
     "subrunId": str(SUBRUN_ID),
     "subrunNumber": SUBRUN_ID_AND_METADATA.subrun_number,
     "state": "command-succeeded",
-    "submittedAt": SUBMITTED_AT_STRING,
     "startedAt": STARTED_AT_STRING,
     "endedAt": ENDED_AT_STRING,
 }
