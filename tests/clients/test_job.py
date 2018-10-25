@@ -22,19 +22,19 @@ from marshmallow import ValidationError
 from sherlockml.clients.job import (
     JobMetadata,
     JobMetadataSchema,
-    JobIdAndMetadata,
-    JobIdAndMetadataSchema,
+    JobSummary,
+    JobSummarySchema,
     JobClient,
     RunIdSchema,
     Page,
     PageSchema,
     Pagination,
     PaginationSchema,
-    RunIdAndMetadata,
-    RunIdAndMetadataSchema,
+    RunSummary,
+    RunSummarySchema,
     RunState,
-    SubrunIdAndMetadata,
-    SubrunIdAndMetadataSchema,
+    SubrunSummary,
+    SubrunSummarySchema,
     SubrunState,
     Run,
     RunSchema,
@@ -54,8 +54,8 @@ JOB_METADATA_BODY = {
     "description": JOB_METADATA.description,
 }
 
-JOB_ID_AND_METADATA = JobIdAndMetadata(id=JOB_ID, metadata=JOB_METADATA)
-JOB_ID_AND_METADATA_BODY = {"jobId": str(JOB_ID), "meta": JOB_METADATA_BODY}
+JOB_SUMMARY = JobSummary(id=JOB_ID, metadata=JOB_METADATA)
+JOB_SUMMARY_BODY = {"jobId": str(JOB_ID), "meta": JOB_METADATA_BODY}
 
 PAGE = Page(start=3, limit=10)
 PAGE_BODY = {"start": PAGE.start, "limit": PAGE.limit}
@@ -83,7 +83,7 @@ STARTED_AT_STRING = "2018-03-10T11:32:30.172Z"
 ENDED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
 ENDED_AT_STRING = "2018-03-10T11:37:42.482Z"
 
-RUN_ID_AND_METADATA = RunIdAndMetadata(
+RUN_SUMMARY = RunSummary(
     id=RUN_ID,
     run_number=3,
     state=RunState.COMPLETED,
@@ -91,25 +91,25 @@ RUN_ID_AND_METADATA = RunIdAndMetadata(
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
 )
-RUN_ID_AND_METADATA_BODY = {
+RUN_SUMMARY_BODY = {
     "runId": str(RUN_ID),
-    "runNumber": RUN_ID_AND_METADATA.run_number,
+    "runNumber": RUN_SUMMARY.run_number,
     "state": "completed",
     "submittedAt": SUBMITTED_AT_STRING,
     "startedAt": STARTED_AT_STRING,
     "endedAt": ENDED_AT_STRING,
 }
 
-SUBRUN_ID_AND_METADATA = SubrunIdAndMetadata(
+SUBRUN_SUMMARY = SubrunSummary(
     id=SUBRUN_ID,
     subrun_number=1,
     state=SubrunState.COMMAND_SUCCEEDED,
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
 )
-SUBRUN_ID_AND_METADATA_BODY = {
+SUBRUN_SUMMARY_BODY = {
     "subrunId": str(SUBRUN_ID),
-    "subrunNumber": SUBRUN_ID_AND_METADATA.subrun_number,
+    "subrunNumber": SUBRUN_SUMMARY.subrun_number,
     "state": "command-succeeded",
     "startedAt": STARTED_AT_STRING,
     "endedAt": ENDED_AT_STRING,
@@ -122,23 +122,23 @@ RUN = Run(
     submitted_at=SUBMITTED_AT,
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
-    subruns=[SUBRUN_ID_AND_METADATA],
+    subruns=[SUBRUN_SUMMARY],
 )
 RUN_BODY = {
     "runId": str(RUN_ID),
-    "runNumber": RUN_ID_AND_METADATA.run_number,
+    "runNumber": RUN_SUMMARY.run_number,
     "state": "completed",
     "submittedAt": SUBMITTED_AT_STRING,
     "startedAt": STARTED_AT_STRING,
     "endedAt": ENDED_AT_STRING,
-    "subruns": [SUBRUN_ID_AND_METADATA_BODY],
+    "subruns": [SUBRUN_SUMMARY_BODY],
 }
 
 LIST_RUNS_RESPONSE = ListRunsResponse(
-    runs=[RUN_ID_AND_METADATA], pagination=PAGINATION
+    runs=[RUN_SUMMARY], pagination=PAGINATION
 )
 LIST_RUNS_RESPONSE_BODY = {
-    "runs": [RUN_ID_AND_METADATA_BODY],
+    "runs": [RUN_SUMMARY_BODY],
     "pagination": PAGINATION_BODY,
 }
 
@@ -148,9 +148,9 @@ def test_job_metadata_schema():
     assert data == JOB_METADATA
 
 
-def test_job_id_and_metadata_schema():
-    data = JobIdAndMetadataSchema().load(JOB_ID_AND_METADATA_BODY)
-    assert data == JOB_ID_AND_METADATA
+def test_job_summary_schema():
+    data = JobSummarySchema().load(JOB_SUMMARY_BODY)
+    assert data == JOB_SUMMARY
 
 
 def test_run_id_schema():
@@ -176,33 +176,33 @@ def test_pagination_schema_nullable_field(field):
     assert getattr(data, field) is None
 
 
-def test_run_id_and_metadata_schema():
-    data = RunIdAndMetadataSchema().load(RUN_ID_AND_METADATA_BODY)
-    assert data == RUN_ID_AND_METADATA
+def test_run_summary_schema():
+    data = RunSummarySchema().load(RUN_SUMMARY_BODY)
+    assert data == RUN_SUMMARY
 
 
 @pytest.mark.parametrize(
     "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
 )
-def test_run_id_and_metadata_schema_nullable_field(data_key, field):
-    body = RUN_ID_AND_METADATA_BODY.copy()
+def test_run_summary_schema_nullable_field(data_key, field):
+    body = RUN_SUMMARY_BODY.copy()
     del body[data_key]
-    data = RunIdAndMetadataSchema().load(body)
+    data = RunSummarySchema().load(body)
     assert getattr(data, field) is None
 
 
-def test_subrun_id_and_metadata_schema():
-    data = SubrunIdAndMetadataSchema().load(SUBRUN_ID_AND_METADATA_BODY)
-    assert data == SUBRUN_ID_AND_METADATA
+def test_subrun_summary_schema():
+    data = SubrunSummarySchema().load(SUBRUN_SUMMARY_BODY)
+    assert data == SUBRUN_SUMMARY
 
 
 @pytest.mark.parametrize(
     "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
 )
-def test_subrun_id_and_metadata_schema_nullable_field(data_key, field):
-    body = SUBRUN_ID_AND_METADATA_BODY.copy()
+def test_subrun_summary_schema_nullable_field(data_key, field):
+    body = SUBRUN_SUMMARY_BODY.copy()
     del body[data_key]
-    data = SubrunIdAndMetadataSchema().load(body)
+    data = SubrunSummarySchema().load(body)
     assert getattr(data, field) is None
 
 
@@ -230,12 +230,12 @@ def test_list_runs_response_schema():
     "schema_class",
     [
         JobMetadataSchema,
-        JobIdAndMetadataSchema,
+        JobSummarySchema,
         RunIdSchema,
         PageSchema,
         PaginationSchema,
-        RunIdAndMetadataSchema,
-        SubrunIdAndMetadataSchema,
+        RunSummarySchema,
+        SubrunSummarySchema,
         RunSchema,
         ListRunsResponseSchema,
     ],
@@ -246,11 +246,11 @@ def test_schemas_invalid_data(schema_class):
 
 
 def test_job_client_list(mocker):
-    mocker.patch.object(JobClient, "_get", return_value=[JOB_ID_AND_METADATA])
-    schema_mock = mocker.patch("sherlockml.clients.job.JobIdAndMetadataSchema")
+    mocker.patch.object(JobClient, "_get", return_value=[JOB_SUMMARY])
+    schema_mock = mocker.patch("sherlockml.clients.job.JobSummarySchema")
 
     client = JobClient(PROFILE)
-    assert client.list(PROJECT_ID) == [JOB_ID_AND_METADATA]
+    assert client.list(PROJECT_ID) == [JOB_SUMMARY]
 
     schema_mock.assert_called_once_with(many=True)
     JobClient._get.assert_called_once_with(

@@ -21,17 +21,16 @@ from marshmallow_enum import EnumField
 from sherlockml.clients.base import BaseClient
 
 JobMetadata = namedtuple("JobMetadata", ["name", "description"])
-JobIdAndMetadata = namedtuple("JobIdAndMetadata", ["id", "metadata"])
+JobSummary = namedtuple("JobSummary", ["id", "metadata"])
 Page = namedtuple("Page", ["start", "limit"])
 Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
-RunIdAndMetadata = namedtuple(
+RunSummary = namedtuple(
     "Run",
     ["id", "run_number", "state", "submitted_at", "started_at", "ended_at"],
 )
 ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
-SubrunIdAndMetadata = namedtuple(
-    "Subrun",
-    ["id", "subrun_number", "state", "started_at", "ended_at"],
+SubrunSummary = namedtuple(
+    "Subrun", ["id", "subrun_number", "state", "started_at", "ended_at"]
 )
 Run = namedtuple(
     "Run",
@@ -78,13 +77,13 @@ class JobMetadataSchema(Schema):
         return JobMetadata(**data)
 
 
-class JobIdAndMetadataSchema(Schema):
+class JobSummarySchema(Schema):
     id = fields.UUID(data_key="jobId", required=True)
     metadata = fields.Nested(JobMetadataSchema, data_key="meta", required=True)
 
     @post_load
-    def make_job_id_and_metadata(self, data):
-        return JobIdAndMetadata(**data)
+    def make_job_summary(self, data):
+        return JobSummary(**data)
 
 
 class RunIdSchema(Schema):
@@ -115,7 +114,7 @@ class PaginationSchema(Schema):
         return Pagination(**data)
 
 
-class RunIdAndMetadataSchema(Schema):
+class RunSummarySchema(Schema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
     state = EnumField(RunState, by_value=True, required=True)
@@ -124,11 +123,11 @@ class RunIdAndMetadataSchema(Schema):
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
 
     @post_load
-    def make_run_id_and_metadata(self, data):
-        return RunIdAndMetadata(**data)
+    def make_run_summary(self, data):
+        return RunSummary(**data)
 
 
-class SubrunIdAndMetadataSchema(Schema):
+class SubrunSummarySchema(Schema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
     state = EnumField(SubrunState, by_value=True, required=True)
@@ -136,8 +135,8 @@ class SubrunIdAndMetadataSchema(Schema):
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
 
     @post_load
-    def make_subrun_id_and_metadata(self, data):
-        return SubrunIdAndMetadata(**data)
+    def make_subrun_summary(self, data):
+        return SubrunSummary(**data)
 
 
 class RunSchema(Schema):
@@ -147,9 +146,7 @@ class RunSchema(Schema):
     submitted_at = fields.DateTime(data_key="submittedAt", required=True)
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
-    subruns = fields.Nested(
-        SubrunIdAndMetadataSchema, many=True, required=True
-    )
+    subruns = fields.Nested(SubrunSummarySchema, many=True, required=True)
 
     @post_load
     def make_run(self, data):
@@ -158,7 +155,7 @@ class RunSchema(Schema):
 
 class ListRunsResponseSchema(Schema):
     pagination = fields.Nested(PaginationSchema, required=True)
-    runs = fields.Nested(RunIdAndMetadataSchema, many=True, required=True)
+    runs = fields.Nested(RunSummarySchema, many=True, required=True)
 
     @post_load
     def make_list_runs_response_schema(self, data):
@@ -171,7 +168,7 @@ class JobClient(BaseClient):
 
     def list(self, project_id):
         endpoint = "/project/{}/job".format(project_id)
-        return self._get(endpoint, JobIdAndMetadataSchema(many=True))
+        return self._get(endpoint, JobSummarySchema(many=True))
 
     def create_run(self, project_id, job_id, parameter_values):
         return self.create_run_array(project_id, job_id, [parameter_values])
