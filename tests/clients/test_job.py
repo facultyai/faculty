@@ -344,3 +344,17 @@ def test_job_client_list_runs_page(mocker):
         schema_mock.return_value,
         params={"start": 20, "limit": 10},
     )
+
+
+def test_job_client_get_run(mocker):
+    mocker.patch.object(JobClient, "_get", return_value=RUN)
+    schema_mock = mocker.patch("sherlockml.clients.job.RunSchema")
+
+    client = JobClient(PROFILE)
+    assert client.get_run(PROJECT_ID, JOB_ID, RUN_ID) == RUN
+
+    schema_mock.assert_called_once_with()
+    JobClient._get.assert_called_once_with(
+        "/project/{}/job/{}/run/{}".format(PROJECT_ID, JOB_ID, RUN_ID),
+        schema_mock.return_value,
+    )
