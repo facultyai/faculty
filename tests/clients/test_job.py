@@ -36,6 +36,8 @@ from sherlockml.clients.job import (
     SubrunIdAndMetadata,
     SubrunIdAndMetadataSchema,
     SubrunState,
+    Run,
+    RunSchema,
     ListRunsResponse,
     ListRunsResponseSchema,
 )
@@ -115,6 +117,25 @@ SUBRUN_ID_AND_METADATA_BODY = {
     "endedAt": ENDED_AT_STRING,
 }
 
+RUN = Run(
+    id=RUN_ID,
+    run_number=3,
+    state=RunState.COMPLETED,
+    submitted_at=SUBMITTED_AT,
+    started_at=STARTED_AT,
+    ended_at=ENDED_AT,
+    subruns=[SUBRUN_ID_AND_METADATA],
+)
+RUN_BODY = {
+    "runId": str(RUN_ID),
+    "runNumber": RUN_ID_AND_METADATA.run_number,
+    "state": "completed",
+    "submittedAt": SUBMITTED_AT_STRING,
+    "startedAt": STARTED_AT_STRING,
+    "endedAt": ENDED_AT_STRING,
+    "subruns": [SUBRUN_ID_AND_METADATA_BODY],
+}
+
 LIST_RUNS_RESPONSE = ListRunsResponse(
     runs=[RUN_ID_AND_METADATA], pagination=PAGINATION
 )
@@ -187,6 +208,21 @@ def test_subrun_id_and_metadata_schema_nullable_field(data_key, field):
     assert getattr(data, field) is None
 
 
+def test_run_schema():
+    data = RunSchema().load(RUN_BODY)
+    assert data == RUN
+
+
+@pytest.mark.parametrize(
+    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
+)
+def test_run_schema_nullable_field(data_key, field):
+    body = RUN_BODY.copy()
+    del body[data_key]
+    data = RunSchema().load(body)
+    assert getattr(data, field) is None
+
+
 def test_list_runs_response_schema():
     data = ListRunsResponseSchema().load(LIST_RUNS_RESPONSE_BODY)
     assert data == LIST_RUNS_RESPONSE
@@ -202,6 +238,7 @@ def test_list_runs_response_schema():
         PaginationSchema,
         RunIdAndMetadataSchema,
         SubrunIdAndMetadataSchema,
+        RunSchema,
         ListRunsResponseSchema,
     ],
 )

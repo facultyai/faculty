@@ -31,8 +31,21 @@ RunIdAndMetadata = namedtuple(
 ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
 SubrunIdAndMetadata = namedtuple(
     "Subrun",
-    ["id", "subrun_number", "state", "submitted_at", "started_at", "ended_at"]
+    ["id", "subrun_number", "state", "submitted_at", "started_at", "ended_at"],
 )
+Run = namedtuple(
+    "Run",
+    [
+        "id",
+        "run_number",
+        "state",
+        "submitted_at",
+        "started_at",
+        "ended_at",
+        "subruns",
+    ],
+)
+
 
 class RunState(Enum):
     QUEUED = "queued"
@@ -41,6 +54,7 @@ class RunState(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
     ERROR = "error"
+
 
 class SubrunState(Enum):
     QUEUED = "queued"
@@ -125,6 +139,22 @@ class SubrunIdAndMetadataSchema(Schema):
     @post_load
     def make_subrun_id_and_metadata(self, data):
         return SubrunIdAndMetadata(**data)
+
+
+class RunSchema(Schema):
+    id = fields.UUID(data_key="runId", required=True)
+    run_number = fields.Integer(data_key="runNumber", required=True)
+    state = EnumField(RunState, by_value=True, required=True)
+    submitted_at = fields.DateTime(data_key="submittedAt", required=True)
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    subruns = fields.Nested(
+        SubrunIdAndMetadataSchema, many=True, required=True
+    )
+
+    @post_load
+    def make_run(self, data):
+        return Run(**data)
 
 
 class ListRunsResponseSchema(Schema):
