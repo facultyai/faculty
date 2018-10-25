@@ -30,8 +30,8 @@ from sherlockml.clients.job import (
     PageSchema,
     Pagination,
     PaginationSchema,
-    Run,
-    RunSchema,
+    RunIdAndMetadata,
+    RunIdAndMetadataSchema,
     RunState,
     ListRunsResponse,
     ListRunsResponseSchema,
@@ -77,7 +77,7 @@ STARTED_AT_STRING = "2018-03-10T11:32:30.172Z"
 ENDED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
 ENDED_AT_STRING = "2018-03-10T11:37:42.482Z"
 
-RUN = Run(
+RUN_ID_AND_METADATA = RunIdAndMetadata(
     id=RUN_ID,
     run_number=3,
     submitted_at=SUBMITTED_AT,
@@ -85,17 +85,22 @@ RUN = Run(
     ended_at=ENDED_AT,
     state=RunState.COMPLETED,
 )
-RUN_BODY = {
+RUN_ID_AND_METADATA_BODY = {
     "runId": str(RUN_ID),
-    "runNumber": RUN.run_number,
+    "runNumber": RUN_ID_AND_METADATA.run_number,
     "submittedAt": SUBMITTED_AT_STRING,
     "startedAt": STARTED_AT_STRING,
     "endedAt": ENDED_AT_STRING,
     "state": "completed",
 }
 
-LIST_RUNS_RESPONSE = ListRunsResponse(runs=[RUN], pagination=PAGINATION)
-LIST_RUNS_RESPONSE_BODY = {"runs": [RUN_BODY], "pagination": PAGINATION_BODY}
+LIST_RUNS_RESPONSE = ListRunsResponse(
+    runs=[RUN_ID_AND_METADATA], pagination=PAGINATION
+)
+LIST_RUNS_RESPONSE_BODY = {
+    "runs": [RUN_ID_AND_METADATA_BODY],
+    "pagination": PAGINATION_BODY,
+}
 
 
 def test_job_metadata_schema():
@@ -131,18 +136,18 @@ def test_pagination_schema_nullable_field(field):
     assert getattr(data, field) is None
 
 
-def test_run_schema():
-    data = RunSchema().load(RUN_BODY)
-    assert data == RUN
+def test_run_id_and_metadata_schema():
+    data = RunIdAndMetadataSchema().load(RUN_ID_AND_METADATA_BODY)
+    assert data == RUN_ID_AND_METADATA
 
 
 @pytest.mark.parametrize(
     "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
 )
 def test_run_schema_nullable_field(data_key, field):
-    body = RUN_BODY.copy()
+    body = RUN_ID_AND_METADATA_BODY.copy()
     del body[data_key]
-    data = RunSchema().load(body)
+    data = RunIdAndMetadataSchema().load(body)
     assert getattr(data, field) is None
 
 
@@ -159,7 +164,7 @@ def test_list_runs_response_schema():
         RunIdSchema,
         PageSchema,
         PaginationSchema,
-        RunSchema,
+        RunIdAndMetadataSchema,
         ListRunsResponseSchema,
     ],
 )

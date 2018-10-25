@@ -24,7 +24,7 @@ JobMetadata = namedtuple("JobMetadata", ["name", "description"])
 JobIdAndMetadata = namedtuple("JobIdAndMetadata", ["id", "metadata"])
 Page = namedtuple("Page", ["start", "limit"])
 Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
-Run = namedtuple(
+RunIdAndMetadata = namedtuple(
     "Run",
     ["id", "run_number", "submitted_at", "started_at", "ended_at", "state"],
 )
@@ -54,7 +54,7 @@ class JobIdAndMetadataSchema(Schema):
     metadata = fields.Nested(JobMetadataSchema, data_key="meta", required=True)
 
     @post_load
-    def make_job(self, data):
+    def make_job_id_and_metadata(self, data):
         return JobIdAndMetadata(**data)
 
 
@@ -86,7 +86,7 @@ class PaginationSchema(Schema):
         return Pagination(**data)
 
 
-class RunSchema(Schema):
+class RunIdAndMetadataSchema(Schema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
     submitted_at = fields.DateTime(data_key="submittedAt", required=True)
@@ -95,13 +95,13 @@ class RunSchema(Schema):
     state = EnumField(RunState, by_value=True, required=True)
 
     @post_load
-    def make_run(self, data):
-        return Run(**data)
+    def make_run_id_and_metadata(self, data):
+        return RunIdAndMetadata(**data)
 
 
 class ListRunsResponseSchema(Schema):
     pagination = fields.Nested(PaginationSchema, required=True)
-    runs = fields.Nested(RunSchema, many=True, required=True)
+    runs = fields.Nested(RunIdAndMetadataSchema, many=True, required=True)
 
     @post_load
     def make_list_runs_response_schema(self, data):
