@@ -16,6 +16,7 @@
 from sherlockml.clients.account import AccountClient
 from sherlockml.clients.cluster import ClusterClient
 from sherlockml.clients.job import JobClient
+from sherlockml.clients.log import LogClient
 from sherlockml.clients.project import ProjectClient
 from sherlockml.clients.secret import SecretClient
 from sherlockml.clients.server import ServerClient
@@ -26,6 +27,7 @@ from sherlockml.clients.workspace import WorkspaceClient
 CLIENT_FOR_RESOURCE = {
     "account": AccountClient,
     "cluster": ClusterClient,
+    "log": LogClient,
     "job": JobClient,
     "project": ProjectClient,
     "secret": SecretClient,

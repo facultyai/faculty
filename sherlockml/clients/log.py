@@ -16,6 +16,8 @@ from collections import namedtuple
 
 from marshmallow import Schema, fields, post_load
 
+from sherlockml.clients.base import BaseClient
+
 
 LogPart = namedtuple(
     "LogPart", ["log_part_number", "line_number", "content", "timestamp"]
@@ -42,3 +44,28 @@ class LogPartsResponseSchema(Schema):
     @post_load
     def make_log_parts_response(self, data):
         return LogPartsResponse(**data)
+
+
+class LogClient(BaseClient):
+
+    SERVICE_NAME = "wozniak"
+
+    def get_subrun_command_logs(self, project_id, job_id, run_id, subrun_id):
+        template = "/project/{}/job/{}/run/{}/subrun/{}/command/log-part"
+        endpoint = template.format(project_id, job_id, run_id, subrun_id)
+        return self._get_logs(endpoint)
+
+    def get_subrun_environment_step_logs(
+        self, project_id, job_id, run_id, subrun_id, environment_step_id
+    ):
+        template = (
+            "/project/{}/job/{}/run/{}/subrun/{}/environment-step/{}/log-part"
+        )
+        endpoint = template.format(
+            project_id, job_id, run_id, subrun_id, environment_step_id
+        )
+        return self._get_logs(endpoint)
+
+    def _get_logs(self, endpoint):
+        response = self._get(endpoint, LogPartsResponseSchema())
+        return response.log_parts

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from datetime import datetime
+from uuid import uuid4
 
 import pytest
 from dateutil.tz import UTC
@@ -23,7 +24,15 @@ from sherlockml.clients.log import (
     LogPartSchema,
     LogPartsResponse,
     LogPartsResponseSchema,
+    LogClient,
 )
+from tests.clients.fixtures import PROFILE
+
+PROJECT_ID = uuid4()
+JOB_ID = uuid4()
+RUN_ID = uuid4()
+SUBRUN_ID = uuid4()
+ENVIRONMENT_STEP_ID = uuid4()
 
 TIMESTAMP = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 TIMESTAMP_STRING = "2018-03-10T11:32:06.247Z"
@@ -63,3 +72,46 @@ def test_log_parts_response_schema():
 def test_log_parts_response_schema_invalid():
     with pytest.raises(ValidationError):
         LogPartsResponseSchema().load({})
+
+
+def test_log_client_get_subrun_command_logs(mocker):
+    mocker.patch.object(LogClient, "_get", return_value=LOG_PARTS_RESPONSE)
+    schema_mock = mocker.patch("sherlockml.clients.log.LogPartsResponseSchema")
+
+    client = LogClient(PROFILE)
+    assert (
+        client.get_subrun_command_logs(PROJECT_ID, JOB_ID, RUN_ID, SUBRUN_ID)
+        == LOG_PARTS_RESPONSE.log_parts
+    )
+
+    schema_mock.assert_called_once_with()
+    LogClient._get.assert_called_once_with(
+        "/project/{}/job/{}/run/{}/subrun/{}/command/log-part".format(
+            PROJECT_ID, JOB_ID, RUN_ID, SUBRUN_ID
+        ),
+        schema_mock.return_value,
+    )
+
+
+def test_log_client_get_subrun_environment_step_logs(mocker):
+    mocker.patch.object(LogClient, "_get", return_value=LOG_PARTS_RESPONSE)
+    schema_mock = mocker.patch("sherlockml.clients.log.LogPartsResponseSchema")
+
+    client = LogClient(PROFILE)
+    assert (
+        client.get_subrun_environment_step_logs(
+            PROJECT_ID, JOB_ID, RUN_ID, SUBRUN_ID, ENVIRONMENT_STEP_ID
+        )
+        == LOG_PARTS_RESPONSE.log_parts
+    )
+
+    schema_mock.assert_called_once_with()
+    template = (
+        "/project/{}/job/{}/run/{}/subrun/{}/environment-step/{}/log-part"
+    )
+    expected_endpoint = template.format(
+        PROJECT_ID, JOB_ID, RUN_ID, SUBRUN_ID, ENVIRONMENT_STEP_ID
+    )
+    LogClient._get.assert_called_once_with(
+        expected_endpoint, schema_mock.return_value
+    )
