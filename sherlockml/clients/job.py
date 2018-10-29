@@ -49,6 +49,7 @@ Run = namedtuple(
 class RunState(Enum):
     QUEUED = "queued"
     STARTING = "starting"
+    RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
