@@ -171,10 +171,7 @@ class JobClient(BaseClient):
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
 
-    def create_run(self, project_id, job_id, parameter_values):
-        return self.create_run_array(project_id, job_id, [parameter_values])
-
-    def create_run_array(self, project_id, job_id, parameter_value_sets):
+    def create_run(self, project_id, job_id, parameter_value_sets):
         endpoint = "/project/{}/job/{}/run".format(project_id, job_id)
         payload = {
             "parameterValues": [

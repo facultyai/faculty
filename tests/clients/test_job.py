@@ -264,32 +264,7 @@ def test_job_client_create_run(mocker):
 
     client = JobClient(PROFILE)
     assert (
-        client.create_run(PROJECT_ID, JOB_ID, {"param": "one", "other": "two"})
-        == RUN_ID
-    )
-
-    schema_mock.assert_called_once_with()
-    JobClient._post.assert_called_once_with(
-        "/project/{}/job/{}/run".format(PROJECT_ID, JOB_ID),
-        schema_mock.return_value,
-        json={
-            "parameterValues": [
-                [
-                    {"name": "param", "value": "one"},
-                    {"name": "other", "value": "two"},
-                ]
-            ]
-        },
-    )
-
-
-def test_job_client_create_run_array(mocker):
-    mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
-    schema_mock = mocker.patch("sherlockml.clients.job.RunIdSchema")
-
-    client = JobClient(PROFILE)
-    assert (
-        client.create_run_array(
+        client.create_run(
             PROJECT_ID,
             JOB_ID,
             [{"param": "one", "other": "two"}, {"param": "three"}],
