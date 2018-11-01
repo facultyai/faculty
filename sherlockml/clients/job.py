@@ -193,8 +193,8 @@ class JobClient(BaseClient):
             params["limit"] = limit
         return self._get(endpoint, ListRunsResponseSchema(), params=params)
 
-    def get_run(self, project_id, job_id, run_id):
+    def get_run(self, project_id, job_id, run_identifier):
         endpoint = "/project/{}/job/{}/run/{}".format(
-            project_id, job_id, run_id
+            project_id, job_id, run_identifier
         )
         return self._get(endpoint, RunSchema())

@@ -321,15 +321,18 @@ def test_job_client_list_runs_page(mocker):
     )
 
 
-def test_job_client_get_run(mocker):
+@pytest.mark.parametrize(
+    "run_identifier", [RUN_ID, RUN.run_number], ids=["ID", "Number"]
+)
+def test_job_client_get_run(mocker, run_identifier):
     mocker.patch.object(JobClient, "_get", return_value=RUN)
     schema_mock = mocker.patch("sherlockml.clients.job.RunSchema")
 
     client = JobClient(PROFILE)
-    assert client.get_run(PROJECT_ID, JOB_ID, RUN_ID) == RUN
+    assert client.get_run(PROJECT_ID, JOB_ID, run_identifier) == RUN
 
     schema_mock.assert_called_once_with()
     JobClient._get.assert_called_once_with(
-        "/project/{}/job/{}/run/{}".format(PROJECT_ID, JOB_ID, RUN_ID),
+        "/project/{}/job/{}/run/{}".format(PROJECT_ID, JOB_ID, run_identifier),
         schema_mock.return_value,
     )
