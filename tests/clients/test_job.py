@@ -350,19 +350,21 @@ def test_job_client_create_run(mocker):
     )
 
     schema_mock.assert_called_once_with()
-    JobClient._post.assert_called_once_with(
+
+    last_call_args, last_call_kwargs = JobClient._post.call_args
+    assert last_call_args == (
         "/project/{}/job/{}/run".format(PROJECT_ID, JOB_ID),
         schema_mock.return_value,
-        json={
-            "parameterValues": [
-                [
-                    {"name": "param", "value": "one"},
-                    {"name": "other", "value": "two"},
-                ],
-                [{"name": "param", "value": "three"}],
-            ]
-        },
     )
+
+    sent_parameter_value_sets = last_call_kwargs["json"]["parameterValues"]
+    assert len(sent_parameter_value_sets) == 2
+    assert len(sent_parameter_value_sets[0]) == 2
+    assert {"name": "param", "value": "one"} in sent_parameter_value_sets[0]
+    assert {"name": "other", "value": "two"} in sent_parameter_value_sets[0]
+    assert sent_parameter_value_sets[1] == [
+        {"name": "param", "value": "three"}
+    ]
 
 
 def test_job_client_list_runs(mocker):
