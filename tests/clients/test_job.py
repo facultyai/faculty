@@ -413,3 +413,32 @@ def test_job_client_get_run(mocker, run_identifier):
         "/project/{}/job/{}/run/{}".format(PROJECT_ID, JOB_ID, run_identifier),
         schema_mock.return_value,
     )
+
+
+@pytest.mark.parametrize(
+    "run_identifier", [RUN_ID, RUN.run_number], ids=["ID", "Number"]
+)
+@pytest.mark.parametrize(
+    "subrun_identifier",
+    [SUBRUN_ID, SUBRUN.subrun_number],
+    ids=["ID", "Number"],
+)
+def test_job_client_get_subrun(mocker, run_identifier, subrun_identifier):
+    mocker.patch.object(JobClient, "_get", return_value=SUBRUN)
+    schema_mock = mocker.patch("sherlockml.clients.job.SubrunSchema")
+
+    client = JobClient(PROFILE)
+    assert (
+        client.get_subrun(
+            PROJECT_ID, JOB_ID, run_identifier, subrun_identifier
+        )
+        == SUBRUN
+    )
+
+    schema_mock.assert_called_once_with()
+    JobClient._get.assert_called_once_with(
+        "/project/{}/job/{}/run/{}/subrun/{}".format(
+            PROJECT_ID, JOB_ID, run_identifier, subrun_identifier
+        ),
+        schema_mock.return_value,
+    )

@@ -266,3 +266,11 @@ class JobClient(BaseClient):
             project_id, job_id, run_identifier
         )
         return self._get(endpoint, RunSchema())
+
+    def get_subrun(
+        self, project_id, job_id, run_identifier, subrun_identifier
+    ):
+        endpoint = "/project/{}/job/{}/run/{}/subrun/{}".format(
+            project_id, job_id, run_identifier, subrun_identifier
+        )
+        return self._get(endpoint, SubrunSchema())
