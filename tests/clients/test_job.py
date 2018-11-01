@@ -40,6 +40,11 @@ from sherlockml.clients.job import (
     RunSchema,
     ListRunsResponse,
     ListRunsResponseSchema,
+    EnvironmentStepExecution,
+    EnvironmentStepExecutionSchema,
+    EnvironmentStepExecutionState,
+    Subrun,
+    SubrunSchema,
 )
 from tests.clients.fixtures import PROFILE
 
@@ -47,6 +52,8 @@ PROJECT_ID = uuid4()
 JOB_ID = uuid4()
 RUN_ID = uuid4()
 SUBRUN_ID = uuid4()
+ENVIRONMENT_ID = uuid4()
+ENVIRONMENT_STEP_ID = uuid4()
 
 JOB_METADATA = JobMetadata(name="job name", description="job description")
 JOB_METADATA_BODY = {
@@ -142,6 +149,42 @@ LIST_RUNS_RESPONSE_BODY = {
     "pagination": PAGINATION_BODY,
 }
 
+ENVIRONMENT_STEP_EXECUTION = EnvironmentStepExecution(
+    environment_id=ENVIRONMENT_ID,
+    environment_step_id=ENVIRONMENT_STEP_ID,
+    environment_name="environment name",
+    command="./example-command",
+    state=EnvironmentStepExecutionState.RUNNING,
+    started_at=STARTED_AT,
+    ended_at=ENDED_AT,
+)
+ENVIRONMENT_STEP_EXECUTION_BODY = {
+    "environmentId": str(ENVIRONMENT_ID),
+    "environmentStepId": str(ENVIRONMENT_STEP_ID),
+    "environmentName": ENVIRONMENT_STEP_EXECUTION.environment_name,
+    "command": ENVIRONMENT_STEP_EXECUTION.command,
+    "state": "running",
+    "startedAt": STARTED_AT_STRING,
+    "endedAt": ENDED_AT_STRING,
+}
+
+SUBRUN = Subrun(
+    id=SUBRUN_ID,
+    subrun_number=2,
+    state=SubrunState.COMMAND_SUCCEEDED,
+    started_at=STARTED_AT,
+    ended_at=ENDED_AT,
+    environment_step_executions=[ENVIRONMENT_STEP_EXECUTION],
+)
+SUBRUN_BODY = {
+    "subrunId": str(SUBRUN_ID),
+    "subrunNumber": SUBRUN.subrun_number,
+    "state": "command-succeeded",
+    "startedAt": STARTED_AT_STRING,
+    "endedAt": ENDED_AT_STRING,
+    "environmentExecutionState": [ENVIRONMENT_STEP_EXECUTION_BODY],
+}
+
 
 def test_job_metadata_schema():
     data = JobMetadataSchema().load(JOB_METADATA_BODY)
@@ -226,6 +269,38 @@ def test_list_runs_response_schema():
     assert data == LIST_RUNS_RESPONSE
 
 
+def test_environment_step_execution_schema():
+    data = EnvironmentStepExecutionSchema().load(
+        ENVIRONMENT_STEP_EXECUTION_BODY
+    )
+    assert data == ENVIRONMENT_STEP_EXECUTION
+
+
+@pytest.mark.parametrize(
+    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
+)
+def test_environment_step_execution_schema_nullable_field(data_key, field):
+    body = ENVIRONMENT_STEP_EXECUTION_BODY.copy()
+    del body[data_key]
+    data = EnvironmentStepExecutionSchema().load(body)
+    assert getattr(data, field) is None
+
+
+def test_subrun_schema():
+    data = SubrunSchema().load(SUBRUN_BODY)
+    assert data == SUBRUN
+
+
+@pytest.mark.parametrize(
+    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
+)
+def test_subrun_schema_nullable_field(data_key, field):
+    body = SUBRUN_BODY.copy()
+    del body[data_key]
+    data = SubrunSchema().load(body)
+    assert getattr(data, field) is None
+
+
 @pytest.mark.parametrize(
     "schema_class",
     [
@@ -238,6 +313,8 @@ def test_list_runs_response_schema():
         SubrunSummarySchema,
         RunSchema,
         ListRunsResponseSchema,
+        EnvironmentStepExecutionSchema,
+        SubrunSchema,
     ],
 )
 def test_schemas_invalid_data(schema_class):

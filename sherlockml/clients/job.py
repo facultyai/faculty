@@ -44,6 +44,29 @@ Run = namedtuple(
         "subruns",
     ],
 )
+EnvironmentStepExecution = namedtuple(
+    "EnvironmentStepExecution",
+    [
+        "environment_id",
+        "environment_step_id",
+        "environment_name",
+        "command",
+        "state",
+        "started_at",
+        "ended_at",
+    ],
+)
+Subrun = namedtuple(
+    "Subrun",
+    [
+        "id",
+        "subrun_number",
+        "state",
+        "started_at",
+        "ended_at",
+        "environment_step_executions",
+    ],
+)
 
 
 class RunState(Enum):
@@ -66,6 +89,14 @@ class SubrunState(Enum):
     COMMAND_FAILED = "command-failed"
     ENVIRONMENT_APPLICATION_FAILED = "environment-application-failed"
     ERROR = "error"
+    CANCELLED = "cancelled"
+
+
+class EnvironmentStepExecutionState(Enum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
     CANCELLED = "cancelled"
 
 
@@ -161,6 +192,43 @@ class ListRunsResponseSchema(Schema):
     @post_load
     def make_list_runs_response_schema(self, data):
         return ListRunsResponse(**data)
+
+
+class EnvironmentStepExecutionSchema(Schema):
+    environment_id = fields.UUID(data_key="environmentId", required=True)
+    environment_step_id = fields.UUID(
+        data_key="environmentStepId", required=True
+    )
+    environment_name = fields.String(data_key="environmentName", required=True)
+    command = fields.String(required=True)
+    state = EnumField(RunState, by_value=True, required=True)
+    state = EnumField(
+        EnvironmentStepExecutionState, by_value=True, required=True
+    )
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+
+    @post_load
+    def make_environment_step_execution_schema(self, data):
+        return EnvironmentStepExecution(**data)
+
+
+class SubrunSchema(Schema):
+    id = fields.UUID(data_key="subrunId", required=True)
+    subrun_number = fields.Integer(data_key="subrunNumber", required=True)
+    state = EnumField(SubrunState, by_value=True, required=True)
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    environment_step_executions = fields.Nested(
+        EnvironmentStepExecutionSchema,
+        data_key="environmentExecutionState",
+        many=True,
+        required=True,
+    )
+
+    @post_load
+    def make_subrun(self, data):
+        return Subrun(**data)
 
 
 class JobClient(BaseClient):
