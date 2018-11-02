@@ -45,3 +45,7 @@ class ProjectClient(BaseClient):
     def get(self, project_id):
         endpoint = "/project/{}".format(project_id)
         return self._get(endpoint, ProjectSchema())
+
+    def get_by_owner_and_name(self, owner_id, project_name):
+        endpoint = "/project/{}/{}".format(owner_id, project_name)
+        return self._get(endpoint, ProjectSchema())
