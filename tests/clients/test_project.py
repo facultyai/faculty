@@ -67,3 +67,17 @@ def test_project_client_get(mocker):
     ProjectClient._get.assert_called_once_with(
         "/project/{}".format(PROJECT.id), schema_mock.return_value
     )
+
+
+def test_project_client_get_by_owner_and_name(mocker):
+    mocker.patch.object(ProjectClient, "_get", return_value=PROJECT)
+    schema_mock = mocker.patch("sherlockml.clients.project.ProjectSchema")
+
+    client = ProjectClient(PROFILE)
+    assert client.get_by_owner_and_name(USER_ID, PROJECT.name) == PROJECT
+
+    schema_mock.assert_called_once_with()
+    ProjectClient._get.assert_called_once_with(
+        "/project/{}/{}".format(USER_ID, PROJECT.name),
+        schema_mock.return_value,
+    )
