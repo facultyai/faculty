@@ -43,16 +43,18 @@ def test_project_schema_load_invalid():
         ProjectSchema().load({})
 
 
-def test_project_client_list_accessible_by_user(mocker):
-    mocker.patch.object(ProjectClient, "_get", return_value=[PROJECT])
+def test_project_client_create(mocker):
+    mocker.patch.object(ProjectClient, "_post", return_value=PROJECT)
     schema_mock = mocker.patch("sherlockml.clients.project.ProjectSchema")
 
     client = ProjectClient(PROFILE)
-    assert client.list_accessible_by_user(USER_ID) == [PROJECT]
+    assert client.create(PROJECT.owner_id, PROJECT.name) == PROJECT
 
-    schema_mock.assert_called_once_with(many=True)
-    ProjectClient._get.assert_called_once_with(
-        "/user/{}".format(USER_ID), schema_mock.return_value
+    schema_mock.assert_called_once_with()
+    ProjectClient._post.assert_called_once_with(
+        "/project",
+        schema_mock.return_value,
+        json={"owner_id": str(PROJECT.owner_id), "name": PROJECT.name},
     )
 
 
@@ -80,4 +82,17 @@ def test_project_client_get_by_owner_and_name(mocker):
     ProjectClient._get.assert_called_once_with(
         "/project/{}/{}".format(USER_ID, PROJECT.name),
         schema_mock.return_value,
+    )
+
+
+def test_project_client_list_accessible_by_user(mocker):
+    mocker.patch.object(ProjectClient, "_get", return_value=[PROJECT])
+    schema_mock = mocker.patch("sherlockml.clients.project.ProjectSchema")
+
+    client = ProjectClient(PROFILE)
+    assert client.list_accessible_by_user(USER_ID) == [PROJECT]
+
+    schema_mock.assert_called_once_with(many=True)
+    ProjectClient._get.assert_called_once_with(
+        "/user/{}".format(USER_ID), schema_mock.return_value
     )

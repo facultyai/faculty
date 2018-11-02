@@ -38,9 +38,9 @@ class ProjectClient(BaseClient):
 
     SERVICE_NAME = "casebook"
 
-    def list_accessible_by_user(self, user_id):
-        endpoint = "/user/{}".format(user_id)
-        return self._get(endpoint, ProjectSchema(many=True))
+    def create(self, owner_id, project_name):
+        payload = {"owner_id": str(owner_id), "name": project_name}
+        return self._post("/project", ProjectSchema(), json=payload)
 
     def get(self, project_id):
         endpoint = "/project/{}".format(project_id)
@@ -49,3 +49,7 @@ class ProjectClient(BaseClient):
     def get_by_owner_and_name(self, owner_id, project_name):
         endpoint = "/project/{}/{}".format(owner_id, project_name)
         return self._get(endpoint, ProjectSchema())
+
+    def list_accessible_by_user(self, user_id):
+        endpoint = "/user/{}".format(user_id)
+        return self._get(endpoint, ProjectSchema(many=True))
