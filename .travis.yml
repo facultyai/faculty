@@ -4,34 +4,24 @@ install:
   - pip install flake8
 jobs:
   include:
-    - name: Check black formatting
+    - name: Check formatting with Black
       stage: test
       install:
         - pip install black
       script:
         - black --check .
       python: "3.6"
-    - stage: test
+    - name: Run linter and unit tests with Python 2.7, 3.4, 3.5, and 3.6
       script:
         - flake8
         - python setup.py test
-      python: "2.7"
-    - stage: test
-      script:
-        - flake8
-        - python setup.py test
-      python: "3.4"
-    - stage: test
-      script:
-        - flake8
-        - python setup.py test
-      python: "3.5"
-    - stage: test
-      script:
-        - flake8
-        - python setup.py test
-      python: "3.6"
-    - stage: test
+      python:
+        - "2.7"
+        - "3.4"
+        - "3.5"
+        - "3.6"
+    - name: Run linter and unit tests with Python 3.7
+      stage: test
       script:
         - flake8
         - python setup.py test
