@@ -19,6 +19,7 @@ from marshmallow import ValidationError
 from dateutil.tz import UTC
 
 from sherlockml.clients.user import UserClient, User, UserSchema, GlobalRole
+from tests.clients.fixtures import PROFILE
 
 USER_ID = uuid.uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
@@ -71,3 +72,53 @@ def test_user_schema_invalid_global_role():
     body["globalRoles"] = ["invalid-global-role"]
     with pytest.raises(ValidationError):
         UserSchema().load(body)
+
+
+def test_get_user(mocker):
+    mocker.patch.object(UserClient, "_get", return_value=EXPECTED_USER)
+    schema_mock = mocker.patch("sherlockml.clients.user.UserSchema")
+
+    client = UserClient(PROFILE)
+
+    user = client.get_user(str(USER_ID))
+
+    assert user == EXPECTED_USER
+
+    schema_mock.assert_called_once_with()
+    UserClient._get.assert_called_once_with(
+        "/user/{}".format(str(USER_ID)), schema_mock.return_value
+    )
+
+
+def test_get_users(mocker):
+    mocker.patch.object(UserClient, "_get", return_value=[EXPECTED_USER])
+    schema_mock = mocker.patch("sherlockml.clients.user.UserSchema")
+
+    client = UserClient(PROFILE)
+
+    users = client.get_users()
+
+    assert users == [EXPECTED_USER]
+
+    schema_mock.assert_called_once_with(many=True)
+    UserClient._get.assert_called_once_with("/users", schema_mock.return_value)
+
+
+def test_set_global_roles(mocker):
+    mocker.patch.object(UserClient, "_put")
+    schema_mock = mocker.patch("sherlockml.clients.user.UserSchema")
+
+    client = UserClient(PROFILE)
+
+    roles = ["global-basic-user", "global-full-user"]
+
+    user = client.set_global_roles(str(USER_ID), roles)
+
+    assert user == UserClient._put.return_value
+
+    schema_mock.assert_called_once_with()
+    UserClient._put.assert_called_once_with(
+        "/user/{}/roles".format(str(USER_ID)),
+        schema_mock.return_value,
+        json={"roles": roles},
+    )
