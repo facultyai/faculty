@@ -14,10 +14,18 @@
 
 
 from collections import namedtuple
+from enum import Enum
 
 from marshmallow import Schema, fields, post_load
+from marshmallow_enum import EnumField
 
 from sherlockml.clients.base import BaseClient
+
+
+class GlobalRole(Enum):
+    BASIC_USER = "global-basic-user"
+    FULL_USER = "global-full-user"
+    ADMIN = "global-admin"
 
 
 User = namedtuple(
@@ -29,7 +37,6 @@ User = namedtuple(
         "email",
         "created_at",
         "enabled",
-        "attributes",
         "global_roles"
     ],
 )
@@ -43,8 +50,7 @@ class UserSchema(Schema):
     email = fields.Str(required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     enabled = fields.Boolean(required=True)
-    attributes = fields.Dict(required=True)
-    global_roles = fields.List(fields.Str(), data_key="globalRoles", required=True)
+    global_roles = fields.List(EnumField(GlobalRole, by_value=True), data_key="globalRoles", required=True)
 
     @post_load
     def make_project(self, data):
