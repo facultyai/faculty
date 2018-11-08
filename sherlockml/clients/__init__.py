@@ -29,7 +29,7 @@ CLIENT_FOR_RESOURCE = {
     "cluster": ClusterClient,
     "secret": SecretClient,
     "workspace": WorkspaceClient,
-    "user": UserClient
+    "user": UserClient,
 }
 
 
