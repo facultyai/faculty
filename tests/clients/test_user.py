@@ -49,3 +49,25 @@ EXPECTED_USER = User(
 def test_user_schema():
     data = UserSchema().load(TEST_USER_JSON)
     assert data == EXPECTED_USER
+
+
+@pytest.mark.parametrize(
+    "data", [{}, {**TEST_USER_JSON, "userId": "not-a-uuid"}]
+)
+def test_user_schema_invalid(data):
+    with pytest.raises(ValidationError):
+        UserSchema().load(data)
+
+
+def test_user_schema_missing_userId():
+    body = TEST_USER_JSON.copy()
+    body.pop("userId")
+    with pytest.raises(ValidationError):
+        UserSchema().load(body)
+
+
+def test_user_schema_invalid_global_role():
+    body = TEST_USER_JSON.copy()
+    body["globalRoles"] = ["invalid-global-role"]
+    with pytest.raises(ValidationError):
+        UserSchema().load(body)
