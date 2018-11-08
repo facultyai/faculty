@@ -18,9 +18,7 @@ import pytest
 from marshmallow import ValidationError
 from dateutil.tz import UTC
 
-from sherlockml.clients.user import (
-    UserClient, User, UserSchema, GlobalRole
-)
+from sherlockml.clients.user import UserClient, User, UserSchema, GlobalRole
 
 USER_ID = uuid.uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
@@ -28,28 +26,26 @@ CREATED_AT_STRING = "2018-03-10T11:32:06.247Z"
 
 TEST_USER_JSON = dict(
     userId=str(USER_ID),
-    username='test-user',
-    fullName='Test User',
-    email='test@email.com',
+    username="test-user",
+    fullName="Test User",
+    email="test@email.com",
     createdAt=CREATED_AT_STRING,
-    enabled='true',
-    globalRoles=['global-basic-user', 'global-full-user']
+    enabled="true",
+    globalRoles=["global-basic-user", "global-full-user"],
 )
 
 
 EXPECTED_USER = User(
     id=USER_ID,
-    username='test-user',
-    full_name='Test User',
-    email='test@email.com',
+    username="test-user",
+    full_name="Test User",
+    email="test@email.com",
     created_at=CREATED_AT,
     enabled=True,
-    global_roles=[GlobalRole.BASIC_USER, GlobalRole.FULL_USER]
+    global_roles=[GlobalRole.BASIC_USER, GlobalRole.FULL_USER],
 )
 
 
 def test_user_schema():
     data = UserSchema().load(TEST_USER_JSON)
     assert data == EXPECTED_USER
-
-

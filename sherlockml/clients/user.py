@@ -37,7 +37,7 @@ User = namedtuple(
         "email",
         "created_at",
         "enabled",
-        "global_roles"
+        "global_roles",
     ],
 )
 
@@ -50,7 +50,11 @@ class UserSchema(Schema):
     email = fields.Str(required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     enabled = fields.Boolean(required=True)
-    global_roles = fields.List(EnumField(GlobalRole, by_value=True), data_key="globalRoles", required=True)
+    global_roles = fields.List(
+        EnumField(GlobalRole, by_value=True),
+        data_key="globalRoles",
+        required=True,
+    )
 
     @post_load
     def make_project(self, data):
