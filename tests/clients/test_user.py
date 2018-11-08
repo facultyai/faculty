@@ -52,12 +52,12 @@ def test_user_schema():
     assert data == EXPECTED_USER
 
 
-def test_user_schema_invalid(data):
+def test_user_schema_invalid():
     with pytest.raises(ValidationError):
         UserSchema().load({})
 
 
-def test_user_schema_invalid_uuid(data):
+def test_user_schema_invalid_uuid():
     body = TEST_USER_JSON.copy()
     body["userId"] = "not-a-uuid"
     with pytest.raises(ValidationError):
