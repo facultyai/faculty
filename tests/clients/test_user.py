@@ -52,12 +52,16 @@ def test_user_schema():
     assert data == EXPECTED_USER
 
 
-@pytest.mark.parametrize(
-    "data", [{}, {**TEST_USER_JSON, "userId": "not-a-uuid"}]
-)
 def test_user_schema_invalid(data):
     with pytest.raises(ValidationError):
-        UserSchema().load(data)
+        UserSchema().load({})
+
+
+def test_user_schema_invalid_uuid(data):
+    body = TEST_USER_JSON.copy()
+    body["userId"] = "not-a-uuid"
+    with pytest.raises(ValidationError):
+        UserSchema().load(body)
 
 
 def test_user_schema_missing_userId():
