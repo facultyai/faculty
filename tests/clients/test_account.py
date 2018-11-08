@@ -17,10 +17,10 @@ import uuid
 import pytest
 from marshmallow import ValidationError
 
-from sherlockml.clients.user import (
-    UserClient,
-    User,
-    UserSchema,
+from sherlockml.clients.account import (
+    AccountClient,
+    Account,
+    AccountSchema,
     AuthenticationResponse,
     AuthenticationResponseSchema,
 )
@@ -30,24 +30,24 @@ from tests.clients.fixtures import PROFILE
 USER_ID = uuid.uuid4()
 
 
-def test_user_schema():
-    data = UserSchema().load({"userId": str(USER_ID)})
-    assert data == User(id=USER_ID)
+def test_account_schema():
+    data = AccountSchema().load({"userId": str(USER_ID)})
+    assert data == Account(id=USER_ID)
 
 
 @pytest.mark.parametrize(
     "data", [{}, {"id": str(USER_ID)}, {"userId": "not-a-uuid"}]
 )
-def test_user_schema_invalid(data):
+def test_account_schema_invalid(data):
     with pytest.raises(ValidationError):
-        UserSchema().load(data)
+        AccountSchema().load(data)
 
 
 def test_authentication_response_schema():
     data = AuthenticationResponseSchema().load(
         {"account": {"userId": str(USER_ID)}}
     )
-    assert data == AuthenticationResponse(user=User(id=USER_ID))
+    assert data == AuthenticationResponse(user=Account(id=USER_ID))
 
 
 @pytest.mark.parametrize(
@@ -58,21 +58,21 @@ def test_authentication_response_schema_invalid(data):
         AuthenticationResponseSchema().load(data)
 
 
-def test_user_client_authenticated_user_id(mocker):
+def test_account_client_authenticated_user_id(mocker):
     mocker.patch.object(
-        UserClient,
+        AccountClient,
         "_get",
-        return_value=AuthenticationResponse(user=User(id=USER_ID)),
+        return_value=AuthenticationResponse(user=Account(id=USER_ID)),
     )
 
     schema_mock = mocker.patch(
-        "sherlockml.clients.user.AuthenticationResponseSchema"
+        "sherlockml.clients.account.AuthenticationResponseSchema"
     )
 
-    client = UserClient(PROFILE)
+    client = AccountClient(PROFILE)
 
     assert client.authenticated_user_id() == USER_ID
 
-    UserClient._get.assert_called_once_with(
+    AccountClient._get.assert_called_once_with(
         "/authenticate", schema_mock.return_value
     )

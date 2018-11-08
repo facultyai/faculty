@@ -20,29 +20,29 @@ from marshmallow import Schema, fields, post_load
 from sherlockml.clients.base import BaseClient
 
 
-User = namedtuple("User", ["id"])
+Account = namedtuple("User", ["id"])
 
 
-class UserSchema(Schema):
+class AccountSchema(Schema):
     id = fields.UUID(data_key="userId", required=True)
 
     @post_load
     def make_user(self, data):
-        return User(**data)
+        return Account(**data)
 
 
 AuthenticationResponse = namedtuple("AuthenticationResponse", ["user"])
 
 
 class AuthenticationResponseSchema(Schema):
-    user = fields.Nested(UserSchema, data_key="account", required=True)
+    user = fields.Nested(AccountSchema, data_key="account", required=True)
 
     @post_load
     def make_authentication_response(self, data):
         return AuthenticationResponse(**data)
 
 
-class UserClient(BaseClient):
+class AccountClient(BaseClient):
 
     SERVICE_NAME = "hudson"
 

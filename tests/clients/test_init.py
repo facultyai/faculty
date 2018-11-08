@@ -16,11 +16,11 @@
 import pytest
 
 import sherlockml.clients
-from sherlockml.clients.user import UserClient
+from sherlockml.clients.account import AccountClient
 
 
 def test_for_resource():
-    assert sherlockml.clients.for_resource("user") is UserClient
+    assert sherlockml.clients.for_resource("account") is AccountClient
 
 
 def test_for_resource_missing():

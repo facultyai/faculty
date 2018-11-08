@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from sherlockml.clients.user import UserClient
+from sherlockml.clients.account import AccountClient
 from sherlockml.clients.project import ProjectClient
 from sherlockml.clients.server import ServerClient
 from sherlockml.clients.cluster import ClusterClient
@@ -22,7 +22,7 @@ from sherlockml.clients.workspace import WorkspaceClient
 
 
 CLIENT_FOR_RESOURCE = {
-    "user": UserClient,
+    "account": AccountClient,
     "project": ProjectClient,
     "server": ServerClient,
     "cluster": ClusterClient,
