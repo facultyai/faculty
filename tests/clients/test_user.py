@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import uuid
 from datetime import datetime
 
 import pytest
-from marshmallow import ValidationError
 from dateutil.tz import UTC
+from marshmallow import ValidationError
 
 from sherlockml.clients.user import UserClient, User, UserSchema, GlobalRole
 from tests.clients.fixtures import PROFILE
