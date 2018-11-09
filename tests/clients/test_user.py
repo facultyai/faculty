@@ -94,13 +94,13 @@ def test_get_user(mocker):
     )
 
 
-def test_get_users(mocker):
+def test_get_all_users(mocker):
     mocker.patch.object(UserClient, "_get", return_value=[EXPECTED_USER])
     schema_mock = mocker.patch("sherlockml.clients.user.UserSchema")
 
     client = UserClient(PROFILE)
 
-    users = client.get_users()
+    users = client.get_all_users()
 
     assert users == [EXPECTED_USER]
 
