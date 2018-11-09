@@ -70,7 +70,7 @@ class UserClient(BaseClient):
         response = self._get(endpoint, UserSchema())
         return response
 
-    def get_users(self):
+    def get_all_users(self):
         endpoint = "/users"
         response = self._get(endpoint, UserSchema(many=True))
         return response
