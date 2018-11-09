@@ -57,7 +57,7 @@ class UserSchema(Schema):
     )
 
     @post_load
-    def make_project(self, data):
+    def make_user(self, data):
         return User(**data)
 
 
