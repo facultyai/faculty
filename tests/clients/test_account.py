@@ -51,9 +51,8 @@ def test_authentication_response_schema():
 
 
 @pytest.mark.parametrize(
-    "data", [
-        {}, {"account": {"id": str(USER_ID)}}, {"account": "not-an-account"}
-    ]
+    "data",
+    [{}, {"account": {"id": str(USER_ID)}}, {"account": "not-an-account"}],
 )
 def test_authentication_response_schema_invalid(data):
     with pytest.raises(ValidationError):
