@@ -20,10 +20,18 @@ from marshmallow import Schema, fields, post_load
 
 from sherlockml.clients.base import (
     BaseClient,
-    Unauthorized,
-    NotFound,
-    BadResponseStatus,
     InvalidResponse,
+    HTTPError,
+    BadRequest,
+    Unauthorized,
+    Forbidden,
+    NotFound,
+    MethodNotAllowed,
+    Conflict,
+    InternalServerError,
+    BadGateway,
+    ServiceUnavailable,
+    GatewayTimeout,
 )
 from tests.clients.fixtures import PROFILE
 
@@ -33,10 +41,17 @@ AUTHORIZATION_HEADER = {"Authorization": AUTHORIZATION_HEADER_VALUE}
 HUDSON_URL = "https://hudson.test.domain.com"
 
 BAD_RESPONSE_STATUSES = [
+    (400, BadRequest),
     (401, Unauthorized),
+    (403, Forbidden),
     (404, NotFound),
-    (400, BadResponseStatus),
-    (500, BadResponseStatus),
+    (405, MethodNotAllowed),
+    (409, Conflict),
+    (500, InternalServerError),
+    (502, BadGateway),
+    (503, ServiceUnavailable),
+    (504, GatewayTimeout),
+    (418, HTTPError),
 ]
 
 HTTP_METHODS = ["GET", "POST", "PUT", "DELETE"]
@@ -134,9 +149,11 @@ def test_delete(requests_mock, patch_sherlockmlauth):
     assert response == DummyObject(foo="bar")
 
 
-@pytest.mark.parametrize("status_code, exception", BAD_RESPONSE_STATUSES)
+@pytest.mark.parametrize(
+    "check_status", [True, False], ids=["Check", "NoCheck"]
+)
 @pytest.mark.parametrize("http_method", HTTP_METHODS)
-@pytest.mark.parametrize("check_status", [True, False])
+@pytest.mark.parametrize("status_code, exception", BAD_RESPONSE_STATUSES)
 def test_bad_responses(
     requests_mock,
     patch_sherlockmlauth,
@@ -163,9 +180,11 @@ def test_bad_responses(
         method("/test", DummySchema(), check_status=check_status)
 
 
-@pytest.mark.parametrize("status_code, exception", BAD_RESPONSE_STATUSES)
+@pytest.mark.parametrize(
+    "check_status", [True, False], ids=["Check", "NoCheck"]
+)
 @pytest.mark.parametrize("http_method", HTTP_METHODS)
-@pytest.mark.parametrize("check_status", [True, False])
+@pytest.mark.parametrize("status_code, exception", BAD_RESPONSE_STATUSES)
 def test_raw_bad_responses(
     requests_mock,
     patch_sherlockmlauth,
