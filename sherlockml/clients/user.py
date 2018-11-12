@@ -14,38 +14,70 @@
 
 
 from collections import namedtuple
+from enum import Enum
 
 from marshmallow import Schema, fields, post_load
+from marshmallow_enum import EnumField
 
 from sherlockml.clients.base import BaseClient
 
 
-User = namedtuple("User", ["id"])
+class GlobalRole(Enum):
+    BASIC_USER = "global-basic-user"
+    FULL_USER = "global-full-user"
+    ADMIN = "global-admin"
+
+
+User = namedtuple(
+    "User",
+    [
+        "id",
+        "username",
+        "full_name",
+        "email",
+        "created_at",
+        "enabled",
+        "global_roles",
+    ],
+)
 
 
 class UserSchema(Schema):
+
     id = fields.UUID(data_key="userId", required=True)
+    username = fields.Str(required=True)
+    full_name = fields.Str(data_key="fullName", required=True)
+    email = fields.Str(required=True)
+    created_at = fields.DateTime(data_key="createdAt", required=True)
+    enabled = fields.Boolean(required=True)
+    global_roles = fields.List(
+        EnumField(GlobalRole, by_value=True),
+        data_key="globalRoles",
+        required=True,
+    )
 
     @post_load
     def make_user(self, data):
         return User(**data)
 
 
-AuthenticationResponse = namedtuple("AuthenticationResponse", ["user"])
-
-
-class AuthenticationResponseSchema(Schema):
-    user = fields.Nested(UserSchema, data_key="account", required=True)
-
-    @post_load
-    def make_authentication_response(self, data):
-        return AuthenticationResponse(**data)
-
-
 class UserClient(BaseClient):
 
-    SERVICE_NAME = "hudson"
+    SERVICE_NAME = "flock"
 
-    def authenticated_user_id(self):
-        data = self._get("/authenticate", AuthenticationResponseSchema())
-        return data.user.id
+    def get_user(self, user_id):
+        endpoint = "/user/{}".format(user_id)
+        response = self._get(endpoint, UserSchema())
+        return response
+
+    def get_all_users(self):
+        endpoint = "/users"
+        response = self._get(endpoint, UserSchema(many=True))
+        return response
+
+    def set_global_roles(self, user_id, global_roles):
+        endpoint = "/user/{}/roles".format(user_id)
+        response = self._put(
+            endpoint, UserSchema(), json={"roles": global_roles}
+        )
+        return response
