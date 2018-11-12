@@ -24,7 +24,7 @@ Account = namedtuple("Account", ["user_id"])
 
 
 class AccountSchema(Schema):
-    id = fields.UUID(data_key="userId", required=True)
+    user_id = fields.UUID(data_key="userId", required=True)
 
     @post_load
     def make_user(self, data):
