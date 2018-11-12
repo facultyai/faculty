@@ -50,8 +50,10 @@ class UserSchema(Schema):
     email = fields.Str(required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     enabled = fields.Boolean(required=True)
-    global_roles = EnumField(
-        GlobalRole, by_value=True, many=True, required=True
+    global_roles = fields.List(
+        EnumField(GlobalRole, by_value=True),
+        data_key="globalRoles",
+        required=True,
     )
 
     @post_load
