@@ -27,7 +27,7 @@ class AccountSchema(Schema):
     user_id = fields.UUID(data_key="userId", required=True)
 
     @post_load
-    def make_user(self, data):
+    def make_account(self, data):
         return Account(**data)
 
 
