@@ -31,7 +31,7 @@ class AccountSchema(Schema):
         return Account(**data)
 
 
-AuthenticationResponse = namedtuple("AuthenticationResponse", ["user"])
+AuthenticationResponse = namedtuple("AuthenticationResponse", ["account"])
 
 
 class AuthenticationResponseSchema(Schema):
