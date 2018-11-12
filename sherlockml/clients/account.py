@@ -20,7 +20,7 @@ from marshmallow import Schema, fields, post_load
 from sherlockml.clients.base import BaseClient
 
 
-Account = namedtuple("User", ["id"])
+Account = namedtuple("Account", ["user_id"])
 
 
 class AccountSchema(Schema):
