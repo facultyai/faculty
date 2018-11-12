@@ -35,7 +35,7 @@ AuthenticationResponse = namedtuple("AuthenticationResponse", ["account"])
 
 
 class AuthenticationResponseSchema(Schema):
-    user = fields.Nested(AccountSchema, data_key="account", required=True)
+    account = fields.Nested(AccountSchema, required=True)
 
     @post_load
     def make_authentication_response(self, data):
