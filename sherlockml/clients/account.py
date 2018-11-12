@@ -48,4 +48,4 @@ class AccountClient(BaseClient):
 
     def authenticated_user_id(self):
         data = self._get("/authenticate", AuthenticationResponseSchema())
-        return data.user.id
+        return data.account.user_id
