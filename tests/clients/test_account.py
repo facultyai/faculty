@@ -32,7 +32,7 @@ USER_ID = uuid.uuid4()
 
 def test_account_schema():
     data = AccountSchema().load({"userId": str(USER_ID)})
-    assert data == Account(id=USER_ID)
+    assert data == Account(user_id=USER_ID)
 
 
 @pytest.mark.parametrize(
@@ -47,11 +47,13 @@ def test_authentication_response_schema():
     data = AuthenticationResponseSchema().load(
         {"account": {"userId": str(USER_ID)}}
     )
-    assert data == AuthenticationResponse(user=Account(id=USER_ID))
+    assert data == AuthenticationResponse(account=Account(user_id=USER_ID))
 
 
 @pytest.mark.parametrize(
-    "data", [{}, {"user": {"id": str(USER_ID)}}, {"account": "not-an-account"}]
+    "data", [
+        {}, {"account": {"id": str(USER_ID)}}, {"account": "not-an-account"}
+    ]
 )
 def test_authentication_response_schema_invalid(data):
     with pytest.raises(ValidationError):
@@ -62,7 +64,7 @@ def test_account_client_authenticated_user_id(mocker):
     mocker.patch.object(
         AccountClient,
         "_get",
-        return_value=AuthenticationResponse(user=Account(id=USER_ID)),
+        return_value=AuthenticationResponse(account=Account(user_id=USER_ID)),
     )
 
     schema_mock = mocker.patch(
