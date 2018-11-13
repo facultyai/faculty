@@ -208,5 +208,6 @@ def test_report_client_create_version(mocker):
             "author_id": str(USER_ID),
             "notebook_path": "/test-notebook-path.ipynb",
             "show_input_cells": False,
+            "draft": False,
         },
     )
