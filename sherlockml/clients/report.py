@@ -23,7 +23,7 @@ Report = namedtuple(
 )
 
 ReportWithVersions = namedtuple(
-    "VersionedReport",
+    "ReportWithVersions",
     [
         "created_at",
         "name",
