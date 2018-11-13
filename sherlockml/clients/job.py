@@ -81,7 +81,6 @@ class RunState(Enum):
 
 class SubrunState(Enum):
     QUEUED = "queued"
-    SUBMITTED = "submitted"  # TODO: Remove once replaced with 'starting'
     STARTING = "starting"
     ENVIRONMENT_APPLICATION_STARTED = "environment-application-started"
     COMMAND_STARTED = "command-started"
