@@ -261,6 +261,19 @@ class JobClient(BaseClient):
         return self._get(endpoint, ListRunsResponseSchema(), params=params)
 
     def get_run(self, project_id, job_id, run_identifier):
+        """Get a run of a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        job_id : uuid.UUID
+        run_identifier : uuid.UUID or int
+            The ID of the run to get or its run number.
+
+        Returns
+        -------
+        Run
+        """
         endpoint = "/project/{}/job/{}/run/{}".format(
             project_id, job_id, run_identifier
         )
@@ -269,6 +282,21 @@ class JobClient(BaseClient):
     def get_subrun(
         self, project_id, job_id, run_identifier, subrun_identifier
     ):
+        """Get a subrun of a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        job_id : uuid.UUID
+        run_identifier : uuid.UUID or int
+            The ID of the run to get or its run number.
+        subrun_identifier : uuid.UUID or int
+            The ID of the subrun to get or its subrun number.
+
+        Returns
+        -------
+        Subrun
+        """
         endpoint = "/project/{}/job/{}/run/{}/subrun/{}".format(
             project_id, job_id, run_identifier, subrun_identifier
         )
