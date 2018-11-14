@@ -55,6 +55,13 @@ SUBRUN_ID = uuid4()
 ENVIRONMENT_ID = uuid4()
 ENVIRONMENT_STEP_ID = uuid4()
 
+SUBMITTED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
+SUBMITTED_AT_STRING = "2018-03-10T11:32:06.247Z"
+STARTED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
+STARTED_AT_STRING = "2018-03-10T11:32:30.172Z"
+ENDED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
+ENDED_AT_STRING = "2018-03-10T11:37:42.482Z"
+
 JOB_METADATA = JobMetadata(name="job name", description="job description")
 JOB_METADATA_BODY = {
     "name": JOB_METADATA.name,
@@ -64,45 +71,21 @@ JOB_METADATA_BODY = {
 JOB_SUMMARY = JobSummary(id=JOB_ID, metadata=JOB_METADATA)
 JOB_SUMMARY_BODY = {"jobId": str(JOB_ID), "meta": JOB_METADATA_BODY}
 
-PAGE = Page(start=3, limit=10)
-PAGE_BODY = {"start": PAGE.start, "limit": PAGE.limit}
-
-PAGINATION = Pagination(
-    start=20,
-    size=10,
-    previous=Page(start=10, limit=10),
-    next=Page(start=30, limit=10),
-)
-PAGINATION_BODY = {
-    "start": PAGINATION.start,
-    "size": PAGINATION.size,
-    "previous": {
-        "start": PAGINATION.previous.start,
-        "limit": PAGINATION.previous.limit,
-    },
-    "next": {"start": PAGINATION.next.start, "limit": PAGINATION.next.limit},
-}
-
-SUBMITTED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
-SUBMITTED_AT_STRING = "2018-03-10T11:32:06.247Z"
-STARTED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
-STARTED_AT_STRING = "2018-03-10T11:32:30.172Z"
-ENDED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
-ENDED_AT_STRING = "2018-03-10T11:37:42.482Z"
-
-RUN_SUMMARY = RunSummary(
-    id=RUN_ID,
-    run_number=3,
-    state=RunState.COMPLETED,
-    submitted_at=SUBMITTED_AT,
+ENVIRONMENT_STEP_EXECUTION = EnvironmentStepExecution(
+    environment_id=ENVIRONMENT_ID,
+    environment_step_id=ENVIRONMENT_STEP_ID,
+    environment_name="environment name",
+    command="./example-command",
+    state=EnvironmentStepExecutionState.RUNNING,
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
 )
-RUN_SUMMARY_BODY = {
-    "runId": str(RUN_ID),
-    "runNumber": RUN_SUMMARY.run_number,
-    "state": "completed",
-    "submittedAt": SUBMITTED_AT_STRING,
+ENVIRONMENT_STEP_EXECUTION_BODY = {
+    "environmentId": str(ENVIRONMENT_ID),
+    "environmentStepId": str(ENVIRONMENT_STEP_ID),
+    "environmentName": ENVIRONMENT_STEP_EXECUTION.environment_name,
+    "command": ENVIRONMENT_STEP_EXECUTION.command,
+    "state": "running",
     "startedAt": STARTED_AT_STRING,
     "endedAt": ENDED_AT_STRING,
 }
@@ -118,6 +101,40 @@ SUBRUN_SUMMARY_BODY = {
     "subrunId": str(SUBRUN_ID),
     "subrunNumber": SUBRUN_SUMMARY.subrun_number,
     "state": "command-succeeded",
+    "startedAt": STARTED_AT_STRING,
+    "endedAt": ENDED_AT_STRING,
+}
+
+SUBRUN = Subrun(
+    id=SUBRUN_ID,
+    subrun_number=2,
+    state=SubrunState.COMMAND_SUCCEEDED,
+    started_at=STARTED_AT,
+    ended_at=ENDED_AT,
+    environment_step_executions=[ENVIRONMENT_STEP_EXECUTION],
+)
+SUBRUN_BODY = {
+    "subrunId": str(SUBRUN_ID),
+    "subrunNumber": SUBRUN.subrun_number,
+    "state": "command-succeeded",
+    "startedAt": STARTED_AT_STRING,
+    "endedAt": ENDED_AT_STRING,
+    "environmentExecutionState": [ENVIRONMENT_STEP_EXECUTION_BODY],
+}
+
+RUN_SUMMARY = RunSummary(
+    id=RUN_ID,
+    run_number=3,
+    state=RunState.COMPLETED,
+    submitted_at=SUBMITTED_AT,
+    started_at=STARTED_AT,
+    ended_at=ENDED_AT,
+)
+RUN_SUMMARY_BODY = {
+    "runId": str(RUN_ID),
+    "runNumber": RUN_SUMMARY.run_number,
+    "state": "completed",
+    "submittedAt": SUBMITTED_AT_STRING,
     "startedAt": STARTED_AT_STRING,
     "endedAt": ENDED_AT_STRING,
 }
@@ -141,48 +158,31 @@ RUN_BODY = {
     "subruns": [SUBRUN_SUMMARY_BODY],
 }
 
+PAGE = Page(start=3, limit=10)
+PAGE_BODY = {"start": PAGE.start, "limit": PAGE.limit}
+
+PAGINATION = Pagination(
+    start=20,
+    size=10,
+    previous=Page(start=10, limit=10),
+    next=Page(start=30, limit=10),
+)
+PAGINATION_BODY = {
+    "start": PAGINATION.start,
+    "size": PAGINATION.size,
+    "previous": {
+        "start": PAGINATION.previous.start,
+        "limit": PAGINATION.previous.limit,
+    },
+    "next": {"start": PAGINATION.next.start, "limit": PAGINATION.next.limit},
+}
+
 LIST_RUNS_RESPONSE = ListRunsResponse(
     runs=[RUN_SUMMARY], pagination=PAGINATION
 )
 LIST_RUNS_RESPONSE_BODY = {
     "runs": [RUN_SUMMARY_BODY],
     "pagination": PAGINATION_BODY,
-}
-
-ENVIRONMENT_STEP_EXECUTION = EnvironmentStepExecution(
-    environment_id=ENVIRONMENT_ID,
-    environment_step_id=ENVIRONMENT_STEP_ID,
-    environment_name="environment name",
-    command="./example-command",
-    state=EnvironmentStepExecutionState.RUNNING,
-    started_at=STARTED_AT,
-    ended_at=ENDED_AT,
-)
-ENVIRONMENT_STEP_EXECUTION_BODY = {
-    "environmentId": str(ENVIRONMENT_ID),
-    "environmentStepId": str(ENVIRONMENT_STEP_ID),
-    "environmentName": ENVIRONMENT_STEP_EXECUTION.environment_name,
-    "command": ENVIRONMENT_STEP_EXECUTION.command,
-    "state": "running",
-    "startedAt": STARTED_AT_STRING,
-    "endedAt": ENDED_AT_STRING,
-}
-
-SUBRUN = Subrun(
-    id=SUBRUN_ID,
-    subrun_number=2,
-    state=SubrunState.COMMAND_SUCCEEDED,
-    started_at=STARTED_AT,
-    ended_at=ENDED_AT,
-    environment_step_executions=[ENVIRONMENT_STEP_EXECUTION],
-)
-SUBRUN_BODY = {
-    "subrunId": str(SUBRUN_ID),
-    "subrunNumber": SUBRUN.subrun_number,
-    "state": "command-succeeded",
-    "startedAt": STARTED_AT_STRING,
-    "endedAt": ENDED_AT_STRING,
-    "environmentExecutionState": [ENVIRONMENT_STEP_EXECUTION_BODY],
 }
 
 
@@ -194,6 +194,83 @@ def test_job_metadata_schema():
 def test_job_summary_schema():
     data = JobSummarySchema().load(JOB_SUMMARY_BODY)
     assert data == JOB_SUMMARY
+
+
+def test_environment_step_execution_schema():
+    data = EnvironmentStepExecutionSchema().load(
+        ENVIRONMENT_STEP_EXECUTION_BODY
+    )
+    assert data == ENVIRONMENT_STEP_EXECUTION
+
+
+@pytest.mark.parametrize(
+    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
+)
+def test_environment_step_execution_schema_nullable_field(data_key, field):
+    body = ENVIRONMENT_STEP_EXECUTION_BODY.copy()
+    del body[data_key]
+    data = EnvironmentStepExecutionSchema().load(body)
+    assert getattr(data, field) is None
+
+
+def test_subrun_summary_schema():
+    data = SubrunSummarySchema().load(SUBRUN_SUMMARY_BODY)
+    assert data == SUBRUN_SUMMARY
+
+
+@pytest.mark.parametrize(
+    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
+)
+def test_subrun_summary_schema_nullable_field(data_key, field):
+    body = SUBRUN_SUMMARY_BODY.copy()
+    del body[data_key]
+    data = SubrunSummarySchema().load(body)
+    assert getattr(data, field) is None
+
+
+def test_subrun_schema():
+    data = SubrunSchema().load(SUBRUN_BODY)
+    assert data == SUBRUN
+
+
+@pytest.mark.parametrize(
+    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
+)
+def test_subrun_schema_nullable_field(data_key, field):
+    body = SUBRUN_BODY.copy()
+    del body[data_key]
+    data = SubrunSchema().load(body)
+    assert getattr(data, field) is None
+
+
+def test_run_summary_schema():
+    data = RunSummarySchema().load(RUN_SUMMARY_BODY)
+    assert data == RUN_SUMMARY
+
+
+@pytest.mark.parametrize(
+    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
+)
+def test_run_summary_schema_nullable_field(data_key, field):
+    body = RUN_SUMMARY_BODY.copy()
+    del body[data_key]
+    data = RunSummarySchema().load(body)
+    assert getattr(data, field) is None
+
+
+def test_run_schema():
+    data = RunSchema().load(RUN_BODY)
+    assert data == RUN
+
+
+@pytest.mark.parametrize(
+    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
+)
+def test_run_schema_nullable_field(data_key, field):
+    body = RUN_BODY.copy()
+    del body[data_key]
+    data = RunSchema().load(body)
+    assert getattr(data, field) is None
 
 
 def test_run_id_schema():
@@ -219,86 +296,9 @@ def test_pagination_schema_nullable_field(field):
     assert getattr(data, field) is None
 
 
-def test_run_summary_schema():
-    data = RunSummarySchema().load(RUN_SUMMARY_BODY)
-    assert data == RUN_SUMMARY
-
-
-@pytest.mark.parametrize(
-    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
-)
-def test_run_summary_schema_nullable_field(data_key, field):
-    body = RUN_SUMMARY_BODY.copy()
-    del body[data_key]
-    data = RunSummarySchema().load(body)
-    assert getattr(data, field) is None
-
-
-def test_subrun_summary_schema():
-    data = SubrunSummarySchema().load(SUBRUN_SUMMARY_BODY)
-    assert data == SUBRUN_SUMMARY
-
-
-@pytest.mark.parametrize(
-    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
-)
-def test_subrun_summary_schema_nullable_field(data_key, field):
-    body = SUBRUN_SUMMARY_BODY.copy()
-    del body[data_key]
-    data = SubrunSummarySchema().load(body)
-    assert getattr(data, field) is None
-
-
-def test_run_schema():
-    data = RunSchema().load(RUN_BODY)
-    assert data == RUN
-
-
-@pytest.mark.parametrize(
-    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
-)
-def test_run_schema_nullable_field(data_key, field):
-    body = RUN_BODY.copy()
-    del body[data_key]
-    data = RunSchema().load(body)
-    assert getattr(data, field) is None
-
-
 def test_list_runs_response_schema():
     data = ListRunsResponseSchema().load(LIST_RUNS_RESPONSE_BODY)
     assert data == LIST_RUNS_RESPONSE
-
-
-def test_environment_step_execution_schema():
-    data = EnvironmentStepExecutionSchema().load(
-        ENVIRONMENT_STEP_EXECUTION_BODY
-    )
-    assert data == ENVIRONMENT_STEP_EXECUTION
-
-
-@pytest.mark.parametrize(
-    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
-)
-def test_environment_step_execution_schema_nullable_field(data_key, field):
-    body = ENVIRONMENT_STEP_EXECUTION_BODY.copy()
-    del body[data_key]
-    data = EnvironmentStepExecutionSchema().load(body)
-    assert getattr(data, field) is None
-
-
-def test_subrun_schema():
-    data = SubrunSchema().load(SUBRUN_BODY)
-    assert data == SUBRUN
-
-
-@pytest.mark.parametrize(
-    "data_key, field", [("startedAt", "started_at"), ("endedAt", "ended_at")]
-)
-def test_subrun_schema_nullable_field(data_key, field):
-    body = SUBRUN_BODY.copy()
-    del body[data_key]
-    data = SubrunSchema().load(body)
-    assert getattr(data, field) is None
 
 
 @pytest.mark.parametrize(
@@ -306,15 +306,15 @@ def test_subrun_schema_nullable_field(data_key, field):
     [
         JobMetadataSchema,
         JobSummarySchema,
+        EnvironmentStepExecutionSchema,
+        SubrunSummarySchema,
+        SubrunSchema,
+        RunSummarySchema,
+        RunSchema,
         RunIdSchema,
         PageSchema,
         PaginationSchema,
-        RunSummarySchema,
-        SubrunSummarySchema,
-        RunSchema,
         ListRunsResponseSchema,
-        EnvironmentStepExecutionSchema,
-        SubrunSchema,
     ],
 )
 def test_schemas_invalid_data(schema_class):

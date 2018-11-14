@@ -20,63 +20,13 @@ from marshmallow_enum import EnumField
 
 from sherlockml.clients.base import BaseClient
 
-JobMetadata = namedtuple("JobMetadata", ["name", "description"])
-JobSummary = namedtuple("JobSummary", ["id", "metadata"])
-Page = namedtuple("Page", ["start", "limit"])
-Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
-RunSummary = namedtuple(
-    "Run",
-    ["id", "run_number", "state", "submitted_at", "started_at", "ended_at"],
-)
-ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
-SubrunSummary = namedtuple(
-    "Subrun", ["id", "subrun_number", "state", "started_at", "ended_at"]
-)
-Run = namedtuple(
-    "Run",
-    [
-        "id",
-        "run_number",
-        "state",
-        "submitted_at",
-        "started_at",
-        "ended_at",
-        "subruns",
-    ],
-)
-EnvironmentStepExecution = namedtuple(
-    "EnvironmentStepExecution",
-    [
-        "environment_id",
-        "environment_step_id",
-        "environment_name",
-        "command",
-        "state",
-        "started_at",
-        "ended_at",
-    ],
-)
-Subrun = namedtuple(
-    "Subrun",
-    [
-        "id",
-        "subrun_number",
-        "state",
-        "started_at",
-        "ended_at",
-        "environment_step_executions",
-    ],
-)
 
-
-class RunState(Enum):
+class EnvironmentStepExecutionState(Enum):
     QUEUED = "queued"
-    STARTING = "starting"
     RUNNING = "running"
-    COMPLETED = "completed"
+    SUCCEEDED = "succeeded"
     FAILED = "failed"
     CANCELLED = "cancelled"
-    ERROR = "error"
 
 
 class SubrunState(Enum):
@@ -91,12 +41,63 @@ class SubrunState(Enum):
     CANCELLED = "cancelled"
 
 
-class EnvironmentStepExecutionState(Enum):
+class RunState(Enum):
     QUEUED = "queued"
+    STARTING = "starting"
     RUNNING = "running"
-    SUCCEEDED = "succeeded"
+    COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    ERROR = "error"
+
+
+JobMetadata = namedtuple("JobMetadata", ["name", "description"])
+JobSummary = namedtuple("JobSummary", ["id", "metadata"])
+EnvironmentStepExecution = namedtuple(
+    "EnvironmentStepExecution",
+    [
+        "environment_id",
+        "environment_step_id",
+        "environment_name",
+        "command",
+        "state",
+        "started_at",
+        "ended_at",
+    ],
+)
+SubrunSummary = namedtuple(
+    "Subrun", ["id", "subrun_number", "state", "started_at", "ended_at"]
+)
+Subrun = namedtuple(
+    "Subrun",
+    [
+        "id",
+        "subrun_number",
+        "state",
+        "started_at",
+        "ended_at",
+        "environment_step_executions",
+    ],
+)
+RunSummary = namedtuple(
+    "Run",
+    ["id", "run_number", "state", "submitted_at", "started_at", "ended_at"],
+)
+Run = namedtuple(
+    "Run",
+    [
+        "id",
+        "run_number",
+        "state",
+        "submitted_at",
+        "started_at",
+        "ended_at",
+        "subruns",
+    ],
+)
+Page = namedtuple("Page", ["start", "limit"])
+Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
+ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
 
 
 class JobMetadataSchema(Schema):
@@ -115,6 +116,82 @@ class JobSummarySchema(Schema):
     @post_load
     def make_job_summary(self, data):
         return JobSummary(**data)
+
+
+class EnvironmentStepExecutionSchema(Schema):
+    environment_id = fields.UUID(data_key="environmentId", required=True)
+    environment_step_id = fields.UUID(
+        data_key="environmentStepId", required=True
+    )
+    environment_name = fields.String(data_key="environmentName", required=True)
+    command = fields.String(required=True)
+    state = EnumField(RunState, by_value=True, required=True)
+    state = EnumField(
+        EnvironmentStepExecutionState, by_value=True, required=True
+    )
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+
+    @post_load
+    def make_environment_step_execution_schema(self, data):
+        return EnvironmentStepExecution(**data)
+
+
+class SubrunSummarySchema(Schema):
+    id = fields.UUID(data_key="subrunId", required=True)
+    subrun_number = fields.Integer(data_key="subrunNumber", required=True)
+    state = EnumField(SubrunState, by_value=True, required=True)
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+
+    @post_load
+    def make_subrun_summary(self, data):
+        return SubrunSummary(**data)
+
+
+class SubrunSchema(Schema):
+    id = fields.UUID(data_key="subrunId", required=True)
+    subrun_number = fields.Integer(data_key="subrunNumber", required=True)
+    state = EnumField(SubrunState, by_value=True, required=True)
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    environment_step_executions = fields.Nested(
+        EnvironmentStepExecutionSchema,
+        data_key="environmentExecutionState",
+        many=True,
+        required=True,
+    )
+
+    @post_load
+    def make_subrun(self, data):
+        return Subrun(**data)
+
+
+class RunSummarySchema(Schema):
+    id = fields.UUID(data_key="runId", required=True)
+    run_number = fields.Integer(data_key="runNumber", required=True)
+    state = EnumField(RunState, by_value=True, required=True)
+    submitted_at = fields.DateTime(data_key="submittedAt", required=True)
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+
+    @post_load
+    def make_run_summary(self, data):
+        return RunSummary(**data)
+
+
+class RunSchema(Schema):
+    id = fields.UUID(data_key="runId", required=True)
+    run_number = fields.Integer(data_key="runNumber", required=True)
+    state = EnumField(RunState, by_value=True, required=True)
+    submitted_at = fields.DateTime(data_key="submittedAt", required=True)
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    subruns = fields.Nested(SubrunSummarySchema, many=True, required=True)
+
+    @post_load
+    def make_run(self, data):
+        return Run(**data)
 
 
 class RunIdSchema(Schema):
@@ -145,45 +222,6 @@ class PaginationSchema(Schema):
         return Pagination(**data)
 
 
-class RunSummarySchema(Schema):
-    id = fields.UUID(data_key="runId", required=True)
-    run_number = fields.Integer(data_key="runNumber", required=True)
-    state = EnumField(RunState, by_value=True, required=True)
-    submitted_at = fields.DateTime(data_key="submittedAt", required=True)
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
-
-    @post_load
-    def make_run_summary(self, data):
-        return RunSummary(**data)
-
-
-class SubrunSummarySchema(Schema):
-    id = fields.UUID(data_key="subrunId", required=True)
-    subrun_number = fields.Integer(data_key="subrunNumber", required=True)
-    state = EnumField(SubrunState, by_value=True, required=True)
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
-
-    @post_load
-    def make_subrun_summary(self, data):
-        return SubrunSummary(**data)
-
-
-class RunSchema(Schema):
-    id = fields.UUID(data_key="runId", required=True)
-    run_number = fields.Integer(data_key="runNumber", required=True)
-    state = EnumField(RunState, by_value=True, required=True)
-    submitted_at = fields.DateTime(data_key="submittedAt", required=True)
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
-    subruns = fields.Nested(SubrunSummarySchema, many=True, required=True)
-
-    @post_load
-    def make_run(self, data):
-        return Run(**data)
-
-
 class ListRunsResponseSchema(Schema):
     pagination = fields.Nested(PaginationSchema, required=True)
     runs = fields.Nested(RunSummarySchema, many=True, required=True)
@@ -191,43 +229,6 @@ class ListRunsResponseSchema(Schema):
     @post_load
     def make_list_runs_response_schema(self, data):
         return ListRunsResponse(**data)
-
-
-class EnvironmentStepExecutionSchema(Schema):
-    environment_id = fields.UUID(data_key="environmentId", required=True)
-    environment_step_id = fields.UUID(
-        data_key="environmentStepId", required=True
-    )
-    environment_name = fields.String(data_key="environmentName", required=True)
-    command = fields.String(required=True)
-    state = EnumField(RunState, by_value=True, required=True)
-    state = EnumField(
-        EnvironmentStepExecutionState, by_value=True, required=True
-    )
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
-
-    @post_load
-    def make_environment_step_execution_schema(self, data):
-        return EnvironmentStepExecution(**data)
-
-
-class SubrunSchema(Schema):
-    id = fields.UUID(data_key="subrunId", required=True)
-    subrun_number = fields.Integer(data_key="subrunNumber", required=True)
-    state = EnumField(SubrunState, by_value=True, required=True)
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
-    environment_step_executions = fields.Nested(
-        EnvironmentStepExecutionSchema,
-        data_key="environmentExecutionState",
-        many=True,
-        required=True,
-    )
-
-    @post_load
-    def make_subrun(self, data):
-        return Subrun(**data)
 
 
 class JobClient(BaseClient):
