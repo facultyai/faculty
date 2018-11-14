@@ -70,7 +70,7 @@ class ReportSchema(Schema):
     active_version = fields.Nested(ReportVersionSchema, required=True)
 
     @post_load
-    def make_active_report(self, data):
+    def make_report(self, data):
         return Report(**data)
 
 
