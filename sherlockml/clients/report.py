@@ -83,7 +83,7 @@ class ReportWithVersionsSchema(Schema):
     versions = fields.Nested(ReportVersionSchema, required=True, many=True)
 
     @post_load
-    def make_versioned_report(self, data):
+    def make_report_with_versions(self, data):
         return ReportWithVersions(**data)
 
 
