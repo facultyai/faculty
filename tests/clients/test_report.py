@@ -14,9 +14,10 @@
 
 import uuid
 import datetime
+from dateutil.tz import UTC
 
 import pytest
-from marshmallow import ValidationError, EXCLUDE
+from marshmallow import ValidationError
 
 from sherlockml.clients.report import (
     Report,
@@ -37,7 +38,7 @@ VERSION_ID = uuid.uuid4()
 PROJECT_ID = uuid.uuid4()
 
 ACTIVE_VERSION = ReportVersion(
-    created_at=datetime.datetime(2018, 10, 3, 9, 23, 5, 0),
+    created_at=datetime.datetime(2018, 10, 3, 9, 23, 5, 0, tzinfo=UTC),
     author_id=USER_ID,
     report_path="/.sml/tavern/{}/{}/index.html".format(REPORT_ID, VERSION_ID),
     report_key="{}/.sml/tavern/{}/{}/index.html".format(
@@ -52,7 +53,7 @@ REPORT = Report(
     id=REPORT_ID,
     name="Test Report Name",
     description="Looking forward to the test reports on this Test Report",
-    created_at=datetime.datetime(2018, 10, 3, 9, 23, 0, 0),
+    created_at=datetime.datetime(2018, 10, 3, 9, 23, 0, 0, tzinfo=UTC),
     active_version=ACTIVE_VERSION,
 )
 
@@ -60,15 +61,13 @@ VERSIONED_REPORT = ReportWithVersions(
     id=REPORT_ID,
     name="Test Report Name",
     description="Looking forward to the test reports on this Test Report",
-    created_at=datetime.datetime(2018, 10, 3, 9, 23, 0, 0),
+    created_at=datetime.datetime(2018, 10, 3, 9, 23, 0, 0, tzinfo=UTC),
     active_version_id=VERSION_ID,
     versions=[ACTIVE_VERSION],
 )
 
 VERSION_BODY = {
-    "created_at": ACTIVE_VERSION.created_at.strftime("%Y-%m-%dT%H:%M:%S.%f")[
-        :-3
-    ],
+    "created_at": "2018-10-03T09:23:05Z",
     "author_id": str(USER_ID),
     "report_path": ACTIVE_VERSION.report_path,
     "report_key": ACTIVE_VERSION.report_key,
@@ -78,7 +77,7 @@ VERSION_BODY = {
 }
 
 REPORT_BODY = {
-    "created_at": REPORT.created_at.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3],
+    "created_at": "2018-10-03T09:23:00Z",
     "report_name": REPORT.name,
     "report_id": str(REPORT.id),
     "description": REPORT.description,
@@ -86,7 +85,7 @@ REPORT_BODY = {
 }
 
 VERSIONED_REPORT_BODY = {
-    "created_at": REPORT.created_at.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3],
+    "created_at": "2018-10-03T09:23:00Z",
     "report_name": REPORT.name,
     "report_id": str(REPORT.id),
     "description": REPORT.description,
@@ -199,7 +198,7 @@ def test_report_client_create_version(mocker):
         == ACTIVE_VERSION
     )
 
-    schema_mock.assert_called_once_with(unknown=EXCLUDE)
+    schema_mock.assert_called_once_with()
 
     ReportClient._post.assert_called_once_with(
         "/report/{}/version".format(REPORT.id),

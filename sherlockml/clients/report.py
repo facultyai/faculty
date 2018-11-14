@@ -14,7 +14,7 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load, EXCLUDE
+from marshmallow import Schema, fields, post_load
 
 from sherlockml.clients.base import BaseClient
 
@@ -136,6 +136,4 @@ class ReportClient(BaseClient):
         }
 
         endpoint = "/report/{report_id}/version".format(report_id=report_id)
-        return self._post(
-            endpoint, ReportVersionSchema(), json=payload
-        )
+        return self._post(endpoint, ReportVersionSchema(), json=payload)
