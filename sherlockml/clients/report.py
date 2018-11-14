@@ -137,5 +137,5 @@ class ReportClient(BaseClient):
 
         endpoint = "/report/{report_id}/version".format(report_id=report_id)
         return self._post(
-            endpoint, ReportVersionSchema(unknown=EXCLUDE), json=payload
+            endpoint, ReportVersionSchema(), json=payload
         )
