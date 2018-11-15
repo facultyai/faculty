@@ -236,10 +236,59 @@ class JobClient(BaseClient):
     SERVICE_NAME = "steve"
 
     def list(self, project_id):
+        """List the jobs in a project.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+
+        Returns
+        -------
+        List[JobSummary]
+        """
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
 
     def create_run(self, project_id, job_id, parameter_value_sets):
+        """Create a run for a job.
+
+        When creating a run, each item in ``parameter_value_sets`` will be
+        translated into an individual subrun. For example, to start a single
+        run of job with ``file`` and ``alpha`` arguments:
+
+        >>> client.create_run(
+        >>>     project_id, job_id, [{"file": "data.txt", "alpha": "0.1"}]
+        >>> )
+
+        Pass additional entries in ``parameter_value_sets`` to start a run
+        array with multiple subruns. For example, for a job with a single
+        ``file`` argument:
+
+        >>> client.create_run(
+        >>>     project_id,
+        >>>     job_id,
+        >>>     [{"file": "data1.txt"}, {"file": "data2.txt"}]
+        >>> )
+
+        Many jobs do not take any arguments. In this case, simply pass a list
+        containing empty parameter value dictionaries, with the number of
+        entries in the list corresponding to the number of subruns you want:
+
+        >>> client.create_run(project_id, job_id, [{}, {}])
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        job_id : uuid.UUID
+        parameter_value_sets : List[dict], optional
+            A list of parameter value sets. Each set of parameter values will
+            result in a subrun with those parameter values passed.
+
+        Returns
+        -------
+        uuid.UUID
+            The ID of the created run.
+        """
         endpoint = "/project/{}/job/{}/run".format(project_id, job_id)
         payload = {
             "parameterValues": [
@@ -253,6 +302,33 @@ class JobClient(BaseClient):
         return self._post(endpoint, RunIdSchema(), json=payload)
 
     def list_runs(self, project_id, job_id, start=None, limit=None):
+        """List the runs of a job.
+
+        This method returns pages of runs. If less than the full number of runs
+        for the job is returned, the ``next`` page of the returned response
+        object will not be ``None``:
+
+        >>> response = client.list_runs(project_id, job_id)
+        >>> response.pagination.next
+        Page(start=10, limit=10)
+
+        Get all the runs for a job by making successive calls to ``list_runs``,
+        passing the ``start`` and ``limit`` of the ``next`` page each time
+        until ``next`` is returned as ``None``.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        job_id : uuid.UUID
+        start : int, optional
+            The (zero-indexed) starting point of runs to retrieve.
+        limit : int, optional
+            The maximum number of runs to retrieve.
+
+        Returns
+        -------
+        ListRunsResponse
+        """
         endpoint = "/project/{}/job/{}/run".format(project_id, job_id)
         params = {}
         if start is not None:
