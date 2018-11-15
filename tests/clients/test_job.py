@@ -367,6 +367,21 @@ def test_job_client_create_run(mocker):
     ]
 
 
+def test_job_client_create_run_default_parameter_value_sets(mocker):
+    mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
+    schema_mock = mocker.patch("sherlockml.clients.job.RunIdSchema")
+
+    client = JobClient(PROFILE)
+    assert client.create_run(PROJECT_ID, JOB_ID) == RUN_ID
+
+    schema_mock.assert_called_once_with()
+    JobClient._post.assert_called_once_with(
+        "/project/{}/job/{}/run".format(PROJECT_ID, JOB_ID),
+        schema_mock.return_value,
+        json={"parameterValues": [[]]},
+    )
+
+
 def test_job_client_list_runs(mocker):
     mocker.patch.object(JobClient, "_get", return_value=LIST_RUNS_RESPONSE)
     schema_mock = mocker.patch("sherlockml.clients.job.ListRunsResponseSchema")

@@ -249,7 +249,7 @@ class JobClient(BaseClient):
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
 
-    def create_run(self, project_id, job_id, parameter_value_sets):
+    def create_run(self, project_id, job_id, parameter_value_sets=None):
         """Create a run for a job.
 
         When creating a run, each item in ``parameter_value_sets`` will be
@@ -282,13 +282,18 @@ class JobClient(BaseClient):
         job_id : uuid.UUID
         parameter_value_sets : List[dict], optional
             A list of parameter value sets. Each set of parameter values will
-            result in a subrun with those parameter values passed.
+            result in a subrun with those parameter values passed. Default:
+            single subrun with no parameter values.
 
         Returns
         -------
         uuid.UUID
             The ID of the created run.
         """
+
+        if parameter_value_sets is None:
+            parameter_value_sets = [{}]
+
         endpoint = "/project/{}/job/{}/run".format(project_id, job_id)
         payload = {
             "parameterValues": [
