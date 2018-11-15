@@ -77,25 +77,25 @@ def test_load_profile(mocker, profile_name, expected_profile):
 def test_default_credentials_path(mocker):
     mocker.patch.dict(os.environ, {"HOME": "/foo/bar"})
     expected_path = "/foo/bar/.config/sherlockml/credentials"
-    assert config._default_credentials_path() == expected_path
+    assert config.default_credentials_path() == expected_path
 
 
 def test_default_credentials_path_xdg_home(mocker):
     mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": "/xdg/home"})
     expected_path = "/xdg/home/sherlockml/credentials"
-    assert config._default_credentials_path() == expected_path
+    assert config.default_credentials_path() == expected_path
 
 
 def test_resolve_profile(mocker):
     mocker.patch(
         "sherlockml.config.load_profile", return_value=DEFAULT_PROFILE
     )
-    mocker.patch("sherlockml.config._default_credentials_path")
+    mocker.patch("sherlockml.config.default_credentials_path")
 
     assert config.resolve_profile() == DEFAULT_PROFILE
 
     config.load_profile.assert_called_once_with(
-        config._default_credentials_path.return_value, "default"
+        config.default_credentials_path.return_value, "default"
     )
 
 
@@ -124,25 +124,25 @@ def test_resolve_profile_credentials_path_env(mocker):
 
 def test_resolve_profile_profile_name_override(mocker):
     mocker.patch("sherlockml.config.load_profile", return_value=OTHER_PROFILE)
-    mocker.patch("sherlockml.config._default_credentials_path")
+    mocker.patch("sherlockml.config.default_credentials_path")
 
     profile = config.resolve_profile(profile_name="other")
     assert profile == OTHER_PROFILE
 
     config.load_profile.assert_called_once_with(
-        config._default_credentials_path.return_value, "other"
+        config.default_credentials_path.return_value, "other"
     )
 
 
 def test_resolve_profile_profile_name_env(mocker):
     mocker.patch("sherlockml.config.load_profile", return_value=OTHER_PROFILE)
-    mocker.patch("sherlockml.config._default_credentials_path")
+    mocker.patch("sherlockml.config.default_credentials_path")
     mocker.patch.dict(os.environ, {"SHERLOCKML_PROFILE": "other"})
 
     assert config.resolve_profile() == OTHER_PROFILE
 
     config.load_profile.assert_called_once_with(
-        config._default_credentials_path.return_value, "other"
+        config.default_credentials_path.return_value, "other"
     )
 
 

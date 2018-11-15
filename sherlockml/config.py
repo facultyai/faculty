@@ -47,7 +47,7 @@ def load_profile(path, profile):
         return Profile(None, None, None, None)
 
 
-def _default_credentials_path():
+def default_credentials_path():
     xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
     if not xdg_config_home:
         xdg_config_home = os.path.expanduser("~/.config")
@@ -74,7 +74,7 @@ def resolve_profile(
     resolved_credentials_path = (
         credentials_path
         or os.getenv("SHERLOCKML_CREDENTIALS_PATH")
-        or _default_credentials_path()
+        or default_credentials_path()
     )
 
     resolved_profile_name = (
