@@ -30,7 +30,7 @@ setup(
         "pytest",
         "pytest-mock",
         "requests_mock",
-        "python-dateutil",
+        "python-dateutil>=2.7",
     ],
     install_requires=[
         "requests",
