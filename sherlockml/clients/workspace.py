@@ -22,7 +22,7 @@ from marshmallow import (
     validates_schema,
     ValidationError,
 )
-from marshmallow_enum import EnumField
+from marshmallow.validate import OneOf
 
 from sherlockml.clients.base import BaseClient
 
@@ -44,7 +44,7 @@ class FileNodeSchema(Schema):
 
     path = fields.String(required=True)
     name = fields.String(required=True)
-    type = EnumField(FileNodeType, by_value=True, required=True)
+    type = fields.String(required=True, validate=OneOf(["file", "directory"]))
     last_modified = fields.DateTime(required=True)
     size = fields.Integer(required=True)
     truncated = fields.Boolean()
@@ -52,18 +52,18 @@ class FileNodeSchema(Schema):
 
     @validates_schema
     def validate_type(self, data):
-        if data["type"] == FileNodeType.DIRECTORY:
+        if data["type"] == "directory":
             required_fields = Directory._fields
-        elif data["type"] == FileNodeType.FILE:
+        elif data["type"] == "file":
             required_fields = File._fields
         if set(data.keys()) != set(required_fields).union({"type"}):
             raise ValidationError("Wrong fields for {}.".format(data["type"]))
 
     @post_load
     def make_file_node(self, data):
-        if data["type"] == FileNodeType.DIRECTORY:
+        if data["type"] == "directory":
             return Directory(**{key: data[key] for key in Directory._fields})
-        elif data["type"] == FileNodeType.FILE:
+        elif data["type"] == "file":
             return File(**{key: data[key] for key in File._fields})
         else:
             raise ValueError("Invalid file node type.")
