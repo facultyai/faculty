@@ -13,42 +13,44 @@
 # limitations under the License.
 
 from collections import namedtuple
-from enum import Enum
 
 from marshmallow import Schema, fields, post_load
-from marshmallow_enum import EnumField
+from marshmallow.validate import OneOf
 
 from sherlockml.clients.base import BaseClient
 
 
-class EnvironmentStepExecutionState(Enum):
-    QUEUED = "queued"
-    RUNNING = "running"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
+ENVIRONMENT_STEP_EXECUTION_STATES = {
+    "queued",
+    "running",
+    "succeeded",
+    "failed",
+    "cancelled",
+}
 
 
-class SubrunState(Enum):
-    QUEUED = "queued"
-    STARTING = "starting"
-    ENVIRONMENT_APPLICATION_STARTED = "environment-application-started"
-    COMMAND_STARTED = "command-started"
-    COMMAND_SUCCEEDED = "command-succeeded"
-    COMMAND_FAILED = "command-failed"
-    ENVIRONMENT_APPLICATION_FAILED = "environment-application-failed"
-    ERROR = "error"
-    CANCELLED = "cancelled"
+SUBRUN_STATES = {
+    "queued",
+    "starting",
+    "environment-application-started",
+    "command-started",
+    "command-succeeded",
+    "command-failed",
+    "environment-application-failed",
+    "error",
+    "cancelled",
+}
 
 
-class RunState(Enum):
-    QUEUED = "queued"
-    STARTING = "starting"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
-    ERROR = "error"
+RUN_STATES = {
+    "queued",
+    "starting",
+    "running",
+    "completed",
+    "failed",
+    "cancelled",
+    "error",
+}
 
 
 JobMetadata = namedtuple("JobMetadata", ["name", "description"])
@@ -125,9 +127,8 @@ class EnvironmentStepExecutionSchema(Schema):
     )
     environment_name = fields.String(data_key="environmentName", required=True)
     command = fields.String(required=True)
-    state = EnumField(RunState, by_value=True, required=True)
-    state = EnumField(
-        EnvironmentStepExecutionState, by_value=True, required=True
+    state = fields.String(
+        required=True, validate=OneOf(ENVIRONMENT_STEP_EXECUTION_STATES)
     )
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
@@ -140,7 +141,7 @@ class EnvironmentStepExecutionSchema(Schema):
 class SubrunSummarySchema(Schema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
-    state = EnumField(SubrunState, by_value=True, required=True)
+    state = fields.String(required=True, validate=OneOf(SUBRUN_STATES))
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
 
@@ -152,7 +153,7 @@ class SubrunSummarySchema(Schema):
 class SubrunSchema(Schema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
-    state = EnumField(SubrunState, by_value=True, required=True)
+    state = fields.String(required=True, validate=OneOf(SUBRUN_STATES))
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
     environment_step_executions = fields.Nested(
@@ -170,7 +171,7 @@ class SubrunSchema(Schema):
 class RunSummarySchema(Schema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
-    state = EnumField(RunState, by_value=True, required=True)
+    state = fields.String(required=True, validate=OneOf(RUN_STATES))
     submitted_at = fields.DateTime(data_key="submittedAt", required=True)
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
@@ -183,7 +184,7 @@ class RunSummarySchema(Schema):
 class RunSchema(Schema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
-    state = EnumField(RunState, by_value=True, required=True)
+    state = fields.String(required=True, validate=OneOf(RUN_STATES))
     submitted_at = fields.DateTime(data_key="submittedAt", required=True)
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
