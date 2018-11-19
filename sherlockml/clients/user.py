@@ -17,15 +17,9 @@ from collections import namedtuple
 from enum import Enum
 
 from marshmallow import Schema, fields, post_load
-from marshmallow_enum import EnumField
+from marshmallow.validate import OneOf
 
 from sherlockml.clients.base import BaseClient
-
-
-class GlobalRole(Enum):
-    BASIC_USER = "global-basic-user"
-    FULL_USER = "global-full-user"
-    ADMIN = "global-admin"
 
 
 User = namedtuple(
@@ -50,10 +44,13 @@ class UserSchema(Schema):
     email = fields.Str(required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     enabled = fields.Boolean(required=True)
-    global_roles = fields.List(
-        EnumField(GlobalRole, by_value=True),
+    global_roles = fields.String(
         data_key="globalRoles",
         required=True,
+        many=True,
+        validate=OneOf(
+            "global-basic-user", "global-full-user", "global-admin"
+        ),
     )
 
     @post_load
