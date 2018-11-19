@@ -14,10 +14,9 @@
 
 
 from collections import namedtuple
-from enum import Enum
 
 from marshmallow import Schema, fields, post_load, ValidationError
-from marshmallow_enum import EnumField
+from marshmallow.validate import OneOf
 
 from sherlockml.clients.base import BaseClient
 
@@ -33,13 +32,6 @@ class ServerSizeSchema(Schema):
     @post_load
     def make_server_size(self, data):
         return ServerSize(**data)
-
-
-class ServerStatus(Enum):
-    CREATING = "creating"
-    RUNNING = "running"
-    ERROR = "error"
-    DESTROYED = "destroyed"
 
 
 Service = namedtuple("Service", ["name", "host", "port", "scheme", "uri"])
@@ -92,7 +84,10 @@ class ServerSchema(Schema):
     )
     server_size = fields.Nested(ServerSizeSchema, data_key="instanceSize")
     created_at = fields.DateTime(data_key="createdAt", required=True)
-    status = EnumField(ServerStatus, by_value=True, required=True)
+    status = fields.String(
+        required=True,
+        validate=OneOf(["creating", "running", "error", "destroyed"]),
+    )
     services = fields.Nested(ServiceSchema, many=True, required=True)
 
     @post_load

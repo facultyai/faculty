@@ -22,7 +22,6 @@ from dateutil.tz import UTC
 
 from sherlockml.clients.server import (
     Server,
-    ServerStatus,
     Service,
     ServerSchema,
     ServiceSchema,
@@ -65,7 +64,7 @@ SHARED_SERVER = Server(
     type="jupyter",
     resources=SHARED_RESOURCES,
     created_at=CREATED_AT,
-    status=ServerStatus.RUNNING,
+    status="running",
     services=[SERVICE],
 )
 SHARED_SERVER_BODY = {
@@ -93,7 +92,7 @@ DEDICATED_SERVER = Server(
     type="jupyter",
     resources=DEDICATED_RESOURCES,
     created_at=CREATED_AT,
-    status=ServerStatus.RUNNING,
+    status="running",
     services=[SERVICE],
 )
 DEDICATED_SERVER_BODY = {
