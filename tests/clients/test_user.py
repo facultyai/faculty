@@ -19,7 +19,7 @@ import pytest
 from dateutil.tz import UTC
 from marshmallow import ValidationError
 
-from sherlockml.clients.user import UserClient, User, UserSchema, GlobalRole
+from sherlockml.clients.user import UserClient, User, UserSchema
 from tests.clients.fixtures import PROFILE
 
 USER_ID = uuid.uuid4()
@@ -43,7 +43,7 @@ EXPECTED_USER = User(
     email="test@email.com",
     created_at=CREATED_AT,
     enabled=True,
-    global_roles=[GlobalRole.BASIC_USER, GlobalRole.FULL_USER],
+    global_roles=["global-basic-user", "global-full-user"],
 )
 
 

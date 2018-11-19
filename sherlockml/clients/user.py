@@ -17,7 +17,7 @@ from collections import namedtuple
 from enum import Enum
 
 from marshmallow import Schema, fields, post_load
-from marshmallow.validate import OneOf
+from marshmallow import validate
 
 from sherlockml.clients.base import BaseClient
 
@@ -44,12 +44,12 @@ class UserSchema(Schema):
     email = fields.Str(required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     enabled = fields.Boolean(required=True)
-    global_roles = fields.String(
+    global_roles = fields.List(
+        fields.String,
         data_key="globalRoles",
         required=True,
-        many=True,
-        validate=OneOf(
-            "global-basic-user", "global-full-user", "global-admin"
+        validate=validate.ContainsOnly(
+            ["global-basic-user", "global-full-user", "global-admin"]
         ),
     )
 

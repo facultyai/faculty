@@ -32,17 +32,14 @@ from sherlockml.clients.job import (
     PaginationSchema,
     RunSummary,
     RunSummarySchema,
-    RunState,
     SubrunSummary,
     SubrunSummarySchema,
-    SubrunState,
     Run,
     RunSchema,
     ListRunsResponse,
     ListRunsResponseSchema,
     EnvironmentStepExecution,
     EnvironmentStepExecutionSchema,
-    EnvironmentStepExecutionState,
     Subrun,
     SubrunSchema,
 )
@@ -76,7 +73,7 @@ ENVIRONMENT_STEP_EXECUTION = EnvironmentStepExecution(
     environment_step_id=ENVIRONMENT_STEP_ID,
     environment_name="environment name",
     command="./example-command",
-    state=EnvironmentStepExecutionState.RUNNING,
+    state="running",
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
 )
@@ -93,7 +90,7 @@ ENVIRONMENT_STEP_EXECUTION_BODY = {
 SUBRUN_SUMMARY = SubrunSummary(
     id=SUBRUN_ID,
     subrun_number=1,
-    state=SubrunState.COMMAND_SUCCEEDED,
+    state="command-succeeded",
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
 )
@@ -108,7 +105,7 @@ SUBRUN_SUMMARY_BODY = {
 SUBRUN = Subrun(
     id=SUBRUN_ID,
     subrun_number=2,
-    state=SubrunState.COMMAND_SUCCEEDED,
+    state="command-succeeded",
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
     environment_step_executions=[ENVIRONMENT_STEP_EXECUTION],
@@ -125,7 +122,7 @@ SUBRUN_BODY = {
 RUN_SUMMARY = RunSummary(
     id=RUN_ID,
     run_number=3,
-    state=RunState.COMPLETED,
+    state="completed",
     submitted_at=SUBMITTED_AT,
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
@@ -142,7 +139,7 @@ RUN_SUMMARY_BODY = {
 RUN = Run(
     id=RUN_ID,
     run_number=3,
-    state=RunState.COMPLETED,
+    state="completed",
     submitted_at=SUBMITTED_AT,
     started_at=STARTED_AT,
     ended_at=ENDED_AT,
