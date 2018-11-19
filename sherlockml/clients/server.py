@@ -15,8 +15,7 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load, ValidationError
-from marshmallow.validate import OneOf
+from marshmallow import Schema, fields, post_load, ValidationError, validate
 
 from sherlockml.clients.base import BaseClient
 
@@ -86,7 +85,7 @@ class ServerSchema(Schema):
     created_at = fields.DateTime(data_key="createdAt", required=True)
     status = fields.String(
         required=True,
-        validate=OneOf(["creating", "running", "error", "destroyed"]),
+        validate=validate.OneOf(["creating", "running", "error", "destroyed"]),
     )
     services = fields.Nested(ServiceSchema, many=True, required=True)
 

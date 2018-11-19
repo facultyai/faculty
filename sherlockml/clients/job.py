@@ -14,8 +14,7 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load
-from marshmallow.validate import OneOf
+from marshmallow import Schema, fields, post_load, validate
 
 from sherlockml.clients.base import BaseClient
 
@@ -82,20 +81,11 @@ Subrun = namedtuple(
     ],
 )
 RunSummary = namedtuple(
-    "Run",
-    ["id", "run_number", "state", "submitted_at", "started_at", "ended_at"],
+    "Run", ["id", "run_number", "state", "submitted_at", "started_at", "ended_at"]
 )
 Run = namedtuple(
     "Run",
-    [
-        "id",
-        "run_number",
-        "state",
-        "submitted_at",
-        "started_at",
-        "ended_at",
-        "subruns",
-    ],
+    ["id", "run_number", "state", "submitted_at", "started_at", "ended_at", "subruns"],
 )
 Page = namedtuple("Page", ["start", "limit"])
 Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
@@ -122,13 +112,11 @@ class JobSummarySchema(Schema):
 
 class EnvironmentStepExecutionSchema(Schema):
     environment_id = fields.UUID(data_key="environmentId", required=True)
-    environment_step_id = fields.UUID(
-        data_key="environmentStepId", required=True
-    )
+    environment_step_id = fields.UUID(data_key="environmentStepId", required=True)
     environment_name = fields.String(data_key="environmentName", required=True)
     command = fields.String(required=True)
     state = fields.String(
-        required=True, validate=OneOf(ENVIRONMENT_STEP_EXECUTION_STATES)
+        required=True, validate=validate.OneOf(ENVIRONMENT_STEP_EXECUTION_STATES)
     )
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
@@ -141,7 +129,7 @@ class EnvironmentStepExecutionSchema(Schema):
 class SubrunSummarySchema(Schema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
-    state = fields.String(required=True, validate=OneOf(SUBRUN_STATES))
+    state = fields.String(required=True, validate=validate.OneOf(SUBRUN_STATES))
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
 
@@ -153,7 +141,7 @@ class SubrunSummarySchema(Schema):
 class SubrunSchema(Schema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
-    state = fields.String(required=True, validate=OneOf(SUBRUN_STATES))
+    state = fields.String(required=True, validate=validate.OneOf(SUBRUN_STATES))
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
     environment_step_executions = fields.Nested(
@@ -171,7 +159,7 @@ class SubrunSchema(Schema):
 class RunSummarySchema(Schema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
-    state = fields.String(required=True, validate=OneOf(RUN_STATES))
+    state = fields.String(required=True, validate=validate.OneOf(RUN_STATES))
     submitted_at = fields.DateTime(data_key="submittedAt", required=True)
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
@@ -184,7 +172,7 @@ class RunSummarySchema(Schema):
 class RunSchema(Schema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
-    state = fields.String(required=True, validate=OneOf(RUN_STATES))
+    state = fields.String(required=True, validate=validate.OneOf(RUN_STATES))
     submitted_at = fields.DateTime(data_key="submittedAt", required=True)
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
@@ -362,9 +350,7 @@ class JobClient(BaseClient):
         )
         return self._get(endpoint, RunSchema())
 
-    def get_subrun(
-        self, project_id, job_id, run_identifier, subrun_identifier
-    ):
+    def get_subrun(self, project_id, job_id, run_identifier, subrun_identifier):
         """Get a subrun of a job.
 
         Parameters

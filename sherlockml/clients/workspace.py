@@ -21,8 +21,8 @@ from marshmallow import (
     post_load,
     validates_schema,
     ValidationError,
+    validate
 )
-from marshmallow.validate import OneOf
 
 from sherlockml.clients.base import BaseClient
 
@@ -44,7 +44,7 @@ class FileNodeSchema(Schema):
 
     path = fields.String(required=True)
     name = fields.String(required=True)
-    type = fields.String(required=True, validate=OneOf(["file", "directory"]))
+    type = fields.String(required=True, validate=validate.OneOf(["file", "directory"]))
     last_modified = fields.DateTime(required=True)
     size = fields.Integer(required=True)
     truncated = fields.Boolean()
