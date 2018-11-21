@@ -19,6 +19,7 @@ from marshmallow import Schema, fields, post_load, ValidationError, validate
 
 from sherlockml.clients.base import BaseClient
 
+SERVER_STATUSES = {"creating", "running", "error", "destroyed"}
 
 ServerSize = namedtuple("ServerSize", ["milli_cpus", "memory_mb"])
 
@@ -84,8 +85,7 @@ class ServerSchema(Schema):
     server_size = fields.Nested(ServerSizeSchema, data_key="instanceSize")
     created_at = fields.DateTime(data_key="createdAt", required=True)
     status = fields.String(
-        required=True,
-        validate=validate.OneOf(["creating", "running", "error", "destroyed"]),
+        required=True, validate=validate.OneOf(SERVER_STATUSES)
     )
     services = fields.Nested(ServiceSchema, many=True, required=True)
 

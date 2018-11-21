@@ -14,13 +14,12 @@
 
 
 from collections import namedtuple
-from enum import Enum
 
-from marshmallow import Schema, fields, post_load
-from marshmallow import validate
+from marshmallow import Schema, fields, post_load, validate
 
 from sherlockml.clients.base import BaseClient
 
+GLOBAL_ROLES = {"global-basic-user", "global-full-user", "global-admin"}
 
 User = namedtuple(
     "User",
@@ -48,9 +47,8 @@ class UserSchema(Schema):
         fields.String,
         data_key="globalRoles",
         required=True,
-        validate=validate.ContainsOnly(
-            ["global-basic-user", "global-full-user", "global-admin"]
-        ),
+        many=True,
+        validate=validate.ContainsOnly(GLOBAL_ROLES),
     )
 
     @post_load

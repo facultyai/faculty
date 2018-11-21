@@ -12,24 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import Enum
 from collections import namedtuple
 
 from marshmallow import (
-    Schema,
     fields,
     post_load,
+    Schema,
+    validate,
     validates_schema,
     ValidationError,
-    validate,
 )
 
 from sherlockml.clients.base import BaseClient
 
 
-class FileNodeType(Enum):
-    FILE = "file"
-    DIRECTORY = "directory"
+FILE_NODE_TYPES = {"file", "directory"}
 
 
 File = namedtuple("File", ["path", "name", "last_modified", "size"])
@@ -45,7 +42,7 @@ class FileNodeSchema(Schema):
     path = fields.String(required=True)
     name = fields.String(required=True)
     type = fields.String(
-        required=True, validate=validate.OneOf(["file", "directory"])
+        required=True, validate=validate.OneOf(FILE_NODE_TYPES)
     )
     last_modified = fields.DateTime(required=True)
     size = fields.Integer(required=True)
