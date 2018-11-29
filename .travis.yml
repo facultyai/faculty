@@ -36,5 +36,4 @@ jobs:
         - flake8
         - python setup.py test
       dist: xenial
-      sudo: true
       python: "3.7"
