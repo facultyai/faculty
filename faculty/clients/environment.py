@@ -20,15 +20,28 @@ from marshmallow import Schema, fields, post_load
 from sherlockml.clients.base import BaseClient
 
 
-Environment = namedtuple('Environment',
-                         ['id', 'project_id', 'name', 'author_id'])
+Environment = namedtuple(
+    "Environment",
+    [
+        "id",
+        "project_id",
+        "name",
+        "author_id",
+        "description",
+        "created_at",
+        "updated_at",
+    ],
+)
 
 
 class EnvironmentSchema(Schema):
-    id = fields.UUID(data_key='environmentId', required=True)
-    project_id = fields.UUID(data_key='projectId', required=True)
+    id = fields.UUID(data_key="environmentId", required=True)
+    project_id = fields.UUID(data_key="projectId", required=True)
     name = fields.String(required=True)
-    author_id = fields.UUID(data_key='authorId', required=True)
+    author_id = fields.UUID(data_key="authorId", required=True)
+    description = fields.String(required=True)
+    created_at = fields.DateTime(data_key="createdAt", required=True)
+    updated_at = fields.DateTime(data_key="updatedAt", required=True)
 
     @post_load
     def make_environment(self, data):
@@ -37,8 +50,8 @@ class EnvironmentSchema(Schema):
 
 class EnvironmentClient(BaseClient):
 
-    SERVICE_NAME = 'baskerville'
+    SERVICE_NAME = "baskerville"
 
     def list(self, project_id):
-        endpoint = '/project/{}/environment'.format(project_id)
+        endpoint = "/project/{}/environment".format(project_id)
         return self._get(endpoint, EnvironmentSchema(many=True))
