@@ -64,14 +64,15 @@ class SherlockMLAuth(AuthBase):
     To perform an authenticated request against a SherlockML service, first
     construct an instance of this class:
 
-    >>> auth = SherlockMLAuth('https://hudson.example.sherlockml.net',
+    >>> auth = SherlockMLAuth('https://hudson.services.example.sherlockml.net',
                               your_client_id, your_client_secret)
 
     then pass it as the ``auth`` argument when making a request with
     ``requests``:
 
     >>> import requests
-    >>> requests.get('http://service.example.sherlockml.net', auth=auth)
+    >>> requests.get('https://service.services.example.sherlockml.net',
+                     auth=auth)
 
     You can also set it as the ``auth`` attribute on a
     :class:`requests.Session`, so that subsequent requests will be
