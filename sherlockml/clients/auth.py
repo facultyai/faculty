@@ -71,7 +71,7 @@ class SherlockMLAuth(AuthBase):
     ``requests``:
 
     >>> import requests
-    >>> requests.get('https://service.services.example.sherlockml.net',
+    >>> requests.get('https://servicename.services.example.sherlockml.net',
                      auth=auth)
 
     You can also set it as the ``auth`` attribute on a
