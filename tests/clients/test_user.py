@@ -124,7 +124,10 @@ def test_get_user(mocker):
     )
 
 
-def test_get_all_users(mocker):
+@pytest.mark.parametrize(
+    "is_system, enabled, expected_params", [(None, None, {})]
+)
+def test_get_all_users(mocker, is_system, enabled, expected_params):
     mocker.patch.object(UserClient, "_get", return_value=[EXPECTED_HUMAN_USER])
     schema_mock = mocker.patch("sherlockml.clients.user.UserSchema")
 
@@ -135,7 +138,9 @@ def test_get_all_users(mocker):
     assert users == [EXPECTED_HUMAN_USER]
 
     schema_mock.assert_called_once_with(many=True)
-    UserClient._get.assert_called_once_with("/users", schema_mock.return_value)
+    UserClient._get.assert_called_once_with(
+        "/users", schema_mock.return_value, params=expected_params
+    )
 
 
 def test_set_global_roles(mocker):

@@ -74,7 +74,7 @@ class UserClient(BaseClient):
 
     def get_all_users(self):
         endpoint = "/users"
-        response = self._get(endpoint, UserSchema(many=True))
+        response = self._get(endpoint, UserSchema(many=True), params={})
         return response
 
     def set_global_roles(self, user_id, global_roles):
