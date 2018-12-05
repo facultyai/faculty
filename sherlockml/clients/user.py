@@ -46,14 +46,14 @@ class UserSchema(Schema):
 
     id = fields.UUID(data_key="userId", required=True)
     username = fields.Str(required=True)
-    full_name = fields.Str(data_key="fullName", required=True)
+    full_name = fields.Str(data_key="fullName", missing=None)
     email = fields.Str(required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     enabled = fields.Boolean(required=True)
     global_roles = fields.List(
         EnumField(GlobalRole, by_value=True),
         data_key="globalRoles",
-        required=True,
+        missing=None,
     )
 
     @post_load
