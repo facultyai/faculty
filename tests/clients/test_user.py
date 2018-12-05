@@ -47,10 +47,37 @@ EXPECTED_HUMAN_USER = User(
     global_roles=[GlobalRole.BASIC_USER, GlobalRole.FULL_USER],
 )
 
+TEST_SYSTEM_USER_JSON = {
+    "userId": str(USER_ID),
+    "username": "test-user",
+    "email": "invalid-email",
+    "createdAt": CREATED_AT_STRING,
+    "enabled": True,
+    "isSystem": True,
+}
 
-def test_user_schema():
-    data = UserSchema().load(TEST_HUMAN_USER_JSON)
-    assert data == EXPECTED_HUMAN_USER
+EXPECTED_SYSTEM_USER = User(
+    id=USER_ID,
+    username="test-user",
+    full_name=None,
+    email="invalid-email",
+    created_at=CREATED_AT,
+    enabled=True,
+    global_roles=None,
+)
+
+
+@pytest.mark.parametrize(
+    "body, expected_user",
+    [
+        (TEST_HUMAN_USER_JSON, EXPECTED_HUMAN_USER),
+        (TEST_SYSTEM_USER_JSON, EXPECTED_SYSTEM_USER),
+    ],
+    ids=["human", "system"],
+)
+def test_user_schema(body, expected_user):
+    data = UserSchema().load(body)
+    assert data == expected_user
 
 
 def test_user_schema_invalid():
