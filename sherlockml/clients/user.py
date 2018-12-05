@@ -38,6 +38,7 @@ User = namedtuple(
         "created_at",
         "enabled",
         "global_roles",
+        "is_system",
     ],
 )
 
@@ -55,6 +56,7 @@ class UserSchema(Schema):
         data_key="globalRoles",
         missing=None,
     )
+    is_system = fields.Boolean(data_key="isSystem", required=True)
 
     @post_load
     def make_user(self, data):

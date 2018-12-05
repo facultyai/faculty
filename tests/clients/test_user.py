@@ -45,6 +45,7 @@ EXPECTED_HUMAN_USER = User(
     created_at=CREATED_AT,
     enabled=True,
     global_roles=[GlobalRole.BASIC_USER, GlobalRole.FULL_USER],
+    is_system=False,
 )
 
 TEST_SYSTEM_USER_JSON = {
@@ -64,6 +65,7 @@ EXPECTED_SYSTEM_USER = User(
     created_at=CREATED_AT,
     enabled=True,
     global_roles=None,
+    is_system=True,
 )
 
 
