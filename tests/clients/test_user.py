@@ -135,6 +135,15 @@ def test_get_user(mocker):
         (True, False, {"isSystem": "true", "isDisabled": "true"}),
         (False, False, {"isSystem": "false", "isDisabled": "true"}),
     ],
+    ids=[
+        "basic",
+        "system only",
+        "human only",
+        "enabled only",
+        "disabled only",
+        "system and disabled only",
+        "human and disabled only",
+    ],
 )
 def test_get_all_users(mocker, is_system, enabled, expected_params):
     mocker.patch.object(UserClient, "_get", return_value=[EXPECTED_HUMAN_USER])
