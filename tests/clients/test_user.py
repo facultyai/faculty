@@ -132,6 +132,8 @@ def test_get_user(mocker):
         (False, None, {"isSystem": "false"}),
         (None, True, {"isDisabled": "false"}),
         (None, False, {"isDisabled": "true"}),
+        (True, False, {"isSystem": "true", "isDisabled": "true"}),
+        (False, False, {"isSystem": "false", "isDisabled": "true"}),
     ],
 )
 def test_get_all_users(mocker, is_system, enabled, expected_params):
