@@ -125,7 +125,12 @@ def test_get_user(mocker):
 
 
 @pytest.mark.parametrize(
-    "is_system, enabled, expected_params", [(None, None, {})]
+    "is_system, enabled, expected_params",
+    [
+        (None, None, {}),
+        (True, None, {"isSystem": "true"}),
+        (False, None, {"isSystem": "false"}),
+    ],
 )
 def test_get_all_users(mocker, is_system, enabled, expected_params):
     mocker.patch.object(UserClient, "_get", return_value=[EXPECTED_HUMAN_USER])
@@ -133,7 +138,7 @@ def test_get_all_users(mocker, is_system, enabled, expected_params):
 
     client = UserClient(PROFILE)
 
-    users = client.get_all_users()
+    users = client.get_all_users(is_system=is_system)
 
     assert users == [EXPECTED_HUMAN_USER]
 
