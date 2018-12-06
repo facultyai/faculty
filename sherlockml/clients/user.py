@@ -72,10 +72,12 @@ class UserClient(BaseClient):
         response = self._get(endpoint, UserSchema())
         return response
 
-    def get_all_users(self, is_system=None):
+    def get_all_users(self, is_system=None, enabled=None):
         params = {}
         if is_system is not None:
             params["isSystem"] = "true" if is_system else "false"
+        if enabled is not None:
+            params["isDisabled"] = "false" if enabled else "true"
         endpoint = "/users"
         response = self._get(endpoint, UserSchema(many=True), params=params)
         return response

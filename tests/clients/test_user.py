@@ -130,6 +130,8 @@ def test_get_user(mocker):
         (None, None, {}),
         (True, None, {"isSystem": "true"}),
         (False, None, {"isSystem": "false"}),
+        (None, True, {"isDisabled": "false"}),
+        (None, False, {"isDisabled": "true"}),
     ],
 )
 def test_get_all_users(mocker, is_system, enabled, expected_params):
@@ -138,7 +140,7 @@ def test_get_all_users(mocker, is_system, enabled, expected_params):
 
     client = UserClient(PROFILE)
 
-    users = client.get_all_users(is_system=is_system)
+    users = client.get_all_users(is_system=is_system, enabled=enabled)
 
     assert users == [EXPECTED_HUMAN_USER]
 
