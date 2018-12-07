@@ -38,6 +38,7 @@ User = namedtuple(
         "created_at",
         "enabled",
         "global_roles",
+        "is_system",
     ],
 )
 
@@ -46,15 +47,16 @@ class UserSchema(Schema):
 
     id = fields.UUID(data_key="userId", required=True)
     username = fields.Str(required=True)
-    full_name = fields.Str(data_key="fullName", required=True)
+    full_name = fields.Str(data_key="fullName", missing=None)
     email = fields.Str(required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     enabled = fields.Boolean(required=True)
     global_roles = fields.List(
         EnumField(GlobalRole, by_value=True),
         data_key="globalRoles",
-        required=True,
+        missing=None,
     )
+    is_system = fields.Boolean(data_key="isSystem", required=True)
 
     @post_load
     def make_user(self, data):
@@ -70,9 +72,14 @@ class UserClient(BaseClient):
         response = self._get(endpoint, UserSchema())
         return response
 
-    def get_all_users(self):
+    def get_all_users(self, is_system=None, enabled=None):
+        params = {}
+        if is_system is not None:
+            params["isSystem"] = "true" if is_system else "false"
+        if enabled is not None:
+            params["isDisabled"] = "false" if enabled else "true"
         endpoint = "/users"
-        response = self._get(endpoint, UserSchema(many=True))
+        response = self._get(endpoint, UserSchema(many=True), params=params)
         return response
 
     def set_global_roles(self, user_id, global_roles):
