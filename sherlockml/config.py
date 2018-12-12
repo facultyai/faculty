@@ -73,18 +73,23 @@ def resolve_profile(
 
     resolved_credentials_path = (
         credentials_path
+        or os.getenv("FACULTY_CREDENTIALS_PATH")
         or os.getenv("SHERLOCKML_CREDENTIALS_PATH")
         or default_credentials_path()
     )
 
     resolved_profile_name = (
-        profile_name or os.getenv("SHERLOCKML_PROFILE") or DEFAULT_PROFILE
+        profile_name
+        or os.getenv("FACULTY_PROFILE")
+        or os.getenv("SHERLOCKML_PROFILE")
+        or DEFAULT_PROFILE
     )
 
     profile = load_profile(resolved_credentials_path, resolved_profile_name)
 
     resolved_domain = (
         domain
+        or os.getenv("FACULTY_DOMAIN")
         or os.getenv("SHERLOCKML_DOMAIN")
         or profile.domain
         or DEFAULT_DOMAIN
@@ -92,6 +97,7 @@ def resolve_profile(
 
     resolved_protocol = (
         protocol
+        or os.getenv("FACULTY_PROTOCOL")
         or os.getenv("SHERLOCKML_PROTOCOL")
         or profile.protocol
         or DEFAULT_PROTOCOL
@@ -99,6 +105,7 @@ def resolve_profile(
 
     resolved_client_id = (
         client_id
+        or os.getenv("FACULTY_CLIENT_ID")
         or os.getenv("SHERLOCKML_CLIENT_ID")
         or profile.client_id
         or _raise_credentials_error("client_id")
@@ -106,6 +113,7 @@ def resolve_profile(
 
     resolved_client_secret = (
         client_secret
+        or os.getenv("FACULTY_CLIENT_SECRET")
         or os.getenv("SHERLOCKML_CLIENT_SECRET")
         or profile.client_secret
         or _raise_credentials_error("client_secret")
