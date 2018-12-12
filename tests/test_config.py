@@ -110,15 +110,33 @@ def test_resolve_profile_credentials_path_override(mocker):
     config.load_profile.assert_called_once_with("test/path", "default")
 
 
-def test_resolve_profile_credentials_path_env(mocker):
+@pytest.mark.parametrize(
+    "environment_variable",
+    ["FACULTY_CREDENTIALS_PATH", "SHERLOCKML_CREDENTIALS_PATH"],
+)
+def test_resolve_profile_credentials_path_env(mocker, environment_variable):
     mocker.patch(
         "sherlockml.config.load_profile", return_value=DEFAULT_PROFILE
     )
     path = "/path/to/credentials"
-    mocker.patch.dict(os.environ, {"SHERLOCKML_CREDENTIALS_PATH": path})
+    mocker.patch.dict(os.environ, {environment_variable: path})
 
     assert config.resolve_profile() == DEFAULT_PROFILE
 
+    config.load_profile.assert_called_once_with(path, "default")
+
+
+def test_resolve_profile_credentials_path_env_faculty_precedence(mocker):
+    mocker.patch("sherlockml.config.load_profile")
+    path = "/faculty/credentials"
+    mocker.patch.dict(
+        os.environ,
+        {
+            "FACULTY_CREDENTIALS_PATH": path,
+            "SHERLOCKML_CREDENTIALS_PATH": "ignored",
+        },
+    )
+    config.resolve_profile()
     config.load_profile.assert_called_once_with(path, "default")
 
 
@@ -134,13 +152,29 @@ def test_resolve_profile_profile_name_override(mocker):
     )
 
 
-def test_resolve_profile_profile_name_env(mocker):
+@pytest.mark.parametrize(
+    "environment_variable", ["FACULTY_PROFILE", "SHERLOCKML_PROFILE"]
+)
+def test_resolve_profile_profile_name_env(mocker, environment_variable):
     mocker.patch("sherlockml.config.load_profile", return_value=OTHER_PROFILE)
     mocker.patch("sherlockml.config.default_credentials_path")
-    mocker.patch.dict(os.environ, {"SHERLOCKML_PROFILE": "other"})
+    mocker.patch.dict(os.environ, {environment_variable: "other"})
 
     assert config.resolve_profile() == OTHER_PROFILE
 
+    config.load_profile.assert_called_once_with(
+        config.default_credentials_path.return_value, "other"
+    )
+
+
+def test_resolve_profile_profile_name_env_faculty_precendence(mocker):
+    mocker.patch("sherlockml.config.load_profile", return_value=OTHER_PROFILE)
+    mocker.patch("sherlockml.config.default_credentials_path")
+    mocker.patch.dict(
+        os.environ,
+        {"FACULTY_PROFILE": "other", "SHERLOCKML_PROFILE": "ignored"},
+    )
+    config.resolve_profile()
     config.load_profile.assert_called_once_with(
         config.default_credentials_path.return_value, "other"
     )
@@ -159,17 +193,38 @@ def test_resolve_profile_overrides(mocker):
     assert profile == OTHER_PROFILE
 
 
-def test_resolve_profile_env(mocker):
+@pytest.mark.parametrize("prefix", ["FACULTY", "SHERLOCKML"])
+def test_resolve_profile_env(mocker, prefix):
     mocker.patch(
         "sherlockml.config.load_profile", return_value=DEFAULT_PROFILE
     )
     mocker.patch.dict(
         os.environ,
         {
-            "SHERLOCKML_DOMAIN": "other.domain.com",
-            "SHERLOCKML_PROTOCOL": "other-protocol",
-            "SHERLOCKML_CLIENT_ID": "other-client-id",
-            "SHERLOCKML_CLIENT_SECRET": "other-client-secret",
+            "{}_DOMAIN".format(prefix): "other.domain.com",
+            "{}_PROTOCOL".format(prefix): "other-protocol",
+            "{}_CLIENT_ID".format(prefix): "other-client-id",
+            "{}_CLIENT_SECRET".format(prefix): "other-client-secret",
+        },
+    )
+    assert config.resolve_profile() == OTHER_PROFILE
+
+
+def test_resolve_profile_env_faculty_precedence(mocker):
+    mocker.patch(
+        "sherlockml.config.load_profile", return_value=DEFAULT_PROFILE
+    )
+    mocker.patch.dict(
+        os.environ,
+        {
+            "FACULTY_DOMAIN": "other.domain.com",
+            "FACULTY_PROTOCOL": "other-protocol",
+            "FACULTY_CLIENT_ID": "other-client-id",
+            "FACULTY_CLIENT_SECRET": "other-client-secret",
+            "SHERLOCKML_DOMAIN": "ignored",
+            "SHERLOCKML_PROTOCOL": "ignored",
+            "SHERLOCKML_CLIENT_ID": "ignored",
+            "SHERLOCKML_CLIENT_SECRET": "ignored",
         },
     )
     assert config.resolve_profile() == OTHER_PROFILE
