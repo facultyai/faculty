@@ -108,7 +108,6 @@ class FacultyAuth(AuthBase):
 
 
 class SherlockMLAuth(FacultyAuth):
-
     def __init__(self, *args, **kwargs):
         warnings.warn(
             "SherlockMLAuth has been renamed FacultyAuth - please update "

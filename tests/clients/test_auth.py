@@ -108,5 +108,4 @@ def test_sherlockml_auth(mocker):
     mocker.patch("faculty.clients.auth.AccessTokenClient")
 
     with pytest.warns(UserWarning):
-        SherlockMLAuth(
-            MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)
+        SherlockMLAuth(MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)

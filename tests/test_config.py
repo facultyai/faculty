@@ -87,9 +87,7 @@ def test_default_credentials_path_xdg_home(mocker):
 
 
 def test_resolve_profile(mocker):
-    mocker.patch(
-        "faculty.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     mocker.patch("faculty.config.default_credentials_path")
 
     assert config.resolve_profile() == DEFAULT_PROFILE
@@ -100,9 +98,7 @@ def test_resolve_profile(mocker):
 
 
 def test_resolve_profile_credentials_path_override(mocker):
-    mocker.patch(
-        "faculty.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
 
     profile = config.resolve_profile(credentials_path="test/path")
     assert profile == DEFAULT_PROFILE
@@ -115,9 +111,7 @@ def test_resolve_profile_credentials_path_override(mocker):
     ["FACULTY_CREDENTIALS_PATH", "SHERLOCKML_CREDENTIALS_PATH"],
 )
 def test_resolve_profile_credentials_path_env(mocker, environment_variable):
-    mocker.patch(
-        "faculty.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     path = "/path/to/credentials"
     mocker.patch.dict(os.environ, {environment_variable: path})
 
@@ -181,9 +175,7 @@ def test_resolve_profile_profile_name_env_faculty_precendence(mocker):
 
 
 def test_resolve_profile_overrides(mocker):
-    mocker.patch(
-        "faculty.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     profile = config.resolve_profile(
         domain="other.domain.com",
         protocol="other-protocol",
@@ -195,9 +187,7 @@ def test_resolve_profile_overrides(mocker):
 
 @pytest.mark.parametrize("prefix", ["FACULTY", "SHERLOCKML"])
 def test_resolve_profile_env(mocker, prefix):
-    mocker.patch(
-        "faculty.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     mocker.patch.dict(
         os.environ,
         {
@@ -211,9 +201,7 @@ def test_resolve_profile_env(mocker, prefix):
 
 
 def test_resolve_profile_env_faculty_precedence(mocker):
-    mocker.patch(
-        "faculty.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     mocker.patch.dict(
         os.environ,
         {
