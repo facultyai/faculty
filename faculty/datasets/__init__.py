@@ -22,8 +22,8 @@ import io
 
 from botocore.client import ClientError
 
-from sherlockml.datasets import path, session
-from sherlockml.datasets.session import SherlockMLDatasetsError
+from faculty.datasets import path, session
+from faculty.datasets.session import SherlockMLDatasetsError
 
 
 # For backwards compatability

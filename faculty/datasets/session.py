@@ -17,7 +17,7 @@ import time
 
 import boto3
 
-import sherlockml
+import faculty
 
 
 class SherlockMLDatasetsError(Exception):
@@ -44,7 +44,7 @@ SECRETS_CACHE_TTL = 10
 
 class DatasetsSession(object):
     def __init__(self):
-        self.secret_client = sherlockml.client("secret")
+        self.secret_client = faculty.client("secret")
         self.bucket_cache = {}
         self.secrets_cache = {}
 

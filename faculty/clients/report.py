@@ -16,7 +16,7 @@ from collections import namedtuple
 
 from marshmallow import Schema, fields, post_load
 
-from sherlockml.clients.base import BaseClient
+from faculty.clients.base import BaseClient
 
 Report = namedtuple(
     "Report", ["created_at", "name", "id", "description", "active_version"]

@@ -19,7 +19,7 @@ import pytest
 from dateutil.tz import UTC
 from marshmallow import ValidationError
 
-from sherlockml.clients.log import (
+from faculty.clients.log import (
     LogPart,
     LogPartSchema,
     LogPartsResponse,
@@ -76,7 +76,7 @@ def test_log_parts_response_schema_invalid():
 
 def test_log_client_get_subrun_command_logs(mocker):
     mocker.patch.object(LogClient, "_get", return_value=LOG_PARTS_RESPONSE)
-    schema_mock = mocker.patch("sherlockml.clients.log.LogPartsResponseSchema")
+    schema_mock = mocker.patch("faculty.clients.log.LogPartsResponseSchema")
 
     client = LogClient(PROFILE)
     assert (
@@ -95,7 +95,7 @@ def test_log_client_get_subrun_command_logs(mocker):
 
 def test_log_client_get_subrun_environment_step_logs(mocker):
     mocker.patch.object(LogClient, "_get", return_value=LOG_PARTS_RESPONSE)
-    schema_mock = mocker.patch("sherlockml.clients.log.LogPartsResponseSchema")
+    schema_mock = mocker.patch("faculty.clients.log.LogPartsResponseSchema")
 
     client = LogClient(PROFILE)
     assert (

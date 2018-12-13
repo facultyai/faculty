@@ -18,7 +18,7 @@ import uuid
 import pytest
 from marshmallow import ValidationError
 
-from sherlockml.clients.project import ProjectSchema, Project, ProjectClient
+from faculty.clients.project import ProjectSchema, Project, ProjectClient
 from tests.clients.fixtures import PROFILE
 
 
@@ -45,7 +45,7 @@ def test_project_schema_load_invalid():
 
 def test_project_client_create(mocker):
     mocker.patch.object(ProjectClient, "_post", return_value=PROJECT)
-    schema_mock = mocker.patch("sherlockml.clients.project.ProjectSchema")
+    schema_mock = mocker.patch("faculty.clients.project.ProjectSchema")
 
     client = ProjectClient(PROFILE)
     assert client.create(PROJECT.owner_id, PROJECT.name) == PROJECT
@@ -60,7 +60,7 @@ def test_project_client_create(mocker):
 
 def test_project_client_get(mocker):
     mocker.patch.object(ProjectClient, "_get", return_value=PROJECT)
-    schema_mock = mocker.patch("sherlockml.clients.project.ProjectSchema")
+    schema_mock = mocker.patch("faculty.clients.project.ProjectSchema")
 
     client = ProjectClient(PROFILE)
     assert client.get(PROJECT.id) == PROJECT
@@ -73,7 +73,7 @@ def test_project_client_get(mocker):
 
 def test_project_client_get_by_owner_and_name(mocker):
     mocker.patch.object(ProjectClient, "_get", return_value=PROJECT)
-    schema_mock = mocker.patch("sherlockml.clients.project.ProjectSchema")
+    schema_mock = mocker.patch("faculty.clients.project.ProjectSchema")
 
     client = ProjectClient(PROFILE)
     assert client.get_by_owner_and_name(USER_ID, PROJECT.name) == PROJECT
@@ -87,7 +87,7 @@ def test_project_client_get_by_owner_and_name(mocker):
 
 def test_project_client_list_accessible_by_user(mocker):
     mocker.patch.object(ProjectClient, "_get", return_value=[PROJECT])
-    schema_mock = mocker.patch("sherlockml.clients.project.ProjectSchema")
+    schema_mock = mocker.patch("faculty.clients.project.ProjectSchema")
 
     client = ProjectClient(PROFILE)
     assert client.list_accessible_by_user(USER_ID) == [PROJECT]

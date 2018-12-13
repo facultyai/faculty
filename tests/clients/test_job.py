@@ -19,7 +19,7 @@ import pytest
 from dateutil.tz import UTC
 from marshmallow import ValidationError
 
-from sherlockml.clients.job import (
+from faculty.clients.job import (
     JobMetadata,
     JobMetadataSchema,
     JobSummary,
@@ -324,7 +324,7 @@ def test_schemas_invalid_data(schema_class):
 
 def test_job_client_list(mocker):
     mocker.patch.object(JobClient, "_get", return_value=[JOB_SUMMARY])
-    schema_mock = mocker.patch("sherlockml.clients.job.JobSummarySchema")
+    schema_mock = mocker.patch("faculty.clients.job.JobSummarySchema")
 
     client = JobClient(PROFILE)
     assert client.list(PROJECT_ID) == [JOB_SUMMARY]
@@ -337,7 +337,7 @@ def test_job_client_list(mocker):
 
 def test_job_client_create_run(mocker):
     mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
-    schema_mock = mocker.patch("sherlockml.clients.job.RunIdSchema")
+    schema_mock = mocker.patch("faculty.clients.job.RunIdSchema")
 
     client = JobClient(PROFILE)
     assert (
@@ -369,7 +369,7 @@ def test_job_client_create_run(mocker):
 
 def test_job_client_create_run_default_parameter_value_sets(mocker):
     mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
-    schema_mock = mocker.patch("sherlockml.clients.job.RunIdSchema")
+    schema_mock = mocker.patch("faculty.clients.job.RunIdSchema")
 
     client = JobClient(PROFILE)
     assert client.create_run(PROJECT_ID, JOB_ID) == RUN_ID
@@ -384,7 +384,7 @@ def test_job_client_create_run_default_parameter_value_sets(mocker):
 
 def test_job_client_list_runs(mocker):
     mocker.patch.object(JobClient, "_get", return_value=LIST_RUNS_RESPONSE)
-    schema_mock = mocker.patch("sherlockml.clients.job.ListRunsResponseSchema")
+    schema_mock = mocker.patch("faculty.clients.job.ListRunsResponseSchema")
 
     client = JobClient(PROFILE)
     assert client.list_runs(PROJECT_ID, JOB_ID) == LIST_RUNS_RESPONSE
@@ -399,7 +399,7 @@ def test_job_client_list_runs(mocker):
 
 def test_job_client_list_runs_page(mocker):
     mocker.patch.object(JobClient, "_get", return_value=LIST_RUNS_RESPONSE)
-    schema_mock = mocker.patch("sherlockml.clients.job.ListRunsResponseSchema")
+    schema_mock = mocker.patch("faculty.clients.job.ListRunsResponseSchema")
 
     client = JobClient(PROFILE)
     assert (
@@ -420,7 +420,7 @@ def test_job_client_list_runs_page(mocker):
 )
 def test_job_client_get_run(mocker, run_identifier):
     mocker.patch.object(JobClient, "_get", return_value=RUN)
-    schema_mock = mocker.patch("sherlockml.clients.job.RunSchema")
+    schema_mock = mocker.patch("faculty.clients.job.RunSchema")
 
     client = JobClient(PROFILE)
     assert client.get_run(PROJECT_ID, JOB_ID, run_identifier) == RUN
@@ -442,7 +442,7 @@ def test_job_client_get_run(mocker, run_identifier):
 )
 def test_job_client_get_subrun(mocker, run_identifier, subrun_identifier):
     mocker.patch.object(JobClient, "_get", return_value=SUBRUN)
-    schema_mock = mocker.patch("sherlockml.clients.job.SubrunSchema")
+    schema_mock = mocker.patch("faculty.clients.job.SubrunSchema")
 
     client = JobClient(PROFILE)
     assert (

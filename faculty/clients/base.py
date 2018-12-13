@@ -16,7 +16,7 @@ import requests
 from marshmallow import Schema, fields, ValidationError
 from six.moves import urllib
 
-from sherlockml.clients.auth import SherlockMLAuth
+from faculty.clients.auth import SherlockMLAuth
 
 
 class InvalidResponse(Exception):

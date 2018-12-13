@@ -17,7 +17,7 @@ import uuid
 import pytest
 from marshmallow import ValidationError
 
-from sherlockml.clients.account import (
+from faculty.clients.account import (
     AccountClient,
     Account,
     AccountSchema,
@@ -67,7 +67,7 @@ def test_account_client_authenticated_user_id(mocker):
     )
 
     schema_mock = mocker.patch(
-        "sherlockml.clients.account.AuthenticationResponseSchema"
+        "faculty.clients.account.AuthenticationResponseSchema"
     )
 
     client = AccountClient(PROFILE)

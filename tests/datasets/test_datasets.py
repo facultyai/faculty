@@ -18,7 +18,7 @@ import os
 import posixpath
 import pytest
 
-from sherlockml import datasets
+from faculty import datasets
 
 from tests.datasets.fixtures import (  # noqa: F401
     mock_secret_client,

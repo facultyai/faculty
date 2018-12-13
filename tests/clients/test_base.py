@@ -18,7 +18,7 @@ from collections import namedtuple
 import pytest
 from marshmallow import Schema, fields, post_load
 
-from sherlockml.clients.base import (
+from faculty.clients.base import (
     BaseClient,
     InvalidResponse,
     HTTPError,
@@ -58,13 +58,13 @@ HTTP_METHODS = ["GET", "POST", "PUT", "DELETE"]
 
 
 @pytest.fixture
-def patch_sherlockmlauth(mocker):
+def patch_auth(mocker):
     def _add_auth_headers(request):
         request.headers["Authorization"] = AUTHORIZATION_HEADER_VALUE
         return request
 
     mock_auth = mocker.patch(
-        "sherlockml.clients.base.SherlockMLAuth",
+        "faculty.clients.base.SherlockMLAuth",
         return_value=_add_auth_headers,
     )
 
@@ -93,7 +93,7 @@ class DummyClient(BaseClient):
 SERVICE_URL = "https://test-service.{}".format(PROFILE.domain)
 
 
-def test_get(requests_mock, patch_sherlockmlauth):
+def test_get(requests_mock, patch_auth):
 
     requests_mock.get(
         "{}/test".format(SERVICE_URL),
@@ -105,7 +105,7 @@ def test_get(requests_mock, patch_sherlockmlauth):
     assert client._get("/test", DummySchema()) == DummyObject(foo="bar")
 
 
-def test_post(requests_mock, patch_sherlockmlauth):
+def test_post(requests_mock, patch_auth):
 
     mock = requests_mock.post(
         "{}/test".format(SERVICE_URL),
@@ -120,7 +120,7 @@ def test_post(requests_mock, patch_sherlockmlauth):
     assert mock.last_request.json() == {"test": "payload"}
 
 
-def test_put(requests_mock, patch_sherlockmlauth):
+def test_put(requests_mock, patch_auth):
 
     mock = requests_mock.put(
         "{}/test".format(SERVICE_URL),
@@ -135,7 +135,7 @@ def test_put(requests_mock, patch_sherlockmlauth):
     assert mock.last_request.json() == {"test": "payload"}
 
 
-def test_delete(requests_mock, patch_sherlockmlauth):
+def test_delete(requests_mock, patch_auth):
 
     requests_mock.delete(
         "{}/test".format(SERVICE_URL),
@@ -156,7 +156,7 @@ def test_delete(requests_mock, patch_sherlockmlauth):
 @pytest.mark.parametrize("status_code, exception", BAD_RESPONSE_STATUSES)
 def test_bad_responses(
     requests_mock,
-    patch_sherlockmlauth,
+    patch_auth,
     status_code,
     exception,
     http_method,
@@ -187,7 +187,7 @@ def test_bad_responses(
 @pytest.mark.parametrize("status_code, exception", BAD_RESPONSE_STATUSES)
 def test_raw_bad_responses(
     requests_mock,
-    patch_sherlockmlauth,
+    patch_auth,
     status_code,
     exception,
     http_method,
@@ -211,7 +211,7 @@ def test_raw_bad_responses(
 
 
 @pytest.mark.parametrize("http_method", HTTP_METHODS)
-def test_invalid_json(requests_mock, patch_sherlockmlauth, http_method):
+def test_invalid_json(requests_mock, patch_auth, http_method):
 
     mock_method = getattr(requests_mock, http_method.lower())
     mock_method(
@@ -227,7 +227,7 @@ def test_invalid_json(requests_mock, patch_sherlockmlauth, http_method):
 
 
 @pytest.mark.parametrize("http_method", HTTP_METHODS)
-def test_malformatted_json(requests_mock, patch_sherlockmlauth, http_method):
+def test_malformatted_json(requests_mock, patch_auth, http_method):
 
     mock_method = getattr(requests_mock, http_method.lower())
     mock_method(

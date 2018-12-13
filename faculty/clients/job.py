@@ -18,7 +18,7 @@ from enum import Enum
 from marshmallow import Schema, fields, post_load
 from marshmallow_enum import EnumField
 
-from sherlockml.clients.base import BaseClient
+from faculty.clients.base import BaseClient
 
 
 class EnvironmentStepExecutionState(Enum):

@@ -24,7 +24,7 @@ from marshmallow import (
 )
 from marshmallow_enum import EnumField
 
-from sherlockml.clients.base import BaseClient
+from faculty.clients.base import BaseClient
 
 
 class FileNodeType(Enum):

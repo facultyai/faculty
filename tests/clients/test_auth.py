@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 import pytest
 import pytz
 
-from sherlockml.clients.auth import (
+from faculty.clients.auth import (
     AccessToken,
     AccessTokenClient,
     SherlockMLAuth,
@@ -34,7 +34,7 @@ NOW = datetime.now(tz=pytz.utc)
 
 @pytest.fixture
 def mock_datetime_now(mocker):
-    datetime_mock = mocker.patch("sherlockml.clients.auth.datetime")
+    datetime_mock = mocker.patch("faculty.clients.auth.datetime")
     datetime_mock.now.return_value = NOW
     return datetime_mock
 
@@ -69,7 +69,7 @@ def test_sherlockml_auth(mocker, cached_token):
         MOCK_ACCESS_TOKEN_MATERIAL, NOW + timedelta(minutes=10)
     )
     client_patch = mocker.patch(
-        "sherlockml.clients.auth.AccessTokenClient", return_value=mock_client
+        "faculty.clients.auth.AccessTokenClient", return_value=mock_client
     )
 
     auth = SherlockMLAuth(MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)
@@ -89,7 +89,7 @@ def test_sherlockml_auth_cached(mocker):
 
     mock_client = mocker.Mock()
     mocker.patch(
-        "sherlockml.clients.auth.AccessTokenClient", return_value=mock_client
+        "faculty.clients.auth.AccessTokenClient", return_value=mock_client
     )
 
     auth = SherlockMLAuth(MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)

@@ -14,7 +14,7 @@
 
 import posixpath
 
-from sherlockml.datasets import session
+from faculty.datasets import session
 
 
 def rationalise_projectpath(path):

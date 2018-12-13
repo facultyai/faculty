@@ -14,7 +14,7 @@ DEFAULT_PROTOCOL = "https"
 
 
 def load(path):
-    """Read the SherlockML configuration from a file."""
+    """Read the Faculty configuration from a file."""
 
     parser = ConfigParser()
     parser.read(str(path))
@@ -39,7 +39,7 @@ def load(path):
 
 
 def load_profile(path, profile):
-    """Read a SherlockML profile from a file."""
+    """Read a Faculty profile from a file."""
     profiles = load(path)
     try:
         return profiles[profile]

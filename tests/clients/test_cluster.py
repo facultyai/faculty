@@ -18,7 +18,7 @@ from decimal import Decimal
 import pytest
 from marshmallow import ValidationError
 
-from sherlockml.clients.cluster import NodeType, NodeTypeSchema, ClusterClient
+from faculty.clients.cluster import NodeType, NodeTypeSchema, ClusterClient
 from tests.clients.fixtures import PROFILE
 
 
@@ -136,7 +136,7 @@ def test_cluster_client_list_single_tenanted_node_types(
     mocker, kwargs, query_params
 ):
     mocker.patch.object(ClusterClient, "_get", return_value=[NODE_TYPE])
-    schema_mock = mocker.patch("sherlockml.clients.cluster.NodeTypeSchema")
+    schema_mock = mocker.patch("faculty.clients.cluster.NodeTypeSchema")
 
     client = ClusterClient(PROFILE)
     assert client.list_single_tenanted_node_types(**kwargs) == [NODE_TYPE]
