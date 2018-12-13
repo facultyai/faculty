@@ -24,15 +24,19 @@ class SherlockMLDatasetsError(Exception):
     pass
 
 
+def _raise_missing_project_id_error():
+    raise SherlockMLDatasetsError(
+        "No FACULTY_PROJECT_ID in environment - set the project ID "
+        "explicitly to use outside of SherlockML"
+    )
+
+
 def project_id_from_environment():
-    try:
-        project_id = os.environ["SHERLOCKML_PROJECT_ID"]
-    except KeyError:
-        raise SherlockMLDatasetsError(
-            "No SHERLOCKML_PROJECT_ID in environment - set the project ID "
-            "explicitly to use outside of SherlockML"
-        )
-    return project_id
+    return (
+        os.getenv("FACULTY_PROJECT_ID")
+        or os.getenv("SHERLOCKML_PROJECT_ID")
+        or _raise_missing_project_id_error()
+    )
 
 
 SECRETS_CACHE_TTL = 10
