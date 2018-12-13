@@ -87,7 +87,7 @@ TEST_NON_EXISTENT = "test_non_existent"
 
 @pytest.fixture
 def project_env(monkeypatch):
-    monkeypatch.setenv("SHERLOCKML_PROJECT_ID", str(uuid.uuid4()))
+    monkeypatch.setenv("FACULTY_PROJECT_ID", str(uuid.uuid4()))
 
 
 def _test_secrets():
@@ -109,7 +109,7 @@ def mock_secret_client(mocker):
 @pytest.fixture
 def project_directory(request, mock_secret_client, project_env):
 
-    project_id = os.environ["SHERLOCKML_PROJECT_ID"]
+    project_id = os.environ["FACULTY_PROJECT_ID"]
 
     # Make the empty directory
     _make_file(request, "")
@@ -159,7 +159,7 @@ def _s3_client():
 
 
 def _path_in_bucket(path):
-    project_id = os.environ["SHERLOCKML_PROJECT_ID"]
+    project_id = os.environ["FACULTY_PROJECT_ID"]
     combined = posixpath.join(project_id, path.lstrip("/"))
     if path.endswith("/"):
         return posixpath.normpath(combined) + "/"
