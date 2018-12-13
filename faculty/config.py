@@ -9,7 +9,7 @@ Profile = namedtuple(
 )
 
 DEFAULT_PROFILE = "default"
-DEFAULT_DOMAIN = "services.sherlockml.com"
+DEFAULT_DOMAIN = "services.cloud.my.faculty.ai"
 DEFAULT_PROTOCOL = "https"
 
 
