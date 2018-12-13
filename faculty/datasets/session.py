@@ -20,12 +20,12 @@ import boto3
 import faculty
 
 
-class SherlockMLDatasetsError(Exception):
+class DatasetsError(Exception):
     pass
 
 
 def _raise_missing_project_id_error():
-    raise SherlockMLDatasetsError(
+    raise DatasetsError(
         "No FACULTY_PROJECT_ID in environment - set the project ID "
         "explicitly to use outside of SherlockML"
     )

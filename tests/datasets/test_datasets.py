@@ -147,7 +147,7 @@ def test_put_file_nonexistent_directory(local_file):  # noqa: F811
     ],
 )
 def test_put_file_in_directory(local_file, destination):
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         datasets.put(local_file, destination)
 
 
@@ -189,7 +189,7 @@ def test_get_file_in_directory(remote_file):  # noqa: F811
     with temporary_directory() as dirname:
         # Ensure dirname ends with exactly one '/'
         dirname = dirname.rstrip("/") + "/"
-        with pytest.raises(datasets.SherlockMLDatasetsError):
+        with pytest.raises(datasets.DatasetsError):
             datasets.get(remote_file, dirname)
 
 
@@ -265,7 +265,7 @@ def test_get_tree_bad_local_path(remote_tree, path):
 
 def test_get_non_existent():
     with temporary_directory() as dirname:
-        with pytest.raises(datasets.SherlockMLDatasetsError):
+        with pytest.raises(datasets.DatasetsError):
             datasets.get(
                 TEST_NON_EXISTENT, os.path.join(dirname, TEST_NON_EXISTENT)
             )
@@ -282,13 +282,13 @@ def test_mv(remote_file, destination):
 
 @pytest.mark.parametrize("remote_dir, destination", [("/input/", "/output/")])
 def test_mv_directory_source(remote_dir, destination):
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         datasets.mv(remote_dir, destination)
 
 
 @pytest.mark.parametrize("destination", ["/output/"])  # noqa: F811
 def test_mv_directory_destination(remote_file, destination):
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         datasets.mv(remote_file, destination)
 
 
@@ -306,13 +306,13 @@ def test_cp(remote_file, destination):
     [("/input/no-such-file", "/output/new-file"), ("/input/", "/output/")],
 )
 def test_cp_directory_source(remote_dir, destination):
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         datasets.cp(remote_dir, destination)
 
 
 @pytest.mark.parametrize("destination", ["/output/"])  # noqa: F811
 def test_cp_directory_destination(remote_file, destination):
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         datasets.cp(remote_file, destination)
 
 
@@ -324,7 +324,7 @@ def test_rm(remote_file):  # noqa: F811
 
 @pytest.mark.parametrize("remote_dir", ["/input/", "/input/no-such-file"])
 def test_rm_directory_source(remote_dir):
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         datasets.rm(remote_dir)
 
 
@@ -335,17 +335,17 @@ def test_rmdir(remote_tree):  # noqa: F811
 
 
 def test_rmdir_missing():
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         datasets.rmdir("missing/directory")
 
 
 def test_rmdir_filetype(remote_tree):  # noqa: F811
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         datasets.rmdir(VALID_FILES[0])
 
 
 def test_rmdir_nonempty(remote_tree):  # noqa: F811
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         datasets.rmdir("input/")
 
 
@@ -373,12 +373,12 @@ def test_open_defaultmode(remote_file):  # noqa: F811
 
 
 def test_open_missing():
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         with datasets.open("missing/file", "r"):
             pass
 
 
 def test_open_directory(remote_tree):  # noqa: F811
-    with pytest.raises(datasets.SherlockMLDatasetsError):
+    with pytest.raises(datasets.DatasetsError):
         with datasets.open("/input", "r"):
             pass
