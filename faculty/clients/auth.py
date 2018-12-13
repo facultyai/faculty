@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import warnings
 
 from collections import namedtuple
 from datetime import datetime, timedelta
@@ -109,5 +110,8 @@ class FacultyAuth(AuthBase):
 class SherlockMLAuth(FacultyAuth):
 
     def __init__(self, *args, **kwargs):
-        # TODO Deprecation warning
+        warnings.warn(
+            "SherlockMLAuth has been renamed FacultyAuth - please update "
+            "your code to match the new class name."
+        )
         super().__init__(*args, **kwargs)

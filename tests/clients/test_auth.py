@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from datetime import datetime, timedelta
 
 import pytest
@@ -114,7 +113,9 @@ def test_sherlockml_auth(mocker):
         "faculty.clients.auth.AccessTokenClient", return_value=mock_client
     )
 
-    auth = SherlockMLAuth(MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)
+    with pytest.warns(UserWarning):
+        auth = SherlockMLAuth(
+            MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)
 
     unauthenticated_request = mocker.Mock(headers={})
     request = auth(unauthenticated_request)
