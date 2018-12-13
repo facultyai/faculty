@@ -61,7 +61,7 @@ def ls(prefix="/", project_id=None, show_hidden=False, s3_client=None):
         is to list all files.
     project_id : str, optional
         The project to list files from. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     show_hidden : bool, optional
         Include hidden files in the output. Defaults to False.
@@ -158,7 +158,7 @@ def _isdir(project_path, project_id=None, s3_client=None):
         The path in the project datasets to test.
     project_id : str, optional
         The project to list files from. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     s3_client : botocore.client.S3, optional
         Advanced - a specific boto client for AWS S3 to use.
@@ -188,7 +188,7 @@ def _isfile(project_path, project_id=None, s3_client=None):
         The path in the project directory to test.
     project_id : str, optional
         The project to list files from. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     s3_client : botocore.client.S3, optional
         Advanced - a specific boto client for AWS S3 to use.
@@ -297,7 +297,7 @@ def put(local_path, project_path, project_id=None):
         The destination path in the project directory.
     project_id : str, optional
         The project to put files in. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     """
 
@@ -378,7 +378,7 @@ def get(project_path, local_path, project_id=None):
         The destination path in the local filesystem.
     project_id : str, optional
         The project to get files from. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     """
 
@@ -404,7 +404,7 @@ def mv(source_path, destination_path, project_id=None):
         The destination path in the project datasets.
     project_id : str, optional
         The project to get files from. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     """
 
@@ -425,7 +425,7 @@ def cp(source_path, destination_path, project_id=None, s3_client=None):
         The destination path in the project datasets.
     project_id : str, optional
         The project to get files from. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     s3_client : botocore.client.S3, optional
         Advanced - a specific boto client for AWS S3 to use.
@@ -466,7 +466,7 @@ def rm(project_path, project_id=None, s3_client=None):
         The path in the project datasets to remove.
     project_id : str, optional
         The project to get files from. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     s3_client : botocore.client.S3, optional
         Advanced - a specific boto client for AWS S3 to use.
@@ -493,7 +493,7 @@ def rmdir(project_path, project_id=None):
         The path of the directory to remove.
     project_id : str, optional
         The project to get files from. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     """
 
@@ -527,7 +527,7 @@ def etag(project_path, project_id=None):
         The path in the project datasets.
     project_id : str, optional
         The project to get files from. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCKML_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
 
     Returns
