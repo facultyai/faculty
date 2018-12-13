@@ -22,6 +22,7 @@ from faculty.clients.auth import (
     AccessToken,
     AccessTokenClient,
     FacultyAuth,
+    SherlockMLAuth,
 )
 
 
@@ -102,3 +103,25 @@ def test_faculty_auth_cached(mocker):
 
     assert request.headers["Authorization"] == "Bearer access-token"
     mock_client.get_access_token.assert_not_called()
+
+
+def test_sherlockml_auth(mocker):
+    mock_client = mocker.Mock()
+    mock_client.get_access_token.return_value = AccessToken(
+        MOCK_ACCESS_TOKEN_MATERIAL, NOW + timedelta(minutes=10)
+    )
+    client_patch = mocker.patch(
+        "faculty.clients.auth.AccessTokenClient", return_value=mock_client
+    )
+
+    auth = SherlockMLAuth(MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)
+
+    unauthenticated_request = mocker.Mock(headers={})
+    request = auth(unauthenticated_request)
+
+    assert request.headers["Authorization"] == "Bearer access-token"
+    client_patch.assert_called_once_with(MOCK_HUDSON_URL)
+    mock_client.get_access_token.assert_called_once_with(
+        MOCK_CLIENT_ID, MOCK_CLIENT_SECRET
+    )
+    assert auth.access_token is not None

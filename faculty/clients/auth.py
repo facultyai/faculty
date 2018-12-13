@@ -104,3 +104,10 @@ class FacultyAuth(AuthBase):
         request.headers["Authorization"] = header_content
 
         return request
+
+
+class SherlockMLAuth(FacultyAuth):
+
+    def __init__(self, *args, **kwargs):
+        # TODO Deprecation warning
+        super().__init__(*args, **kwargs)
