@@ -21,7 +21,7 @@ setup(
     description="Python library for interacting with SherlockML.",
     url="https://sherlockml.com",
     author="ASI Data Science",
-    author_email="engineering@asidatascience.com",
+    author_email="opensource@asidatascience.com",
     license="Apache Software License",
     packages=find_packages(),
     use_scm_version={"version_scheme": "post-release"},
