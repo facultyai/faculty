@@ -64,7 +64,7 @@ def patch_auth(mocker):
         return request
 
     mock_auth = mocker.patch(
-        "faculty.clients.base.SherlockMLAuth",
+        "faculty.clients.base.FacultyAuth",
         return_value=_add_auth_headers,
     )
 

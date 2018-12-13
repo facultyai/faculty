@@ -16,7 +16,7 @@ import requests
 from marshmallow import Schema, fields, ValidationError
 from six.moves import urllib
 
-from faculty.clients.auth import SherlockMLAuth
+from faculty.clients.auth import FacultyAuth
 
 
 class InvalidResponse(Exception):
@@ -139,7 +139,7 @@ class BaseClient(object):
     def http_session(self):
         if self._http_session_cache is None:
             self._http_session_cache = requests.Session()
-            self._http_session_cache.auth = SherlockMLAuth(
+            self._http_session_cache.auth = FacultyAuth(
                 _service_url(self.profile, "hudson"),
                 self.profile.client_id,
                 self.profile.client_secret,

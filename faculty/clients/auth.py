@@ -49,7 +49,7 @@ class AccessTokenClient(object):
         return AccessToken(token, expires_at)
 
 
-class SherlockMLAuth(AuthBase):
+class FacultyAuth(AuthBase):
     """Requests auth implementation for accessing Faculty services.
 
     Parameters
@@ -64,8 +64,8 @@ class SherlockMLAuth(AuthBase):
     To perform an authenticated request against a Faculty service, first
     construct an instance of this class:
 
-    >>> auth = SherlockMLAuth('https://hudson.services.example.sherlockml.net',
-                              your_client_id, your_client_secret)
+    >>> auth = FacultyAuth('https://hudson.services.example.sherlockml.net',
+                           your_client_id, your_client_secret)
 
     then pass it as the ``auth`` argument when making a request with
     ``requests``:
