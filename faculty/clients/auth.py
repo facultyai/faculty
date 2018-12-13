@@ -64,7 +64,7 @@ class FacultyAuth(AuthBase):
     To perform an authenticated request against a Faculty service, first
     construct an instance of this class:
 
-    >>> auth = FacultyAuth('https://hudson.services.example.sherlockml.net',
+    >>> auth = FacultyAuth('https://hudson.services.example.my.faculty.ai',
                            your_client_id, your_client_secret)
 
     then pass it as the ``auth`` argument when making a request with
