@@ -72,7 +72,7 @@ class FacultyAuth(AuthBase):
     ``requests``:
 
     >>> import requests
-    >>> requests.get('https://servicename.services.example.faculty.ai',
+    >>> requests.get('https://servicename.services.example.my.faculty.ai',
                      auth=auth)
 
     You can also set it as the ``auth`` attribute on a
