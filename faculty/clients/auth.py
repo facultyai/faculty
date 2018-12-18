@@ -105,12 +105,3 @@ class FacultyAuth(AuthBase):
         request.headers["Authorization"] = header_content
 
         return request
-
-
-class SherlockMLAuth(FacultyAuth):
-    def __init__(self, *args, **kwargs):
-        warnings.warn(
-            "SherlockMLAuth has been renamed FacultyAuth - please update "
-            "your code to match the new class name."
-        )
-        super().__init__(*args, **kwargs)

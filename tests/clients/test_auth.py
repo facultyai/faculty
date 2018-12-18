@@ -21,7 +21,6 @@ from faculty.clients.auth import (
     AccessToken,
     AccessTokenClient,
     FacultyAuth,
-    SherlockMLAuth,
 )
 
 
@@ -102,10 +101,3 @@ def test_faculty_auth_cached(mocker):
 
     assert request.headers["Authorization"] == "Bearer access-token"
     mock_client.get_access_token.assert_not_called()
-
-
-def test_sherlockml_auth(mocker):
-    mocker.patch("faculty.clients.auth.AccessTokenClient")
-
-    with pytest.warns(UserWarning):
-        SherlockMLAuth(MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)
