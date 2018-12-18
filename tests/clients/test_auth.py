@@ -17,11 +17,7 @@ from datetime import datetime, timedelta
 import pytest
 import pytz
 
-from faculty.clients.auth import (
-    AccessToken,
-    AccessTokenClient,
-    FacultyAuth,
-)
+from faculty.clients.auth import AccessToken, AccessTokenClient, FacultyAuth
 
 
 MOCK_HUDSON_URL = "https://hudson.example.com"
