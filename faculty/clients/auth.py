@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from collections import namedtuple
 from datetime import datetime, timedelta
 
@@ -25,7 +24,7 @@ AccessToken = namedtuple("AccessToken", ["token", "expires_at"])
 
 
 class AccessTokenClient(object):
-    """Client for getting access tokens for accessing SherlockML services."""
+    """Client for getting access tokens for accessing Faculty services."""
 
     def __init__(self, hudson_url):
         self._session = requests.Session()
@@ -49,29 +48,29 @@ class AccessTokenClient(object):
         return AccessToken(token, expires_at)
 
 
-class SherlockMLAuth(AuthBase):
-    """Requests auth implementation for accessing SherlockML services.
+class FacultyAuth(AuthBase):
+    """Requests auth implementation for accessing Faculty services.
 
     Parameters
     ----------
     auth_service_url : str
-        The URL of the SherlockML authentication service
+        The URL of the Faculty authentication service
     client_id : str
-        The SherlockML client ID to use for authentication
+        The Faculty client ID to use for authentication
     client_secret : str
         The client secret associated with the client ID
 
-    To perform an authenticated request against a SherlockML service, first
+    To perform an authenticated request against a Faculty service, first
     construct an instance of this class:
 
-    >>> auth = SherlockMLAuth('https://hudson.services.example.sherlockml.net',
-                              your_client_id, your_client_secret)
+    >>> auth = FacultyAuth('https://hudson.services.example.my.faculty.ai',
+                           your_client_id, your_client_secret)
 
     then pass it as the ``auth`` argument when making a request with
     ``requests``:
 
     >>> import requests
-    >>> requests.get('https://servicename.services.example.sherlockml.net',
+    >>> requests.get('https://servicename.services.example.my.faculty.ai',
                      auth=auth)
 
     You can also set it as the ``auth`` attribute on a

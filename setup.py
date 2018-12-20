@@ -17,8 +17,8 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name="sherlockml",
-    description="Python library for interacting with SherlockML.",
+    name="faculty",
+    description="Python library for interacting with the Faculty platform.",
     url="https://sherlockml.com",
     author="ASI Data Science",
     author_email="opensource@asidatascience.com",

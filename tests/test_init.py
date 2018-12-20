@@ -13,15 +13,15 @@
 # limitations under the License.
 
 
-import sherlockml
+import faculty
 
 
 def test_client(mocker):
-    profile_mock = mocker.patch("sherlockml.config.resolve_profile")
-    for_resource_mock = mocker.patch("sherlockml.clients.for_resource")
+    profile_mock = mocker.patch("faculty.config.resolve_profile")
+    for_resource_mock = mocker.patch("faculty.clients.for_resource")
 
     config_overrides = {"foo": "bar"}
-    sherlockml.client("test-resource", **config_overrides)
+    faculty.client("test-resource", **config_overrides)
 
     profile_mock.assert_called_once_with(**config_overrides)
     for_resource_mock.assert_called_once_with("test-resource")

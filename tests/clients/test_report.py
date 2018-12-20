@@ -19,7 +19,7 @@ from dateutil.tz import UTC
 import pytest
 from marshmallow import ValidationError
 
-from sherlockml.clients.report import (
+from faculty.clients.report import (
     Report,
     ReportSchema,
     ReportWithVersions,
@@ -110,7 +110,7 @@ def test_versioned_report_schema():
 
 def test_report_client_list(mocker):
     mocker.patch.object(ReportClient, "_get", return_value=[REPORT])
-    schema_mock = mocker.patch("sherlockml.clients.report.ReportSchema")
+    schema_mock = mocker.patch("faculty.clients.report.ReportSchema")
 
     client = ReportClient(PROFILE)
 
@@ -125,7 +125,7 @@ def test_report_client_list(mocker):
 
 def test_report_client_get(mocker):
     mocker.patch.object(ReportClient, "_get", return_value=REPORT)
-    schema_mock = mocker.patch("sherlockml.clients.report.ReportSchema")
+    schema_mock = mocker.patch("faculty.clients.report.ReportSchema")
 
     client = ReportClient(PROFILE)
 
@@ -141,7 +141,7 @@ def test_report_client_get(mocker):
 def test_report_client_get_with_versions(mocker):
     mocker.patch.object(ReportClient, "_get", return_value=VERSIONED_REPORT)
     schema_mock = mocker.patch(
-        "sherlockml.clients.report.ReportWithVersionsSchema"
+        "faculty.clients.report.ReportWithVersionsSchema"
     )
 
     client = ReportClient(PROFILE)
@@ -157,7 +157,7 @@ def test_report_client_get_with_versions(mocker):
 
 def test_report_client_create(mocker):
     mocker.patch.object(ReportClient, "_post", return_value=REPORT)
-    schema_mock = mocker.patch("sherlockml.clients.report.ReportSchema")
+    schema_mock = mocker.patch("faculty.clients.report.ReportSchema")
 
     client = ReportClient(PROFILE)
 
@@ -189,7 +189,7 @@ def test_report_client_create(mocker):
 
 def test_report_client_create_version(mocker):
     mocker.patch.object(ReportClient, "_post", return_value=ACTIVE_VERSION)
-    schema_mock = mocker.patch("sherlockml.clients.report.ReportVersionSchema")
+    schema_mock = mocker.patch("faculty.clients.report.ReportVersionSchema")
 
     client = ReportClient(PROFILE)
 

@@ -15,14 +15,14 @@
 
 import pytest
 
-import sherlockml.clients
-from sherlockml.clients.account import AccountClient
+import faculty.clients
+from faculty.clients.account import AccountClient
 
 
 def test_for_resource():
-    assert sherlockml.clients.for_resource("account") is AccountClient
+    assert faculty.clients.for_resource("account") is AccountClient
 
 
 def test_for_resource_missing():
     with pytest.raises(ValueError):
-        sherlockml.clients.for_resource("missing")
+        faculty.clients.for_resource("missing")

@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from sherlockml import config
+from faculty import config
 
 
 SAMPLE_CONFIG_CONTENT = """
@@ -67,7 +67,7 @@ def test_load_missing():
     [("default", DEFAULT_PROFILE), ("missing profile", EMPTY_PROFILE)],
 )
 def test_load_profile(mocker, profile_name, expected_profile):
-    mocker.patch("sherlockml.config.load", return_value=SAMPLE_CONFIG)
+    mocker.patch("faculty.config.load", return_value=SAMPLE_CONFIG)
 
     assert config.load_profile("test/path", profile_name) == expected_profile
 
@@ -87,10 +87,8 @@ def test_default_credentials_path_xdg_home(mocker):
 
 
 def test_resolve_profile(mocker):
-    mocker.patch(
-        "sherlockml.config.load_profile", return_value=DEFAULT_PROFILE
-    )
-    mocker.patch("sherlockml.config.default_credentials_path")
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
+    mocker.patch("faculty.config.default_credentials_path")
 
     assert config.resolve_profile() == DEFAULT_PROFILE
 
@@ -100,9 +98,7 @@ def test_resolve_profile(mocker):
 
 
 def test_resolve_profile_credentials_path_override(mocker):
-    mocker.patch(
-        "sherlockml.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
 
     profile = config.resolve_profile(credentials_path="test/path")
     assert profile == DEFAULT_PROFILE
@@ -115,9 +111,7 @@ def test_resolve_profile_credentials_path_override(mocker):
     ["FACULTY_CREDENTIALS_PATH", "SHERLOCKML_CREDENTIALS_PATH"],
 )
 def test_resolve_profile_credentials_path_env(mocker, environment_variable):
-    mocker.patch(
-        "sherlockml.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     path = "/path/to/credentials"
     mocker.patch.dict(os.environ, {environment_variable: path})
 
@@ -127,7 +121,7 @@ def test_resolve_profile_credentials_path_env(mocker, environment_variable):
 
 
 def test_resolve_profile_credentials_path_env_faculty_precedence(mocker):
-    mocker.patch("sherlockml.config.load_profile")
+    mocker.patch("faculty.config.load_profile")
     path = "/faculty/credentials"
     mocker.patch.dict(
         os.environ,
@@ -141,8 +135,8 @@ def test_resolve_profile_credentials_path_env_faculty_precedence(mocker):
 
 
 def test_resolve_profile_profile_name_override(mocker):
-    mocker.patch("sherlockml.config.load_profile", return_value=OTHER_PROFILE)
-    mocker.patch("sherlockml.config.default_credentials_path")
+    mocker.patch("faculty.config.load_profile", return_value=OTHER_PROFILE)
+    mocker.patch("faculty.config.default_credentials_path")
 
     profile = config.resolve_profile(profile_name="other")
     assert profile == OTHER_PROFILE
@@ -156,8 +150,8 @@ def test_resolve_profile_profile_name_override(mocker):
     "environment_variable", ["FACULTY_PROFILE", "SHERLOCKML_PROFILE"]
 )
 def test_resolve_profile_profile_name_env(mocker, environment_variable):
-    mocker.patch("sherlockml.config.load_profile", return_value=OTHER_PROFILE)
-    mocker.patch("sherlockml.config.default_credentials_path")
+    mocker.patch("faculty.config.load_profile", return_value=OTHER_PROFILE)
+    mocker.patch("faculty.config.default_credentials_path")
     mocker.patch.dict(os.environ, {environment_variable: "other"})
 
     assert config.resolve_profile() == OTHER_PROFILE
@@ -168,8 +162,8 @@ def test_resolve_profile_profile_name_env(mocker, environment_variable):
 
 
 def test_resolve_profile_profile_name_env_faculty_precendence(mocker):
-    mocker.patch("sherlockml.config.load_profile", return_value=OTHER_PROFILE)
-    mocker.patch("sherlockml.config.default_credentials_path")
+    mocker.patch("faculty.config.load_profile", return_value=OTHER_PROFILE)
+    mocker.patch("faculty.config.default_credentials_path")
     mocker.patch.dict(
         os.environ,
         {"FACULTY_PROFILE": "other", "SHERLOCKML_PROFILE": "ignored"},
@@ -181,9 +175,7 @@ def test_resolve_profile_profile_name_env_faculty_precendence(mocker):
 
 
 def test_resolve_profile_overrides(mocker):
-    mocker.patch(
-        "sherlockml.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     profile = config.resolve_profile(
         domain="other.domain.com",
         protocol="other-protocol",
@@ -195,9 +187,7 @@ def test_resolve_profile_overrides(mocker):
 
 @pytest.mark.parametrize("prefix", ["FACULTY", "SHERLOCKML"])
 def test_resolve_profile_env(mocker, prefix):
-    mocker.patch(
-        "sherlockml.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     mocker.patch.dict(
         os.environ,
         {
@@ -211,9 +201,7 @@ def test_resolve_profile_env(mocker, prefix):
 
 
 def test_resolve_profile_env_faculty_precedence(mocker):
-    mocker.patch(
-        "sherlockml.config.load_profile", return_value=DEFAULT_PROFILE
-    )
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     mocker.patch.dict(
         os.environ,
         {
@@ -232,7 +220,7 @@ def test_resolve_profile_env_faculty_precedence(mocker):
 
 def test_resolve_profile_defaults(mocker):
     mocker.patch(
-        "sherlockml.config.load_profile", return_value=CREDENTIALS_ONLY_PROFILE
+        "faculty.config.load_profile", return_value=CREDENTIALS_ONLY_PROFILE
     )
     profile = config.resolve_profile()
     assert profile == config.Profile(
@@ -245,7 +233,7 @@ def test_resolve_profile_defaults(mocker):
 
 def test_resolve_profile_missing_client_id(mocker):
     mocker.patch(
-        "sherlockml.config.load_profile", return_value=PROFILE_WITHOUT_ID
+        "faculty.config.load_profile", return_value=PROFILE_WITHOUT_ID
     )
     with pytest.raises(config.CredentialsError, match="client_id"):
         config.resolve_profile()
@@ -253,7 +241,7 @@ def test_resolve_profile_missing_client_id(mocker):
 
 def test_resolve_profile_missing_client_secret(mocker):
     mocker.patch(
-        "sherlockml.config.load_profile", return_value=PROFILE_WITHOUT_SECRET
+        "faculty.config.load_profile", return_value=PROFILE_WITHOUT_SECRET
     )
     with pytest.raises(config.CredentialsError, match="client_secret"):
         config.resolve_profile()

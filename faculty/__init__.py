@@ -13,11 +13,11 @@
 # limitations under the License.
 
 
-import sherlockml.config
-import sherlockml.clients
+import faculty.config
+import faculty.clients
 
 
 def client(resource, *args, **kwargs):
-    profile = sherlockml.config.resolve_profile(*args, **kwargs)
-    client_class = sherlockml.clients.for_resource(resource)
+    profile = faculty.config.resolve_profile(*args, **kwargs)
+    client_class = faculty.clients.for_resource(resource)
     return client_class(profile)

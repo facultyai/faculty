@@ -17,7 +17,7 @@ from collections import namedtuple
 
 from marshmallow import Schema, fields, post_load
 
-from sherlockml.clients.base import BaseClient
+from faculty.clients.base import BaseClient
 
 
 Account = namedtuple("Account", ["user_id"])

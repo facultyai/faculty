@@ -19,7 +19,7 @@ from enum import Enum
 from marshmallow import Schema, fields, post_load, ValidationError
 from marshmallow_enum import EnumField
 
-from sherlockml.clients.base import BaseClient
+from faculty.clients.base import BaseClient
 
 
 ServerSize = namedtuple("ServerSize", ["milli_cpus", "memory_mb"])

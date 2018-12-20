@@ -20,7 +20,7 @@ from uuid import uuid4
 
 from marshmallow import ValidationError
 
-from sherlockml.clients.workspace import (
+from faculty.clients.workspace import (
     Directory,
     File,
     FileNodeSchema,
@@ -102,9 +102,7 @@ def test_list_response_schema_invalid():
 
 def test_workspace_client_get(mocker):
     mocker.patch.object(WorkspaceClient, "_get", return_value=LIST_RESPONSE)
-    schema_mock = mocker.patch(
-        "sherlockml.clients.workspace.ListResponseSchema"
-    )
+    schema_mock = mocker.patch("faculty.clients.workspace.ListResponseSchema")
 
     client = WorkspaceClient(PROFILE)
     assert client.list(

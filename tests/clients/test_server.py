@@ -20,7 +20,7 @@ import pytest
 from marshmallow import ValidationError
 from dateutil.tz import UTC
 
-from sherlockml.clients.server import (
+from faculty.clients.server import (
     Server,
     ServerStatus,
     Service,
@@ -157,7 +157,7 @@ def test_server_id_schema_invalid():
 
 def test_server_client_create_shared(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
-    schema_mock = mocker.patch("sherlockml.clients.server.ServerIdSchema")
+    schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
 
     client = ServerClient(PROFILE)
 
@@ -200,7 +200,7 @@ def test_server_client_create_shared(mocker):
 
 def test_server_client_create_dedicated(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
-    schema_mock = mocker.patch("sherlockml.clients.server.ServerIdSchema")
+    schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
 
     client = ServerClient(PROFILE)
 
@@ -239,7 +239,7 @@ def test_server_client_create_dedicated(mocker):
 
 def test_server_client_create_minimal(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
-    schema_mock = mocker.patch("sherlockml.clients.server.ServerIdSchema")
+    schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
 
     client = ServerClient(PROFILE)
 
@@ -266,7 +266,7 @@ def test_server_client_create_minimal(mocker):
 
 def test_server_client_get(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=SHARED_SERVER)
-    schema_mock = mocker.patch("sherlockml.clients.server.ServerSchema")
+    schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
 
     client = ServerClient(PROFILE)
 
@@ -281,7 +281,7 @@ def test_server_client_get(mocker):
 
 def test_server_client_list(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
-    schema_mock = mocker.patch("sherlockml.clients.server.ServerSchema")
+    schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
 
     client = ServerClient(PROFILE)
 
@@ -297,7 +297,7 @@ def test_server_client_list(mocker):
 
 def test_server_client_list_filter_name(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
-    schema_mock = mocker.patch("sherlockml.clients.server.ServerSchema")
+    schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
 
     client = ServerClient(PROFILE)
 

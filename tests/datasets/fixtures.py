@@ -23,7 +23,7 @@ import uuid
 import boto3
 import pytest
 
-from sherlockml.clients.secret import DatasetsSecrets
+from faculty.clients.secret import DatasetsSecrets
 
 TEST_BUCKET_NAME = "sml-sfs-test"
 
@@ -103,7 +103,7 @@ def _test_secrets():
 def mock_secret_client(mocker):
     mock_client = mocker.Mock()
     mock_client.datasets_secrets.return_value = _test_secrets()
-    mocker.patch("sherlockml.client", return_value=mock_client)
+    mocker.patch("faculty.client", return_value=mock_client)
 
 
 @pytest.fixture

@@ -12,17 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from datetime import datetime, timedelta
 
 import pytest
 import pytz
 
-from sherlockml.clients.auth import (
-    AccessToken,
-    AccessTokenClient,
-    SherlockMLAuth,
-)
+from faculty.clients.auth import AccessToken, AccessTokenClient, FacultyAuth
 
 
 MOCK_HUDSON_URL = "https://hudson.example.com"
@@ -34,7 +29,7 @@ NOW = datetime.now(tz=pytz.utc)
 
 @pytest.fixture
 def mock_datetime_now(mocker):
-    datetime_mock = mocker.patch("sherlockml.clients.auth.datetime")
+    datetime_mock = mocker.patch("faculty.clients.auth.datetime")
     datetime_mock.now.return_value = NOW
     return datetime_mock
 
@@ -62,17 +57,17 @@ def test_access_token_client(requests_mock, mock_datetime_now):
     "cached_token",
     [None, AccessToken("old-token", NOW - timedelta(minutes=10))],
 )
-def test_sherlockml_auth(mocker, cached_token):
+def test_faculty_auth(mocker, cached_token):
 
     mock_client = mocker.Mock()
     mock_client.get_access_token.return_value = AccessToken(
         MOCK_ACCESS_TOKEN_MATERIAL, NOW + timedelta(minutes=10)
     )
     client_patch = mocker.patch(
-        "sherlockml.clients.auth.AccessTokenClient", return_value=mock_client
+        "faculty.clients.auth.AccessTokenClient", return_value=mock_client
     )
 
-    auth = SherlockMLAuth(MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)
+    auth = FacultyAuth(MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)
 
     unauthenticated_request = mocker.Mock(headers={})
     request = auth(unauthenticated_request)
@@ -85,14 +80,14 @@ def test_sherlockml_auth(mocker, cached_token):
     assert auth.access_token is not None
 
 
-def test_sherlockml_auth_cached(mocker):
+def test_faculty_auth_cached(mocker):
 
     mock_client = mocker.Mock()
     mocker.patch(
-        "sherlockml.clients.auth.AccessTokenClient", return_value=mock_client
+        "faculty.clients.auth.AccessTokenClient", return_value=mock_client
     )
 
-    auth = SherlockMLAuth(MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)
+    auth = FacultyAuth(MOCK_HUDSON_URL, MOCK_CLIENT_ID, MOCK_CLIENT_SECRET)
     auth.access_token = AccessToken(
         MOCK_ACCESS_TOKEN_MATERIAL, NOW + timedelta(minutes=10)
     )

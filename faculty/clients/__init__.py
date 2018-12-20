@@ -13,16 +13,16 @@
 # limitations under the License.
 
 
-from sherlockml.clients.account import AccountClient
-from sherlockml.clients.cluster import ClusterClient
-from sherlockml.clients.job import JobClient
-from sherlockml.clients.log import LogClient
-from sherlockml.clients.project import ProjectClient
-from sherlockml.clients.report import ReportClient
-from sherlockml.clients.secret import SecretClient
-from sherlockml.clients.server import ServerClient
-from sherlockml.clients.user import UserClient
-from sherlockml.clients.workspace import WorkspaceClient
+from faculty.clients.account import AccountClient
+from faculty.clients.cluster import ClusterClient
+from faculty.clients.job import JobClient
+from faculty.clients.log import LogClient
+from faculty.clients.project import ProjectClient
+from faculty.clients.report import ReportClient
+from faculty.clients.secret import SecretClient
+from faculty.clients.server import ServerClient
+from faculty.clients.user import UserClient
+from faculty.clients.workspace import WorkspaceClient
 
 
 CLIENT_FOR_RESOURCE = {

@@ -16,7 +16,7 @@
 import pytest
 from marshmallow import ValidationError
 
-from sherlockml.clients.secret import DatasetsSecrets, DatasetsSecretsSchema
+from faculty.clients.secret import DatasetsSecrets, DatasetsSecretsSchema
 
 
 TEST_SECRETS = DatasetsSecrets(

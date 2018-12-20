@@ -14,7 +14,7 @@
 
 import pytest
 
-from sherlockml.datasets import path
+from faculty.datasets import path
 
 
 @pytest.mark.parametrize(

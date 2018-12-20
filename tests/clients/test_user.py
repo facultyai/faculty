@@ -19,7 +19,7 @@ import pytest
 from dateutil.tz import UTC
 from marshmallow import ValidationError
 
-from sherlockml.clients.user import UserClient, User, UserSchema, GlobalRole
+from faculty.clients.user import UserClient, User, UserSchema, GlobalRole
 from tests.clients.fixtures import PROFILE
 
 USER_ID = uuid.uuid4()
@@ -110,7 +110,7 @@ def test_user_schema_invalid_global_role():
 
 def test_get_user(mocker):
     mocker.patch.object(UserClient, "_get", return_value=EXPECTED_HUMAN_USER)
-    schema_mock = mocker.patch("sherlockml.clients.user.UserSchema")
+    schema_mock = mocker.patch("faculty.clients.user.UserSchema")
 
     client = UserClient(PROFILE)
 
@@ -147,7 +147,7 @@ def test_get_user(mocker):
 )
 def test_get_all_users(mocker, is_system, enabled, expected_params):
     mocker.patch.object(UserClient, "_get", return_value=[EXPECTED_HUMAN_USER])
-    schema_mock = mocker.patch("sherlockml.clients.user.UserSchema")
+    schema_mock = mocker.patch("faculty.clients.user.UserSchema")
 
     client = UserClient(PROFILE)
 
@@ -163,7 +163,7 @@ def test_get_all_users(mocker, is_system, enabled, expected_params):
 
 def test_set_global_roles(mocker):
     mocker.patch.object(UserClient, "_put")
-    schema_mock = mocker.patch("sherlockml.clients.user.UserSchema")
+    schema_mock = mocker.patch("faculty.clients.user.UserSchema")
 
     client = UserClient(PROFILE)
 

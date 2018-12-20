@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from sherlockml.config import Profile
+from faculty.config import Profile
 
 PROFILE = Profile(
     domain="test.domain.com",

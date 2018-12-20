@@ -17,15 +17,15 @@ import time
 
 import boto3
 
-import sherlockml
+import faculty
 
 
-class SherlockMLDatasetsError(Exception):
+class DatasetsError(Exception):
     pass
 
 
 def _raise_missing_project_id_error():
-    raise SherlockMLDatasetsError(
+    raise DatasetsError(
         "No FACULTY_PROJECT_ID in environment - set the project ID "
         "explicitly to use outside of SherlockML"
     )
@@ -44,7 +44,7 @@ SECRETS_CACHE_TTL = 10
 
 class DatasetsSession(object):
     def __init__(self):
-        self.secret_client = sherlockml.client("secret")
+        self.secret_client = faculty.client("secret")
         self.bucket_cache = {}
         self.secrets_cache = {}
 

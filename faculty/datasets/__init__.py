@@ -22,12 +22,12 @@ import io
 
 from botocore.client import ClientError
 
-from sherlockml.datasets import path, session
-from sherlockml.datasets.session import SherlockMLDatasetsError
+from faculty.datasets import path, session
+from faculty.datasets.session import DatasetsError
 
 
-# For backwards compatability
-SherlockMLFileSystemError = SherlockMLDatasetsError
+# For backwards compatibility
+SherlockMLDatasetsError = DatasetsError
 
 
 def _s3_client(project_id=None):
@@ -246,7 +246,7 @@ def _put_file(local_path, project_path, project_id, s3_client):
             "source path {} is a normal file - please provide a full "
             "destination path"
         ).format(repr(project_path), repr(local_path))
-        raise SherlockMLDatasetsError(msg)
+        raise DatasetsError(msg)
 
     s3_client.upload_file(
         local_path,
@@ -318,7 +318,7 @@ def _get_file(project_path, local_path, project_id, s3_client):
             "source path {} is a normal file - please provide a full "
             "destination path"
         ).format(repr(project_path), repr(local_path))
-        raise SherlockMLDatasetsError(msg)
+        raise DatasetsError(msg)
 
     bucket = _bucket(project_id)
     bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
@@ -328,7 +328,7 @@ def _get_file(project_path, local_path, project_id, s3_client):
     except ClientError as err:
         if "404" in err.args[0]:
             msg = "no file {} in project".format(repr(project_path))
-            raise SherlockMLDatasetsError(msg)
+            raise DatasetsError(msg)
         else:
             raise
 
@@ -435,10 +435,10 @@ def cp(source_path, destination_path, project_id=None, s3_client=None):
         s3_client = _s3_client(project_id)
 
     if not _isfile(source_path, project_id, s3_client):
-        raise SherlockMLDatasetsError("source_path must be a file")
+        raise DatasetsError("source_path must be a file")
 
     if destination_path.endswith("/"):
-        raise SherlockMLDatasetsError("destination_path must be a file path")
+        raise DatasetsError("destination_path must be a file path")
 
     bucket = _bucket(project_id)
     source_bucket_path = path.projectpath_to_bucketpath(
@@ -476,7 +476,7 @@ def rm(project_path, project_id=None, s3_client=None):
         s3_client = _s3_client(project_id)
 
     if not _isfile(project_path, project_id, s3_client):
-        raise SherlockMLDatasetsError("not a file")
+        raise DatasetsError("not a file")
 
     bucket = _bucket(project_id)
     bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
@@ -500,13 +500,13 @@ def rmdir(project_path, project_id=None):
     s3_client = _s3_client(project_id)
 
     if not _isdir(project_path, project_id, s3_client):
-        raise SherlockMLDatasetsError("not a directory")
+        raise DatasetsError("not a directory")
 
     contents = ls(
         project_path, project_id, show_hidden=True, s3_client=s3_client
     )
     if not len(contents) == 1:
-        raise SherlockMLDatasetsError("directory is not empty")
+        raise DatasetsError("directory is not empty")
 
     # Directory paths must end with '/'
     if not project_path.endswith("/"):
@@ -567,7 +567,7 @@ def open(project_path, mode="r", temp_dir=None, **kwargs):
     """
 
     if _isdir(project_path):
-        raise SherlockMLDatasetsError("Can't open directories.")
+        raise DatasetsError("Can't open directories.")
 
     if any(char in mode for char in ("w", "a", "x")):
         raise NotImplementedError("Currently, only reading is implemented.")
