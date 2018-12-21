@@ -1,5 +1,5 @@
-sherlockml
-==========
+faculty
+=======
 
 .. image:: https://travis-ci.org/ASIDataScience/faculty.svg?branch=master
     :target: https://travis-ci.org/ASIDataScience/faculty
