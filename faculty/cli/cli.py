@@ -980,7 +980,7 @@ def job_run_logs(project, job, run):
 
     project_id, job_id = _resolve_job(project, job)
 
-    job_client = faculty.client("job") 
+    job_client = faculty.client("job")
     run_details = job_client.get_run(project_id, job_id, run.run_number)
     if run.subrun_number is not None:
         subrun_number = run.subrun_number

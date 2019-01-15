@@ -17,6 +17,7 @@
 import faculty.cli.client
 import faculty.cli.config
 
+
 class BaskervilleError(faculty.cli.client.FacultyServiceError):
     """Exception for errors interacting with Baskerville."""
 

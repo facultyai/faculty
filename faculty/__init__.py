@@ -18,6 +18,7 @@ import faculty.clients
 import faculty.cli
 import faculty.cli.cli
 
+
 def client(resource, *args, **kwargs):
     profile = faculty.config.resolve_profile(*args, **kwargs)
     client_class = faculty.clients.for_resource(resource)
