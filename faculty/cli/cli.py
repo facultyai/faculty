@@ -32,21 +32,21 @@ from distutils.version import StrictVersion
 
 import click
 import requests
-import faculty.config
-import faculty.cli.auth
 from tabulate import tabulate
 
 import faculty.cli.auth
-import faculty.cli.config
 import faculty.cli.baskerville
 import faculty.cli.casebook
 import faculty.cli.client
+import faculty.cli.config
 import faculty.cli.galleon
 import faculty.cli.hound
 import faculty.cli.parse
 import faculty.cli.shell
 import faculty.cli.update
 import faculty.cli.version
+import faculty.config
+from faculty.clients.base import NotFound
 
 SSH_OPTIONS = [
     "-o",
@@ -72,7 +72,7 @@ def _print_and_exit(msg, code):
 
 def _get_pypi_versions():
     """List releases available from PyPI."""
-    ## TODO needs to point to the new repo
+    # TODO needs to point to the new repo
     response = requests.get("https://pypi.python.org/pypi/sml/json", timeout=1)
     versions = response.json()["releases"].keys()
     return [StrictVersion(v) for v in versions]
@@ -146,7 +146,7 @@ def _ensure_creds_file_present():
     except IOError:
         msg = textwrap.dedent(
             """\
-        It looks like this is the first time you've used the faculty cli on 
+        It looks like this is the first time you've used the faculty cli on
         this computer, so you must enter your Faculty credentials. They'll
         be saved so you don't have to enter them again.
         """
