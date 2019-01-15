@@ -1,4 +1,6 @@
-# Copyright 2018 ASI Data Science
+"""The command line interface to Faculty."""
+
+# Copyright 2016-2018 ASI Data Science
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,14 +13,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-import faculty.config
-import faculty.clients
-import faculty.cli
-import faculty.cli.cli
-
-def client(resource, *args, **kwargs):
-    profile = faculty.config.resolve_profile(*args, **kwargs)
-    client_class = faculty.clients.for_resource(resource)
-    return client_class(profile)

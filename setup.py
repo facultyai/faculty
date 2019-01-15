@@ -41,9 +41,14 @@ setup(
         "marshmallow_enum",
         "boto3",
         "botocore",
+        "click",
+        "python-dateutil",
+        "six",
+        "tabulate",
     ],
     dependency_links=[
         "git+https://github.com/marshmallow-code/marshmallow"
         "@3.0.0b12#egg=marshmallow"
     ],
+    entry_points={"console_scripts": ["faculty=faculty.cli.cli:cli"]},
 )

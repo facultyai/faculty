@@ -1,4 +1,6 @@
-# Copyright 2018 ASI Data Science
+"""Module version information."""
+
+# Copyright 2016-2018 ASI Data Science
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import platform
+from pkg_resources import get_distribution, DistributionNotFound
 
-import faculty.config
-import faculty.clients
-import faculty.cli
-import faculty.cli.cli
 
-def client(resource, *args, **kwargs):
-    profile = faculty.config.resolve_profile(*args, **kwargs)
-    client_class = faculty.clients.for_resource(resource)
-    return client_class(profile)
+try:
+    __version__ = get_distribution("faculty").version
+except DistributionNotFound:
+    # package is not installed
+    pass
+
+
+def user_agent():
+    """Return user agent string."""
+    return "sml/{} (Python {}, {})".format(
+        __version__, platform.python_version(), platform.platform()
+    )
