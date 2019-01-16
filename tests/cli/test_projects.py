@@ -37,3 +37,19 @@ def test_list_projects(
     ProjectClient._get.assert_called_once_with(
         "/user/{}".format(USER_ID), schema_mock.return_value
     )
+
+def test_list_projects_verbose(
+    mocker, mock_update_check, mock_check_credentials, mock_profile
+):
+    runner = CliRunner()
+    schema_mock = mocker.patch("faculty.clients.project.ProjectSchema")
+    mocker.patch.object(ProjectClient, "_get", return_value=[PROJECT])
+
+    result = runner.invoke(cli, ["projects", "-v"])
+
+    assert result.exit_code == 0
+    assert result.output == f"Project Name    ID\n{PROJECT.name}    {PROJECT.id}\n"
+
+    ProjectClient._get.assert_called_once_with(
+        "/user/{}".format(USER_ID), schema_mock.return_value
+    )
