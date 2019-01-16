@@ -36,7 +36,6 @@ from tabulate import tabulate
 
 import faculty.cli.auth
 import faculty.cli.baskerville
-import faculty.cli.casebook
 import faculty.cli.client
 import faculty.cli.config
 import faculty.cli.galleon
@@ -170,8 +169,8 @@ def _resolve_project(project):
         project_id = uuid.UUID(project)
     except ValueError:
         user_id = faculty.cli.auth.user_id()
-        client = faculty.cli.casebook.Casebook()
-        project_id = client.get_project_by_name(user_id, project).id_
+        client = faculty.client("project")
+        project_id = client.get_by_owner_and_name(user_id, project).id
     return project_id
 
 
@@ -372,22 +371,22 @@ def login():
 def projects(verbose):
     """List accessible Faculty projects."""
     _check_credentials()
-    client = faculty.cli.casebook.Casebook()
+    client = faculty.client("project")
     user_id = faculty.cli.auth.user_id()
-    projects_ = client.get_projects(user_id)
+    projects = client.list_accessible_by_user(user_id)
     if verbose:
-        if not projects_:
+        if not projects:
             click.echo("No projects.")
         else:
             click.echo(
                 tabulate(
-                    [(p.name, p.id_) for p in projects_],
+                    [(p.name, p.id) for p in projects],
                     ("Project Name", "ID"),
                     tablefmt="plain",
                 )
             )
     else:
-        for project in projects_:
+        for project in projects:
             click.echo(project.name)
 
 
