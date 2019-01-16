@@ -1,9 +1,8 @@
-import click
 import pytest
 from click.testing import CliRunner
 
 from faculty.cli.cli import cli
-from faculty.clients.project import ProjectClient, ProjectSchema
+from faculty.clients.project import ProjectClient
 from tests.fixtures import PROJECT, USER_ID
 
 
@@ -38,6 +37,7 @@ def test_list_projects(
         "/user/{}".format(USER_ID), schema_mock.return_value
     )
 
+
 def test_list_projects_verbose(
     mocker, mock_update_check, mock_check_credentials, mock_profile
 ):
@@ -48,7 +48,10 @@ def test_list_projects_verbose(
     result = runner.invoke(cli, ["projects", "-v"])
 
     assert result.exit_code == 0
-    assert result.output == f"Project Name    ID\n{PROJECT.name}    {PROJECT.id}\n"
+    assert (
+        result.output
+        == f"Project Name    ID\n{PROJECT.name}    {PROJECT.id}\n"
+    )
 
     ProjectClient._get.assert_called_once_with(
         "/user/{}".format(USER_ID), schema_mock.return_value
