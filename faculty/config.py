@@ -1,4 +1,5 @@
 import os
+import warnings
 from collections import namedtuple
 
 from six.moves.configparser import ConfigParser, NoSectionError, NoOptionError
@@ -48,10 +49,25 @@ def load_profile(path, profile):
 
 
 def default_credentials_path():
+
     xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
     if not xdg_config_home:
         xdg_config_home = os.path.expanduser("~/.config")
-    return os.path.join(xdg_config_home, "sherlockml", "credentials")
+
+    default_path = os.path.join(xdg_config_home, "faculty", "credentials")
+    legacy_path = os.path.join(xdg_config_home, "sherlockml", "credentials")
+
+    if not os.path.exists(default_path) and os.path.exists(legacy_path):
+        template = (
+            "Reading credentials from {legacy_path}. Credentials at this path "
+            "are deprecated - please migrate by moving them to {default_path}."
+        )
+        warnings.warn(
+            template.format(legacy_path=legacy_path, default_path=default_path)
+        )
+        return legacy_path
+    else:
+        return default_path
 
 
 class CredentialsError(RuntimeError):

@@ -76,14 +76,24 @@ def test_load_profile(mocker, profile_name, expected_profile):
 
 def test_default_credentials_path(mocker):
     mocker.patch.dict(os.environ, {"HOME": "/foo/bar"})
-    expected_path = "/foo/bar/.config/sherlockml/credentials"
+    expected_path = "/foo/bar/.config/faculty/credentials"
     assert config.default_credentials_path() == expected_path
 
 
 def test_default_credentials_path_xdg_home(mocker):
     mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": "/xdg/home"})
-    expected_path = "/xdg/home/sherlockml/credentials"
+    expected_path = "/xdg/home/faculty/credentials"
     assert config.default_credentials_path() == expected_path
+
+
+def test_default_credentials_path_legacy(mocker, tmpdir):
+    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": str(tmpdir)})
+    legacy_path = tmpdir.mkdir("sherlockml").join("credentials")
+    legacy_path.ensure(file=True)
+    with pytest.warns(
+        UserWarning, match="Credentials at this path are deprecated"
+    ):
+        assert config.default_credentials_path() == legacy_path
 
 
 def test_resolve_profile(mocker):
