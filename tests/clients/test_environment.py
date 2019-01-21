@@ -19,13 +19,11 @@ import uuid
 from dateutil.tz import UTC
 from marshmallow import ValidationError
 
-
-from sherlockml.clients.environment import (
+from faculty.clients.environment import (
     Environment,
     EnvironmentClient,
     EnvironmentSchema,
 )
-
 from tests.clients.fixtures import PROFILE
 
 
@@ -64,7 +62,7 @@ def test_environment_schema():
 def test_environment_client_list(mocker):
     mocker.patch.object(EnvironmentClient, "_get", return_value=[ENVIRONMENT])
     schema_mock = mocker.patch(
-        "sherlockml.clients.environment.EnvironmentSchema"
+        "faculty.clients.environment.EnvironmentSchema"
     )
 
     client = EnvironmentClient(PROFILE)
