@@ -69,11 +69,9 @@ def test_environment_client_list(mocker):
     )
 
     client = EnvironmentClient(PROFILE)
-
     assert client.list(PROJECT_ID) == [ENVIRONMENT]
 
     schema_mock.assert_called_once_with(many=True)
-
     EnvironmentClient._get.assert_called_once_with(
         "/project/{}/environment".format(PROJECT_ID), schema_mock.return_value
     )
