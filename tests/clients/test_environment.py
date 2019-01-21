@@ -33,9 +33,9 @@ PROJECT_ID = uuid.uuid4()
 ENVIRONMENT = Environment(
     id=uuid.uuid4(),
     project_id=PROJECT_ID,
-    name="Test Environment Name",
+    name="Test Environment",
+    description="Environment description",
     author_id=uuid.uuid4(),
-    description="Looking forward to testing environments",
     created_at=datetime.datetime(2018, 10, 3, 4, 20, 0, 0, tzinfo=UTC),
     updated_at=datetime.datetime(2018, 11, 3, 4, 21, 15, 0, tzinfo=UTC),
 )
@@ -43,10 +43,10 @@ ENVIRONMENT = Environment(
 
 ENVIRONMENT_BODY = {
     "environmentId": str(ENVIRONMENT.id),
+    "projectId": str(PROJECT_ID),
     "name": ENVIRONMENT.name,
     "description": ENVIRONMENT.description,
     "authorId": str(ENVIRONMENT.author_id),
-    "projectId": str(PROJECT_ID),
     "createdAt": "2018-10-03T04:20:00Z",
     "updatedAt": "2018-11-03T04:21:15Z",
 }

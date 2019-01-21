@@ -26,8 +26,8 @@ Environment = namedtuple(
         "id",
         "project_id",
         "name",
-        "author_id",
         "description",
+        "author_id",
         "created_at",
         "updated_at",
     ],
@@ -38,8 +38,8 @@ class EnvironmentSchema(Schema):
     id = fields.UUID(data_key="environmentId", required=True)
     project_id = fields.UUID(data_key="projectId", required=True)
     name = fields.String(required=True)
-    author_id = fields.UUID(data_key="authorId", required=True)
     description = fields.String(required=True)
+    author_id = fields.UUID(data_key="authorId", required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     updated_at = fields.DateTime(data_key="updatedAt", required=True)
 
