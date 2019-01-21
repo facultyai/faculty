@@ -37,7 +37,7 @@ def test_project_schema():
     assert data == PROJECT
 
 
-def test_project_schema_load_invalid():
+def test_project_schema_invalid():
     with pytest.raises(ValidationError):
         ProjectSchema().load({})
 
