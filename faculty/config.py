@@ -48,7 +48,7 @@ def load_profile(path, profile):
         return Profile(None, None, None, None)
 
 
-def default_credentials_path():
+def _default_credentials_path():
 
     xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
     if not xdg_config_home:
@@ -70,6 +70,15 @@ def default_credentials_path():
         return default_path
 
 
+def resolve_credentials_path(credentials_path=None):
+    return (
+        credentials_path
+        or os.getenv("FACULTY_CREDENTIALS_PATH")
+        or os.getenv("SHERLOCKML_CREDENTIALS_PATH")
+        or _default_credentials_path()
+    )
+
+
 class CredentialsError(RuntimeError):
     pass
 
@@ -87,13 +96,6 @@ def resolve_profile(
     client_secret=None,
 ):
 
-    resolved_credentials_path = (
-        credentials_path
-        or os.getenv("FACULTY_CREDENTIALS_PATH")
-        or os.getenv("SHERLOCKML_CREDENTIALS_PATH")
-        or default_credentials_path()
-    )
-
     resolved_profile_name = (
         profile_name
         or os.getenv("FACULTY_PROFILE")
@@ -101,7 +103,9 @@ def resolve_profile(
         or DEFAULT_PROFILE
     )
 
-    profile = load_profile(resolved_credentials_path, resolved_profile_name)
+    profile = load_profile(
+        resolve_credentials_path(credentials_path), resolved_profile_name
+    )
 
     resolved_domain = (
         domain

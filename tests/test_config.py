@@ -77,13 +77,13 @@ def test_load_profile(mocker, profile_name, expected_profile):
 def test_default_credentials_path(mocker):
     mocker.patch.dict(os.environ, {"HOME": "/foo/bar"})
     expected_path = "/foo/bar/.config/faculty/credentials"
-    assert config.default_credentials_path() == expected_path
+    assert config._default_credentials_path() == expected_path
 
 
 def test_default_credentials_path_xdg_home(mocker):
     mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": "/xdg/home"})
     expected_path = "/xdg/home/faculty/credentials"
-    assert config.default_credentials_path() == expected_path
+    assert config._default_credentials_path() == expected_path
 
 
 def test_default_credentials_path_legacy(mocker, tmpdir):
@@ -93,46 +93,33 @@ def test_default_credentials_path_legacy(mocker, tmpdir):
     with pytest.warns(
         UserWarning, match="Credentials at this path are deprecated"
     ):
-        assert config.default_credentials_path() == legacy_path
+        assert config._default_credentials_path() == legacy_path
 
 
-def test_resolve_profile(mocker):
-    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
-    mocker.patch("faculty.config.default_credentials_path")
-
-    assert config.resolve_profile() == DEFAULT_PROFILE
-
-    config.load_profile.assert_called_once_with(
-        config.default_credentials_path.return_value, "default"
+def test_resolve_credentials_path(mocker):
+    mocker.patch("faculty.config._default_credentials_path")
+    assert (
+        config.resolve_credentials_path()
+        == config._default_credentials_path.return_value
     )
 
 
-def test_resolve_profile_credentials_path_override(mocker):
-    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
-
-    profile = config.resolve_profile(credentials_path="test/path")
-    assert profile == DEFAULT_PROFILE
-
-    config.load_profile.assert_called_once_with("test/path", "default")
+def test_resolve_credentials_path_override(mocker):
+    assert config.resolve_credentials_path("override/path") == "override/path"
 
 
 @pytest.mark.parametrize(
     "environment_variable",
     ["FACULTY_CREDENTIALS_PATH", "SHERLOCKML_CREDENTIALS_PATH"],
 )
-def test_resolve_profile_credentials_path_env(mocker, environment_variable):
-    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
-    path = "/path/to/credentials"
+def test_resolve_credentials_path_env(mocker, environment_variable):
+    path = "override/path"
     mocker.patch.dict(os.environ, {environment_variable: path})
-
-    assert config.resolve_profile() == DEFAULT_PROFILE
-
-    config.load_profile.assert_called_once_with(path, "default")
+    assert config.resolve_credentials_path() == path
 
 
-def test_resolve_profile_credentials_path_env_faculty_precedence(mocker):
-    mocker.patch("faculty.config.load_profile")
-    path = "/faculty/credentials"
+def test_resolve_credentials_path_env_faculty_precedence(mocker):
+    path = "override/path"
     mocker.patch.dict(
         os.environ,
         {
@@ -140,19 +127,43 @@ def test_resolve_profile_credentials_path_env_faculty_precedence(mocker):
             "SHERLOCKML_CREDENTIALS_PATH": "ignored",
         },
     )
-    config.resolve_profile()
-    config.load_profile.assert_called_once_with(path, "default")
+    assert config.resolve_credentials_path() == path
+
+
+def test_resolve_profile(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
+
+    assert config.resolve_profile() == DEFAULT_PROFILE
+
+    config.resolve_credentials_path.assert_called_once_with(None)
+    config.load_profile.assert_called_once_with(
+        config.resolve_credentials_path.return_value, "default"
+    )
+
+
+def test_resolve_profile_credentials_path_override(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
+
+    profile = config.resolve_profile(credentials_path="test/path")
+    assert profile == DEFAULT_PROFILE
+
+    config.resolve_credentials_path.assert_called_once_with("test/path")
+    config.load_profile.assert_called_once_with(
+        config.resolve_credentials_path.return_value, "default"
+    )
 
 
 def test_resolve_profile_profile_name_override(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch("faculty.config.load_profile", return_value=OTHER_PROFILE)
-    mocker.patch("faculty.config.default_credentials_path")
 
     profile = config.resolve_profile(profile_name="other")
     assert profile == OTHER_PROFILE
 
     config.load_profile.assert_called_once_with(
-        config.default_credentials_path.return_value, "other"
+        config.resolve_credentials_path.return_value, "other"
     )
 
 
@@ -160,31 +171,32 @@ def test_resolve_profile_profile_name_override(mocker):
     "environment_variable", ["FACULTY_PROFILE", "SHERLOCKML_PROFILE"]
 )
 def test_resolve_profile_profile_name_env(mocker, environment_variable):
+    mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch("faculty.config.load_profile", return_value=OTHER_PROFILE)
-    mocker.patch("faculty.config.default_credentials_path")
     mocker.patch.dict(os.environ, {environment_variable: "other"})
 
     assert config.resolve_profile() == OTHER_PROFILE
 
     config.load_profile.assert_called_once_with(
-        config.default_credentials_path.return_value, "other"
+        config.resolve_credentials_path.return_value, "other"
     )
 
 
 def test_resolve_profile_profile_name_env_faculty_precendence(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch("faculty.config.load_profile", return_value=OTHER_PROFILE)
-    mocker.patch("faculty.config.default_credentials_path")
     mocker.patch.dict(
         os.environ,
         {"FACULTY_PROFILE": "other", "SHERLOCKML_PROFILE": "ignored"},
     )
     config.resolve_profile()
     config.load_profile.assert_called_once_with(
-        config.default_credentials_path.return_value, "other"
+        config.resolve_credentials_path.return_value, "other"
     )
 
 
 def test_resolve_profile_overrides(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     profile = config.resolve_profile(
         domain="other.domain.com",
@@ -197,6 +209,7 @@ def test_resolve_profile_overrides(mocker):
 
 @pytest.mark.parametrize("prefix", ["FACULTY", "SHERLOCKML"])
 def test_resolve_profile_env(mocker, prefix):
+    mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     mocker.patch.dict(
         os.environ,
@@ -211,6 +224,7 @@ def test_resolve_profile_env(mocker, prefix):
 
 
 def test_resolve_profile_env_faculty_precedence(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     mocker.patch.dict(
         os.environ,
@@ -229,6 +243,7 @@ def test_resolve_profile_env_faculty_precedence(mocker):
 
 
 def test_resolve_profile_defaults(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch(
         "faculty.config.load_profile", return_value=CREDENTIALS_ONLY_PROFILE
     )
@@ -242,6 +257,7 @@ def test_resolve_profile_defaults(mocker):
 
 
 def test_resolve_profile_missing_client_id(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch(
         "faculty.config.load_profile", return_value=PROFILE_WITHOUT_ID
     )
@@ -250,6 +266,7 @@ def test_resolve_profile_missing_client_id(mocker):
 
 
 def test_resolve_profile_missing_client_secret(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch(
         "faculty.config.load_profile", return_value=PROFILE_WITHOUT_SECRET
     )
