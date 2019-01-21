@@ -55,6 +55,9 @@ ENVIRONMENT_BODY = {
 def test_environment_schema():
     data = EnvironmentSchema().load(ENVIRONMENT_BODY)
     assert data == ENVIRONMENT
+
+
+def test_environment_schema_invalid():
     with pytest.raises(ValidationError):
         EnvironmentSchema().load({})
 
