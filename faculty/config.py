@@ -70,11 +70,26 @@ def _default_credentials_path():
         return default_path
 
 
+def _get_deprecated_env_var(key, expected_key):
+    value = os.getenv(key)
+
+    if value:
+        template = (
+            "The environment variable {key} is deprecated. "
+            "Please migrate by using {expected_key}."
+        )
+        warnings.warn(template.format(key=key, expected_key=expected_key))
+
+    return value
+
+
 def resolve_credentials_path(credentials_path=None):
     return (
         credentials_path
         or os.getenv("FACULTY_CREDENTIALS_PATH")
-        or os.getenv("SHERLOCKML_CREDENTIALS_PATH")
+        or _get_deprecated_env_var(
+            "SHERLOCKML_CREDENTIALS_PATH", "FACULTY_CREDENTIALS_PATH"
+        )
         or _default_credentials_path()
     )
 
@@ -99,7 +114,7 @@ def resolve_profile(
     resolved_profile_name = (
         profile_name
         or os.getenv("FACULTY_PROFILE")
-        or os.getenv("SHERLOCKML_PROFILE")
+        or _get_deprecated_env_var("SHERLOCKML_PROFILE", "FACULTY_PROFILE")
         or DEFAULT_PROFILE
     )
 
@@ -110,7 +125,7 @@ def resolve_profile(
     resolved_domain = (
         domain
         or os.getenv("FACULTY_DOMAIN")
-        or os.getenv("SHERLOCKML_DOMAIN")
+        or _get_deprecated_env_var("SHERLOCKML_DOMAIN", "FACULTY_DOMAIN")
         or profile.domain
         or DEFAULT_DOMAIN
     )
@@ -118,7 +133,7 @@ def resolve_profile(
     resolved_protocol = (
         protocol
         or os.getenv("FACULTY_PROTOCOL")
-        or os.getenv("SHERLOCKML_PROTOCOL")
+        or _get_deprecated_env_var("SHERLOCKML_PROTOCOL", "FACULTY_PROTOCOL")
         or profile.protocol
         or DEFAULT_PROTOCOL
     )
@@ -126,7 +141,7 @@ def resolve_profile(
     resolved_client_id = (
         client_id
         or os.getenv("FACULTY_CLIENT_ID")
-        or os.getenv("SHERLOCKML_CLIENT_ID")
+        or _get_deprecated_env_var("SHERLOCKML_CLIENT_ID", "FACULTY_CLIENT_ID")
         or profile.client_id
         or _raise_credentials_error("client_id")
     )
@@ -134,7 +149,9 @@ def resolve_profile(
     resolved_client_secret = (
         client_secret
         or os.getenv("FACULTY_CLIENT_SECRET")
-        or os.getenv("SHERLOCKML_CLIENT_SECRET")
+        or _get_deprecated_env_var(
+            "SHERLOCKML_CLIENT_SECRET", "FACULTY_CLIENT_SECRET"
+        )
         or profile.client_secret
         or _raise_credentials_error("client_secret")
     )

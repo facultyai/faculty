@@ -108,14 +108,19 @@ def test_resolve_credentials_path_override(mocker):
     assert config.resolve_credentials_path("override/path") == "override/path"
 
 
-@pytest.mark.parametrize(
-    "environment_variable",
-    ["FACULTY_CREDENTIALS_PATH", "SHERLOCKML_CREDENTIALS_PATH"],
-)
-def test_resolve_credentials_path_env(mocker, environment_variable):
+def test_resolve_credentials_path_env(mocker):
     path = "override/path"
-    mocker.patch.dict(os.environ, {environment_variable: path})
+    mocker.patch.dict(os.environ, {"FACULTY_CREDENTIALS_PATH": path})
     assert config.resolve_credentials_path() == path
+
+
+def test_resolve_credentials_path_env_sherlockml(mocker):
+    path = "override/path"
+    mocker.patch.dict(os.environ, {"SHERLOCKML_CREDENTIALS_PATH": path})
+    with pytest.warns(
+        UserWarning, match="SHERLOCKML_CREDENTIALS_PATH is deprecated"
+    ):
+        assert config.resolve_credentials_path() == path
 
 
 def test_resolve_credentials_path_env_faculty_precedence(mocker):
@@ -167,15 +172,25 @@ def test_resolve_profile_profile_name_override(mocker):
     )
 
 
-@pytest.mark.parametrize(
-    "environment_variable", ["FACULTY_PROFILE", "SHERLOCKML_PROFILE"]
-)
-def test_resolve_profile_profile_name_env(mocker, environment_variable):
+def test_resolve_profile_profile_name_env(mocker):
     mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch("faculty.config.load_profile", return_value=OTHER_PROFILE)
-    mocker.patch.dict(os.environ, {environment_variable: "other"})
+    mocker.patch.dict(os.environ, {"FACULTY_PROFILE": "other"})
 
     assert config.resolve_profile() == OTHER_PROFILE
+
+    config.load_profile.assert_called_once_with(
+        config.resolve_credentials_path.return_value, "other"
+    )
+
+
+def test_resolve_profile_profile_name_env_sherlockml(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
+    mocker.patch("faculty.config.load_profile", return_value=OTHER_PROFILE)
+    mocker.patch.dict(os.environ, {"SHERLOCKML_PROFILE": "other"})
+
+    with pytest.warns(UserWarning, match="SHERLOCKML_PROFILE is deprecated"):
+        assert config.resolve_profile() == OTHER_PROFILE
 
     config.load_profile.assert_called_once_with(
         config.resolve_credentials_path.return_value, "other"
@@ -207,20 +222,41 @@ def test_resolve_profile_overrides(mocker):
     assert profile == OTHER_PROFILE
 
 
-@pytest.mark.parametrize("prefix", ["FACULTY", "SHERLOCKML"])
-def test_resolve_profile_env(mocker, prefix):
+def test_resolve_profile_env(mocker):
     mocker.patch("faculty.config.resolve_credentials_path")
     mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
     mocker.patch.dict(
         os.environ,
         {
-            "{}_DOMAIN".format(prefix): "other.domain.com",
-            "{}_PROTOCOL".format(prefix): "other-protocol",
-            "{}_CLIENT_ID".format(prefix): "other-client-id",
-            "{}_CLIENT_SECRET".format(prefix): "other-client-secret",
+            "FACULTY_DOMAIN": "other.domain.com",
+            "FACULTY_PROTOCOL": "other-protocol",
+            "FACULTY_CLIENT_ID": "other-client-id",
+            "FACULTY_CLIENT_SECRET": "other-client-secret",
         },
     )
     assert config.resolve_profile() == OTHER_PROFILE
+
+
+def test_resolve_profile_env_sherlockml(mocker):
+    mocker.patch("faculty.config.resolve_credentials_path")
+    mocker.patch("faculty.config.load_profile", return_value=DEFAULT_PROFILE)
+    mocker.patch.dict(
+        os.environ,
+        {
+            "SHERLOCKML_DOMAIN": "other.domain.com",
+            "SHERLOCKML_PROTOCOL": "other-protocol",
+            "SHERLOCKML_CLIENT_ID": "other-client-id",
+            "SHERLOCKML_CLIENT_SECRET": "other-client-secret",
+        },
+    )
+    with pytest.warns(UserWarning) as records:
+        assert config.resolve_profile() == OTHER_PROFILE
+
+    assert len(records) == 4
+    assert "SHERLOCKML_DOMAIN is deprecated" in str(records[0].message)
+    assert "SHERLOCKML_PROTOCOL is deprecated" in str(records[1].message)
+    assert "SHERLOCKML_CLIENT_ID is deprecated" in str(records[2].message)
+    assert "SHERLOCKML_CLIENT_SECRET is deprecated" in str(records[3].message)
 
 
 def test_resolve_profile_env_faculty_precedence(mocker):
