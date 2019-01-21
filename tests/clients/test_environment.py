@@ -64,9 +64,7 @@ def test_environment_schema_invalid():
 
 def test_environment_client_list(mocker):
     mocker.patch.object(EnvironmentClient, "_get", return_value=[ENVIRONMENT])
-    schema_mock = mocker.patch(
-        "faculty.clients.environment.EnvironmentSchema"
-    )
+    schema_mock = mocker.patch("faculty.clients.environment.EnvironmentSchema")
 
     client = EnvironmentClient(PROFILE)
     assert client.list(PROJECT_ID) == [ENVIRONMENT]
