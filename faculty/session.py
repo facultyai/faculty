@@ -77,12 +77,12 @@ class Session(object):
         self.access_token_cache = access_token_cache
 
     @classmethod
-    def get(cls, *args, access_token_cache=None, **kwargs):
-        key = (args, access_token_cache) + tuple(kwargs.items())
+    def get(cls, access_token_cache=None, **kwargs):
+        key = tuple(kwargs.items()) + (access_token_cache,)
         try:
             session = cls.__session_cache[key]
         except KeyError:
-            profile = faculty.config.resolve_profile(*args, **kwargs)
+            profile = faculty.config.resolve_profile(**kwargs)
             access_token_cache = access_token_cache or MemoryAccessTokenCache()
             session = cls(profile, access_token_cache)
             cls.__session_cache[key] = session

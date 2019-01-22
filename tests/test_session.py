@@ -99,15 +99,11 @@ def test_session_get(mocker, isolated_session_cache):
     mocker.spy(Session, "__init__")
 
     session = Session.get(
-        "arg1",
-        "arg2",
-        kwarg1="foo",
-        kwarg2="bar",
-        access_token_cache=access_token_cache,
+        kwarg1="foo", kwarg2="bar", access_token_cache=access_token_cache
     )
 
     faculty.config.resolve_profile.assert_called_once_with(
-        "arg1", "arg2", kwarg1="foo", kwarg2="bar"
+        kwarg1="foo", kwarg2="bar"
     )
     Session.__init__.assert_called_once_with(
         session, PROFILE, access_token_cache
@@ -136,12 +132,8 @@ def test_session_get_cache(mocker, isolated_session_cache):
     access_token_cache = mocker.Mock()
     mocker.spy(Session, "__init__")
 
-    session1 = Session.get(
-        "arg", kwarg="foo", access_token_cache=access_token_cache
-    )
-    session2 = Session.get(
-        "arg", kwarg="foo", access_token_cache=access_token_cache
-    )
+    session1 = Session.get(kwarg="foo", access_token_cache=access_token_cache)
+    session2 = Session.get(kwarg="foo", access_token_cache=access_token_cache)
 
     assert session1 is session2
 

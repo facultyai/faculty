@@ -17,7 +17,7 @@ import faculty.session
 import faculty.clients
 
 
-def client(resource, *args, **kwargs):
-    session = faculty.session.Session.get(*args, **kwargs)
+def client(resource, **kwargs):
+    session = faculty.session.Session.get(**kwargs)
     client_class = faculty.clients.for_resource(resource)
     return client_class(session)
