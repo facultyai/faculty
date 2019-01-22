@@ -18,6 +18,7 @@ from collections import namedtuple
 
 import requests
 import pytz
+from six.moves import urllib
 
 import faculty.config
 
@@ -41,11 +42,14 @@ class MemoryAccessTokenCache(object):
         self._store[profile] = access_token
 
 
-def _get_access_token(profile):
+def _service_url(profile, service, endpoint=""):
+    host = "{}.{}".format(service, profile.domain)
+    url_parts = (profile.protocol, host, endpoint, None, None)
+    return urllib.parse.urlunsplit(url_parts)
 
-    url = "{}://hudson.{}/access_token".format(
-        profile.protocol, profile.domain
-    )
+
+def _get_access_token(profile):
+    url = _service_url(profile, "hudson", "access_token")
     payload = {
         "client_id": profile.client_id,
         "client_secret": profile.client_secret,
@@ -90,3 +94,6 @@ class Session(object):
             access_token = _get_access_token(self.profile)
             self.access_token_cache.add(self.profile, access_token)
         return access_token
+
+    def service_url(self, service_name, endpoint=""):
+        return _service_url(self.profile, service_name, endpoint)
