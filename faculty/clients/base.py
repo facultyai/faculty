@@ -14,7 +14,6 @@
 
 import requests
 from marshmallow import Schema, fields, ValidationError
-from six.moves import urllib
 
 from faculty.clients.auth import FacultyAuth
 
@@ -69,12 +68,6 @@ class GatewayTimeout(HTTPError):
     pass
 
 
-def _service_url(profile, service, endpoint=""):
-    host = "{}.{}".format(service, profile.domain)
-    url_parts = (profile.protocol, host, endpoint, None, None)
-    return urllib.parse.urlunsplit(url_parts)
-
-
 HTTP_ERRORS = {
     400: BadRequest,
     401: Unauthorized,
@@ -127,23 +120,23 @@ class BaseClient(object):
 
     SERVICE_NAME = None
 
-    def __init__(self, profile):
+    def __init__(self, session):
         if self.SERVICE_NAME is None:
             raise RuntimeError(
                 "must set SERVICE_NAME in subclasses of BaseClient"
             )
-        self.profile = profile
+        self.session = session
         self._http_session_cache = None
 
     @property
     def http_session(self):
         if self._http_session_cache is None:
             self._http_session_cache = requests.Session()
-            self._http_session_cache.auth = FacultyAuth(self.profile)
+            self._http_session_cache.auth = FacultyAuth(self.session)
         return self._http_session_cache
 
     def _request(self, method, endpoint, check_status=True, *args, **kwargs):
-        url = _service_url(self.profile, self.SERVICE_NAME, endpoint)
+        url = self.session.service_url(self.SERVICE_NAME, endpoint)
         response = self.http_session.request(method, url, *args, **kwargs)
         if check_status:
             _check_status(response)
