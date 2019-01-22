@@ -24,9 +24,14 @@ from faculty.session import (
     _get_access_token,
     Session,
 )
-from tests.fixtures import PROFILE
 
 
+PROFILE = faculty.config.Profile(
+    domain="test.domain.com",
+    protocol="https",
+    client_id="test-client-id",
+    client_secret="test-client-secret",
+)
 ACCESS_TOKEN_URL = "{}://hudson.{}/access_token".format(
     PROFILE.protocol, PROFILE.domain
 )
