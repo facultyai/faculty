@@ -17,15 +17,15 @@ import faculty
 
 
 def test_client(mocker):
-    profile_mock = mocker.patch("faculty.config.resolve_profile")
+    session_get_mock = mocker.patch("faculty.session.Session.get")
     for_resource_mock = mocker.patch("faculty.clients.for_resource")
 
-    config_overrides = {"foo": "bar"}
-    faculty.client("test-resource", **config_overrides)
+    options = {"foo": "bar"}
+    faculty.client("test-resource", **options)
 
-    profile_mock.assert_called_once_with(**config_overrides)
+    session_get_mock.assert_called_once_with(**options)
     for_resource_mock.assert_called_once_with("test-resource")
 
-    returned_profile = profile_mock.return_value
+    returned_session = session_get_mock.return_value
     returned_class = for_resource_mock.return_value
-    returned_class.assert_called_once_with(returned_profile)
+    returned_class.assert_called_once_with(returned_session)
