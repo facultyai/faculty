@@ -25,7 +25,7 @@ from faculty.clients.account import (
     AuthenticationResponseSchema,
 )
 
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 USER_ID = uuid.uuid4()
 

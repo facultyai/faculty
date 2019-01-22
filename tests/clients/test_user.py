@@ -20,7 +20,7 @@ from dateutil.tz import UTC
 from marshmallow import ValidationError
 
 from faculty.clients.user import UserClient, User, UserSchema, GlobalRole
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 USER_ID = uuid.uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)

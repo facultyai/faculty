@@ -46,7 +46,7 @@ from faculty.clients.job import (
     Subrun,
     SubrunSchema,
 )
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 PROJECT_ID = uuid4()
 JOB_ID = uuid4()

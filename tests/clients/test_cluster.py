@@ -19,7 +19,7 @@ import pytest
 from marshmallow import ValidationError
 
 from faculty.clients.cluster import NodeType, NodeTypeSchema, ClusterClient
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 
 NODE_TYPE = NodeType(

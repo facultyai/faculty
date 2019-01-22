@@ -24,7 +24,7 @@ from faculty.session import (
     _get_access_token,
     Session,
 )
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 
 ACCESS_TOKEN_URL = "{}://hudson.{}/access_token".format(

@@ -19,7 +19,7 @@ import pytest
 from marshmallow import ValidationError
 
 from faculty.clients.project import ProjectSchema, Project, ProjectClient
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 
 USER_ID = uuid.uuid4()

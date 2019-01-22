@@ -28,7 +28,7 @@ from faculty.clients.report import (
     ReportClient,
 )
 
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 
 PROJECT_ID = uuid.uuid4()

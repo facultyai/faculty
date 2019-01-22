@@ -33,7 +33,7 @@ from faculty.clients.base import (
     ServiceUnavailable,
     GatewayTimeout,
 )
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 AUTHORIZATION_HEADER_VALUE = "Bearer mock-token"
 AUTHORIZATION_HEADER = {"Authorization": AUTHORIZATION_HEADER_VALUE}

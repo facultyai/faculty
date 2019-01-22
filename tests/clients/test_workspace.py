@@ -28,7 +28,7 @@ from faculty.clients.workspace import (
     ListResponseSchema,
     WorkspaceClient,
 )
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 
 PROJECT_ID = uuid4()

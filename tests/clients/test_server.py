@@ -31,7 +31,7 @@ from faculty.clients.server import (
     SharedServerResources,
     DedicatedServerResources,
 )
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 
 SERVICE = Service(

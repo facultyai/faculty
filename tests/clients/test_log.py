@@ -26,7 +26,7 @@ from faculty.clients.log import (
     LogPartsResponseSchema,
     LogClient,
 )
-from tests.clients.fixtures import PROFILE
+from tests.fixtures import PROFILE
 
 PROJECT_ID = uuid4()
 JOB_ID = uuid4()
