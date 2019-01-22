@@ -46,7 +46,6 @@ from faculty.clients.job import (
     Subrun,
     SubrunSchema,
 )
-from tests.fixtures import PROFILE
 
 PROJECT_ID = uuid4()
 JOB_ID = uuid4()
@@ -326,7 +325,7 @@ def test_job_client_list(mocker):
     mocker.patch.object(JobClient, "_get", return_value=[JOB_SUMMARY])
     schema_mock = mocker.patch("faculty.clients.job.JobSummarySchema")
 
-    client = JobClient(PROFILE)
+    client = JobClient(mocker.Mock())
     assert client.list(PROJECT_ID) == [JOB_SUMMARY]
 
     schema_mock.assert_called_once_with(many=True)
@@ -339,7 +338,7 @@ def test_job_client_create_run(mocker):
     mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
     schema_mock = mocker.patch("faculty.clients.job.RunIdSchema")
 
-    client = JobClient(PROFILE)
+    client = JobClient(mocker.Mock())
     assert (
         client.create_run(
             PROJECT_ID,
@@ -371,7 +370,7 @@ def test_job_client_create_run_default_parameter_value_sets(mocker):
     mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
     schema_mock = mocker.patch("faculty.clients.job.RunIdSchema")
 
-    client = JobClient(PROFILE)
+    client = JobClient(mocker.Mock())
     assert client.create_run(PROJECT_ID, JOB_ID) == RUN_ID
 
     schema_mock.assert_called_once_with()
@@ -386,7 +385,7 @@ def test_job_client_list_runs(mocker):
     mocker.patch.object(JobClient, "_get", return_value=LIST_RUNS_RESPONSE)
     schema_mock = mocker.patch("faculty.clients.job.ListRunsResponseSchema")
 
-    client = JobClient(PROFILE)
+    client = JobClient(mocker.Mock())
     assert client.list_runs(PROJECT_ID, JOB_ID) == LIST_RUNS_RESPONSE
 
     schema_mock.assert_called_once_with()
@@ -401,7 +400,7 @@ def test_job_client_list_runs_page(mocker):
     mocker.patch.object(JobClient, "_get", return_value=LIST_RUNS_RESPONSE)
     schema_mock = mocker.patch("faculty.clients.job.ListRunsResponseSchema")
 
-    client = JobClient(PROFILE)
+    client = JobClient(mocker.Mock())
     assert (
         client.list_runs(PROJECT_ID, JOB_ID, start=20, limit=10)
         == LIST_RUNS_RESPONSE
@@ -422,7 +421,7 @@ def test_job_client_get_run(mocker, run_identifier):
     mocker.patch.object(JobClient, "_get", return_value=RUN)
     schema_mock = mocker.patch("faculty.clients.job.RunSchema")
 
-    client = JobClient(PROFILE)
+    client = JobClient(mocker.Mock())
     assert client.get_run(PROJECT_ID, JOB_ID, run_identifier) == RUN
 
     schema_mock.assert_called_once_with()
@@ -444,7 +443,7 @@ def test_job_client_get_subrun(mocker, run_identifier, subrun_identifier):
     mocker.patch.object(JobClient, "_get", return_value=SUBRUN)
     schema_mock = mocker.patch("faculty.clients.job.SubrunSchema")
 
-    client = JobClient(PROFILE)
+    client = JobClient(mocker.Mock())
     assert (
         client.get_subrun(
             PROJECT_ID, JOB_ID, run_identifier, subrun_identifier
