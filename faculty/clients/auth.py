@@ -12,65 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import namedtuple
-from datetime import datetime, timedelta
 
-import pytz
-import requests
 from requests.auth import AuthBase
-
-
-AccessToken = namedtuple("AccessToken", ["token", "expires_at"])
-
-
-class _AccessTokenCache(object):
-    def __init__(self):
-        self._store = {}
-
-    def get(self, profile):
-        access_token = self._store.get(profile)
-        utc_now = datetime.now(tz=pytz.utc)
-        if access_token is None or access_token.expires_at < utc_now:
-            return None
-        else:
-            return access_token
-
-    def add(self, profile, access_token):
-        self._store[profile] = access_token
-
-
-_ACCESS_TOKEN_CACHE = _AccessTokenCache()
-
-
-def _get_access_token(profile):
-
-    url = "{}://hudson.{}/access_token".format(
-        profile.protocol, profile.domain
-    )
-    payload = {
-        "client_id": profile.client_id,
-        "client_secret": profile.client_secret,
-        "grant_type": "client_credentials",
-    }
-
-    response = requests.post(url, json=payload)
-    response.raise_for_status()
-
-    body = response.json()
-
-    token = body["access_token"]
-    now = datetime.now(tz=pytz.utc)
-    expires_at = now + timedelta(seconds=body["expires_in"])
-
-    return AccessToken(token, expires_at)
-
-
-def _get_access_token_cached(profile):
-    access_token = _ACCESS_TOKEN_CACHE.get(profile)
-    if access_token is None:
-        access_token = _get_access_token(profile)
-        _ACCESS_TOKEN_CACHE.add(profile, access_token)
-    return access_token
 
 
 class FacultyAuth(AuthBase):
@@ -78,23 +21,25 @@ class FacultyAuth(AuthBase):
 
     Parameters
     ----------
-    profile : faculty.config.Profile
-        The profile (Faculty domain, protocol and client credentials) to use
+    session : faculty.session.Session
+        The Faculty session to authenticate with
 
     To perform an authenticated request against a Faculty service, first
     construct an instance of this class:
 
-    >>> from faculty.config import resolve_profile
+    >>> from faculty.session import Session
     >>> from faculty.clients.auth import FacultyAuth
-    >>> profile = resolve_profile()
-    >>> auth = FacultyAuth(profile)
+    >>> session = Session.get()
+    >>> auth = FacultyAuth(session)
 
     then pass it as the ``auth`` argument when making a request with
     ``requests``:
 
     >>> import requests
-    >>> requests.get('https://servicename.services.example.my.faculty.ai',
-                     auth=auth)
+    >>> requests.get(
+            'https://servicename.services.example.my.faculty.ai',
+            auth=auth
+        )
 
     You can also set it as the ``auth`` attribute on a
     :class:`requests.Session`, so that subsequent requests will be
@@ -105,11 +50,11 @@ class FacultyAuth(AuthBase):
     >>> session.auth = auth
     """
 
-    def __init__(self, profile):
-        self.profile = profile
+    def __init__(self, session):
+        self.session = session
 
     def __call__(self, request):
-        access_token = _get_access_token_cached(self.profile)
+        access_token = self.session.access_token()
 
         header_content = "Bearer {}".format(access_token.token)
         request.headers["Authorization"] = header_content
