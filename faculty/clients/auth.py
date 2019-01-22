@@ -23,29 +23,55 @@ from requests.auth import AuthBase
 AccessToken = namedtuple("AccessToken", ["token", "expires_at"])
 
 
-class AccessTokenClient(object):
-    """Client for getting access tokens for accessing Faculty services."""
+class _AccessTokenCache(object):
 
-    def __init__(self, hudson_url):
-        self._session = requests.Session()
-        self.hudson_url = hudson_url
+    def __init__(self):
+        self._store = {}
 
-    def get_access_token(self, client_id, client_secret):
-        endpoint = "{}/access_token".format(self.hudson_url)
-        payload = {
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "grant_type": "client_credentials",
-        }
-        response = self._session.post(endpoint, json=payload)
-        response.raise_for_status()
-        body = response.json()
+    def get(self, profile):
+        access_token = self._store.get(profile)
+        utc_now = datetime.now(tz=pytz.utc)
+        if access_token is None or access_token.expires_at < utc_now:
+            return None
+        else:
+            return access_token
 
-        token = body["access_token"]
-        now = datetime.now(tz=pytz.utc)
-        expires_at = now + timedelta(seconds=body["expires_in"])
+    def add(self, profile, access_token):
+        self._store[profile] = access_token
 
-        return AccessToken(token, expires_at)
+
+_ACCESS_TOKEN_CACHE = _AccessTokenCache()
+
+
+def _get_access_token(profile):
+
+    url = "{}://hudson.{}/access_token".format(
+        profile.protocol, profile.domain
+    )
+    payload = {
+        "client_id": profile.client_id,
+        "client_secret": profile.client_secret,
+        "grant_type": "client_credentials",
+    }
+
+    response = requests.post(url, json=payload)
+    response.raise_for_status()
+
+    body = response.json()
+
+    token = body["access_token"]
+    now = datetime.now(tz=pytz.utc)
+    expires_at = now + timedelta(seconds=body["expires_in"])
+
+    return AccessToken(token, expires_at)
+
+
+def _get_access_token_cached(profile):
+    access_token = _ACCESS_TOKEN_CACHE.get(profile)
+    if access_token is None:
+        access_token = _get_access_token(profile)
+        _ACCESS_TOKEN_CACHE.add(profile, access_token)
+    return access_token
 
 
 class FacultyAuth(AuthBase):
@@ -53,18 +79,16 @@ class FacultyAuth(AuthBase):
 
     Parameters
     ----------
-    auth_service_url : str
-        The URL of the Faculty authentication service
-    client_id : str
-        The Faculty client ID to use for authentication
-    client_secret : str
-        The client secret associated with the client ID
+    profile : faculty.config.Profile
+        The profile (Faculty domain, protocol and client credentials) to use
 
     To perform an authenticated request against a Faculty service, first
     construct an instance of this class:
 
-    >>> auth = FacultyAuth('https://hudson.services.example.my.faculty.ai',
-                           your_client_id, your_client_secret)
+    >>> from faculty.config import resolve_profile
+    >>> from faculty.clients.auth import FacultyAuth
+    >>> profile = resolve_profile()
+    >>> auth = FacultyAuth(profile)
 
     then pass it as the ``auth`` argument when making a request with
     ``requests``:
@@ -82,24 +106,13 @@ class FacultyAuth(AuthBase):
     >>> session.auth = auth
     """
 
-    def __init__(self, auth_service_url, client_id, client_secret):
-        self.auth_service_url = auth_service_url
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.access_token = None
-
-    def _get_token(self):
-        client = AccessTokenClient(self.auth_service_url)
-        return client.get_access_token(self.client_id, self.client_secret)
+    def __init__(self, profile):
+        self.profile = profile
 
     def __call__(self, request):
+        access_token = _get_access_token_cached(self.profile)
 
-        if self.access_token is None:
-            self.access_token = self._get_token()
-        if self.access_token.expires_at < datetime.now(tz=pytz.utc):
-            self.access_token = self._get_token()
-
-        header_content = "Bearer {}".format(self.access_token.token)
+        header_content = "Bearer {}".format(access_token.token)
         request.headers["Authorization"] = header_content
 
         return request
