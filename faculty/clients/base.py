@@ -139,11 +139,7 @@ class BaseClient(object):
     def http_session(self):
         if self._http_session_cache is None:
             self._http_session_cache = requests.Session()
-            self._http_session_cache.auth = FacultyAuth(
-                _service_url(self.profile, "hudson"),
-                self.profile.client_id,
-                self.profile.client_secret,
-            )
+            self._http_session_cache.auth = FacultyAuth(self.profile)
         return self._http_session_cache
 
     def _request(self, method, endpoint, check_status=True, *args, **kwargs):

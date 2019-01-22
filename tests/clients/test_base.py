@@ -38,8 +38,6 @@ from tests.clients.fixtures import PROFILE
 AUTHORIZATION_HEADER_VALUE = "Bearer mock-token"
 AUTHORIZATION_HEADER = {"Authorization": AUTHORIZATION_HEADER_VALUE}
 
-HUDSON_URL = "https://hudson.test.domain.com"
-
 BAD_RESPONSE_STATUSES = [
     (400, BadRequest),
     (401, Unauthorized),
@@ -69,9 +67,7 @@ def patch_auth(mocker):
 
     yield
 
-    mock_auth.assert_called_once_with(
-        HUDSON_URL, PROFILE.client_id, PROFILE.client_secret
-    )
+    mock_auth.assert_called_once_with(PROFILE)
 
 
 DummyObject = namedtuple("DummyObject", ["foo"])
