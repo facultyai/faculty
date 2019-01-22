@@ -24,7 +24,6 @@ AccessToken = namedtuple("AccessToken", ["token", "expires_at"])
 
 
 class _AccessTokenCache(object):
-
     def __init__(self):
         self._store = {}
 
