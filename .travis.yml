@@ -1,39 +1,36 @@
 language: python
 cache: pip
-install:
-  - pip install flake8
-jobs:
+
+matrix:
   include:
     - name: Check black formatting
-      stage: test
-      install:
-        - pip install black
-      script:
-        - black --check .
       python: "3.6"
-    - stage: test
-      script:
-        - flake8
-        - python setup.py test
-      python: "2.7"
-    - stage: test
-      script:
-        - flake8
-        - python setup.py test
-      python: "3.4"
-    - stage: test
-      script:
-        - flake8
-        - python setup.py test
-      python: "3.5"
-    - stage: test
-      script:
-        - flake8
-        - python setup.py test
-      python: "3.6"
-    - stage: test
-      script:
-        - flake8
-        - python setup.py test
-      dist: xenial
+      env: TOXENV=black
+    - name: Check flake8 on Python 3
       python: "3.7"
+      env: TOXENV=flake8
+    - name: Check flake8 on Python 2
+      python: "2.7"
+      env: TOXENV=flake8
+    - stage: test
+      python: "2.7"
+      env: TOXENV=py27
+    - stage: test
+      python: "3.4"
+      env: TOXENV=py34
+    - stage: test
+      python: "3.5"
+      env: TOXENV=py35
+    - stage: test
+      python: "3.6"
+      env: TOXENV=py36
+    - stage: test
+      dist: xenial
+      py36-python: "3.7"
+      env: TOXENV=py37
+
+install:
+  - pip install tox
+
+script:
+  - tox
