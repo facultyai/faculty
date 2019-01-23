@@ -25,10 +25,9 @@ class FacultyAuth(AuthBase):
         The Faculty session to authenticate with
 
     To perform an authenticated request against a Faculty service, first
-    construct an instance of this class:
+    construct an instance of this class with a session:
 
     >>> import faculty.session
-    >>> from faculty.clients.auth import FacultyAuth
     >>> session = faculty.session.get_session()
     >>> auth = FacultyAuth(session)
 
