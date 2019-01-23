@@ -4,11 +4,14 @@ dist: xenial
 
 matrix:
   include:
-    - python: 3.7
+    - name: Check black formatting
+      python: 3.7
       env: TOXENV=black
-    - python: 3.7
+    - name: Check flake8 on Python 3
+      python: 3.7
       env: TOXENV=flake8
-    - python: 2.7
+    - name: Check flake8 on Python 2
+      python: 2.7
       env: TOXENV=flake8
 
     - stage: test
