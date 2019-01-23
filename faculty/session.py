@@ -69,24 +69,9 @@ def _get_access_token(profile):
 
 
 class Session(object):
-
-    __session_cache = {}
-
     def __init__(self, profile, access_token_cache):
         self.profile = profile
         self.access_token_cache = access_token_cache
-
-    @classmethod
-    def get(cls, access_token_cache=None, **kwargs):
-        key = tuple(kwargs.items()) + (access_token_cache,)
-        try:
-            session = cls.__session_cache[key]
-        except KeyError:
-            profile = faculty.config.resolve_profile(**kwargs)
-            access_token_cache = access_token_cache or MemoryAccessTokenCache()
-            session = cls(profile, access_token_cache)
-            cls.__session_cache[key] = session
-        return session
 
     def access_token(self):
         access_token = self.access_token_cache.get(self.profile)
@@ -97,3 +82,18 @@ class Session(object):
 
     def service_url(self, service_name, endpoint=""):
         return _service_url(self.profile, service_name, endpoint)
+
+
+_SESSION_CACHE = {}
+
+
+def get_session(access_token_cache=None, **kwargs):
+    key = tuple(kwargs.items()) + (access_token_cache,)
+    try:
+        session = _SESSION_CACHE[key]
+    except KeyError:
+        profile = faculty.config.resolve_profile(**kwargs)
+        access_token_cache = access_token_cache or MemoryAccessTokenCache()
+        session = Session(profile, access_token_cache)
+        _SESSION_CACHE[key] = session
+    return session

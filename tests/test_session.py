@@ -23,6 +23,7 @@ from faculty.session import (
     MemoryAccessTokenCache,
     _get_access_token,
     Session,
+    get_session,
 )
 
 
@@ -48,7 +49,7 @@ def mock_datetime_now(mocker):
 
 @pytest.fixture
 def isolated_session_cache(mocker):
-    mocker.patch("faculty.session.Session._Session__session_cache", {})
+    mocker.patch("faculty.session._SESSION_CACHE", {})
 
 
 def test_memory_access_token_cache(mock_datetime_now):
@@ -93,54 +94,6 @@ def test_get_access_token(requests_mock, mock_datetime_now):
     )
 
 
-def test_session_get(mocker, isolated_session_cache):
-    mocker.patch("faculty.config.resolve_profile", return_value=PROFILE)
-    access_token_cache = mocker.Mock()
-    mocker.spy(Session, "__init__")
-
-    session = Session.get(
-        kwarg1="foo", kwarg2="bar", access_token_cache=access_token_cache
-    )
-
-    faculty.config.resolve_profile.assert_called_once_with(
-        kwarg1="foo", kwarg2="bar"
-    )
-    Session.__init__.assert_called_once_with(
-        session, PROFILE, access_token_cache
-    )
-
-
-def test_session_get_defaults(mocker, isolated_session_cache):
-    mocker.patch("faculty.config.resolve_profile", return_value=PROFILE)
-    access_token_cache = mocker.Mock()
-    mocker.patch(
-        "faculty.session.MemoryAccessTokenCache",
-        return_value=access_token_cache,
-    )
-    mocker.spy(Session, "__init__")
-
-    session = Session.get()
-
-    faculty.config.resolve_profile.assert_called_once_with()
-    Session.__init__.assert_called_once_with(
-        session, PROFILE, access_token_cache
-    )
-
-
-def test_session_get_cache(mocker, isolated_session_cache):
-    mocker.patch("faculty.config.resolve_profile", return_value=PROFILE)
-    access_token_cache = mocker.Mock()
-    mocker.spy(Session, "__init__")
-
-    session1 = Session.get(kwarg="foo", access_token_cache=access_token_cache)
-    session2 = Session.get(kwarg="foo", access_token_cache=access_token_cache)
-
-    assert session1 is session2
-
-    faculty.config.resolve_profile.call_count == 1
-    Session.__init__.call_count == 1
-
-
 def test_session_access_token(mocker):
     access_token_cache = mocker.Mock()
     session = Session(PROFILE, access_token_cache)
@@ -174,3 +127,51 @@ def test_session_service_url_default_endpoint(mocker):
     assert session.service_url("service") == "{}://service.{}".format(
         PROFILE.protocol, PROFILE.domain
     )
+
+
+def test_get_session(mocker, isolated_session_cache):
+    mocker.patch("faculty.config.resolve_profile", return_value=PROFILE)
+    access_token_cache = mocker.Mock()
+    mocker.spy(Session, "__init__")
+
+    session = get_session(
+        kwarg1="foo", kwarg2="bar", access_token_cache=access_token_cache
+    )
+
+    faculty.config.resolve_profile.assert_called_once_with(
+        kwarg1="foo", kwarg2="bar"
+    )
+    Session.__init__.assert_called_once_with(
+        session, PROFILE, access_token_cache
+    )
+
+
+def test_get_session_defaults(mocker, isolated_session_cache):
+    mocker.patch("faculty.config.resolve_profile", return_value=PROFILE)
+    access_token_cache = mocker.Mock()
+    mocker.patch(
+        "faculty.session.MemoryAccessTokenCache",
+        return_value=access_token_cache,
+    )
+    mocker.spy(Session, "__init__")
+
+    session = get_session()
+
+    faculty.config.resolve_profile.assert_called_once_with()
+    Session.__init__.assert_called_once_with(
+        session, PROFILE, access_token_cache
+    )
+
+
+def test_get_session_cache(mocker, isolated_session_cache):
+    mocker.patch("faculty.config.resolve_profile", return_value=PROFILE)
+    access_token_cache = mocker.Mock()
+    mocker.spy(Session, "__init__")
+
+    session1 = get_session(kwarg="foo", access_token_cache=access_token_cache)
+    session2 = get_session(kwarg="foo", access_token_cache=access_token_cache)
+
+    assert session1 is session2
+
+    faculty.config.resolve_profile.call_count == 1
+    Session.__init__.call_count == 1
