@@ -24,11 +24,9 @@ from faculty.clients.environment import (
     EnvironmentClient,
     EnvironmentSchema,
 )
-from tests.clients.fixtures import PROFILE
 
 
 PROJECT_ID = uuid.uuid4()
-
 
 ENVIRONMENT = Environment(
     id=uuid.uuid4(),
@@ -39,7 +37,6 @@ ENVIRONMENT = Environment(
     created_at=datetime.datetime(2018, 10, 3, 4, 20, 0, 0, tzinfo=UTC),
     updated_at=datetime.datetime(2018, 11, 3, 4, 21, 15, 0, tzinfo=UTC),
 )
-
 
 ENVIRONMENT_BODY = {
     "environmentId": str(ENVIRONMENT.id),
@@ -66,7 +63,7 @@ def test_environment_client_list(mocker):
     mocker.patch.object(EnvironmentClient, "_get", return_value=[ENVIRONMENT])
     schema_mock = mocker.patch("faculty.clients.environment.EnvironmentSchema")
 
-    client = EnvironmentClient(PROFILE)
+    client = EnvironmentClient(mocker.Mock())
     assert client.list(PROJECT_ID) == [ENVIRONMENT]
 
     schema_mock.assert_called_once_with(many=True)
