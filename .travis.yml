@@ -1,32 +1,33 @@
 language: python
 cache: pip
+dist: xenial
 
 matrix:
   include:
     - name: Check black formatting
-      python: "3.6"
+      python: 3.7
       env: TOXENV=black
     - name: Check flake8 on Python 3
-      python: "3.6"
+      python: 3.7
       env: TOXENV=flake8
     - name: Check flake8 on Python 2
-      python: "2.7"
+      python: 2.7
       env: TOXENV=flake8
+
     - stage: test
-      python: "2.7"
+      python: 2.7
       env: TOXENV=py27
     - stage: test
-      python: "3.4"
+      python: 3.4
       env: TOXENV=py34
     - stage: test
-      python: "3.5"
+      python: 3.5
       env: TOXENV=py35
     - stage: test
-      python: "3.6"
+      python: 3.6
       env: TOXENV=py36
     - stage: test
-      dist: xenial
-      py36-python: "3.7"
+      python: 3.7
       env: TOXENV=py37
 
 install:
