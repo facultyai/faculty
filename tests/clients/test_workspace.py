@@ -28,7 +28,6 @@ from faculty.clients.workspace import (
     ListResponseSchema,
     WorkspaceClient,
 )
-from tests.clients.fixtures import PROFILE
 
 
 PROJECT_ID = uuid4()
@@ -104,7 +103,7 @@ def test_workspace_client_get(mocker):
     mocker.patch.object(WorkspaceClient, "_get", return_value=LIST_RESPONSE)
     schema_mock = mocker.patch("faculty.clients.workspace.ListResponseSchema")
 
-    client = WorkspaceClient(PROFILE)
+    client = WorkspaceClient(mocker.Mock())
     assert client.list(
         PROJECT_ID, prefix="/path/to/test-directory/", depth=1
     ) == [DIRECTORY]

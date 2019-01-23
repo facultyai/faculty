@@ -13,11 +13,11 @@
 # limitations under the License.
 
 
-import faculty.config
+import faculty.session
 import faculty.clients
 
 
-def client(resource, *args, **kwargs):
-    profile = faculty.config.resolve_profile(*args, **kwargs)
+def client(resource, **kwargs):
+    session = faculty.session.get_session(**kwargs)
     client_class = faculty.clients.for_resource(resource)
-    return client_class(profile)
+    return client_class(session)

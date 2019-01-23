@@ -19,7 +19,6 @@ import pytest
 from marshmallow import ValidationError
 
 from faculty.clients.cluster import NodeType, NodeTypeSchema, ClusterClient
-from tests.clients.fixtures import PROFILE
 
 
 NODE_TYPE = NodeType(
@@ -138,7 +137,7 @@ def test_cluster_client_list_single_tenanted_node_types(
     mocker.patch.object(ClusterClient, "_get", return_value=[NODE_TYPE])
     schema_mock = mocker.patch("faculty.clients.cluster.NodeTypeSchema")
 
-    client = ClusterClient(PROFILE)
+    client = ClusterClient(mocker.Mock())
     assert client.list_single_tenanted_node_types(**kwargs) == [NODE_TYPE]
 
     schema_mock.assert_called_once_with(many=True)
@@ -152,7 +151,7 @@ def test_cluster_client_list_single_tenanted_node_types(
 def test_cluster_client_configure_single_tenanted_node_type(mocker):
     put_raw_mock = mocker.patch.object(ClusterClient, "_put_raw")
 
-    client = ClusterClient(PROFILE)
+    client = ClusterClient(mocker.Mock())
     response = client.configure_single_tenanted_node_type(
         NODE_TYPE.id,
         NODE_TYPE.name,
@@ -177,7 +176,7 @@ def test_cluster_client_configure_single_tenanted_node_type(mocker):
 def test_cluster_client_disable_single_tenanted_node_type(mocker):
     delete_raw_mock = mocker.patch.object(ClusterClient, "_delete_raw")
 
-    client = ClusterClient(PROFILE)
+    client = ClusterClient(mocker.Mock())
     response = client.disable_single_tenanted_node_type(NODE_TYPE.id)
 
     assert response == delete_raw_mock.return_value

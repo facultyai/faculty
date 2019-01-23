@@ -25,7 +25,6 @@ from faculty.clients.account import (
     AuthenticationResponseSchema,
 )
 
-from tests.clients.fixtures import PROFILE
 
 USER_ID = uuid.uuid4()
 
@@ -70,7 +69,7 @@ def test_account_client_authenticated_user_id(mocker):
         "faculty.clients.account.AuthenticationResponseSchema"
     )
 
-    client = AccountClient(PROFILE)
+    client = AccountClient(mocker.Mock())
 
     assert client.authenticated_user_id() == USER_ID
 

@@ -31,7 +31,6 @@ from faculty.clients.server import (
     SharedServerResources,
     DedicatedServerResources,
 )
-from tests.clients.fixtures import PROFILE
 
 
 SERVICE = Service(
@@ -159,7 +158,7 @@ def test_server_client_create_shared(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
     schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
 
-    client = ServerClient(PROFILE)
+    client = ServerClient(mocker.Mock())
 
     server_type = "jupyter"
     name = "test server"
@@ -202,7 +201,7 @@ def test_server_client_create_dedicated(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
     schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
 
-    client = ServerClient(PROFILE)
+    client = ServerClient(mocker.Mock())
 
     server_type = "jupyter"
     name = "test server"
@@ -241,7 +240,7 @@ def test_server_client_create_minimal(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
     schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
 
-    client = ServerClient(PROFILE)
+    client = ServerClient(mocker.Mock())
 
     server_type = "jupyter"
 
@@ -268,7 +267,7 @@ def test_server_client_get(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=SHARED_SERVER)
     schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
 
-    client = ServerClient(PROFILE)
+    client = ServerClient(mocker.Mock())
 
     assert client.get(PROJECT_ID, SERVER_ID) == SHARED_SERVER
 
@@ -283,7 +282,7 @@ def test_server_client_list(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
     schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
 
-    client = ServerClient(PROFILE)
+    client = ServerClient(mocker.Mock())
 
     assert client.list(PROJECT_ID) == [SHARED_SERVER]
 
@@ -299,7 +298,7 @@ def test_server_client_list_filter_name(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
     schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
 
-    client = ServerClient(PROFILE)
+    client = ServerClient(mocker.Mock())
 
     assert client.list(PROJECT_ID, name="foo") == [SHARED_SERVER]
 

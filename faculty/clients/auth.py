@@ -12,40 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import namedtuple
-from datetime import datetime, timedelta
 
-import pytz
-import requests
 from requests.auth import AuthBase
-
-
-AccessToken = namedtuple("AccessToken", ["token", "expires_at"])
-
-
-class AccessTokenClient(object):
-    """Client for getting access tokens for accessing Faculty services."""
-
-    def __init__(self, hudson_url):
-        self._session = requests.Session()
-        self.hudson_url = hudson_url
-
-    def get_access_token(self, client_id, client_secret):
-        endpoint = "{}/access_token".format(self.hudson_url)
-        payload = {
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "grant_type": "client_credentials",
-        }
-        response = self._session.post(endpoint, json=payload)
-        response.raise_for_status()
-        body = response.json()
-
-        token = body["access_token"]
-        now = datetime.now(tz=pytz.utc)
-        expires_at = now + timedelta(seconds=body["expires_in"])
-
-        return AccessToken(token, expires_at)
 
 
 class FacultyAuth(AuthBase):
@@ -53,25 +21,24 @@ class FacultyAuth(AuthBase):
 
     Parameters
     ----------
-    auth_service_url : str
-        The URL of the Faculty authentication service
-    client_id : str
-        The Faculty client ID to use for authentication
-    client_secret : str
-        The client secret associated with the client ID
+    session : faculty.session.Session
+        The Faculty session to authenticate with
 
     To perform an authenticated request against a Faculty service, first
-    construct an instance of this class:
+    construct an instance of this class with a session:
 
-    >>> auth = FacultyAuth('https://hudson.services.example.my.faculty.ai',
-                           your_client_id, your_client_secret)
+    >>> import faculty.session
+    >>> session = faculty.session.get_session()
+    >>> auth = FacultyAuth(session)
 
     then pass it as the ``auth`` argument when making a request with
     ``requests``:
 
     >>> import requests
-    >>> requests.get('https://servicename.services.example.my.faculty.ai',
-                     auth=auth)
+    >>> requests.get(
+            'https://servicename.services.example.my.faculty.ai',
+            auth=auth
+        )
 
     You can also set it as the ``auth`` attribute on a
     :class:`requests.Session`, so that subsequent requests will be
@@ -82,24 +49,13 @@ class FacultyAuth(AuthBase):
     >>> session.auth = auth
     """
 
-    def __init__(self, auth_service_url, client_id, client_secret):
-        self.auth_service_url = auth_service_url
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.access_token = None
-
-    def _get_token(self):
-        client = AccessTokenClient(self.auth_service_url)
-        return client.get_access_token(self.client_id, self.client_secret)
+    def __init__(self, session):
+        self.session = session
 
     def __call__(self, request):
+        access_token = self.session.access_token()
 
-        if self.access_token is None:
-            self.access_token = self._get_token()
-        if self.access_token.expires_at < datetime.now(tz=pytz.utc):
-            self.access_token = self._get_token()
-
-        header_content = "Bearer {}".format(self.access_token.token)
+        header_content = "Bearer {}".format(access_token.token)
         request.headers["Authorization"] = header_content
 
         return request

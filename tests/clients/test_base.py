@@ -33,12 +33,13 @@ from faculty.clients.base import (
     ServiceUnavailable,
     GatewayTimeout,
 )
-from tests.clients.fixtures import PROFILE
+
+MOCK_SERVICE_NAME = "test-service"
+MOCK_ENDPOINT = "/endpoint"
+MOCK_SERVICE_URL = "https://test-service.example.com/endpoint"
 
 AUTHORIZATION_HEADER_VALUE = "Bearer mock-token"
 AUTHORIZATION_HEADER = {"Authorization": AUTHORIZATION_HEADER_VALUE}
-
-HUDSON_URL = "https://hudson.test.domain.com"
 
 BAD_RESPONSE_STATUSES = [
     (400, BadRequest),
@@ -58,7 +59,19 @@ HTTP_METHODS = ["GET", "POST", "PUT", "DELETE"]
 
 
 @pytest.fixture
-def patch_auth(mocker):
+def session(mocker):
+    session = mocker.Mock()
+    session.service_url.return_value = MOCK_SERVICE_URL
+
+    yield session
+
+    session.service_url.assert_called_once_with(
+        MOCK_SERVICE_NAME, MOCK_ENDPOINT
+    )
+
+
+@pytest.fixture
+def patch_auth(mocker, session):
     def _add_auth_headers(request):
         request.headers["Authorization"] = AUTHORIZATION_HEADER_VALUE
         return request
@@ -69,9 +82,7 @@ def patch_auth(mocker):
 
     yield
 
-    mock_auth.assert_called_once_with(
-        HUDSON_URL, PROFILE.client_id, PROFILE.client_secret
-    )
+    mock_auth.assert_called_once_with(session)
 
 
 DummyObject = namedtuple("DummyObject", ["foo"])
@@ -86,64 +97,63 @@ class DummySchema(Schema):
 
 
 class DummyClient(BaseClient):
-    SERVICE_NAME = "test-service"
+    SERVICE_NAME = MOCK_SERVICE_NAME
 
 
-SERVICE_URL = "https://test-service.{}".format(PROFILE.domain)
-
-
-def test_get(requests_mock, patch_auth):
-
+def test_get(requests_mock, session, patch_auth):
     requests_mock.get(
-        "{}/test".format(SERVICE_URL),
+        MOCK_SERVICE_URL,
         request_headers=AUTHORIZATION_HEADER,
         json={"foo": "bar"},
     )
 
-    client = DummyClient(PROFILE)
-    assert client._get("/test", DummySchema()) == DummyObject(foo="bar")
+    client = DummyClient(session)
+
+    assert client._get(MOCK_ENDPOINT, DummySchema()) == DummyObject(foo="bar")
 
 
-def test_post(requests_mock, patch_auth):
-
+def test_post(requests_mock, session, patch_auth):
     mock = requests_mock.post(
-        "{}/test".format(SERVICE_URL),
+        MOCK_SERVICE_URL,
         request_headers=AUTHORIZATION_HEADER,
         json={"foo": "bar"},
     )
 
-    client = DummyClient(PROFILE)
-    response = client._post("/test", DummySchema(), json={"test": "payload"})
+    client = DummyClient(session)
+    response = client._post(
+        MOCK_ENDPOINT, DummySchema(), json={"test": "payload"}
+    )
 
     assert response == DummyObject(foo="bar")
     assert mock.last_request.json() == {"test": "payload"}
 
 
-def test_put(requests_mock, patch_auth):
-
+def test_put(requests_mock, session, patch_auth):
     mock = requests_mock.put(
-        "{}/test".format(SERVICE_URL),
+        MOCK_SERVICE_URL,
         request_headers=AUTHORIZATION_HEADER,
         json={"foo": "bar"},
     )
 
-    client = DummyClient(PROFILE)
-    response = client._put("/test", DummySchema(), json={"test": "payload"})
+    client = DummyClient(session)
+    response = client._put(
+        MOCK_ENDPOINT, DummySchema(), json={"test": "payload"}
+    )
 
     assert response == DummyObject(foo="bar")
     assert mock.last_request.json() == {"test": "payload"}
 
 
-def test_delete(requests_mock, patch_auth):
+def test_delete(requests_mock, session, patch_auth):
 
     requests_mock.delete(
-        "{}/test".format(SERVICE_URL),
+        MOCK_SERVICE_URL,
         request_headers=AUTHORIZATION_HEADER,
         json={"foo": "bar"},
     )
 
-    client = DummyClient(PROFILE)
-    response = client._delete("/test", DummySchema())
+    client = DummyClient(session)
+    response = client._delete(MOCK_ENDPOINT, DummySchema())
 
     assert response == DummyObject(foo="bar")
 
@@ -155,6 +165,7 @@ def test_delete(requests_mock, patch_auth):
 @pytest.mark.parametrize("status_code, exception", BAD_RESPONSE_STATUSES)
 def test_bad_responses(
     requests_mock,
+    session,
     patch_auth,
     status_code,
     exception,
@@ -164,19 +175,19 @@ def test_bad_responses(
 
     mock_method = getattr(requests_mock, http_method.lower())
     mock_method(
-        "{}/test".format(SERVICE_URL),
+        MOCK_SERVICE_URL,
         request_headers=AUTHORIZATION_HEADER,
         status_code=status_code,
         json={"foo": "bar"},
     )
 
-    client = DummyClient(PROFILE)
+    client = DummyClient(session)
     method = getattr(client, "_{}".format(http_method.lower()))
     if check_status:
         with pytest.raises(exception):
-            method("/test", DummySchema(), check_status=check_status)
+            method(MOCK_ENDPOINT, DummySchema(), check_status=check_status)
     else:
-        method("/test", DummySchema(), check_status=check_status)
+        method(MOCK_ENDPOINT, DummySchema(), check_status=check_status)
 
 
 @pytest.mark.parametrize(
@@ -186,6 +197,7 @@ def test_bad_responses(
 @pytest.mark.parametrize("status_code, exception", BAD_RESPONSE_STATUSES)
 def test_raw_bad_responses(
     requests_mock,
+    session,
     patch_auth,
     status_code,
     exception,
@@ -195,47 +207,47 @@ def test_raw_bad_responses(
 
     mock_method = getattr(requests_mock, http_method.lower())
     mock_method(
-        "{}/test".format(SERVICE_URL),
+        MOCK_SERVICE_URL,
         request_headers=AUTHORIZATION_HEADER,
         status_code=status_code,
     )
 
-    client = DummyClient(PROFILE)
+    client = DummyClient(session)
     method = getattr(client, "_{}_raw".format(http_method.lower()))
     if check_status:
         with pytest.raises(exception):
-            method("/test", check_status=check_status)
+            method(MOCK_ENDPOINT, check_status=check_status)
     else:
-        method("/test", check_status=check_status)
+        method(MOCK_ENDPOINT, check_status=check_status)
 
 
 @pytest.mark.parametrize("http_method", HTTP_METHODS)
-def test_invalid_json(requests_mock, patch_auth, http_method):
+def test_invalid_json(requests_mock, session, patch_auth, http_method):
 
     mock_method = getattr(requests_mock, http_method.lower())
     mock_method(
-        "{}/test".format(SERVICE_URL),
+        MOCK_SERVICE_URL,
         request_headers=AUTHORIZATION_HEADER,
         text="invalid-json",
     )
 
-    client = DummyClient(PROFILE)
+    client = DummyClient(session)
     method = getattr(client, "_{}".format(http_method.lower()))
     with pytest.raises(InvalidResponse, match="not valid JSON"):
-        method("/test", DummySchema())
+        method(MOCK_ENDPOINT, DummySchema())
 
 
 @pytest.mark.parametrize("http_method", HTTP_METHODS)
-def test_malformatted_json(requests_mock, patch_auth, http_method):
+def test_malformatted_json(requests_mock, session, patch_auth, http_method):
 
     mock_method = getattr(requests_mock, http_method.lower())
     mock_method(
-        "{}/test".format(SERVICE_URL),
+        MOCK_SERVICE_URL,
         request_headers=AUTHORIZATION_HEADER,
         json={"bad": "json"},
     )
 
-    client = DummyClient(PROFILE)
+    client = DummyClient(session)
     method = getattr(client, "_{}".format(http_method.lower()))
     with pytest.raises(InvalidResponse, match="not match expected format"):
-        method("/test", DummySchema())
+        method(MOCK_ENDPOINT, DummySchema())
