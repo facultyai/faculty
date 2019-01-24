@@ -13,9 +13,9 @@
 # limitations under the License.
 
 import datetime
-import pytest
 import uuid
 
+import pytest
 from dateutil.tz import UTC
 from marshmallow import ValidationError
 
