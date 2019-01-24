@@ -15,6 +15,7 @@
 
 from faculty.clients.account import AccountClient
 from faculty.clients.cluster import ClusterClient
+from faculty.clients.environment import EnvironmentClient
 from faculty.clients.job import JobClient
 from faculty.clients.log import LogClient
 from faculty.clients.project import ProjectClient
@@ -28,6 +29,7 @@ from faculty.clients.workspace import WorkspaceClient
 CLIENT_FOR_RESOURCE = {
     "account": AccountClient,
     "cluster": ClusterClient,
+    "environment": EnvironmentClient,
     "log": LogClient,
     "job": JobClient,
     "project": ProjectClient,
