@@ -92,7 +92,7 @@ class MemoryAccessTokenCache(object):
 
 class FileSystemAccessTokenCache(object):
     def __init__(self, cache_path):
-        self.cache_path = cache_path
+        self.cache_path = str(cache_path)
         self._store = None
 
     def _load_from_disk(self):
