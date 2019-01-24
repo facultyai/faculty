@@ -20,6 +20,7 @@ import pytz
 import faculty.config
 from faculty.session import (
     AccessToken,
+    AccessTokenStore,
     MemoryAccessTokenCache,
     FileSystemAccessTokenCache,
     _get_access_token,
@@ -56,6 +57,23 @@ def mock_datetime_now(mocker):
 @pytest.fixture
 def isolated_session_cache(mocker):
     mocker.patch("faculty.session._SESSION_CACHE", {})
+
+
+def test_access_token_store():
+    store = AccessTokenStore()
+    store[PROFILE] = VALID_ACCESS_TOKEN
+    assert store[PROFILE] == VALID_ACCESS_TOKEN
+
+
+def test_access_token_store_get():
+    store = AccessTokenStore()
+    store[PROFILE] = VALID_ACCESS_TOKEN
+    assert store.get(PROFILE) == VALID_ACCESS_TOKEN
+
+
+def test_access_token_store_get_default():
+    store = AccessTokenStore()
+    assert store.get(PROFILE) is None
 
 
 def test_memory_access_token_cache(mock_datetime_now):
