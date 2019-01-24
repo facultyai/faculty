@@ -39,7 +39,7 @@ class AccessTokenSchema(Schema):
         return AccessToken(**data)
 
 
-class AccessTokenStore:
+class AccessTokenStore(object):
     def __init__(self, tokens=None):
         self.tokens = tokens or {}
 
