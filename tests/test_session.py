@@ -95,7 +95,7 @@ def test_memory_access_token_cache_expired(mock_datetime_now):
 
 
 def test_file_system_access_token_cache(tmpdir, mock_datetime_now):
-    cache_path = tmpdir.join("subdir").join("cache.json")
+    cache_path = tmpdir.join("cache.json")
     cache = FileSystemAccessTokenCache(cache_path)
     cache.add(PROFILE, VALID_ACCESS_TOKEN)
 
@@ -106,17 +106,48 @@ def test_file_system_access_token_cache(tmpdir, mock_datetime_now):
 def test_file_system_access_token_cache_miss(
     mocker, tmpdir, mock_datetime_now
 ):
-    cache_path = tmpdir.join("subdir").join("cache.json")
+    cache_path = tmpdir.join("cache.json")
     cache = FileSystemAccessTokenCache(cache_path)
     cache.add(PROFILE, VALID_ACCESS_TOKEN)
     assert cache.get(mocker.Mock()) is None
 
 
 def test_file_system_access_token_cache_expired(tmpdir, mock_datetime_now):
-    cache_path = tmpdir.join("subdir").join("cache.json")
+    cache_path = tmpdir.join("cache.json")
     cache = FileSystemAccessTokenCache(cache_path)
     cache.add(PROFILE, EXPIRED_ACCESS_TOKEN)
     assert cache.get(PROFILE) is None
+
+
+def test_file_system_access_token_cache_new_directory(
+    tmpdir, mock_datetime_now
+):
+    directory = tmpdir.join("spam").join("eggs")
+
+    cache_path = directory.join("cache.json")
+    cache = FileSystemAccessTokenCache(cache_path)
+    cache.add(PROFILE, VALID_ACCESS_TOKEN)
+
+    assert directory.check(dir=True)
+
+    new_cache = FileSystemAccessTokenCache(cache_path)
+    assert new_cache.get(PROFILE) == VALID_ACCESS_TOKEN
+
+
+@pytest.mark.parametrize(
+    "content", ["invalid json", '{"invalid": "structure"}']
+)
+def test_file_system_access_token_cache_invalid_file(
+    tmpdir, mock_datetime_now, content
+):
+    cache_path = tmpdir.join("cache.json")
+    cache_path.write(content)
+
+    cache = FileSystemAccessTokenCache(cache_path)
+    cache.add(PROFILE, VALID_ACCESS_TOKEN)
+
+    new_cache = FileSystemAccessTokenCache(cache_path)
+    assert new_cache.get(PROFILE) == VALID_ACCESS_TOKEN
 
 
 def test_get_access_token(requests_mock, mock_datetime_now):
