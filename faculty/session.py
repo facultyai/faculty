@@ -15,12 +15,13 @@
 
 import os
 import json
+import errno
 from datetime import datetime, timedelta
 from collections import namedtuple
 
 import requests
 import pytz
-from marshmallow import Schema, fields, post_load
+from marshmallow import Schema, fields, post_load, ValidationError
 from six.moves import urllib
 
 import faculty.config
@@ -90,6 +91,17 @@ class MemoryAccessTokenCache(object):
         self._store[profile] = access_token
 
 
+def _ensure_directory_exists(path, mode):
+    try:
+        os.makedirs(path, mode=mode)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            # Directory already exists
+            pass
+        else:
+            raise
+
+
 class FileSystemAccessTokenCache(object):
     def __init__(self, cache_path):
         self.cache_path = str(cache_path)
@@ -100,21 +112,22 @@ class FileSystemAccessTokenCache(object):
             with open(self.cache_path, "r") as fp:
                 data = json.load(fp)
             self._store = AccessTokenStoreSchema().load(data)
-        except Exception:  # TODO: Make less open or remove
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+                # File does not exist - initialise empty store
+                self._store = AccessTokenStore()
+            else:
+                raise
+        except (ValueError, ValidationError):
+            # File is of invalid format - reset with empty store
             self._store = AccessTokenStore()
-        print(self._store)
 
     def _persist_to_disk(self):
-        try:
-            os.makedirs(os.path.dirname(self.cache_path), mode=0o700)
-        except OSError:
-            pass
-        try:
-            data = AccessTokenStoreSchema().dump(self._store)
-            with open(self.cache_path, "w") as fp:
-                json.dump(data, fp, separators=(",", ":"))
-        except Exception:  # TODO: Make less open or remove
-            pass
+        dirname = os.path.dirname(self.cache_path)
+        _ensure_directory_exists(dirname, mode=0o700)
+        data = AccessTokenStoreSchema().dump(self._store)
+        with open(self.cache_path, "w") as fp:
+            json.dump(data, fp, separators=(",", ":"))
 
     def get(self, profile):
         if self._store is None:
