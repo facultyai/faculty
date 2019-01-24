@@ -21,6 +21,7 @@ import faculty.config
 from faculty.session import (
     AccessToken,
     MemoryAccessTokenCache,
+    FileSystemAccessTokenCache,
     _get_access_token,
     Session,
     get_session,
@@ -37,7 +38,12 @@ ACCESS_TOKEN_URL = "{}://hudson.{}/access_token".format(
     PROFILE.protocol, PROFILE.domain
 )
 NOW = datetime.now(tz=pytz.utc)
-IN_TEN_MINUTES = NOW + timedelta(minutes=10)
+VALID_ACCESS_TOKEN = AccessToken(
+    token="access-token", expires_at=NOW + timedelta(minutes=10)
+)
+EXPIRED_ACCESS_TOKEN = AccessToken(
+    token="access-token", expires_at=NOW - timedelta(seconds=1)
+)
 
 
 @pytest.fixture
@@ -54,24 +60,44 @@ def isolated_session_cache(mocker):
 
 def test_memory_access_token_cache(mock_datetime_now):
     cache = MemoryAccessTokenCache()
-    access_token = AccessToken(token="access-token", expires_at=IN_TEN_MINUTES)
-    cache.add(PROFILE, access_token)
-    assert cache.get(PROFILE) == access_token
+    cache.add(PROFILE, VALID_ACCESS_TOKEN)
+    assert cache.get(PROFILE) == VALID_ACCESS_TOKEN
 
 
 def test_memory_access_token_cache_miss(mocker, mock_datetime_now):
     cache = MemoryAccessTokenCache()
-    access_token = AccessToken(token="access-token", expires_at=IN_TEN_MINUTES)
-    cache.add(PROFILE, access_token)
+    cache.add(PROFILE, VALID_ACCESS_TOKEN)
     assert cache.get(mocker.Mock()) is None
 
 
 def test_memory_access_token_cache_expired(mock_datetime_now):
     cache = MemoryAccessTokenCache()
-    access_token = AccessToken(
-        token="access-token", expires_at=NOW - timedelta(seconds=1)
-    )
-    cache.add(PROFILE, access_token)
+    cache.add(PROFILE, EXPIRED_ACCESS_TOKEN)
+    assert cache.get(PROFILE) is None
+
+
+def test_file_system_access_token_cache(tmpdir, mock_datetime_now):
+    cache_path = tmpdir.join("subdir").join("cache.json")
+    cache = FileSystemAccessTokenCache(cache_path)
+    cache.add(PROFILE, VALID_ACCESS_TOKEN)
+
+    new_cache = FileSystemAccessTokenCache(cache_path)
+    assert new_cache.get(PROFILE) == VALID_ACCESS_TOKEN
+
+
+def test_file_system_access_token_cache_miss(
+    mocker, tmpdir, mock_datetime_now
+):
+    cache_path = tmpdir.join("subdir").join("cache.json")
+    cache = FileSystemAccessTokenCache(cache_path)
+    cache.add(PROFILE, VALID_ACCESS_TOKEN)
+    assert cache.get(mocker.Mock()) is None
+
+
+def test_file_system_access_token_cache_expired(tmpdir, mock_datetime_now):
+    cache_path = tmpdir.join("subdir").join("cache.json")
+    cache = FileSystemAccessTokenCache(cache_path)
+    cache.add(PROFILE, EXPIRED_ACCESS_TOKEN)
     assert cache.get(PROFILE) is None
 
 
@@ -79,7 +105,7 @@ def test_get_access_token(requests_mock, mock_datetime_now):
 
     requests_mock.post(
         ACCESS_TOKEN_URL,
-        json={"access_token": "access-token", "expires_in": 600},
+        json={"access_token": "access-token", "expires_in": 30},
     )
 
     access_token = _get_access_token(PROFILE)
@@ -90,7 +116,7 @@ def test_get_access_token(requests_mock, mock_datetime_now):
         "grant_type": "client_credentials",
     }
     assert access_token == AccessToken(
-        token="access-token", expires_at=IN_TEN_MINUTES
+        token="access-token", expires_at=NOW + timedelta(seconds=30)
     )
 
 

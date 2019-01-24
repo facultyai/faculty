@@ -13,11 +13,14 @@
 # limitations under the License.
 
 
+import os
+import json
 from datetime import datetime, timedelta
 from collections import namedtuple
 
 import requests
 import pytz
+from marshmallow import Schema, fields, post_load
 from six.moves import urllib
 
 import faculty.config
@@ -26,20 +29,104 @@ import faculty.config
 AccessToken = namedtuple("AccessToken", ["token", "expires_at"])
 
 
+class AccessTokenSchema(Schema):
+    token = fields.String(required=True)
+    expires_at = fields.DateTime(data_key="expiresAt", required=True)
+
+    @post_load
+    def make_access_token(self, data):
+        return AccessToken(**data)
+
+
+class AccessTokenStore:
+    def __init__(self, tokens=None):
+        self.tokens = tokens or {}
+
+    @staticmethod
+    def _hash_profile(profile):
+        return str(hash(profile))
+
+    def __getitem__(self, profile):
+        return self.tokens[self._hash_profile(profile)]
+
+    def __setitem__(self, profile, access_token):
+        self.tokens[self._hash_profile(profile)] = access_token
+
+    def get(self, profile):
+        try:
+            return self[profile]
+        except KeyError:
+            return None
+
+
+class AccessTokenStoreSchema(Schema):
+    tokens = fields.Dict(
+        keys=fields.String(),
+        values=fields.Nested(AccessTokenSchema),
+        required=True,
+    )
+
+    @post_load
+    def make_access_token_store(self, data):
+        return AccessTokenStore(**data)
+
+
+def _is_valid_access_token(access_token_or_none):
+    if access_token_or_none is None:
+        return False
+    else:
+        return access_token_or_none.expires_at >= datetime.now(tz=pytz.utc)
+
+
 class MemoryAccessTokenCache(object):
     def __init__(self):
-        self._store = {}
+        self._store = AccessTokenStore()
 
     def get(self, profile):
         access_token = self._store.get(profile)
-        utc_now = datetime.now(tz=pytz.utc)
-        if access_token is None or access_token.expires_at < utc_now:
-            return None
-        else:
-            return access_token
+        return access_token if _is_valid_access_token(access_token) else None
 
     def add(self, profile, access_token):
         self._store[profile] = access_token
+
+
+class FileSystemAccessTokenCache(object):
+    def __init__(self, cache_path):
+        self.cache_path = cache_path
+        self._store = None
+
+    def _load_from_disk(self):
+        try:
+            with open(self.cache_path, "r") as fp:
+                data = json.load(fp)
+            self._store = AccessTokenStoreSchema().load(data)
+        except Exception:  # TODO: Make less open or remove
+            self._store = AccessTokenStore()
+        print(self._store)
+
+    def _persist_to_disk(self):
+        try:
+            os.makedirs(os.path.dirname(self.cache_path), mode=0o700)
+        except OSError:
+            pass
+        try:
+            data = AccessTokenStoreSchema().dump(self._store)
+            with open(self.cache_path, "w") as fp:
+                json.dump(data, fp, separators=(",", ":"))
+        except Exception:  # TODO: Make less open or remove
+            pass
+
+    def get(self, profile):
+        if self._store is None:
+            self._load_from_disk()
+        access_token = self._store.get(profile)
+        return access_token if _is_valid_access_token(access_token) else None
+
+    def add(self, profile, access_token):
+        if self._store is None:
+            self._load_from_disk()
+        self._store[profile] = access_token
+        self._persist_to_disk()
 
 
 def _service_url(profile, service, endpoint=""):
