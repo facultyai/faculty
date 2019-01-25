@@ -25,13 +25,7 @@ setup(
     license="Apache Software License",
     packages=find_packages(),
     use_scm_version={"version_scheme": "post-release"},
-    setup_requires=["setuptools_scm", "pytest-runner"],
-    tests_require=[
-        "pytest",
-        "pytest-mock",
-        "requests_mock",
-        "python-dateutil>=2.7",
-    ],
+    setup_requires=["setuptools_scm"],
     install_requires=[
         "requests",
         "pytz",
