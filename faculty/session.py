@@ -79,7 +79,7 @@ def _is_valid_access_token(access_token_or_none):
         return access_token_or_none.expires_at >= datetime.now(tz=pytz.utc)
 
 
-class MemoryAccessTokenCache(object):
+class AccessTokenMemoryCache(object):
     def __init__(self):
         self._store = AccessTokenStore()
 
@@ -102,7 +102,7 @@ def _ensure_directory_exists(path, mode):
             raise
 
 
-class FileSystemAccessTokenCache(object):
+class AccessTokenFileSystemCache(object):
     def __init__(self, cache_path):
         self.cache_path = str(cache_path)
         self._store = None
@@ -193,7 +193,7 @@ def get_session(access_token_cache=None, **kwargs):
         session = _SESSION_CACHE[key]
     except KeyError:
         profile = faculty.config.resolve_profile(**kwargs)
-        access_token_cache = access_token_cache or MemoryAccessTokenCache()
+        access_token_cache = access_token_cache or AccessTokenMemoryCache()
         session = Session(profile, access_token_cache)
         _SESSION_CACHE[key] = session
     return session
