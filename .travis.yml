@@ -7,13 +7,12 @@ matrix:
     - name: Check black formatting
       python: 3.7
       env: TOXENV=black
-    - name: Check flake8 on Python 3
-      python: 3.7
-      env: TOXENV=flake8
     - name: Check flake8 on Python 2
       python: 2.7
       env: TOXENV=flake8
-
+    - name: Check flake8 on Python 3
+      python: 3.7
+      env: TOXENV=flake8
     - stage: test
       python: 2.7
       env: TOXENV=py27
