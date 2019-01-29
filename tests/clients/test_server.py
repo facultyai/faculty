@@ -16,24 +16,22 @@
 import uuid
 from datetime import datetime
 
-import pytest
-from marshmallow import ValidationError
 from dateutil.tz import UTC
+from marshmallow import ValidationError
+import pytest
 
 from faculty.clients.server import (
+    DedicatedServerResources,
     Server,
-    ServerStatus,
-    Service,
-    ServerSchema,
-    ServiceSchema,
     ServerClient,
     ServerIdSchema,
+    ServerSchema,
+    ServerStatus,
+    Service,
+    ServiceSchema,
     SharedServerResources,
     SSHDetails,
-    SSHDetailsSchema,
-    DedicatedServerResources,
 )
-
 
 SERVICE = Service(
     name="hound",
