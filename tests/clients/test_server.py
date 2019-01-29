@@ -29,6 +29,8 @@ from faculty.clients.server import (
     ServerClient,
     ServerIdSchema,
     SharedServerResources,
+    SSHDetails,
+    SSHDetailsSchema,
     DedicatedServerResources,
 )
 
@@ -110,6 +112,10 @@ DEDICATED_SERVER_BODY = {
 }
 
 SERVER_ID_BODY = {"instanceId": str(SERVER_ID)}
+
+SSH_DETAILS = SSHDetails(
+    hostname="instances.domain.com", port=1234, username="username", key="key"
+)
 
 
 def test_service_schema():
@@ -330,4 +336,19 @@ def test_server_client_apply_environment(mocker):
 
     ServerClient._put_raw.assert_called_once_with(
         "/instance/{}/environment/{}".format(SERVER_ID, ENVIRONMENT_ID)
+    )
+
+
+def test_server_client_get_ssh_details(mocker):
+    mocker.patch.object(ServerClient, "_get", return_value=SSHDetails)
+    schema_mock = mocker.patch("faculty.clients.server.SSHDetailsSchema")
+
+    client = ServerClient(mocker.Mock())
+
+    assert client.get_ssh_details(PROJECT_ID, SERVER_ID) == SSHDetails
+
+    schema_mock.assert_called_once_with()
+    ServerClient._get.assert_called_once_with(
+        "/instance/{}/{}/ssh".format(PROJECT_ID, SERVER_ID),
+        schema_mock.return_value,
     )
