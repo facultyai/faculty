@@ -136,21 +136,6 @@ class ServerIdSchema(Schema):
         return data["instanceId"]
 
 
-AppliedEnvironment = namedtuple(
-    "AppliedEnvironment", ["instance_id", "environment_id"]
-)
-
-
-class AppliedEnvironmentSchema(Schema):
-
-    instance_id = fields.UUID(data_key="instanceId", required=True)
-    environment_id = fields.UUID(data_key="environmentId", required=True)
-
-    @post_load
-    def make_applied_environment(self, data):
-        return AppliedEnvironment(**data)
-
-
 class ServerClient(BaseClient):
 
     SERVICE_NAME = "galleon"
@@ -210,4 +195,4 @@ class ServerClient(BaseClient):
         endpoint = "/instance/{}/environment/{}".format(
             server_id, environment_id
         )
-        return self._put(endpoint, AppliedEnvironmentSchema())
+        self._put_raw(endpoint)

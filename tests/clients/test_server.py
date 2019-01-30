@@ -21,7 +21,6 @@ from marshmallow import ValidationError
 from dateutil.tz import UTC
 
 from faculty.clients.server import (
-    AppliedEnvironment,
     Server,
     ServerStatus,
     Service,
@@ -111,10 +110,6 @@ DEDICATED_SERVER_BODY = {
 }
 
 SERVER_ID_BODY = {"instanceId": str(SERVER_ID)}
-
-APPLIED_ENVIRONMENT = AppliedEnvironment(
-    instance_id=SERVER_ID, environment_id=ENVIRONMENT_ID
-)
 
 
 def test_service_schema():
@@ -316,6 +311,7 @@ def test_server_client_list_filter_name(mocker):
         params={"name": "foo"},
     )
 
+
 def test_server_client_delete(mocker):
     mocker.patch.object(ServerClient, "_delete_raw")
     client = ServerClient(mocker.Mock())
@@ -325,19 +321,13 @@ def test_server_client_delete(mocker):
         "/instance/{}".format(SERVER_ID)
     )
 
-def test_server_client_apply_environment(mocker):
-    mocker.patch.object(ServerClient, "_put", return_value=APPLIED_ENVIRONMENT)
-    schema_mock = mocker.patch(
-        "faculty.clients.server.AppliedEnvironmentSchema"
-    )
 
+def test_server_client_apply_environment(mocker):
+    mocker.patch.object(ServerClient, "_put_raw")
     client = ServerClient(mocker.Mock())
 
-    assert (
-        client.apply_environment(ENVIRONMENT_ID, SERVER_ID)
-        == APPLIED_ENVIRONMENT
-    )
+    client.apply_environment(ENVIRONMENT_ID, SERVER_ID)
 
-    schema_mock.assert_called_once_with()
-    ServerClient._put.assert_called_once_with(
-        "/instance/{}/environment/{}".format(SERVER_ID, ENVIRONMENT_ID),
+    ServerClient._put_raw.assert_called_once_with(
+        "/instance/{}/environment/{}".format(SERVER_ID, ENVIRONMENT_ID)
+    )
