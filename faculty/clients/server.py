@@ -136,6 +136,21 @@ class ServerIdSchema(Schema):
         return data["instanceId"]
 
 
+SSHDetails = namedtuple("SSHDetails", ["hostname", "port", "username", "key"])
+
+
+class SSHDetailsSchema(Schema):
+
+    hostname = fields.String(required=True)
+    port = fields.Integer(required=True)
+    username = fields.String(required=True)
+    key = fields.String(required=True)
+
+    @post_load
+    def make_ssh_details(self, data):
+        return SSHDetails(**data)
+
+
 class ServerClient(BaseClient):
 
     SERVICE_NAME = "galleon"
@@ -196,3 +211,7 @@ class ServerClient(BaseClient):
             server_id, environment_id
         )
         self._put_raw(endpoint)
+
+    def get_ssh_details(self, project_id, server_id):
+        endpoint = "/instance/{}/{}/ssh".format(project_id, server_id)
+        return self._get(endpoint, SSHDetailsSchema())

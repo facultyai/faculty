@@ -16,22 +16,23 @@
 import uuid
 from datetime import datetime
 
-import pytest
-from marshmallow import ValidationError
 from dateutil.tz import UTC
+from marshmallow import ValidationError
+import pytest
 
 from faculty.clients.server import (
+    DedicatedServerResources,
     Server,
-    ServerStatus,
-    Service,
-    ServerSchema,
-    ServiceSchema,
     ServerClient,
     ServerIdSchema,
+    ServerSchema,
+    ServerStatus,
+    Service,
+    ServiceSchema,
     SharedServerResources,
-    DedicatedServerResources,
+    SSHDetails,
+    SSHDetailsSchema,
 )
-
 
 SERVICE = Service(
     name="hound",
@@ -111,6 +112,16 @@ DEDICATED_SERVER_BODY = {
 
 SERVER_ID_BODY = {"instanceId": str(SERVER_ID)}
 
+SSH_DETAILS = SSHDetails(
+    hostname="instances.domain.com", port=1234, username="username", key="key"
+)
+SSH_DETAILS_BODY = {
+    "hostname": "instances.domain.com",
+    "port": 1234,
+    "username": "username",
+    "key": "key",
+}
+
 
 def test_service_schema():
     data = ServiceSchema().load(SERVICE_BODY)
@@ -154,6 +165,16 @@ def test_server_id_schema():
 def test_server_id_schema_invalid():
     with pytest.raises(ValidationError):
         ServerIdSchema().load({})
+
+
+def test_ssh_details_schema():
+    data = SSHDetailsSchema().load(SSH_DETAILS_BODY)
+    assert data == SSH_DETAILS
+
+
+def test_ssh_details_schema_invalid():
+    with pytest.raises(ValidationError):
+        SSHDetailsSchema().load({})
 
 
 def test_server_client_create_shared(mocker):
@@ -330,4 +351,21 @@ def test_server_client_apply_environment(mocker):
 
     ServerClient._put_raw.assert_called_once_with(
         "/instance/{}/environment/{}".format(SERVER_ID, ENVIRONMENT_ID)
+    )
+
+
+def test_server_client_get_ssh_details(mocker):
+    _get_mock = mocker.patch.object(ServerClient, "_get")
+    schema_mock = mocker.patch("faculty.clients.server.SSHDetailsSchema")
+
+    client = ServerClient(mocker.Mock())
+
+    assert (
+        client.get_ssh_details(PROJECT_ID, SERVER_ID) == _get_mock.return_value
+    )
+
+    schema_mock.assert_called_once_with()
+    ServerClient._get.assert_called_once_with(
+        "/instance/{}/{}/ssh".format(PROJECT_ID, SERVER_ID),
+        schema_mock.return_value,
     )
