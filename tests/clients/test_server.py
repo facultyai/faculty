@@ -338,12 +338,14 @@ def test_server_client_apply_environment(mocker):
 
 
 def test_server_client_get_ssh_details(mocker):
-    mocker.patch.object(ServerClient, "_get", return_value=SSHDetails)
+    _get_mock = mocker.patch.object(ServerClient, "_get")
     schema_mock = mocker.patch("faculty.clients.server.SSHDetailsSchema")
 
     client = ServerClient(mocker.Mock())
 
-    assert client.get_ssh_details(PROJECT_ID, SERVER_ID) == SSHDetails
+    assert (
+        client.get_ssh_details(PROJECT_ID, SERVER_ID) == _get_mock.return_value
+    )
 
     schema_mock.assert_called_once_with()
     ServerClient._get.assert_called_once_with(
