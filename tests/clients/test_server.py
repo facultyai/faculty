@@ -49,9 +49,11 @@ SERVICE_BODY = {
     "uri": SERVICE.uri,
 }
 
-PROJECT_ID = uuid.uuid4()
+ENVIRONMENT_ID = uuid.uuid4()
 OWNER_ID = uuid.uuid4()
+PROJECT_ID = uuid.uuid4()
 SERVER_ID = uuid.uuid4()
+
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 CREATED_AT_STRING = "2018-03-10T11:32:06.247Z"
 
@@ -317,4 +319,15 @@ def test_server_client_delete(mocker):
 
     ServerClient._delete_raw.assert_called_once_with(
         "/instance/{}".format(SERVER_ID)
+    )
+
+
+def test_server_client_apply_environment(mocker):
+    mocker.patch.object(ServerClient, "_put_raw")
+    client = ServerClient(mocker.Mock())
+
+    client.apply_environment(ENVIRONMENT_ID, SERVER_ID)
+
+    ServerClient._put_raw.assert_called_once_with(
+        "/instance/{}/environment/{}".format(SERVER_ID, ENVIRONMENT_ID)
     )

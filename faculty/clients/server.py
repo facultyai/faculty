@@ -190,3 +190,9 @@ class ServerClient(BaseClient):
         endpoint = "/instance/{}".format(project_id)
         params = {"name": name} if name is not None else None
         return self._get(endpoint, ServerSchema(many=True), params=params)
+
+    def apply_environment(self, environment_id, server_id):
+        endpoint = "/instance/{}/environment/{}".format(
+            server_id, environment_id
+        )
+        self._put_raw(endpoint)
