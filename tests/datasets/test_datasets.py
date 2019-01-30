@@ -20,17 +20,8 @@ import pytest
 
 from faculty import datasets
 
-from tests.datasets.fixtures import (  # noqa: F401
-    mock_secret_client,
-    project_env,
-    project_directory,
-    write_remote_object,
+from tests.datasets.fixtures import (
     read_remote_object,
-    remote_file,
-    remote_tree,
-    local_file,
-    local_file_changed,
-    local_tree,
     temporary_directory,
     TEST_DIRECTORY,
     TEST_FILE_NAME,
@@ -49,7 +40,7 @@ from tests.datasets.fixtures import (  # noqa: F401
 pytestmark = pytest.mark.usefixtures("project_directory")
 
 
-@pytest.mark.parametrize(  # noqa: F811
+@pytest.mark.parametrize(
     "path, show_hidden, expected",
     [(path, True, TEST_TREE) for path in VALID_ROOT_PATHS]
     + [(path, False, TEST_TREE_NO_HIDDEN_FILES) for path in VALID_ROOT_PATHS],
@@ -60,7 +51,7 @@ def test_ls_root(remote_tree, path, show_hidden, expected):
     }
 
 
-@pytest.mark.parametrize(  # noqa: F811
+@pytest.mark.parametrize(
     "prefix, show_hidden, expected",
     [(directory, True, TEST_TREE) for directory in VALID_DIRECTORIES]
     + [
@@ -76,7 +67,7 @@ def test_ls_subdirectory(remote_tree, prefix, show_hidden, expected):
     assert set(datasets.ls(prefix, show_hidden=show_hidden)) == set(matches)
 
 
-@pytest.mark.parametrize(  # noqa: F811
+@pytest.mark.parametrize(
     "pattern, prefix, show_hidden, expected",
     [("*dir2*", directory, True, TEST_TREE) for directory in VALID_DIRECTORIES]
     + [
@@ -98,7 +89,7 @@ def test_glob(pattern, remote_tree, prefix, show_hidden, expected):
     )
 
 
-@pytest.mark.parametrize(  # noqa: F811
+@pytest.mark.parametrize(
     "path, result",
     [(path, True) for path in VALID_DIRECTORIES]
     + [(path, False) for path in VALID_FILES + INVALID_PATHS],
@@ -107,7 +98,7 @@ def test_isdir(remote_tree, path, result):
     assert datasets._isdir(path) is result
 
 
-@pytest.mark.parametrize(  # noqa: F811
+@pytest.mark.parametrize(
     "path, result",
     [(path, True) for path in VALID_FILES]
     + [(path, False) for path in VALID_DIRECTORIES + INVALID_PATHS],
@@ -116,7 +107,7 @@ def test_isfile(remote_tree, path, result):
     assert datasets._isfile(path) is result
 
 
-@pytest.mark.parametrize(  # noqa: F811
+@pytest.mark.parametrize(
     "destination",
     [TEST_FILE_NAME, "/" + TEST_FILE_NAME, "./" + TEST_FILE_NAME],
 )
@@ -126,7 +117,7 @@ def test_put_file(local_file, destination):
     assert content == TEST_FILE_CONTENT
 
 
-def test_put_file_nonexistent_directory(local_file):  # noqa: F811
+def test_put_file_nonexistent_directory(local_file):
     datasets.put(local_file, "/path/to/newdir/test_file")
     for path in ["/path/", "/path/to/", "/path/to/newdir/"]:
         content = read_remote_object(path)
@@ -135,7 +126,7 @@ def test_put_file_nonexistent_directory(local_file):  # noqa: F811
     assert content == TEST_FILE_CONTENT
 
 
-@pytest.mark.parametrize(  # noqa: F811
+@pytest.mark.parametrize(
     "destination",
     [
         "",
@@ -151,7 +142,7 @@ def test_put_file_in_directory(local_file, destination):
         datasets.put(local_file, destination)
 
 
-@pytest.mark.parametrize(  # noqa: F811
+@pytest.mark.parametrize(
     "destination, resolved_destination",
     [
         ("", ""),
@@ -176,7 +167,7 @@ def test_put_tree(local_tree, destination, resolved_destination):
             assert content == TEST_FILE_CONTENT
 
 
-def test_get_file(remote_file):  # noqa: F811
+def test_get_file(remote_file):
     with temporary_directory() as dirname:
         path = os.path.join(dirname, TEST_FILE_NAME)
         datasets.get(remote_file, path)
@@ -185,7 +176,7 @@ def test_get_file(remote_file):  # noqa: F811
     assert content == TEST_FILE_CONTENT
 
 
-def test_get_file_in_directory(remote_file):  # noqa: F811
+def test_get_file_in_directory(remote_file):
     with temporary_directory() as dirname:
         # Ensure dirname ends with exactly one '/'
         dirname = dirname.rstrip("/") + "/"
@@ -193,7 +184,7 @@ def test_get_file_in_directory(remote_file):  # noqa: F811
             datasets.get(remote_file, dirname)
 
 
-def test_get_file_bad_local_path(remote_file):  # noqa: F811
+def test_get_file_bad_local_path(remote_file):
     with temporary_directory() as dirname:
         path = os.path.join(dirname, "directory/does/not/exist")
         with pytest.raises(IOError):
@@ -211,14 +202,14 @@ def _validate_local_tree(root, tree):
             assert content == TEST_FILE_CONTENT
 
 
-@pytest.mark.parametrize("path", VALID_ROOT_PATHS)  # noqa: F811
+@pytest.mark.parametrize("path", VALID_ROOT_PATHS)
 def test_get_tree(remote_tree, path):
     with temporary_directory() as dirname:
         datasets.get(path, dirname)
         _validate_local_tree(dirname, TEST_TREE)
 
 
-@pytest.mark.parametrize("path", VALID_ROOT_PATHS)  # noqa: F811
+@pytest.mark.parametrize("path", VALID_ROOT_PATHS)
 def test_get_tree_in_directory(remote_tree, path):
     with temporary_directory() as dirname:
         # Ensure dirname ends with exactly one '/'
@@ -227,7 +218,7 @@ def test_get_tree_in_directory(remote_tree, path):
         _validate_local_tree(dirname, TEST_TREE)
 
 
-@pytest.mark.parametrize("path", VALID_DIRECTORIES)  # noqa: F811
+@pytest.mark.parametrize("path", VALID_DIRECTORIES)
 def test_get_subtree(remote_tree, path):
     prefix = path.strip("/") + "/"
     subtree = [
@@ -240,7 +231,7 @@ def test_get_subtree(remote_tree, path):
         _validate_local_tree(dirname, subtree)
 
 
-@pytest.mark.parametrize("path", VALID_DIRECTORIES)  # noqa: F811
+@pytest.mark.parametrize("path", VALID_DIRECTORIES)
 def test_get_subtree_in_directory(remote_tree, path):
     prefix = path.strip("/") + "/"
     subtree = [
@@ -255,7 +246,7 @@ def test_get_subtree_in_directory(remote_tree, path):
         _validate_local_tree(dirname, subtree)
 
 
-@pytest.mark.parametrize("path", VALID_DIRECTORIES)  # noqa: F811
+@pytest.mark.parametrize("path", VALID_DIRECTORIES)
 def test_get_tree_bad_local_path(remote_tree, path):
     with temporary_directory() as dirname:
         local_path = os.path.join(dirname, "directory/does/not/exist/")
@@ -271,7 +262,7 @@ def test_get_non_existent():
             )
 
 
-@pytest.mark.parametrize("destination", ["new_file"])  # noqa: F811
+@pytest.mark.parametrize("destination", ["new_file"])
 def test_mv(remote_file, destination):
     datasets.mv(remote_file, destination)
     content = read_remote_object(destination)
@@ -286,13 +277,13 @@ def test_mv_directory_source(remote_dir, destination):
         datasets.mv(remote_dir, destination)
 
 
-@pytest.mark.parametrize("destination", ["/output/"])  # noqa: F811
+@pytest.mark.parametrize("destination", ["/output/"])
 def test_mv_directory_destination(remote_file, destination):
     with pytest.raises(datasets.DatasetsError):
         datasets.mv(remote_file, destination)
 
 
-@pytest.mark.parametrize("destination", ["new_file"])  # noqa: F811
+@pytest.mark.parametrize("destination", ["new_file"])
 def test_cp(remote_file, destination):
     datasets.cp(remote_file, destination)
     destination_content = read_remote_object(destination)
@@ -310,13 +301,13 @@ def test_cp_directory_source(remote_dir, destination):
         datasets.cp(remote_dir, destination)
 
 
-@pytest.mark.parametrize("destination", ["/output/"])  # noqa: F811
+@pytest.mark.parametrize("destination", ["/output/"])
 def test_cp_directory_destination(remote_file, destination):
     with pytest.raises(datasets.DatasetsError):
         datasets.cp(remote_file, destination)
 
 
-def test_rm(remote_file):  # noqa: F811
+def test_rm(remote_file):
     assert "/" + remote_file in datasets.ls()
     datasets.rm(remote_file)
     assert "/" + remote_file not in datasets.ls()
@@ -328,7 +319,7 @@ def test_rm_directory_source(remote_dir):
         datasets.rm(remote_dir)
 
 
-def test_rmdir(remote_tree):  # noqa: F811
+def test_rmdir(remote_tree):
     assert "/" + EMPTY_DIRECTORY in datasets.ls()
     datasets.rmdir(EMPTY_DIRECTORY)
     assert "/" + EMPTY_DIRECTORY not in datasets.ls()
@@ -339,35 +330,35 @@ def test_rmdir_missing():
         datasets.rmdir("missing/directory")
 
 
-def test_rmdir_filetype(remote_tree):  # noqa: F811
+def test_rmdir_filetype(remote_tree):
     with pytest.raises(datasets.DatasetsError):
         datasets.rmdir(VALID_FILES[0])
 
 
-def test_rmdir_nonempty(remote_tree):  # noqa: F811
+def test_rmdir_nonempty(remote_tree):
     with pytest.raises(datasets.DatasetsError):
         datasets.rmdir("input/")
 
 
-def test_etag(remote_file):  # noqa: F811
+def test_etag(remote_file):
     etag = datasets.etag(remote_file)
     assert isinstance(etag, str)
     assert len(etag) > 0
 
 
-def test_etag_change(remote_file, local_file_changed):  # noqa: F811
+def test_etag_change(remote_file, local_file_changed):
     initial_etag = datasets.etag(remote_file)
     datasets.put(local_file_changed, remote_file)
     final_etag = datasets.etag(remote_file)
     assert final_etag != initial_etag
 
 
-def test_open_read(remote_file):  # noqa: F811
+def test_open_read(remote_file):
     with datasets.open(remote_file, "rb") as fp:
         assert fp.read() == TEST_FILE_CONTENT
 
 
-def test_open_defaultmode(remote_file):  # noqa: F811
+def test_open_defaultmode(remote_file):
     with datasets.open(remote_file) as fp:
         assert fp.read() == TEST_FILE_CONTENT.decode("utf-8")
 
@@ -378,7 +369,7 @@ def test_open_missing():
             pass
 
 
-def test_open_directory(remote_tree):  # noqa: F811
+def test_open_directory(remote_tree):
     with pytest.raises(datasets.DatasetsError):
         with datasets.open("/input", "r"):
             pass
