@@ -308,3 +308,13 @@ def test_server_client_list_filter_name(mocker):
         schema_mock.return_value,
         params={"name": "foo"},
     )
+
+
+def test_server_client_delete(mocker):
+    mocker.patch.object(ServerClient, "_delete_raw")
+    client = ServerClient(mocker.Mock())
+    client.delete(SERVER_ID)
+
+    ServerClient._delete_raw.assert_called_once_with(
+        "/instance/{}".format(SERVER_ID)
+    )

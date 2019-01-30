@@ -178,6 +178,10 @@ class ServerClient(BaseClient):
             "/instance/{}".format(project_id), ServerIdSchema(), json=payload
         )
 
+    def delete(self, server_id):
+        endpoint = "/instance/{}".format(server_id)
+        self._delete_raw(endpoint)
+
     def get(self, project_id, server_id):
         endpoint = "/instance/{}/{}".format(project_id, server_id)
         return self._get(endpoint, ServerSchema())
