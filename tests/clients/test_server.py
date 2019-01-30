@@ -31,6 +31,7 @@ from faculty.clients.server import (
     ServiceSchema,
     SharedServerResources,
     SSHDetails,
+    SSHDetailsSchema,
 )
 
 SERVICE = Service(
@@ -114,6 +115,12 @@ SERVER_ID_BODY = {"instanceId": str(SERVER_ID)}
 SSH_DETAILS = SSHDetails(
     hostname="instances.domain.com", port=1234, username="username", key="key"
 )
+SSH_DETAILS_BODY = {
+    "hostname": "instances.domain.com",
+    "port": 1234,
+    "username": "username",
+    "key": "key",
+}
 
 
 def test_service_schema():
@@ -158,6 +165,16 @@ def test_server_id_schema():
 def test_server_id_schema_invalid():
     with pytest.raises(ValidationError):
         ServerIdSchema().load({})
+
+
+def test_ssh_details_schema():
+    data = SSHDetailsSchema().load(SSH_DETAILS_BODY)
+    assert data == SSH_DETAILS
+
+
+def test_ssh_details_schema_invalid():
+    with pytest.raises(ValidationError):
+        SSHDetailsSchema().load({})
 
 
 def test_server_client_create_shared(mocker):
