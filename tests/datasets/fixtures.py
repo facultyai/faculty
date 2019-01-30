@@ -18,10 +18,8 @@ import posixpath
 from contextlib import contextmanager
 import tempfile
 import shutil
-import uuid
 
 import boto3
-import pytest
 
 from faculty.clients.secret import DatasetsSecrets
 
@@ -85,11 +83,6 @@ TEST_DIRECTORY = "test_directory"
 TEST_NON_EXISTENT = "test_non_existent"
 
 
-@pytest.fixture
-def project_env(monkeypatch):
-    monkeypatch.setenv("FACULTY_PROJECT_ID", str(uuid.uuid4()))
-
-
 def _test_secrets():
     return DatasetsSecrets(
         bucket=TEST_BUCKET_NAME,
@@ -99,53 +92,10 @@ def _test_secrets():
     )
 
 
-@pytest.fixture
-def mock_secret_client(mocker):
-    mock_client = mocker.Mock()
-    mock_client.datasets_secrets.return_value = _test_secrets()
-    mocker.patch("faculty.client", return_value=mock_client)
-
-
-@pytest.fixture
-def project_directory(request, mock_secret_client, project_env):
-
-    project_id = os.environ["FACULTY_PROJECT_ID"]
-
-    # Make the empty directory
-    _make_file(request, "")
-    yield
-
-    # Tear down
-    client = _s3_client()
-    response = client.list_objects_v2(
-        Bucket=TEST_BUCKET_NAME, Prefix=project_id
-    )
-    objects = [{"Key": obj["Key"]} for obj in response["Contents"]]
-    client.delete_objects(Bucket=TEST_BUCKET_NAME, Delete={"Objects": objects})
-
-
-@pytest.fixture
-def remote_file(request, project_directory):
-    _make_file(request, TEST_FILE_NAME, TEST_FILE_CONTENT)
-    return TEST_FILE_NAME
-
-
-@pytest.fixture
-def remote_tree(request, project_directory):
-    for path in TEST_TREE:
-        if path.endswith("/"):
-            # Just touch, is a directory
-            _make_file(request, path)
-        else:
-            # Add test file content
-            _make_file(request, path, TEST_FILE_CONTENT)
-    return TEST_TREE
-
-
 _S3_CLIENT_CACHE = None
 
 
-def _s3_client():
+def s3_client():
     global _S3_CLIENT_CACHE
     if _S3_CLIENT_CACHE is None:
         secrets = _test_secrets()
@@ -168,7 +118,7 @@ def _path_in_bucket(path):
 
 
 def write_remote_object(path, content):
-    client = _s3_client()
+    client = s3_client()
     client.put_object(
         Bucket=TEST_BUCKET_NAME,
         Key=_path_in_bucket(path),
@@ -178,36 +128,20 @@ def write_remote_object(path, content):
 
 
 def read_remote_object(path):
-    client = _s3_client()
+    client = s3_client()
     obj = client.get_object(Bucket=TEST_BUCKET_NAME, Key=_path_in_bucket(path))
     return obj["Body"].read()
 
 
-def _make_file(request, path, content=""):
+def make_file(request, path, content=""):
     write_remote_object(path, content)
 
     def tear_down():
-        _s3_client().delete_object(
+        s3_client().delete_object(
             Bucket=TEST_BUCKET_NAME, Key=_path_in_bucket(path)
         )
 
     request.addfinalizer(tear_down)
-
-
-@pytest.fixture
-def local_file():
-    with tempfile.NamedTemporaryFile(mode="wb") as f:
-        f.write(TEST_FILE_CONTENT)
-        f.flush()
-        yield f.name
-
-
-@pytest.fixture
-def local_file_changed():
-    with tempfile.NamedTemporaryFile(mode="wb") as f:
-        f.write(TEST_FILE_CONTENT_CHANGED)
-        f.flush()
-        yield f.name
 
 
 @contextmanager
@@ -217,25 +151,3 @@ def temporary_directory():
         yield temp_dir
     finally:
         shutil.rmtree(temp_dir)
-
-
-@pytest.fixture
-def local_tree():
-
-    with temporary_directory() as temp_dir:
-
-        for tree_path in TEST_TREE:
-
-            path = os.path.join(temp_dir, tree_path)
-
-            if tree_path.endswith("/"):
-                if not os.path.exists(path):
-                    os.makedirs(path)
-            else:
-                dirname = os.path.dirname(path)
-                if not os.path.exists(dirname):
-                    os.makedirs(dirname)
-                with open(path, "wb") as fp:
-                    fp.write(TEST_FILE_CONTENT)
-
-        yield temp_dir
