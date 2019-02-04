@@ -206,7 +206,7 @@ class ServerClient(BaseClient):
         params = {"name": name} if name is not None else None
         return self._get(endpoint, ServerSchema(many=True), params=params)
 
-    def apply_environment(self, environment_id, server_id):
+    def apply_environment(self, server_id, environment_id):
         endpoint = "/instance/{}/environment/{}".format(
             server_id, environment_id
         )

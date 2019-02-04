@@ -347,7 +347,7 @@ def test_server_client_apply_environment(mocker):
     mocker.patch.object(ServerClient, "_put_raw")
     client = ServerClient(mocker.Mock())
 
-    client.apply_environment(ENVIRONMENT_ID, SERVER_ID)
+    client.apply_environment(SERVER_ID, ENVIRONMENT_ID)
 
     ServerClient._put_raw.assert_called_once_with(
         "/instance/{}/environment/{}".format(SERVER_ID, ENVIRONMENT_ID)
