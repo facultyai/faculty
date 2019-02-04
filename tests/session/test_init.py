@@ -12,21 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 from datetime import datetime, timedelta
 
 import pytest
 import pytz
 
 import faculty.config
-from faculty.session import (
-    AccessToken,
-    AccessTokenStore,
-    AccessTokenMemoryCache,
-    AccessTokenFileSystemCache,
-    _get_access_token,
-    Session,
-    get_session,
-)
+from faculty.session.accesstoken import AccessToken
+from faculty.session import _get_access_token, Session, get_session
 
 
 PROFILE = faculty.config.Profile(
@@ -39,12 +33,6 @@ ACCESS_TOKEN_URL = "{}://hudson.{}/access_token".format(
     PROFILE.protocol, PROFILE.domain
 )
 NOW = datetime.now(tz=pytz.utc)
-VALID_ACCESS_TOKEN = AccessToken(
-    token="access-token", expires_at=NOW + timedelta(minutes=10)
-)
-EXPIRED_ACCESS_TOKEN = AccessToken(
-    token="access-token", expires_at=NOW - timedelta(seconds=1)
-)
 
 
 @pytest.fixture
@@ -57,97 +45,6 @@ def mock_datetime_now(mocker):
 @pytest.fixture
 def isolated_session_cache(mocker):
     mocker.patch("faculty.session._SESSION_CACHE", {})
-
-
-def test_access_token_store():
-    store = AccessTokenStore()
-    store[PROFILE] = VALID_ACCESS_TOKEN
-    assert store[PROFILE] == VALID_ACCESS_TOKEN
-
-
-def test_access_token_store_get():
-    store = AccessTokenStore()
-    store[PROFILE] = VALID_ACCESS_TOKEN
-    assert store.get(PROFILE) == VALID_ACCESS_TOKEN
-
-
-def test_access_token_store_get_default():
-    store = AccessTokenStore()
-    assert store.get(PROFILE) is None
-
-
-def test_access_token_memory_cache(mock_datetime_now):
-    cache = AccessTokenMemoryCache()
-    cache.add(PROFILE, VALID_ACCESS_TOKEN)
-    assert cache.get(PROFILE) == VALID_ACCESS_TOKEN
-
-
-def test_access_token_memory_cache_miss(mocker, mock_datetime_now):
-    cache = AccessTokenMemoryCache()
-    cache.add(PROFILE, VALID_ACCESS_TOKEN)
-    assert cache.get(mocker.Mock()) is None
-
-
-def test_access_token_memory_cache_expired(mock_datetime_now):
-    cache = AccessTokenMemoryCache()
-    cache.add(PROFILE, EXPIRED_ACCESS_TOKEN)
-    assert cache.get(PROFILE) is None
-
-
-def test_access_token_file_system_cache(tmpdir, mock_datetime_now):
-    cache_path = tmpdir.join("cache.json")
-    cache = AccessTokenFileSystemCache(cache_path)
-    cache.add(PROFILE, VALID_ACCESS_TOKEN)
-
-    new_cache = AccessTokenFileSystemCache(cache_path)
-    assert new_cache.get(PROFILE) == VALID_ACCESS_TOKEN
-
-
-def test_access_token_file_system_cache_miss(
-    mocker, tmpdir, mock_datetime_now
-):
-    cache_path = tmpdir.join("cache.json")
-    cache = AccessTokenFileSystemCache(cache_path)
-    cache.add(PROFILE, VALID_ACCESS_TOKEN)
-    assert cache.get(mocker.Mock()) is None
-
-
-def test_access_token_file_system_cache_expired(tmpdir, mock_datetime_now):
-    cache_path = tmpdir.join("cache.json")
-    cache = AccessTokenFileSystemCache(cache_path)
-    cache.add(PROFILE, EXPIRED_ACCESS_TOKEN)
-    assert cache.get(PROFILE) is None
-
-
-def test_access_token_file_system_cache_new_directory(
-    tmpdir, mock_datetime_now
-):
-    directory = tmpdir.join("spam").join("eggs")
-
-    cache_path = directory.join("cache.json")
-    cache = AccessTokenFileSystemCache(cache_path)
-    cache.add(PROFILE, VALID_ACCESS_TOKEN)
-
-    assert directory.check(dir=True)
-
-    new_cache = AccessTokenFileSystemCache(cache_path)
-    assert new_cache.get(PROFILE) == VALID_ACCESS_TOKEN
-
-
-@pytest.mark.parametrize(
-    "content", ["invalid json", '{"invalid": "structure"}']
-)
-def test_access_token_file_system_cache_invalid_file(
-    tmpdir, mock_datetime_now, content
-):
-    cache_path = tmpdir.join("cache.json")
-    cache_path.write(content)
-
-    cache = AccessTokenFileSystemCache(cache_path)
-    cache.add(PROFILE, VALID_ACCESS_TOKEN)
-
-    new_cache = AccessTokenFileSystemCache(cache_path)
-    assert new_cache.get(PROFILE) == VALID_ACCESS_TOKEN
 
 
 def test_get_access_token(requests_mock, mock_datetime_now):
