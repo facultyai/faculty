@@ -98,9 +98,19 @@ def _ensure_directory_exists(path, mode):
             raise
 
 
+def _default_token_cache_path():
+    xdg_cache_home = os.environ.get("XDG_CACHE_HOME")
+    if not xdg_cache_home:
+        xdg_cache_home = os.path.expanduser("~/.cache")
+    return os.path.join(xdg_cache_home, "faculty", "token-cache.json")
+
+
 class AccessTokenFileSystemCache(object):
-    def __init__(self, cache_path):
-        self.cache_path = str(cache_path)
+    def __init__(self, cache_path=None):
+        if cache_path is None:
+            self.cache_path = _default_token_cache_path()
+        else:
+            self.cache_path = str(cache_path)
         self._store = None
 
     def _load_from_disk(self):

@@ -81,8 +81,8 @@ def test_default_credentials_path(mocker):
 
 
 def test_default_credentials_path_xdg_home(mocker):
-    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": "/xdg/home"})
-    expected_path = "/xdg/home/faculty/credentials"
+    mocker.patch.dict(os.environ, {"XDG_CONFIG_HOME": "/xdg/config/home"})
+    expected_path = "/xdg/config/home/faculty/credentials"
     assert config._default_credentials_path() == expected_path
 
 

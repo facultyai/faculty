@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import os
 from datetime import datetime, timedelta
 
 import pytest
@@ -24,6 +25,7 @@ from faculty.session.accesstoken import (
     AccessTokenStore,
     AccessTokenMemoryCache,
     AccessTokenFileSystemCache,
+    _default_token_cache_path,
 )
 
 
@@ -84,10 +86,43 @@ def test_access_token_memory_cache_expired(mock_datetime_now):
     assert cache.get(PROFILE) is None
 
 
+def test_default_token_cache_path(mocker):
+    mocker.patch.dict(os.environ, {"HOME": "/foo/bar"})
+    expected_path = "/foo/bar/.cache/faculty/token-cache.json"
+    assert _default_token_cache_path() == expected_path
+
+
+def test_default_token_cache_path_xdg_home(mocker):
+    mocker.patch.dict(os.environ, {"XDG_CACHE_HOME": "/xdg/cache/home"})
+    expected_path = "/xdg/cache/home/faculty/token-cache.json"
+    assert _default_token_cache_path() == expected_path
+
+
 def test_access_token_file_system_cache(tmpdir, mock_datetime_now):
     cache_path = tmpdir.join("cache.json")
     cache = AccessTokenFileSystemCache(cache_path)
     cache.add(PROFILE, VALID_ACCESS_TOKEN)
+
+    assert cache_path.check(file=True)
+
+    new_cache = AccessTokenFileSystemCache(cache_path)
+    assert new_cache.get(PROFILE) == VALID_ACCESS_TOKEN
+
+
+def test_access_token_file_system_cache_default_location(
+    mocker, tmpdir, mock_datetime_now
+):
+    cache_path = tmpdir.join("cache.json")
+    default_path_mock = mocker.patch(
+        "faculty.session.accesstoken._default_token_cache_path",
+        return_value=str(cache_path),
+    )
+
+    cache = AccessTokenFileSystemCache()
+    cache.add(PROFILE, VALID_ACCESS_TOKEN)
+
+    default_path_mock.assert_called_once_with()
+    assert cache_path.check(file=True)
 
     new_cache = AccessTokenFileSystemCache(cache_path)
     assert new_cache.get(PROFILE) == VALID_ACCESS_TOKEN
