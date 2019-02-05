@@ -20,7 +20,7 @@ setup(
     name="faculty",
     description="Python library for interacting with the Faculty platform.",
     url="https://sherlockml.com",
-    author="ASI Data Science",
+    author="Faculty",
     author_email="opensource@asidatascience.com",
     license="Apache Software License",
     packages=find_packages(),
