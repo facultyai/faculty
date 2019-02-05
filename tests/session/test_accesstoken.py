@@ -46,7 +46,7 @@ EXPIRED_ACCESS_TOKEN = AccessToken(
 
 @pytest.fixture
 def mock_datetime_now(mocker):
-    datetime_mock = mocker.patch("faculty.session.datetime")
+    datetime_mock = mocker.patch("faculty.session.accesstoken.datetime")
     datetime_mock.now.return_value = NOW
     return datetime_mock
 
