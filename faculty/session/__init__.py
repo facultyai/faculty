@@ -14,32 +14,13 @@
 
 
 from datetime import datetime, timedelta
-from collections import namedtuple
 
-import requests
 import pytz
+import requests
 from six.moves import urllib
 
 import faculty.config
-
-
-AccessToken = namedtuple("AccessToken", ["token", "expires_at"])
-
-
-class MemoryAccessTokenCache(object):
-    def __init__(self):
-        self._store = {}
-
-    def get(self, profile):
-        access_token = self._store.get(profile)
-        utc_now = datetime.now(tz=pytz.utc)
-        if access_token is None or access_token.expires_at < utc_now:
-            return None
-        else:
-            return access_token
-
-    def add(self, profile, access_token):
-        self._store[profile] = access_token
+from faculty.session.accesstoken import AccessToken, AccessTokenMemoryCache
 
 
 def _service_url(profile, service, endpoint=""):
@@ -93,7 +74,7 @@ def get_session(access_token_cache=None, **kwargs):
         session = _SESSION_CACHE[key]
     except KeyError:
         profile = faculty.config.resolve_profile(**kwargs)
-        access_token_cache = access_token_cache or MemoryAccessTokenCache()
+        access_token_cache = access_token_cache or AccessTokenMemoryCache()
         session = Session(profile, access_token_cache)
         _SESSION_CACHE[key] = session
     return session

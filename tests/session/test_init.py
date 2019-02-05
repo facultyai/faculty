@@ -12,19 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 from datetime import datetime, timedelta
 
 import pytest
 import pytz
 
 import faculty.config
-from faculty.session import (
-    AccessToken,
-    MemoryAccessTokenCache,
-    _get_access_token,
-    Session,
-    get_session,
-)
+from faculty.session.accesstoken import AccessToken
+from faculty.session import _get_access_token, Session, get_session
 
 
 PROFILE = faculty.config.Profile(
@@ -37,7 +33,6 @@ ACCESS_TOKEN_URL = "{}://hudson.{}/access_token".format(
     PROFILE.protocol, PROFILE.domain
 )
 NOW = datetime.now(tz=pytz.utc)
-IN_TEN_MINUTES = NOW + timedelta(minutes=10)
 
 
 @pytest.fixture
@@ -52,34 +47,11 @@ def isolated_session_cache(mocker):
     mocker.patch("faculty.session._SESSION_CACHE", {})
 
 
-def test_memory_access_token_cache(mock_datetime_now):
-    cache = MemoryAccessTokenCache()
-    access_token = AccessToken(token="access-token", expires_at=IN_TEN_MINUTES)
-    cache.add(PROFILE, access_token)
-    assert cache.get(PROFILE) == access_token
-
-
-def test_memory_access_token_cache_miss(mocker, mock_datetime_now):
-    cache = MemoryAccessTokenCache()
-    access_token = AccessToken(token="access-token", expires_at=IN_TEN_MINUTES)
-    cache.add(PROFILE, access_token)
-    assert cache.get(mocker.Mock()) is None
-
-
-def test_memory_access_token_cache_expired(mock_datetime_now):
-    cache = MemoryAccessTokenCache()
-    access_token = AccessToken(
-        token="access-token", expires_at=NOW - timedelta(seconds=1)
-    )
-    cache.add(PROFILE, access_token)
-    assert cache.get(PROFILE) is None
-
-
 def test_get_access_token(requests_mock, mock_datetime_now):
 
     requests_mock.post(
         ACCESS_TOKEN_URL,
-        json={"access_token": "access-token", "expires_in": 600},
+        json={"access_token": "access-token", "expires_in": 30},
     )
 
     access_token = _get_access_token(PROFILE)
@@ -90,7 +62,7 @@ def test_get_access_token(requests_mock, mock_datetime_now):
         "grant_type": "client_credentials",
     }
     assert access_token == AccessToken(
-        token="access-token", expires_at=IN_TEN_MINUTES
+        token="access-token", expires_at=NOW + timedelta(seconds=30)
     )
 
 
@@ -150,7 +122,7 @@ def test_get_session_defaults(mocker, isolated_session_cache):
     mocker.patch("faculty.config.resolve_profile", return_value=PROFILE)
     access_token_cache = mocker.Mock()
     mocker.patch(
-        "faculty.session.MemoryAccessTokenCache",
+        "faculty.session.AccessTokenMemoryCache",
         return_value=access_token_cache,
     )
     mocker.spy(Session, "__init__")
