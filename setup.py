@@ -1,4 +1,4 @@
-# Copyright 2018-2019 ASI Data Science
+# Copyright 2018-2019 Faculty Science Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ setup(
     name="faculty",
     description="Python library for interacting with the Faculty platform.",
     url="https://sherlockml.com",
-    author="ASI Data Science",
-    author_email="opensource@asidatascience.com",
+    author="Faculty",
+    author_email="opensource@faculty.ai",
     license="Apache Software License",
     packages=find_packages(),
     use_scm_version={"version_scheme": "post-release"},
