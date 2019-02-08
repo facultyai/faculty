@@ -1,7 +1,7 @@
 faculty
 =======
 
-.. image:: https://travis-ci.org/ASIDataScience/faculty.svg?branch=master
-    :target: https://travis-ci.org/ASIDataScience/faculty
+.. image:: https://travis-ci.org/facultyai/faculty.svg?branch=master
+    :target: https://travis-ci.org/facultyai/faculty
 
-A Python library for interacting with `the Faculty platform <https://sherlockml.com/>`_.
+A Python library for interacting with `the Faculty platform <https://faculty.ai/products-services/platform/>`_.
