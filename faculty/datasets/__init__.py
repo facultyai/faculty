@@ -314,9 +314,9 @@ def _get_file(project_path, local_path, project_id, s3_client):
 
     if local_path.endswith("/"):
         msg = (
-            "the destination path {} indicates a directory but the "
-            "source path {} is a normal file - please provide a full "
-            "destination path"
+            "the source path {} is a normal file but the destination "
+            "path {} indicates a directory - please provide a "
+            "full destination path"
         ).format(repr(project_path), repr(local_path))
         raise DatasetsError(msg)
 
