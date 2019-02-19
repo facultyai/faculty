@@ -55,6 +55,13 @@ def test_experiment_schema():
     assert data == EXPERIMENT
 
 
+def test_experiment_schema_nullable_deleted_at():
+    body = EXPERIMENT_BODY.copy()
+    body["deletedAt"] = None
+    data = ExperimentSchema().load(body)
+    assert data.deleted_at is None
+
+
 def test_experiment_schema_invalid():
     with pytest.raises(ValidationError):
         ExperimentSchema().load({})
