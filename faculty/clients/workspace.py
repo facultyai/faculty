@@ -15,16 +15,10 @@
 from enum import Enum
 from collections import namedtuple
 
-from marshmallow import (
-    Schema,
-    fields,
-    post_load,
-    validates_schema,
-    ValidationError,
-)
+from marshmallow import fields, post_load, validates_schema, ValidationError
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 class FileNodeType(Enum):
@@ -40,7 +34,7 @@ Directory = namedtuple(
 ListResponse = namedtuple("ListResponse", ["project_id", "path", "content"])
 
 
-class FileNodeSchema(Schema):
+class FileNodeSchema(BaseSchema):
 
     path = fields.String(required=True)
     name = fields.String(required=True)
@@ -69,7 +63,7 @@ class FileNodeSchema(Schema):
             raise ValueError("Invalid file node type.")
 
 
-class ListResponseSchema(Schema):
+class ListResponseSchema(BaseSchema):
 
     project_id = fields.UUID(data_key="project_id", required=True)
     path = fields.String(required=True)

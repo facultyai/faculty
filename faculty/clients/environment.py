@@ -15,9 +15,9 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 Environment = namedtuple(
@@ -34,7 +34,7 @@ Environment = namedtuple(
 )
 
 
-class EnvironmentSchema(Schema):
+class EnvironmentSchema(BaseSchema):
     id = fields.UUID(data_key="environmentId", required=True)
     project_id = fields.UUID(data_key="projectId", required=True)
     name = fields.String(required=True)

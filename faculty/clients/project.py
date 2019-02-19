@@ -15,15 +15,15 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 Project = namedtuple("Project", ["id", "name", "owner_id"])
 
 
-class ProjectSchema(Schema):
+class ProjectSchema(BaseSchema):
 
     id = fields.UUID(data_key="projectId", required=True)
     name = fields.Str(required=True)

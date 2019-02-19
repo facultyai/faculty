@@ -15,9 +15,9 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 NodeType = namedtuple(
@@ -37,7 +37,7 @@ NodeType = namedtuple(
 )
 
 
-class NodeTypeSchema(Schema):
+class NodeTypeSchema(BaseSchema):
 
     id = fields.String(data_key="nodeTypeId", required=True)
     name = fields.String(missing=None)

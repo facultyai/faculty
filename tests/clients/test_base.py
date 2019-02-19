@@ -16,9 +16,10 @@
 from collections import namedtuple
 
 import pytest
-from marshmallow import Schema, fields, post_load
+from marshmallow import fields, post_load
 
 from faculty.clients.base import (
+    BaseSchema,
     BaseClient,
     InvalidResponse,
     HTTPError,
@@ -88,7 +89,7 @@ def patch_auth(mocker, session):
 DummyObject = namedtuple("DummyObject", ["foo"])
 
 
-class DummySchema(Schema):
+class DummySchema(BaseSchema):
     foo = fields.String(required=True)
 
     @post_load

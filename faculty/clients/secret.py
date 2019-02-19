@@ -14,16 +14,16 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 DatasetsSecrets = namedtuple(
     "DatasetsSecrets", ["bucket", "access_key", "secret_key", "verified"]
 )
 
 
-class DatasetsSecretsSchema(Schema):
+class DatasetsSecretsSchema(BaseSchema):
     bucket = fields.String(required=True)
     access_key = fields.String(required=True)
     secret_key = fields.String(required=True)

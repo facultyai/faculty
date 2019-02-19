@@ -15,15 +15,15 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 Account = namedtuple("Account", ["user_id"])
 
 
-class AccountSchema(Schema):
+class AccountSchema(BaseSchema):
     user_id = fields.UUID(data_key="userId", required=True)
 
     @post_load
@@ -34,7 +34,7 @@ class AccountSchema(Schema):
 AuthenticationResponse = namedtuple("AuthenticationResponse", ["account"])
 
 
-class AuthenticationResponseSchema(Schema):
+class AuthenticationResponseSchema(BaseSchema):
     account = fields.Nested(AccountSchema, required=True)
 
     @post_load

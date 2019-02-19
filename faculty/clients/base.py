@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import requests
-from marshmallow import Schema, fields, ValidationError
+from marshmallow import Schema, fields, ValidationError, EXCLUDE
 
 from faculty.clients.auth import FacultyAuth
 
@@ -82,7 +82,12 @@ HTTP_ERRORS = {
 }
 
 
-class ErrorSchema(Schema):
+class BaseSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+
+class ErrorSchema(BaseSchema):
     error = fields.String(required=True)
 
 
