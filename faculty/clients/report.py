@@ -14,9 +14,9 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 Report = namedtuple(
     "Report", ["created_at", "name", "id", "description", "active_version"]
@@ -48,7 +48,7 @@ ReportVersion = namedtuple(
 )
 
 
-class ReportVersionSchema(Schema):
+class ReportVersionSchema(BaseSchema):
     id = fields.UUID(data_key="version_id", required=True)
     created_at = fields.DateTime(required=True)
     author_id = fields.UUID(required=True)
@@ -62,7 +62,7 @@ class ReportVersionSchema(Schema):
         return ReportVersion(**data)
 
 
-class ReportSchema(Schema):
+class ReportSchema(BaseSchema):
     created_at = fields.DateTime(required=True)
     name = fields.String(required=True, data_key="report_name")
     id = fields.UUID(required=True, data_key="report_id")
@@ -74,7 +74,7 @@ class ReportSchema(Schema):
         return Report(**data)
 
 
-class ReportWithVersionsSchema(Schema):
+class ReportWithVersionsSchema(BaseSchema):
     created_at = fields.DateTime(required=True)
     name = fields.String(required=True, data_key="report_name")
     id = fields.UUID(required=True, data_key="report_id")

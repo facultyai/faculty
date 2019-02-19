@@ -16,10 +16,10 @@
 from collections import namedtuple
 from enum import Enum
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 class GlobalRole(Enum):
@@ -43,7 +43,7 @@ User = namedtuple(
 )
 
 
-class UserSchema(Schema):
+class UserSchema(BaseSchema):
 
     id = fields.UUID(data_key="userId", required=True)
     username = fields.Str(required=True)

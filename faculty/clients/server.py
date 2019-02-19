@@ -16,16 +16,16 @@
 from collections import namedtuple
 from enum import Enum
 
-from marshmallow import Schema, fields, post_load, ValidationError
+from marshmallow import fields, post_load, ValidationError
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 ServerSize = namedtuple("ServerSize", ["milli_cpus", "memory_mb"])
 
 
-class ServerSizeSchema(Schema):
+class ServerSizeSchema(BaseSchema):
 
     milli_cpus = fields.Integer(data_key="milliCpus", required=True)
     memory_mb = fields.Integer(data_key="memoryMb", required=True)
@@ -45,7 +45,7 @@ class ServerStatus(Enum):
 Service = namedtuple("Service", ["name", "host", "port", "scheme", "uri"])
 
 
-class ServiceSchema(Schema):
+class ServiceSchema(BaseSchema):
 
     name = fields.String(required=True)
     host = fields.String(required=True)
@@ -80,7 +80,7 @@ Server = namedtuple(
 )
 
 
-class ServerSchema(Schema):
+class ServerSchema(BaseSchema):
 
     id = fields.UUID(data_key="instanceId", required=True)
     project_id = fields.UUID(data_key="projectId", required=True)
@@ -127,7 +127,7 @@ class ServerSchema(Schema):
         )
 
 
-class ServerIdSchema(Schema):
+class ServerIdSchema(BaseSchema):
 
     instanceId = fields.UUID(required=True)
 
@@ -139,7 +139,7 @@ class ServerIdSchema(Schema):
 SSHDetails = namedtuple("SSHDetails", ["hostname", "port", "username", "key"])
 
 
-class SSHDetailsSchema(Schema):
+class SSHDetailsSchema(BaseSchema):
 
     hostname = fields.String(required=True)
     port = fields.Integer(required=True)

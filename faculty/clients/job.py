@@ -15,10 +15,10 @@
 from collections import namedtuple
 from enum import Enum
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 class EnvironmentStepExecutionState(Enum):
@@ -100,7 +100,7 @@ Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
 ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
 
 
-class JobMetadataSchema(Schema):
+class JobMetadataSchema(BaseSchema):
     name = fields.String(required=True)
     description = fields.String(required=True)
 
@@ -109,7 +109,7 @@ class JobMetadataSchema(Schema):
         return JobMetadata(**data)
 
 
-class JobSummarySchema(Schema):
+class JobSummarySchema(BaseSchema):
     id = fields.UUID(data_key="jobId", required=True)
     metadata = fields.Nested(JobMetadataSchema, data_key="meta", required=True)
 
@@ -118,7 +118,7 @@ class JobSummarySchema(Schema):
         return JobSummary(**data)
 
 
-class EnvironmentStepExecutionSchema(Schema):
+class EnvironmentStepExecutionSchema(BaseSchema):
     environment_id = fields.UUID(data_key="environmentId", required=True)
     environment_step_id = fields.UUID(
         data_key="environmentStepId", required=True
@@ -137,7 +137,7 @@ class EnvironmentStepExecutionSchema(Schema):
         return EnvironmentStepExecution(**data)
 
 
-class SubrunSummarySchema(Schema):
+class SubrunSummarySchema(BaseSchema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
     state = EnumField(SubrunState, by_value=True, required=True)
@@ -149,7 +149,7 @@ class SubrunSummarySchema(Schema):
         return SubrunSummary(**data)
 
 
-class SubrunSchema(Schema):
+class SubrunSchema(BaseSchema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
     state = EnumField(SubrunState, by_value=True, required=True)
@@ -167,7 +167,7 @@ class SubrunSchema(Schema):
         return Subrun(**data)
 
 
-class RunSummarySchema(Schema):
+class RunSummarySchema(BaseSchema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
     state = EnumField(RunState, by_value=True, required=True)
@@ -180,7 +180,7 @@ class RunSummarySchema(Schema):
         return RunSummary(**data)
 
 
-class RunSchema(Schema):
+class RunSchema(BaseSchema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
     state = EnumField(RunState, by_value=True, required=True)
@@ -194,7 +194,7 @@ class RunSchema(Schema):
         return Run(**data)
 
 
-class RunIdSchema(Schema):
+class RunIdSchema(BaseSchema):
     runId = fields.UUID(required=True)
 
     @post_load
@@ -202,7 +202,7 @@ class RunIdSchema(Schema):
         return data["runId"]
 
 
-class PageSchema(Schema):
+class PageSchema(BaseSchema):
     start = fields.Integer(required=True)
     limit = fields.Integer(required=True)
 
@@ -211,7 +211,7 @@ class PageSchema(Schema):
         return Page(**data)
 
 
-class PaginationSchema(Schema):
+class PaginationSchema(BaseSchema):
     start = fields.Integer(required=True)
     size = fields.Integer(required=True)
     previous = fields.Nested(PageSchema, missing=None)
@@ -222,7 +222,7 @@ class PaginationSchema(Schema):
         return Pagination(**data)
 
 
-class ListRunsResponseSchema(Schema):
+class ListRunsResponseSchema(BaseSchema):
     pagination = fields.Nested(PaginationSchema, required=True)
     runs = fields.Nested(RunSummarySchema, many=True, required=True)
 

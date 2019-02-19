@@ -14,9 +14,9 @@
 
 from collections import namedtuple
 
-from marshmallow import Schema, fields, post_load
+from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 LogPart = namedtuple(
@@ -25,7 +25,7 @@ LogPart = namedtuple(
 LogPartsResponse = namedtuple("LogPartsResponse", ["log_parts"])
 
 
-class LogPartSchema(Schema):
+class LogPartSchema(BaseSchema):
     log_part_number = fields.Integer(data_key="logPartNumber", required=True)
     line_number = fields.Integer(data_key="lineNumber", required=True)
     content = fields.String(required=True)
@@ -36,7 +36,7 @@ class LogPartSchema(Schema):
         return LogPart(**data)
 
 
-class LogPartsResponseSchema(Schema):
+class LogPartsResponseSchema(BaseSchema):
     log_parts = fields.Nested(
         LogPartSchema, data_key="logParts", many=True, required=True
     )
