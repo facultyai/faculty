@@ -101,6 +101,17 @@ class DummyClient(BaseClient):
     SERVICE_NAME = MOCK_SERVICE_NAME
 
 
+def test_base_schema_ignores_unknown_fields():
+    """Check that fields in the data but not in the schema do not error.
+
+    marshmallow version 3 changed the default behaviour of schemas to raise a
+    ValidationError if there are any fields in the data being deserialised
+    which are not configured in the schema. Our BaseSchema is configured to
+    disable this behaviour.
+    """
+    assert BaseSchema().load({"unknown": "field"}) == {}
+
+
 def test_get(requests_mock, session, patch_auth):
     requests_mock.get(
         MOCK_SERVICE_URL,
