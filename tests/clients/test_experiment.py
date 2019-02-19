@@ -14,14 +14,20 @@
 
 
 from datetime import datetime
+from uuid import uuid4
 
 import pytest
 from pytz import UTC
 from marshmallow import ValidationError
 
-from faculty.clients.experiment import Experiment, ExperimentSchema
+from faculty.clients.experiment import (
+    Experiment,
+    ExperimentSchema,
+    ExperimentClient,
+)
 
 
+PROJECT_ID = uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 CREATED_AT_STRING = "2018-03-10T11:32:06.247Z"
 LAST_UPDATED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
@@ -65,3 +71,27 @@ def test_experiment_schema_nullable_deleted_at():
 def test_experiment_schema_invalid():
     with pytest.raises(ValidationError):
         ExperimentSchema().load({})
+
+
+@pytest.mark.parametrize("description", [None, "experiment description"])
+@pytest.mark.parametrize("artifact_location", [None, "s3://mybucket"])
+def test_experiment_client_create(mocker, description, artifact_location):
+    mocker.patch.object(ExperimentClient, "_post", return_value=EXPERIMENT)
+    schema_mock = mocker.patch("faculty.clients.experiment.ExperimentSchema")
+
+    client = ExperimentClient(mocker.Mock())
+    returned_experiment = client.create(
+        PROJECT_ID, "experiment name", description, artifact_location
+    )
+    assert returned_experiment == EXPERIMENT
+
+    schema_mock.assert_called_once_with()
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/experiment".format(PROJECT_ID),
+        schema_mock.return_value,
+        json={
+            "name": "experiment name",
+            "description": description,
+            "artifactLocation": artifact_location,
+        },
+    )

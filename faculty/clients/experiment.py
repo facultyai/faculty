@@ -17,7 +17,7 @@ from collections import namedtuple
 
 from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseSchema
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 Experiment = namedtuple(
@@ -48,3 +48,19 @@ class ExperimentSchema(BaseSchema):
     @post_load
     def make_experiment(self, data):
         return Experiment(**data)
+
+
+class ExperimentClient(BaseClient):
+
+    SERVICE_NAME = "atlas"
+
+    def create(
+        self, project_id, name, description=None, artifact_location=None
+    ):
+        endpoint = "/project/{}/experiment".format(project_id)
+        payload = {
+            "name": name,
+            "description": description,
+            "artifactLocation": artifact_location,
+        }
+        return self._post(endpoint, ExperimentSchema(), json=payload)
