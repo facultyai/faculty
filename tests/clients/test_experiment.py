@@ -95,3 +95,31 @@ def test_experiment_client_create(mocker, description, artifact_location):
             "artifactLocation": artifact_location,
         },
     )
+
+
+def test_experiment_client_get(mocker):
+    mocker.patch.object(ExperimentClient, "_get", return_value=EXPERIMENT)
+    schema_mock = mocker.patch("faculty.clients.experiment.ExperimentSchema")
+
+    client = ExperimentClient(mocker.Mock())
+    returned_experiment = client.get(PROJECT_ID, EXPERIMENT.id)
+    assert returned_experiment == EXPERIMENT
+
+    schema_mock.assert_called_once_with()
+    ExperimentClient._get.assert_called_once_with(
+        "/project/{}/experiment/{}".format(PROJECT_ID, EXPERIMENT.id),
+        schema_mock.return_value,
+    )
+
+
+def test_job_client_list(mocker):
+    mocker.patch.object(ExperimentClient, "_get", return_value=[EXPERIMENT])
+    schema_mock = mocker.patch("faculty.clients.experiment.ExperimentSchema")
+
+    client = ExperimentClient(mocker.Mock())
+    assert client.list(PROJECT_ID) == [EXPERIMENT]
+
+    schema_mock.assert_called_once_with(many=True)
+    ExperimentClient._get.assert_called_once_with(
+        "/project/{}/experiment".format(PROJECT_ID), schema_mock.return_value
+    )

@@ -64,3 +64,13 @@ class ExperimentClient(BaseClient):
             "artifactLocation": artifact_location,
         }
         return self._post(endpoint, ExperimentSchema(), json=payload)
+
+    def get(self, project_id, experiment_id):
+        endpoint = "/project/{}/experiment/{}".format(
+            project_id, experiment_id
+        )
+        return self._get(endpoint, ExperimentSchema())
+
+    def list(self, project_id):
+        endpoint = "/project/{}/experiment".format(project_id)
+        return self._get(endpoint, ExperimentSchema(many=True))
