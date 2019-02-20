@@ -57,6 +57,19 @@ class ExperimentClient(BaseClient):
     def create(
         self, project_id, name, description=None, artifact_location=None
     ):
+        """Create an experiment.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        name : str
+        description : str, optional
+        artifact_location : str, optional
+
+        Returns
+        -------
+        Experiment
+        """
         endpoint = "/project/{}/experiment".format(project_id)
         payload = {
             "name": name,
@@ -66,11 +79,32 @@ class ExperimentClient(BaseClient):
         return self._post(endpoint, ExperimentSchema(), json=payload)
 
     def get(self, project_id, experiment_id):
+        """Get a specified experiment.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        experiment_id : uuid.UUID
+
+        Returns
+        -------
+        Experiment
+        """
         endpoint = "/project/{}/experiment/{}".format(
             project_id, experiment_id
         )
         return self._get(endpoint, ExperimentSchema())
 
     def list(self, project_id):
+        """List the experiments in a project.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+
+        Returns
+        -------
+        List[Experiment]
+        """
         endpoint = "/project/{}/experiment".format(project_id)
         return self._get(endpoint, ExperimentSchema(many=True))
