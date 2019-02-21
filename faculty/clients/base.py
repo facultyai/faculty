@@ -22,49 +22,52 @@ class InvalidResponse(Exception):
     pass
 
 
-class HTTPError(Exception):
+class HttpError(Exception):
     def __init__(self, response, error=None):
         self.response = response
         self.error = error
 
 
-class BadRequest(HTTPError):
+HTTPError = HttpError  # For backwards compatiblity
+
+
+class BadRequest(HttpError):
     pass
 
 
-class Unauthorized(HTTPError):
+class Unauthorized(HttpError):
     pass
 
 
-class Forbidden(HTTPError):
+class Forbidden(HttpError):
     pass
 
 
-class NotFound(HTTPError):
+class NotFound(HttpError):
     pass
 
 
-class MethodNotAllowed(HTTPError):
+class MethodNotAllowed(HttpError):
     pass
 
 
-class Conflict(HTTPError):
+class Conflict(HttpError):
     pass
 
 
-class InternalServerError(HTTPError):
+class InternalServerError(HttpError):
     pass
 
 
-class BadGateway(HTTPError):
+class BadGateway(HttpError):
     pass
 
 
-class ServiceUnavailable(HTTPError):
+class ServiceUnavailable(HttpError):
     pass
 
 
-class GatewayTimeout(HTTPError):
+class GatewayTimeout(HttpError):
     pass
 
 
@@ -101,7 +104,7 @@ def _extract_error(response):
 
 def _check_status(response):
     if response.status_code >= 400:
-        cls = HTTP_ERRORS.get(response.status_code, HTTPError)
+        cls = HTTP_ERRORS.get(response.status_code, HttpError)
         raise cls(response, _extract_error(response))
 
 
