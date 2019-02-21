@@ -22,7 +22,7 @@ from faculty.clients.base import (
     BaseSchema,
     BaseClient,
     InvalidResponse,
-    HTTPError,
+    HttpError,
     BadRequest,
     Unauthorized,
     Forbidden,
@@ -53,7 +53,7 @@ BAD_RESPONSE_STATUSES = [
     (502, BadGateway),
     (503, ServiceUnavailable),
     (504, GatewayTimeout),
-    (418, HTTPError),
+    (418, HttpError),
 ]
 
 HTTP_METHODS = ["GET", "POST", "PUT", "DELETE"]
