@@ -166,7 +166,6 @@ class ExperimentClient(BaseClient):
 
         Returns
         -------
-
         ExperimentRun
         """
         endpoint = "/project/{}/experiment/{}/run".format(
