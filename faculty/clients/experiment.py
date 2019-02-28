@@ -148,6 +148,25 @@ class ExperimentClient(BaseClient):
     def create_run(
         self, project_id, started_at, experiment_id=None, artifact_uri=None
     ):
+        """Create a run in a project.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        started_at : datetime.datetime
+        experiment_id : int, optional
+            The ID of the experiment in which to create this run. If
+            omitted, the run is created in the default experiment.
+        artifact_uri: str, optional
+            The location of the artifact repository to use for this run.
+            If omitted, the value of `artifact_location` for the experiment
+            will be used.
+
+        Returns
+        -------
+
+        ExperimentRun
+        """
         endpoint = "/project/{}/run".format(project_id)
         payload = {
             "experimentId": experiment_id,
