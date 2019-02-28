@@ -34,13 +34,7 @@ Experiment = namedtuple(
 )
 
 
-ExperimentRun = namedtuple(
-    "ExperimentRun",
-    [
-        "id",
-        "experiment_id",
-    ]
-)
+ExperimentRun = namedtuple("ExperimentRun", ["id", "experiment_id"])
 
 
 class ExperimentSchema(BaseSchema):
@@ -127,11 +121,13 @@ class ExperimentClient(BaseClient):
         endpoint = "/project/{}/experiment".format(project_id)
         return self._get(endpoint, ExperimentSchema(many=True))
 
-    def create_run(self, project_id, started_at, experiment_id=None, artifact_uri=None):
+    def create_run(
+        self, project_id, started_at, experiment_id=None, artifact_uri=None
+    ):
         endpoint = "/project/{}/run".format(project_id)
         payload = {
             "experimentId": experiment_id,
             "startedAt": started_at.isoformat(),
-            "artifactUri": artifact_uri
+            "artifactUri": artifact_uri,
         }
         return self._post(endpoint, ExperimentRunSchema(), json=payload)

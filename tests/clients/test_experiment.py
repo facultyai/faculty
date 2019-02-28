@@ -25,7 +25,7 @@ from faculty.clients.experiment import (
     ExperimentSchema,
     ExperimentClient,
     ExperimentRun,
-    ExperimentRunSchema
+    ExperimentRunSchema,
 )
 
 
@@ -62,12 +62,11 @@ RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
 RUN_STARTED_AT_STRING = "2018-03-10T11:39:12.110000+00:00"
 
 EXPERIMENT_RUN = ExperimentRun(
-    id=EXPERIMENT_RUN_ID,
-    experiment_id=EXPERIMENT.id
+    id=EXPERIMENT_RUN_ID, experiment_id=EXPERIMENT.id
 )
 EXPERIMENT_RUN_BODY = {
     "experimentId": EXPERIMENT.id,
-    "runId": str(EXPERIMENT_RUN_ID)
+    "runId": str(EXPERIMENT_RUN_ID),
 }
 
 
@@ -148,15 +147,37 @@ def test_experiment_client_list(mocker):
 @pytest.mark.parametrize(
     "kwargs,expected_payload",
     [
-        ({}, {"experimentId": None, "artifactUri": None, "startedAt": RUN_STARTED_AT_STRING}),
-        ({"experiment_id": 661}, {"experimentId": 661, "artifactUri": None, "startedAt": RUN_STARTED_AT_STRING}),
-        ({"artifact_uri": "faculty:"}, {"experimentId": None, "artifactUri": "faculty:", "startedAt": RUN_STARTED_AT_STRING})
-    ]
+        (
+            {},
+            {
+                "experimentId": None,
+                "artifactUri": None,
+                "startedAt": RUN_STARTED_AT_STRING,
+            },
+        ),
+        (
+            {"experiment_id": 661},
+            {
+                "experimentId": 661,
+                "artifactUri": None,
+                "startedAt": RUN_STARTED_AT_STRING,
+            },
+        ),
+        (
+            {"artifact_uri": "faculty:"},
+            {
+                "experimentId": None,
+                "artifactUri": "faculty:",
+                "startedAt": RUN_STARTED_AT_STRING,
+            },
+        ),
+    ],
 )
 def test_experiment_create_run(mocker, kwargs, expected_payload):
     mocker.patch.object(ExperimentClient, "_post", return_value=EXPERIMENT_RUN)
     schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunSchema")
+        "faculty.clients.experiment.ExperimentRunSchema"
+    )
 
     client = ExperimentClient(mocker.Mock())
     returned_run = client.create_run(PROJECT_ID, RUN_STARTED_AT, **kwargs)
@@ -166,5 +187,5 @@ def test_experiment_create_run(mocker, kwargs, expected_payload):
     ExperimentClient._post.assert_called_once_with(
         "/project/{}/run".format(PROJECT_ID),
         schema_mock.return_value,
-        json=expected_payload
+        json=expected_payload,
     )
