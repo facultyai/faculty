@@ -34,7 +34,7 @@ Experiment = namedtuple(
 )
 
 
-ExperimentRun = namedtuple("ExperimentRun", ["id", "experiment_id", "artifact_uri"])
+ExperimentRun = namedtuple("ExperimentRun", ["id", "experiment_id", "artifact_uri", "started_at"])
 
 
 class ExperimentSchema(BaseSchema):
@@ -59,6 +59,7 @@ class ExperimentRunSchema(BaseSchema):
     artifact_uri = fields.String(
         data_key="artifactUri", required=True
     )
+    started_at = fields.DateTime(data_key="startedAt", required=True)
 
     @post_load
     def make_experiment_run(self, data):

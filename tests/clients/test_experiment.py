@@ -59,15 +59,17 @@ EXPERIMENT_BODY = {
 }
 
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
-RUN_STARTED_AT_STRING = "2018-03-10T11:39:12.110000+00:00"
+RUN_STARTED_AT_STRING_PYTHON = "2018-03-10T11:39:12.110000+00:00"
+RUN_STARTED_AT_STRING_JAVA = "2018-03-10T11:39:12.11Z"
 
 EXPERIMENT_RUN = ExperimentRun(
-    id=EXPERIMENT_RUN_ID, experiment_id=EXPERIMENT.id, artifact_uri="faculty:"
+    id=EXPERIMENT_RUN_ID, experiment_id=EXPERIMENT.id, artifact_uri="faculty:", started_at=RUN_STARTED_AT
 )
 EXPERIMENT_RUN_BODY = {
     "experimentId": EXPERIMENT.id,
     "runId": str(EXPERIMENT_RUN_ID),
-    "artifactUri": "faculty:"
+    "artifactUri": "faculty:",
+    "startedAt": RUN_STARTED_AT_STRING_JAVA
 }
 
 
@@ -153,7 +155,7 @@ def test_experiment_client_list(mocker):
             {
                 "experimentId": None,
                 "artifactUri": None,
-                "startedAt": RUN_STARTED_AT_STRING,
+                "startedAt": RUN_STARTED_AT_STRING_PYTHON,
             },
         ),
         (
@@ -161,7 +163,7 @@ def test_experiment_client_list(mocker):
             {
                 "experimentId": 661,
                 "artifactUri": None,
-                "startedAt": RUN_STARTED_AT_STRING,
+                "startedAt": RUN_STARTED_AT_STRING_PYTHON,
             },
         ),
         (
@@ -169,7 +171,7 @@ def test_experiment_client_list(mocker):
             {
                 "experimentId": None,
                 "artifactUri": "faculty:",
-                "startedAt": RUN_STARTED_AT_STRING,
+                "startedAt": RUN_STARTED_AT_STRING_PYTHON,
             },
         ),
     ],
