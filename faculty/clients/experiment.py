@@ -34,6 +34,15 @@ Experiment = namedtuple(
 )
 
 
+ExperimentRun = namedtuple(
+    "ExperimentRun",
+    [
+        "id",
+        "experiment_id",
+    ]
+)
+
+
 class ExperimentSchema(BaseSchema):
     id = fields.Integer(data_key="experimentId", required=True)
     name = fields.String(required=True)
@@ -48,6 +57,15 @@ class ExperimentSchema(BaseSchema):
     @post_load
     def make_experiment(self, data):
         return Experiment(**data)
+
+
+class ExperimentRunSchema(BaseSchema):
+    id = fields.UUID(data_key="runId", required=True)
+    experiment_id = fields.Integer(data_key="experimentId", required=True)
+
+    @post_load
+    def make_experiment_run(self, data):
+        return ExperimentRun(**data)
 
 
 class ExperimentClient(BaseClient):

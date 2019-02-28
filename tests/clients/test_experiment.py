@@ -24,10 +24,13 @@ from faculty.clients.experiment import (
     Experiment,
     ExperimentSchema,
     ExperimentClient,
+    ExperimentRun,
+    ExperimentRunSchema
 )
 
 
 PROJECT_ID = uuid4()
+EXPERIMENT_RUN_ID = uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 CREATED_AT_STRING = "2018-03-10T11:32:06.247Z"
 LAST_UPDATED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
@@ -55,6 +58,15 @@ EXPERIMENT_BODY = {
     "deletedAt": DELETED_AT_STRING,
 }
 
+EXPERIMENT_RUN = ExperimentRun(
+    id=EXPERIMENT_RUN_ID,
+    experiment_id=EXPERIMENT.id
+)
+EXPERIMENT_RUN_BODY = {
+    "experimentId": EXPERIMENT.id,
+    "runId": str(EXPERIMENT_RUN_ID)
+}
+
 
 def test_experiment_schema():
     data = ExperimentSchema().load(EXPERIMENT_BODY)
@@ -71,6 +83,11 @@ def test_experiment_schema_nullable_deleted_at():
 def test_experiment_schema_invalid():
     with pytest.raises(ValidationError):
         ExperimentSchema().load({})
+
+
+def test_experiment_run_schema():
+    data = ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
+    assert data == EXPERIMENT_RUN
 
 
 @pytest.mark.parametrize("description", [None, "experiment description"])
