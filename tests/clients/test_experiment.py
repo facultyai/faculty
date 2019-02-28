@@ -62,11 +62,12 @@ RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
 RUN_STARTED_AT_STRING = "2018-03-10T11:39:12.110000+00:00"
 
 EXPERIMENT_RUN = ExperimentRun(
-    id=EXPERIMENT_RUN_ID, experiment_id=EXPERIMENT.id
+    id=EXPERIMENT_RUN_ID, experiment_id=EXPERIMENT.id, artifact_uri="faculty:"
 )
 EXPERIMENT_RUN_BODY = {
     "experimentId": EXPERIMENT.id,
     "runId": str(EXPERIMENT_RUN_ID),
+    "artifactUri": "faculty:"
 }
 
 
