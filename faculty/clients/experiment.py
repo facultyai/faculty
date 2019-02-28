@@ -78,9 +78,7 @@ class ExperimentRunSchema(BaseSchema):
     artifact_location = fields.String(
         data_key="artifactLocation", required=True
     )
-    status = EnumField(
-        ExperimentRunStatus, data_key="status", by_value=True, required=True
-    )
+    status = EnumField(ExperimentRunStatus, by_value=True, required=True)
     started_at = fields.DateTime(data_key="startedAt", required=True)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
     deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
