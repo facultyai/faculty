@@ -47,7 +47,7 @@ ExperimentRun = namedtuple(
     [
         "id",
         "experiment_id",
-        "artifact_uri",
+        "artifact_location",
         "status",
         "started_at",
         "ended_at",
@@ -75,7 +75,9 @@ class ExperimentSchema(BaseSchema):
 class ExperimentRunSchema(BaseSchema):
     id = fields.UUID(data_key="runId", required=True)
     experiment_id = fields.Integer(data_key="experimentId", required=True)
-    artifact_uri = fields.String(data_key="artifactUri", required=True)
+    artifact_location = fields.String(
+        data_key="artifactLocation", required=True
+    )
     status = EnumField(
         ExperimentRunStatus, data_key="status", by_value=True, required=True
     )
@@ -148,7 +150,11 @@ class ExperimentClient(BaseClient):
         return self._get(endpoint, ExperimentSchema(many=True))
 
     def create_run(
-        self, project_id, started_at, experiment_id=None, artifact_uri=None
+        self,
+        project_id,
+        started_at,
+        experiment_id=None,
+        artifact_location=None,
     ):
         """Create a run in a project.
 
@@ -159,7 +165,7 @@ class ExperimentClient(BaseClient):
         experiment_id : int, optional
             The ID of the experiment in which to create this run. If
             omitted, the run is created in the default experiment.
-        artifact_uri: str, optional
+        artifact_location: str, optional
             The location of the artifact repository to use for this run.
             If omitted, the value of `artifact_location` for the experiment
             will be used.
@@ -173,6 +179,6 @@ class ExperimentClient(BaseClient):
         payload = {
             "experimentId": experiment_id,
             "startedAt": started_at.isoformat(),
-            "artifactUri": artifact_uri,
+            "artifactLocation": artifact_location,
         }
         return self._post(endpoint, ExperimentRunSchema(), json=payload)

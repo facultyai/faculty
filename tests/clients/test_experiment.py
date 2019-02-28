@@ -68,7 +68,7 @@ RUN_ENDED_AT_STRING = "2018-03-10T11:39:15.11Z"
 EXPERIMENT_RUN = ExperimentRun(
     id=EXPERIMENT_RUN_ID,
     experiment_id=EXPERIMENT.id,
-    artifact_uri="faculty:",
+    artifact_location="faculty:",
     status=ExperimentRunStatus.RUNNING,
     started_at=RUN_STARTED_AT,
     ended_at=RUN_ENDED_AT,
@@ -77,7 +77,7 @@ EXPERIMENT_RUN = ExperimentRun(
 EXPERIMENT_RUN_BODY = {
     "experimentId": EXPERIMENT.id,
     "runId": str(EXPERIMENT_RUN_ID),
-    "artifactUri": "faculty:",
+    "artifactLocation": "faculty:",
     "status": "running",
     "startedAt": RUN_STARTED_AT_STRING_JAVA,
     "endedAt": RUN_ENDED_AT_STRING,
@@ -176,7 +176,7 @@ def test_experiment_client_list(mocker):
             {},
             {
                 "experimentId": None,
-                "artifactUri": None,
+                "artifactLocation": None,
                 "startedAt": RUN_STARTED_AT_STRING_PYTHON,
             },
         ),
@@ -184,15 +184,15 @@ def test_experiment_client_list(mocker):
             {"experiment_id": 661},
             {
                 "experimentId": 661,
-                "artifactUri": None,
+                "artifactLocation": None,
                 "startedAt": RUN_STARTED_AT_STRING_PYTHON,
             },
         ),
         (
-            {"artifact_uri": "faculty:"},
+            {"artifact_location": "faculty:"},
             {
                 "experimentId": None,
-                "artifactUri": "faculty:",
+                "artifactLocation": "faculty:",
                 "startedAt": RUN_STARTED_AT_STRING_PYTHON,
             },
         ),
