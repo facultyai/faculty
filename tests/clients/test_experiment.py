@@ -26,7 +26,7 @@ from faculty.clients.experiment import (
     ExperimentClient,
     ExperimentRun,
     ExperimentRunSchema,
-    ExperimentRunStatus
+    ExperimentRunStatus,
 )
 
 
@@ -66,10 +66,13 @@ RUN_ENDED_AT = datetime(2018, 3, 10, 11, 39, 15, 110000, tzinfo=UTC)
 RUN_ENDED_AT_STRING = "2018-03-10T11:39:15.11Z"
 
 EXPERIMENT_RUN = ExperimentRun(
-    id=EXPERIMENT_RUN_ID, experiment_id=EXPERIMENT.id, artifact_uri="faculty:",
+    id=EXPERIMENT_RUN_ID,
+    experiment_id=EXPERIMENT.id,
+    artifact_uri="faculty:",
     status=ExperimentRunStatus.RUNNING,
     started_at=RUN_STARTED_AT,
-    ended_at=RUN_ENDED_AT, deleted_at=DELETED_AT
+    ended_at=RUN_ENDED_AT,
+    deleted_at=DELETED_AT,
 )
 EXPERIMENT_RUN_BODY = {
     "experimentId": EXPERIMENT.id,
@@ -78,7 +81,7 @@ EXPERIMENT_RUN_BODY = {
     "status": "running",
     "startedAt": RUN_STARTED_AT_STRING_JAVA,
     "endedAt": RUN_ENDED_AT_STRING,
-    "deletedAt": DELETED_AT_STRING
+    "deletedAt": DELETED_AT_STRING,
 }
 
 
