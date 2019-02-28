@@ -112,7 +112,7 @@ def test_experiment_client_get(mocker):
     )
 
 
-def test_job_client_list(mocker):
+def test_experiment_client_list(mocker):
     mocker.patch.object(ExperimentClient, "_get", return_value=[EXPERIMENT])
     schema_mock = mocker.patch("faculty.clients.experiment.ExperimentSchema")
 
