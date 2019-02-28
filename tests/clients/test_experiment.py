@@ -100,6 +100,16 @@ def test_experiment_run_schema():
     assert data == EXPERIMENT_RUN
 
 
+@pytest.mark.parametrize(
+    "data_key, field", [("endedAt", "ended_at"), ("deletedAt", "deleted_at")]
+)
+def test_experiment_run_schema_nullable_field(data_key, field):
+    body = EXPERIMENT_RUN_BODY.copy()
+    del body[data_key]
+    data = ExperimentRunSchema().load(body)
+    assert getattr(data, field) is None
+
+
 @pytest.mark.parametrize("description", [None, "experiment description"])
 @pytest.mark.parametrize("artifact_location", [None, "s3://mybucket"])
 def test_experiment_client_create(mocker, description, artifact_location):
