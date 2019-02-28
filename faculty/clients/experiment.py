@@ -12,12 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from collections import namedtuple
+from enum import Enum
 
 from marshmallow import fields, post_load
+from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseSchema, BaseClient
+
+
+class ExperimentRunStatus(Enum):
+    RUNNING = "running"
+    FINISHED = "finished"
+    FAILED = "failed"
+    SCHEDULED = "scheduled"
 
 
 Experiment = namedtuple(
@@ -34,7 +42,7 @@ Experiment = namedtuple(
 )
 
 
-ExperimentRun = namedtuple("ExperimentRun", ["id", "experiment_id", "artifact_uri", "started_at", "ended_at", "deleted_at"])
+ExperimentRun = namedtuple("ExperimentRun", ["id", "experiment_id", "artifact_uri", "started_at", "status", "ended_at", "deleted_at"])
 
 
 class ExperimentSchema(BaseSchema):
@@ -59,6 +67,7 @@ class ExperimentRunSchema(BaseSchema):
     artifact_uri = fields.String(
         data_key="artifactUri", required=True
     )
+    status = EnumField(ExperimentRunStatus, by_value=True, required=True)
     started_at = fields.DateTime(data_key="startedAt", required=True)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
     deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
