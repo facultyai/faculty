@@ -126,3 +126,10 @@ class ExperimentClient(BaseClient):
         """
         endpoint = "/project/{}/experiment".format(project_id)
         return self._get(endpoint, ExperimentSchema(many=True))
+
+    def create_run(self, project_id, experiment_id=None):
+        endpoint = "/project/{}/run".format(project_id)
+        payload = {
+            "experimentId": experiment_id
+        }
+        return self._post(endpoint, ExperimentRunSchema(), json=payload)

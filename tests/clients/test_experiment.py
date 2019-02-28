@@ -140,3 +140,11 @@ def test_experiment_client_list(mocker):
     ExperimentClient._get.assert_called_once_with(
         "/project/{}/experiment".format(PROJECT_ID), schema_mock.return_value
     )
+
+
+def test_experiment_client_create_run(mocker):
+    mocker.patch.object(ExperimentClient, "_post", return_value=EXPERIMENT_RUN)
+
+    client = ExperimentClient(mocker.Mock())
+    returned_run = client.create_run(PROJECT_ID)
+    assert returned_run == EXPERIMENT_RUN
