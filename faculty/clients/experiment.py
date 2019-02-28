@@ -120,7 +120,7 @@ class ExperimentClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
-        experiment_id : uuid.UUID
+        experiment_id : int
 
         Returns
         -------
