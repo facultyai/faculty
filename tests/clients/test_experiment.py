@@ -144,7 +144,18 @@ def test_experiment_client_list(mocker):
 
 def test_experiment_client_create_run(mocker):
     mocker.patch.object(ExperimentClient, "_post", return_value=EXPERIMENT_RUN)
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunSchema")
 
     client = ExperimentClient(mocker.Mock())
     returned_run = client.create_run(PROJECT_ID)
     assert returned_run == EXPERIMENT_RUN
+
+    schema_mock.assert_called_once_with()
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID),
+        schema_mock.return_value,
+        json={
+            "experimentId": None
+        }
+    )
