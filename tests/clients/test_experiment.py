@@ -31,6 +31,7 @@ from faculty.clients.experiment import (
 
 
 PROJECT_ID = uuid4()
+EXPERIMENT_ID = 661
 EXPERIMENT_RUN_ID = uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 CREATED_AT_STRING = "2018-03-10T11:32:06.247Z"
@@ -41,7 +42,7 @@ DELETED_AT_STRING = "2018-03-10T11:37:42.482Z"
 
 
 EXPERIMENT = Experiment(
-    id=12,
+    id=EXPERIMENT_ID,
     name="experiment name",
     description="experiment description",
     artifact_location="https://example.com",
@@ -50,7 +51,7 @@ EXPERIMENT = Experiment(
     deleted_at=DELETED_AT,
 )
 EXPERIMENT_BODY = {
-    "experimentId": EXPERIMENT.id,
+    "experimentId": EXPERIMENT_ID,
     "name": EXPERIMENT.name,
     "description": EXPERIMENT.description,
     "artifactLocation": EXPERIMENT.artifact_location,
@@ -175,15 +176,6 @@ def test_experiment_client_list(mocker):
         (
             {},
             {
-                "experimentId": None,
-                "artifactLocation": None,
-                "startedAt": RUN_STARTED_AT_STRING_PYTHON,
-            },
-        ),
-        (
-            {"experiment_id": 661},
-            {
-                "experimentId": 661,
                 "artifactLocation": None,
                 "startedAt": RUN_STARTED_AT_STRING_PYTHON,
             },
@@ -191,7 +183,6 @@ def test_experiment_client_list(mocker):
         (
             {"artifact_location": "faculty:"},
             {
-                "experimentId": None,
                 "artifactLocation": "faculty:",
                 "startedAt": RUN_STARTED_AT_STRING_PYTHON,
             },
@@ -205,12 +196,14 @@ def test_experiment_create_run(mocker, kwargs, expected_payload):
     )
 
     client = ExperimentClient(mocker.Mock())
-    returned_run = client.create_run(PROJECT_ID, RUN_STARTED_AT, **kwargs)
+    returned_run = client.create_run(
+        PROJECT_ID, EXPERIMENT_ID, RUN_STARTED_AT, **kwargs
+    )
     assert returned_run == EXPERIMENT_RUN
 
     schema_mock.assert_called_once_with()
     ExperimentClient._post.assert_called_once_with(
-        "/project/{}/run".format(PROJECT_ID),
+        "/project/{}/experiment/{}/run".format(PROJECT_ID, EXPERIMENT_ID),
         schema_mock.return_value,
         json=expected_payload,
     )
