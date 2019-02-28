@@ -58,6 +58,9 @@ EXPERIMENT_BODY = {
     "deletedAt": DELETED_AT_STRING,
 }
 
+RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
+RUN_STARTED_AT_STRING = "2018-03-10T11:39:12.110000+00:00"
+
 EXPERIMENT_RUN = ExperimentRun(
     id=EXPERIMENT_RUN_ID,
     experiment_id=EXPERIMENT.id
@@ -148,7 +151,7 @@ def test_experiment_client_create_run(mocker):
         "faculty.clients.experiment.ExperimentRunSchema")
 
     client = ExperimentClient(mocker.Mock())
-    returned_run = client.create_run(PROJECT_ID)
+    returned_run = client.create_run(PROJECT_ID, RUN_STARTED_AT)
     assert returned_run == EXPERIMENT_RUN
 
     schema_mock.assert_called_once_with()
@@ -156,6 +159,50 @@ def test_experiment_client_create_run(mocker):
         "/project/{}/run".format(PROJECT_ID),
         schema_mock.return_value,
         json={
-            "experimentId": None
+            "experimentId": None,
+            "artifactUri": None,
+            "startedAt": RUN_STARTED_AT_STRING,
+        }
+    )
+
+
+def test_experiment_create_run_explicit_experiment_id(mocker):
+    mocker.patch.object(ExperimentClient, "_post", return_value=EXPERIMENT_RUN)
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunSchema")
+
+    client = ExperimentClient(mocker.Mock())
+    returned_run = client.create_run(PROJECT_ID, RUN_STARTED_AT, experiment_id=661)
+    assert returned_run == EXPERIMENT_RUN
+
+    schema_mock.assert_called_once_with()
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID),
+        schema_mock.return_value,
+        json={
+            "experimentId": 661,
+            "artifactUri": None,
+            "startedAt": RUN_STARTED_AT_STRING
+        }
+    )
+
+
+def test_experiment_create_run_explicit_artifact_uri(mocker):
+    mocker.patch.object(ExperimentClient, "_post", return_value=EXPERIMENT_RUN)
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunSchema")
+
+    client = ExperimentClient(mocker.Mock())
+    returned_run = client.create_run(PROJECT_ID, RUN_STARTED_AT, artifact_uri="faculty:")
+    assert returned_run == EXPERIMENT_RUN
+
+    schema_mock.assert_called_once_with()
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID),
+        schema_mock.return_value,
+        json={
+            "experimentId": None,
+            "artifactUri": "faculty:",
+            "startedAt": RUN_STARTED_AT_STRING
         }
     )
