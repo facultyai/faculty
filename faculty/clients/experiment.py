@@ -88,6 +88,11 @@ class ExperimentRunSchema(BaseSchema):
         return ExperimentRun(**data)
 
 
+class CreateRunSchema(BaseSchema):
+    started_at = fields.DateTime(data_key="startedAt")
+    artifact_location = fields.String(data_key="artifactLocation")
+
+
 class ExperimentClient(BaseClient):
 
     SERVICE_NAME = "atlas"

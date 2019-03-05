@@ -27,6 +27,7 @@ from faculty.clients.experiment import (
     ExperimentRun,
     ExperimentRunSchema,
     ExperimentRunStatus,
+    CreateRunSchema,
 )
 
 
@@ -116,6 +117,29 @@ def test_experiment_run_schema_nullable_field(data_key, field):
     del body[data_key]
     data = ExperimentRunSchema().load(body)
     assert getattr(data, field) is None
+
+
+def test_create_run_schema():
+    data = CreateRunSchema().dump(
+        {
+            "started_at": RUN_STARTED_AT,
+            "artifact_location": "faculty:project-id",
+        }
+    )
+    assert data == {
+        "startedAt": RUN_STARTED_AT_STRING_PYTHON,
+        "artifactLocation": "faculty:project-id",
+    }
+
+
+def test_create_run_schema_nullable_artifact_location():
+    data = CreateRunSchema().dump(
+        {"started_at": RUN_STARTED_AT, "artifact_location": None}
+    )
+    assert data == {
+        "startedAt": RUN_STARTED_AT_STRING_PYTHON,
+        "artifactLocation": None,
+    }
 
 
 @pytest.mark.parametrize("description", [None, "experiment description"])
