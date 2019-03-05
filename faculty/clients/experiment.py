@@ -157,6 +157,8 @@ class ExperimentClient(BaseClient):
         project_id : uuid.UUID
         experiment_id : int
         started_at : datetime.datetime
+            Time at which the run was started. This needs to be a zoned
+            datetime, e.g. ``datetime.now(tz=pytz.UTC)``.
         artifact_location: str, optional
             The location of the artifact repository to use for this run.
             If omitted, the value of `artifact_location` for the experiment
