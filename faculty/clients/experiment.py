@@ -182,6 +182,18 @@ class ExperimentClient(BaseClient):
         return self._post(endpoint, ExperimentRunSchema(), json=payload)
 
     def get_run(self, project_id, experiment_id, run_id):
+        """Get a specified experiment run.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        experiment_id : int
+        run_id : uuid.UUID
+
+        Returns
+        -------
+        ExperimentRun
+        """
         endpoint = "/project/{}/experiment/{}/run/{}".format(
             project_id, experiment_id, run_id
         )
