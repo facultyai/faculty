@@ -228,13 +228,11 @@ def test_experiment_client_get_run(mocker):
     )
 
     client = ExperimentClient(mocker.Mock())
-    returned_run = client.get_run(PROJECT_ID, EXPERIMENT_ID, EXPERIMENT_RUN_ID)
+    returned_run = client.get_run(PROJECT_ID, EXPERIMENT_RUN_ID)
     assert returned_run == EXPERIMENT_RUN
 
     schema_mock.assert_called_once_with()
     ExperimentClient._get.assert_called_once_with(
-        "/project/{}/experiment/{}/run/{}".format(
-            PROJECT_ID, EXPERIMENT_ID, EXPERIMENT_RUN_ID
-        ),
+        "/project/{}/run/{}".format(PROJECT_ID, EXPERIMENT_RUN_ID),
         schema_mock.return_value,
     )
