@@ -62,6 +62,7 @@ EXPERIMENT_BODY = {
 }
 
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
+RUN_STARTED_AT_NO_TIMEZONE = datetime(2018, 3, 10, 11, 39, 12, 110000)
 RUN_STARTED_AT_STRING_PYTHON = "2018-03-10T11:39:12.110000+00:00"
 RUN_STARTED_AT_STRING_JAVA = "2018-03-10T11:39:12.11Z"
 RUN_ENDED_AT = datetime(2018, 3, 10, 11, 39, 15, 110000, tzinfo=UTC)
@@ -119,26 +120,19 @@ def test_experiment_run_schema_nullable_field(data_key, field):
     assert getattr(data, field) is None
 
 
-def test_create_run_schema():
+@pytest.mark.parametrize(
+    "started_at",
+    [RUN_STARTED_AT, RUN_STARTED_AT_NO_TIMEZONE],
+    ids=["timezone", "no timezone"],
+)
+@pytest.mark.parametrize("artifact_location", [None, "faculty:project-id"])
+def test_create_run_schema(started_at, artifact_location):
     data = CreateRunSchema().dump(
-        {
-            "started_at": RUN_STARTED_AT,
-            "artifact_location": "faculty:project-id",
-        }
+        {"started_at": started_at, "artifact_location": artifact_location}
     )
     assert data == {
         "startedAt": RUN_STARTED_AT_STRING_PYTHON,
-        "artifactLocation": "faculty:project-id",
-    }
-
-
-def test_create_run_schema_nullable_artifact_location():
-    data = CreateRunSchema().dump(
-        {"started_at": RUN_STARTED_AT, "artifact_location": None}
-    )
-    assert data == {
-        "startedAt": RUN_STARTED_AT_STRING_PYTHON,
-        "artifactLocation": None,
+        "artifactLocation": artifact_location,
     }
 
 
