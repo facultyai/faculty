@@ -176,8 +176,7 @@ class ExperimentClient(BaseClient):
         endpoint = "/project/{}/experiment/{}/run".format(
             project_id, experiment_id
         )
-        payload = {
-            "startedAt": started_at.isoformat(),
-            "artifactLocation": artifact_location,
-        }
+        payload = CreateRunSchema().dump(
+            {"started_at": started_at, "artifact_location": artifact_location}
+        )
         return self._post(endpoint, ExperimentRunSchema(), json=payload)

@@ -194,40 +194,34 @@ def test_experiment_client_list(mocker):
     )
 
 
-@pytest.mark.parametrize(
-    "kwargs,expected_payload",
-    [
-        (
-            {},
-            {
-                "artifactLocation": None,
-                "startedAt": RUN_STARTED_AT_STRING_PYTHON,
-            },
-        ),
-        (
-            {"artifact_location": "faculty:"},
-            {
-                "artifactLocation": "faculty:",
-                "startedAt": RUN_STARTED_AT_STRING_PYTHON,
-            },
-        ),
-    ],
-)
-def test_experiment_create_run(mocker, kwargs, expected_payload):
+def test_experiment_create_run(mocker):
     mocker.patch.object(ExperimentClient, "_post", return_value=EXPERIMENT_RUN)
-    schema_mock = mocker.patch(
+    request_schema_mock = mocker.patch(
+        "faculty.clients.experiment.CreateRunSchema"
+    )
+    dump_mock = request_schema_mock.return_value.dump
+    response_schema_mock = mocker.patch(
         "faculty.clients.experiment.ExperimentRunSchema"
     )
+    started_at = mocker.Mock()
+    artifact_location = mocker.Mock()
 
     client = ExperimentClient(mocker.Mock())
     returned_run = client.create_run(
-        PROJECT_ID, EXPERIMENT_ID, RUN_STARTED_AT, **kwargs
+        PROJECT_ID,
+        EXPERIMENT_ID,
+        started_at,
+        artifact_location=artifact_location,
     )
     assert returned_run == EXPERIMENT_RUN
 
-    schema_mock.assert_called_once_with()
+    request_schema_mock.assert_called_once_with()
+    dump_mock.assert_called_once_with(
+        {"started_at": started_at, "artifact_location": artifact_location}
+    )
+    response_schema_mock.assert_called_once_with()
     ExperimentClient._post.assert_called_once_with(
         "/project/{}/experiment/{}/run".format(PROJECT_ID, EXPERIMENT_ID),
-        schema_mock.return_value,
-        json=expected_payload,
+        response_schema_mock.return_value,
+        json=dump_mock.return_value,
     )
