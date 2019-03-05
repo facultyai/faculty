@@ -12,12 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from collections import namedtuple
+from enum import Enum
 
 from marshmallow import fields, post_load
+from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseSchema, BaseClient
+
+
+class ExperimentRunStatus(Enum):
+    RUNNING = "running"
+    FINISHED = "finished"
+    FAILED = "failed"
+    SCHEDULED = "scheduled"
 
 
 Experiment = namedtuple(
@@ -29,6 +37,20 @@ Experiment = namedtuple(
         "artifact_location",
         "created_at",
         "last_updated_at",
+        "deleted_at",
+    ],
+)
+
+
+ExperimentRun = namedtuple(
+    "ExperimentRun",
+    [
+        "id",
+        "experiment_id",
+        "artifact_location",
+        "status",
+        "started_at",
+        "ended_at",
         "deleted_at",
     ],
 )
@@ -48,6 +70,27 @@ class ExperimentSchema(BaseSchema):
     @post_load
     def make_experiment(self, data):
         return Experiment(**data)
+
+
+class ExperimentRunSchema(BaseSchema):
+    id = fields.UUID(data_key="runId", required=True)
+    experiment_id = fields.Integer(data_key="experimentId", required=True)
+    artifact_location = fields.String(
+        data_key="artifactLocation", required=True
+    )
+    status = EnumField(ExperimentRunStatus, by_value=True, required=True)
+    started_at = fields.DateTime(data_key="startedAt", required=True)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
+
+    @post_load
+    def make_experiment_run(self, data):
+        return ExperimentRun(**data)
+
+
+class CreateRunSchema(BaseSchema):
+    started_at = fields.DateTime(data_key="startedAt")
+    artifact_location = fields.String(data_key="artifactLocation")
 
 
 class ExperimentClient(BaseClient):
@@ -84,7 +127,7 @@ class ExperimentClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
-        experiment_id : uuid.UUID
+        experiment_id : int
 
         Returns
         -------
@@ -108,3 +151,32 @@ class ExperimentClient(BaseClient):
         """
         endpoint = "/project/{}/experiment".format(project_id)
         return self._get(endpoint, ExperimentSchema(many=True))
+
+    def create_run(
+        self, project_id, experiment_id, started_at, artifact_location=None
+    ):
+        """Create a run in a project.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        experiment_id : int
+        started_at : datetime.datetime
+            Time at which the run was started. If the datetime does not have a
+            timezone, it will be assumed to be in UTC.
+        artifact_location: str, optional
+            The location of the artifact repository to use for this run.
+            If omitted, the value of `artifact_location` for the experiment
+            will be used.
+
+        Returns
+        -------
+        ExperimentRun
+        """
+        endpoint = "/project/{}/experiment/{}/run".format(
+            project_id, experiment_id
+        )
+        payload = CreateRunSchema().dump(
+            {"started_at": started_at, "artifact_location": artifact_location}
+        )
+        return self._post(endpoint, ExperimentRunSchema(), json=payload)
