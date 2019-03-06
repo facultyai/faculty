@@ -180,3 +180,18 @@ class ExperimentClient(BaseClient):
             {"started_at": started_at, "artifact_location": artifact_location}
         )
         return self._post(endpoint, ExperimentRunSchema(), json=payload)
+
+    def get_run(self, project_id, run_id):
+        """Get a specified experiment run.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        run_id : uuid.UUID
+
+        Returns
+        -------
+        ExperimentRun
+        """
+        endpoint = "/project/{}/run/{}".format(project_id, run_id)
+        return self._get(endpoint, ExperimentRunSchema())

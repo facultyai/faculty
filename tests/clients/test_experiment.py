@@ -219,3 +219,20 @@ def test_experiment_create_run(mocker):
         response_schema_mock.return_value,
         json=dump_mock.return_value,
     )
+
+
+def test_experiment_client_get_run(mocker):
+    mocker.patch.object(ExperimentClient, "_get", return_value=EXPERIMENT_RUN)
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunSchema"
+    )
+
+    client = ExperimentClient(mocker.Mock())
+    returned_run = client.get_run(PROJECT_ID, EXPERIMENT_RUN_ID)
+    assert returned_run == EXPERIMENT_RUN
+
+    schema_mock.assert_called_once_with()
+    ExperimentClient._get.assert_called_once_with(
+        "/project/{}/run/{}".format(PROJECT_ID, EXPERIMENT_RUN_ID),
+        schema_mock.return_value,
+    )
