@@ -259,6 +259,7 @@ class ExperimentClient(BaseClient):
         experiment_ids : List[int], optional
             To filter runs of experiments with the given IDs only. If an empty
             list is passed, a result with an empty list of runs is returned.
+            By default, runs from all experiments are returned.
         start : int, optional
             The (zero-indexed) starting point of runs to retrieve.
         limit : int, optional
