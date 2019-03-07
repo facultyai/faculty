@@ -103,7 +103,6 @@ class PageSchema(BaseSchema):
         return Page(**data)
 
 
-# TODO reuse pagination from jobs?
 class PaginationSchema(BaseSchema):
     start = fields.Integer(required=True)
     size = fields.Integer(required=True)

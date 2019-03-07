@@ -31,7 +31,9 @@ from faculty.clients.experiment import (
     ListExperimentRunsResponse,
     ListExperimentRunsResponseSchema,
     Page,
+    PageSchema,
     Pagination,
+    PaginationSchema,
 )
 
 
@@ -90,6 +92,9 @@ EXPERIMENT_RUN_BODY = {
     "endedAt": RUN_ENDED_AT_STRING,
     "deletedAt": DELETED_AT_STRING,
 }
+
+PAGE = Page(start=3, limit=10)
+PAGE_BODY = {"start": PAGE.start, "limit": PAGE.limit}
 
 PAGINATION = Pagination(
     start=20,
@@ -273,7 +278,22 @@ def test_list_runs_schema(mocker):
     assert data == LIST_EXPERIMENT_RUNS_RESPONSE
 
 
-# TODO test all edge cases of pagination or factor it out from jobs?
+def test_page_schema():
+    data = PageSchema().load(PAGE_BODY)
+    assert data == PAGE
+
+
+def test_pagination_schema():
+    data = PaginationSchema().load(PAGINATION_BODY)
+    assert data == PAGINATION
+
+
+@pytest.mark.parametrize("field", ["previous", "next"])
+def test_pagination_schema_nullable_field(field):
+    body = PAGINATION_BODY.copy()
+    del body[field]
+    data = PaginationSchema().load(body)
+    assert getattr(data, field) is None
 
 
 def test_experiment_client_list_runs_all(mocker):
