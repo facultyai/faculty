@@ -28,6 +28,12 @@ from faculty.clients.experiment import (
     ExperimentRunSchema,
     ExperimentRunStatus,
     CreateRunSchema,
+    ListExperimentRunsResponse,
+    ListExperimentRunsResponseSchema,
+    Page,
+    PageSchema,
+    Pagination,
+    PaginationSchema,
 )
 
 
@@ -85,6 +91,33 @@ EXPERIMENT_RUN_BODY = {
     "startedAt": RUN_STARTED_AT_STRING_JAVA,
     "endedAt": RUN_ENDED_AT_STRING,
     "deletedAt": DELETED_AT_STRING,
+}
+
+PAGE = Page(start=3, limit=10)
+PAGE_BODY = {"start": PAGE.start, "limit": PAGE.limit}
+
+PAGINATION = Pagination(
+    start=20,
+    size=10,
+    previous=Page(start=10, limit=10),
+    next=Page(start=30, limit=10),
+)
+PAGINATION_BODY = {
+    "start": PAGINATION.start,
+    "size": PAGINATION.size,
+    "previous": {
+        "start": PAGINATION.previous.start,
+        "limit": PAGINATION.previous.limit,
+    },
+    "next": {"start": PAGINATION.next.start, "limit": PAGINATION.next.limit},
+}
+
+LIST_EXPERIMENT_RUNS_RESPONSE = ListExperimentRunsResponse(
+    runs=[EXPERIMENT_RUN], pagination=PAGINATION
+)
+LIST_EXPERIMENT_RUNS_RESPONSE_BODY = {
+    "runs": [EXPERIMENT_RUN_BODY],
+    "pagination": PAGINATION_BODY,
 }
 
 
@@ -235,4 +268,98 @@ def test_experiment_client_get_run(mocker):
     ExperimentClient._get.assert_called_once_with(
         "/project/{}/run/{}".format(PROJECT_ID, EXPERIMENT_RUN_ID),
         schema_mock.return_value,
+    )
+
+
+def test_list_runs_schema(mocker):
+    data = ListExperimentRunsResponseSchema().load(
+        LIST_EXPERIMENT_RUNS_RESPONSE_BODY
+    )
+    assert data == LIST_EXPERIMENT_RUNS_RESPONSE
+
+
+def test_page_schema():
+    data = PageSchema().load(PAGE_BODY)
+    assert data == PAGE
+
+
+def test_pagination_schema():
+    data = PaginationSchema().load(PAGINATION_BODY)
+    assert data == PAGINATION
+
+
+@pytest.mark.parametrize("field", ["previous", "next"])
+def test_pagination_schema_nullable_field(field):
+    body = PAGINATION_BODY.copy()
+    del body[field]
+    data = PaginationSchema().load(body)
+    assert getattr(data, field) is None
+
+
+def test_experiment_client_list_runs_all(mocker):
+    mocker.patch.object(
+        ExperimentClient, "_get", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.ListExperimentRunsResponseSchema"
+    )
+
+    client = ExperimentClient(mocker.Mock())
+    list_result = client.list_runs(PROJECT_ID)
+    assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
+
+    schema_mock.assert_called_once_with()
+    ExperimentClient._get.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID),
+        schema_mock.return_value,
+        params=[],
+    )
+
+
+def test_experiment_client_list_runs_experiments_filter(mocker):
+    mocker.patch.object(
+        ExperimentClient, "_get", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.ListExperimentRunsResponseSchema"
+    )
+
+    client = ExperimentClient(mocker.Mock())
+    list_result = client.list_runs(PROJECT_ID, experiment_ids=[123, 456])
+    assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
+    schema_mock.assert_called_once_with()
+    ExperimentClient._get.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID),
+        schema_mock.return_value,
+        params=[("experimentId", 123), ("experimentId", 456)],
+    )
+
+
+def test_experiment_client_list_runs_experiments_filter_empty(mocker):
+    client = ExperimentClient(mocker.Mock())
+    list_result = client.list_runs(PROJECT_ID, experiment_ids=[])
+
+    assert list_result == ListExperimentRunsResponse(
+        runs=[],
+        pagination=Pagination(start=0, size=0, previous=None, next=None),
+    )
+
+
+def test_experiment_client_list_runs_page(mocker):
+    mocker.patch.object(
+        ExperimentClient, "_get", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.ListExperimentRunsResponseSchema"
+    )
+
+    client = ExperimentClient(mocker.Mock())
+    list_result = client.list_runs(PROJECT_ID, start=20, limit=10)
+    assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
+
+    schema_mock.assert_called_once_with()
+    ExperimentClient._get.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID),
+        schema_mock.return_value,
+        params=[("start", 20), ("limit", 10)],
     )

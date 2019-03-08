@@ -55,6 +55,12 @@ ExperimentRun = namedtuple(
     ],
 )
 
+Page = namedtuple("Page", ["start", "limit"])
+Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
+ListExperimentRunsResponse = namedtuple(
+    "ListExperimentRunsResponse", ["runs", "pagination"]
+)
+
 
 class ExperimentSchema(BaseSchema):
     id = fields.Integer(data_key="experimentId", required=True)
@@ -86,6 +92,35 @@ class ExperimentRunSchema(BaseSchema):
     @post_load
     def make_experiment_run(self, data):
         return ExperimentRun(**data)
+
+
+class PageSchema(BaseSchema):
+    start = fields.Integer(required=True)
+    limit = fields.Integer(required=True)
+
+    @post_load
+    def make_page(self, data):
+        return Page(**data)
+
+
+class PaginationSchema(BaseSchema):
+    start = fields.Integer(required=True)
+    size = fields.Integer(required=True)
+    previous = fields.Nested(PageSchema, missing=None)
+    next = fields.Nested(PageSchema, missing=None)
+
+    @post_load
+    def make_pagination(self, data):
+        return Pagination(**data)
+
+
+class ListExperimentRunsResponseSchema(BaseSchema):
+    pagination = fields.Nested(PaginationSchema, required=True)
+    runs = fields.Nested(ExperimentRunSchema, many=True, required=True)
+
+    @post_load
+    def make_list_runs_response_schema(self, data):
+        return ListExperimentRunsResponse(**data)
 
 
 class CreateRunSchema(BaseSchema):
@@ -195,3 +230,66 @@ class ExperimentClient(BaseClient):
         """
         endpoint = "/project/{}/run/{}".format(project_id, run_id)
         return self._get(endpoint, ExperimentRunSchema())
+
+    def list_runs(
+        self,
+        project_id,
+        experiment_ids=None,
+        lifecycle_stage=None,
+        start=None,
+        limit=None,
+    ):
+        """List experiment runs.
+
+        This method returns pages of runs. If less than the full number of runs
+        for the job is returned, the ``next`` page of the returned response
+        object will not be ``None``:
+
+        >>> response = client.list_runs(project_id)
+        >>> response.pagination.next
+        Page(start=10, limit=10)
+
+        Get all experiment runs by making successive calls to ``list_runs``,
+        passing the ``start`` and ``limit`` of the ``next`` page each time
+        until ``next`` is returned as ``None``.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        experiment_ids : List[int], optional
+            To filter runs of experiments with the given IDs only. If an empty
+            list is passed, a result with an empty list of runs is returned.
+            By default, runs from all experiments are returned.
+        start : int, optional
+            The (zero-indexed) starting point of runs to retrieve.
+        limit : int, optional
+            The maximum number of runs to retrieve.
+
+        Returns
+        -------
+        ListExperimentRunsResponse
+        """
+        if lifecycle_stage is not None:
+            raise NotImplementedError("lifecycle_stage is not supported.")
+
+        query_params = []
+        if experiment_ids is not None:
+            if len(experiment_ids) == 0:
+                return ListExperimentRunsResponse(
+                    runs=[],
+                    pagination=Pagination(
+                        start=0, size=0, previous=None, next=None
+                    ),
+                )
+            for experiment_id in experiment_ids:
+                query_params.append(("experimentId", experiment_id))
+
+        if start is not None:
+            query_params.append(("start", start))
+        if limit is not None:
+            query_params.append(("limit", limit))
+
+        endpoint = "/project/{}/run".format(project_id)
+        return self._get(
+            endpoint, ListExperimentRunsResponseSchema(), params=query_params
+        )
