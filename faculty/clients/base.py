@@ -171,6 +171,13 @@ class BaseClient(object):
         response = self._put_raw(endpoint, **kwargs)
         return _deserialise_response(schema, response)
 
+    def _patch_raw(self, endpoint, *args, **kwargs):
+        return self._request("PATCH", endpoint, *args, **kwargs)
+
+    def _patch(self, endpoint, schema, **kwargs):
+        response = self._patch_raw(endpoint, **kwargs)
+        return _deserialise_response(schema, response)
+
     def _delete_raw(self, endpoint, *args, **kwargs):
         return self._request("DELETE", endpoint, *args, **kwargs)
 
