@@ -56,7 +56,7 @@ BAD_RESPONSE_STATUSES = [
     (418, HttpError),
 ]
 
-HTTP_METHODS = ["GET", "POST", "PUT", "DELETE"]
+HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 
 
 @pytest.fixture
@@ -149,6 +149,23 @@ def test_put(requests_mock, session, patch_auth):
 
     client = DummyClient(session)
     response = client._put(
+        MOCK_ENDPOINT, DummySchema(), json={"test": "payload"}
+    )
+
+    assert response == DummyObject(foo="bar")
+    assert mock.last_request.json() == {"test": "payload"}
+
+
+def test_patch(requests_mock, session, patch_auth):
+
+    mock = requests_mock.patch(
+        MOCK_SERVICE_URL,
+        request_headers=AUTHORIZATION_HEADER,
+        json={"foo": "bar"},
+    )
+
+    client = DummyClient(session)
+    response = client._patch(
         MOCK_ENDPOINT, DummySchema(), json={"test": "payload"}
     )
 
