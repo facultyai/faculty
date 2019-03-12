@@ -94,6 +94,22 @@ class ExperimentRunSchema(BaseSchema):
         return ExperimentRun(**data)
 
 
+class ExperimentRunTagSchema(BaseSchema):
+    key = fields.String(required=True)
+    value = fields.String(required=True)
+
+
+class ExperimentRunParameterSchema(BaseSchema):
+    key = fields.String(required=True)
+    value = fields.String(required=True)
+
+
+class ExperimentRunMetricSchema(BaseSchema):
+    key = fields.String(required=True)
+    value = fields.Float(required=True)
+    timestamp = fields.DateTime(missing=None)
+
+
 class PageSchema(BaseSchema):
     start = fields.Integer(required=True)
     limit = fields.Integer(required=True)
@@ -293,3 +309,62 @@ class ExperimentClient(BaseClient):
         return self._get(
             endpoint, ListExperimentRunsResponseSchema(), params=query_params
         )
+
+    def log_run_data(
+        self, project_id, run_id, tags=[], metrics=[], parameters=[]
+    ):
+        """Update the data of a run.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        run_id : uuid.UUID
+        tags : List[dict], optional
+            A list of tag value sets. Each set of tag values will result in an
+            upserted tag for each key passed on the specified run.
+            Example:
+            [
+                {
+                    'key': <str>,
+                    'value': <str>
+                },
+                {...}
+            ]
+        params : List[dict], optional
+            A list of parameter value sets. Each set of parameter values will
+            result in an upserted tag for each key passed on the specified run.
+            Example:
+            [                {
+                    'key': <str>,
+                    'value': <int>
+                },
+                {...}
+            ]
+        metrics : List[dict]
+            [
+                {
+                    'key': <str>,
+                    'value': <int>,
+                    'timestamp': datetime.datetime
+                },
+                {...}
+            ]}
+        Note: If the datetime does not have a
+            timezone, it will be assumed to be in UTC.
+
+        Returns
+        -------
+        None
+        """
+        endpoint = "/project/{}/run/{}/data".format(project_id, run_id)
+        payload = {
+            "tags": [ExperimentRunTagSchema().dump(tag) for tag in tags],
+            "params": [
+                ExperimentRunParameterSchema().dump(parameter)
+                for parameter in parameters
+            ],
+            "metrics": [
+                ExperimentRunMetricSchema().dump(metric) for metric in metrics
+            ],
+        }
+        return self._patch_raw(endpoint, json=payload)
