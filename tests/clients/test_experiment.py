@@ -25,6 +25,12 @@ from faculty.clients.experiment import (
     ExperimentSchema,
     ExperimentClient,
     ExperimentRun,
+    ExperimentRunMetric,
+    ExperimentRunMetricSchema,
+    ExperimentRunParam,
+    ExperimentRunParamSchema,
+    ExperimentRunTag,
+    ExperimentRunTagSchema,
     ExperimentRunSchema,
     ExperimentRunStatus,
     CreateRunSchema,
@@ -46,7 +52,6 @@ LAST_UPDATED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
 LAST_UPDATED_AT_STRING = "2018-03-10T11:32:30.172Z"
 DELETED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
 DELETED_AT_STRING = "2018-03-10T11:37:42.482Z"
-
 
 EXPERIMENT = Experiment(
     id=EXPERIMENT_ID,
@@ -92,6 +97,37 @@ EXPERIMENT_RUN_BODY = {
     "endedAt": RUN_ENDED_AT_STRING,
     "deletedAt": DELETED_AT_STRING,
 }
+EXPERIMENT_RUN_TAG = ExperimentRunTag(key="tag-key", value="tag-value")
+EXPERIMENT_RUN_TAG_BODY = {"key": "tag-key", "value": "tag-value"}
+
+OTHER_EXPERIMENT_RUN_TAG = ExperimentRunTag(
+    key="other-tag-key", value="tag-value"
+)
+OTHER_EXPERIMENT_RUN_TAG_BODY = {"key": "other-tag-key", "value": "tag-value"}
+
+EXPERIMENT_RUN_PARAM = ExperimentRunParam(
+    key="parameter-key", value="tag-value"
+)
+EXPERIMENT_RUN_PARAM_BODY = {"key": "parameter-key", "value": "tag-value"}
+
+
+METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
+METRIC_TIMESTAMP_STRING = "2018-03-12T16:20:22.122Z"
+EXPERIMENT_RUN_METRIC = ExperimentRunMetric(
+    key="metric-key", value=123, timestamp=METRIC_TIMESTAMP
+)
+EXPERIMENT_RUN_METRIC_BODY = {
+    "key": "metric-key",
+    "value": 123,
+    "timestamp": METRIC_TIMESTAMP_STRING,
+}
+
+EXPERIMENT_RUN_DATA_BODY = {
+    "metrics": [ExperimentRunMetricSchema().dump(EXPERIMENT_RUN_METRIC)],
+    "params": [ExperimentRunParamSchema().dump(EXPERIMENT_RUN_PARAM)],
+    "tags": [ExperimentRunTagSchema().dump(EXPERIMENT_RUN_TAG)],
+}
+
 
 PAGE = Page(start=3, limit=10)
 PAGE_BODY = {"start": PAGE.start, "limit": PAGE.limit}
@@ -120,14 +156,6 @@ LIST_EXPERIMENT_RUNS_RESPONSE_BODY = {
     "pagination": PAGINATION_BODY,
 }
 
-RUN_TAG_BODY = [{"key": "tag-key", "value": "tag-value"}]
-RUN_OTHER_TAG_BODY = [{"key": "other-tag-key", "value": "tag-value"}]
-
-
-RUN_PARAMETER_BODY = [{"key": "parameter-key", "value": "tag-value"}]
-
-RUN_METRIC_BODY = [{"key": "metric-key", "value": "metric-value"}]
-
 
 def test_experiment_schema():
     data = ExperimentSchema().load(EXPERIMENT_BODY)
@@ -144,11 +172,6 @@ def test_experiment_schema_nullable_deleted_at():
 def test_experiment_schema_invalid():
     with pytest.raises(ValidationError):
         ExperimentSchema().load({})
-
-
-def test_experiment_run_schema():
-    data = ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
-    assert data == EXPERIMENT_RUN
 
 
 @pytest.mark.parametrize(
@@ -175,6 +198,21 @@ def test_create_run_schema(started_at, artifact_location):
         "startedAt": RUN_STARTED_AT_STRING_PYTHON,
         "artifactLocation": artifact_location,
     }
+
+
+def test_experiment_run_metric_schema():
+    data = ExperimentRunMetricSchema().load(EXPERIMENT_RUN_METRIC_BODY)
+    assert data == EXPERIMENT_RUN_METRIC
+
+
+def test_experiment_run_param_schema():
+    data = ExperimentRunParamSchema().load(EXPERIMENT_RUN_PARAM_BODY)
+    assert data == EXPERIMENT_RUN_PARAM
+
+
+def test_experiment_run_tag_schema():
+    data = ExperimentRunTagSchema().load(EXPERIMENT_RUN_TAG_BODY)
+    assert data == EXPERIMENT_RUN_TAG
 
 
 @pytest.mark.parametrize("description", [None, "experiment description"])
@@ -375,107 +413,61 @@ def test_experiment_client_list_runs_page(mocker):
 
 def test_log_metadata(mocker):
     mocker.patch.object(ExperimentClient, "_patch_raw")
-    tag_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunTagSchema"
+    run_data_schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunDataSchema"
     )
-    tag_dump_mock = tag_schema_mock.return_value.dump
-    parameter_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunParameterSchema"
-    )
-    parameter_dump_mock = parameter_schema_mock.return_value.dump
-    metric_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunMetricSchema"
-    )
-    metric_dump_mock = metric_schema_mock.return_value.dump
+    run_data_dump_mock = run_data_schema_mock.return_value.dump
 
     client = ExperimentClient(mocker.Mock())
-
     client.log_run_data(
         PROJECT_ID,
         EXPERIMENT_RUN_ID,
-        tags=RUN_TAG_BODY,
-        parameters=RUN_PARAMETER_BODY,
-        metrics=RUN_METRIC_BODY,
+        metrics=[EXPERIMENT_RUN_METRIC],
+        params=[EXPERIMENT_RUN_PARAM],
+        tags=[EXPERIMENT_RUN_TAG],
     )
 
-    tag_schema_mock.assert_called_once_with()
-    tag_dump_mock.assert_called_once_with(RUN_TAG_BODY[0])
-
-    parameter_schema_mock.assert_called_once_with()
-    parameter_dump_mock.assert_called_once_with(RUN_PARAMETER_BODY[0])
-
-    metric_schema_mock.assert_called_once_with()
-    metric_dump_mock.assert_called_once_with(RUN_METRIC_BODY[0])
-
+    run_data_schema_mock.assert_called_once_with()
+    run_data_dump_mock.assert_called_once_with(EXPERIMENT_RUN_DATA_BODY)
     ExperimentClient._patch_raw.assert_called_once_with(
         "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
-        json={
-            "tags": [tag_dump_mock.return_value],
-            "params": [parameter_dump_mock.return_value],
-            "metrics": [metric_dump_mock.return_value],
-        },
+        json=run_data_dump_mock.return_value,
     )
 
 
 def test_log_metadata_empty_data(mocker):
     mocker.patch.object(ExperimentClient, "_patch_raw")
-    tag_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunTagSchema"
+    run_data_schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunDataSchema"
     )
-    parameter_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunParameterSchema"
-    )
-    metric_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunMetricSchema"
-    )
+    run_data_dump_mock = run_data_schema_mock.return_value.dump
 
     client = ExperimentClient(mocker.Mock())
-
     client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
 
-    tag_schema_mock.assert_not_called()
-    parameter_schema_mock.assert_not_called()
-    metric_schema_mock.assert_not_called()
-
+    run_data_schema_mock.assert_called_once_with()
     ExperimentClient._patch_raw.assert_called_once_with(
         "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
-        json={"tags": [], "params": [], "metrics": []},
+        json=run_data_dump_mock.return_value,
     )
 
 
 def test_log_metadata_multiple_tags(mocker):
     mocker.patch.object(ExperimentClient, "_patch_raw")
-    tag_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunTagSchema"
+    run_data_schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunDataSchema"
     )
-    tag_dump_mock = tag_schema_mock.return_value.dump
-    parameter_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunParameterSchema"
-    )
-    metric_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunMetricSchema"
-    )
+    run_data_dump_mock = run_data_schema_mock.return_value.dump
 
     client = ExperimentClient(mocker.Mock())
-
     client.log_run_data(
-        PROJECT_ID, EXPERIMENT_RUN_ID, tags=RUN_TAG_BODY + RUN_OTHER_TAG_BODY
+        PROJECT_ID,
+        EXPERIMENT_RUN_ID,
+        tags=[EXPERIMENT_RUN_TAG, OTHER_EXPERIMENT_RUN_TAG],
     )
 
-    assert tag_schema_mock.call_count == 2
-    assert tag_dump_mock.call_args_list == [
-        mocker.call(RUN_TAG_BODY[0]),
-        mocker.call(RUN_OTHER_TAG_BODY[0]),
-    ]
-
-    parameter_schema_mock.assert_not_called()
-    metric_schema_mock.assert_not_called()
-
+    run_data_schema_mock.assert_called_once_with()
     ExperimentClient._patch_raw.assert_called_once_with(
         "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
-        json={
-            "tags": [tag_dump_mock.return_value, tag_dump_mock.return_value],
-            "params": [],
-            "metrics": [],
-        },
+        json=run_data_dump_mock.return_value,
     )

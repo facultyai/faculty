@@ -55,6 +55,12 @@ ExperimentRun = namedtuple(
     ],
 )
 
+ExperimentRunMetric = namedtuple(
+    "ExperimentRunMetric", ["key", "value", "timestamp"]
+)
+ExperimentRunParam = namedtuple("ExperimentRunParam", ["key", "value"])
+ExperimentRunTag = namedtuple("ExperimentRunTag", ["key", "value"])
+
 Page = namedtuple("Page", ["start", "limit"])
 Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
 ListExperimentRunsResponse = namedtuple(
@@ -98,16 +104,34 @@ class ExperimentRunTagSchema(BaseSchema):
     key = fields.String(required=True)
     value = fields.String(required=True)
 
+    @post_load
+    def make_experiment_run_tag(self, data):
+        return ExperimentRunTag(**data)
 
-class ExperimentRunParameterSchema(BaseSchema):
+
+class ExperimentRunParamSchema(BaseSchema):
     key = fields.String(required=True)
     value = fields.String(required=True)
+
+    @post_load
+    def make_experiment_run_param(self, data):
+        return ExperimentRunParam(**data)
 
 
 class ExperimentRunMetricSchema(BaseSchema):
     key = fields.String(required=True)
     value = fields.Float(required=True)
     timestamp = fields.DateTime(missing=None)
+
+    @post_load
+    def make_experiment_run_metric(self, data):
+        return ExperimentRunMetric(**data)
+
+
+class ExperimentRunDataSchema(BaseSchema):
+    metrics = fields.List(fields.Nested(ExperimentRunMetricSchema))
+    params = fields.List(fields.Nested(ExperimentRunParamSchema))
+    tags = fields.List(fields.Nested(ExperimentRunTagSchema))
 
 
 class PageSchema(BaseSchema):
@@ -311,7 +335,7 @@ class ExperimentClient(BaseClient):
         )
 
     def log_run_data(
-        self, project_id, run_id, tags=[], metrics=[], parameters=[]
+        self, project_id, run_id, metrics=None, params=None, tags=None
     ):
         """Update the data of a run.
 
@@ -319,52 +343,24 @@ class ExperimentClient(BaseClient):
         ----------
         project_id : uuid.UUID
         run_id : uuid.UUID
-        tags : List[dict], optional
-            A list of tag value sets. Each set of tag values will result in an
-            upserted tag for each key passed on the specified run.
-            Example:
-            [
-                {
-                    'key': <str>,
-                    'value': <str>
-                },
-                {...}
-            ]
-        params : List[dict], optional
-            A list of parameter value sets. Each set of parameter values will
-            result in an upserted tag for each key passed on the specified run.
-            Example:
-            [                {
-                    'key': <str>,
-                    'value': <int>
-                },
-                {...}
-            ]
-        metrics : List[dict]
-            [
-                {
-                    'key': <str>,
-                    'value': <int>,
-                    'timestamp': datetime.datetime
-                },
-                {...}
-            ]}
-        Note: If the datetime does not have a
-            timezone, it will be assumed to be in UTC.
+        metrics : List[experiments.ExperimentRunMetric], optional
+            Each metric will be inserted.
+        params : List[experiments.ExperimentRunMetric], optional
+            Each param will be inserted and rejected if the given key is
+            present.
+        tags : List[experiments.ExperimentRunTag], optional
+            Each tag be upserted.
 
         Returns
         -------
         None
         """
         endpoint = "/project/{}/run/{}/data".format(project_id, run_id)
-        payload = {
-            "tags": [ExperimentRunTagSchema().dump(tag) for tag in tags],
-            "params": [
-                ExperimentRunParameterSchema().dump(parameter)
-                for parameter in parameters
-            ],
-            "metrics": [
-                ExperimentRunMetricSchema().dump(metric) for metric in metrics
-            ],
-        }
+        payload = ExperimentRunDataSchema().dump(
+            {
+                "metrics": ExperimentRunMetricSchema(many=True).dump(metrics),
+                "params": ExperimentRunParamSchema(many=True).dump(params),
+                "tags": ExperimentRunTagSchema(many=True).dump(tags),
+            }
+        )
         return self._patch_raw(endpoint, json=payload)
