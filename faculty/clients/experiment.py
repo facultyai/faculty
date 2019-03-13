@@ -222,6 +222,7 @@ class ExperimentClient(BaseClient):
             The location of the artifact repository to use for this run.
             If omitted, the value of `artifact_location` for the experiment
             will be used.
+        tags: dict[str, str]
 
         Returns
         -------
