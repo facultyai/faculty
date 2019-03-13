@@ -92,32 +92,18 @@ class BaseSchema(Schema):
 
 
 class ErrorSchema(BaseSchema):
-    error = fields.String(required=True)
-    error_code = fields.String(required=True)
-
-
-def _extract_error(response):
-    try:
-        data = response.json()
-        return ErrorSchema().load(data)["error"]
-    except (ValueError, ValidationError):
-        return None
-
-
-def _extract_error_code(response):
-    try:
-        data = response.json()
-        return ErrorSchema().load(data)["errorCode"]
-    except (ValueError, ValidationError):
-        return None
+    error = fields.String(missing=None)
+    error_code = fields.String(data_key="error_code", missing=None)
 
 
 def _check_status(response):
     if response.status_code >= 400:
         cls = HTTP_ERRORS.get(response.status_code, HttpError)
-        raise cls(
-            response, _extract_error(response), _extract_error_code(response)
-        )
+        try:
+            data = ErrorSchema().load(response.json())
+        except (ValueError, ValidationError):
+            data = {}
+        raise cls(response, data.get("error"), data.get("errorCode"))
 
 
 def _deserialise_response(schema, response):
@@ -159,6 +145,7 @@ class BaseClient(object):
         url = self.session.service_url(self.SERVICE_NAME, endpoint)
         response = self.http_session.request(method, url, *args, **kwargs)
         if check_status:
+            print(response)
             _check_status(response)
         return response
 

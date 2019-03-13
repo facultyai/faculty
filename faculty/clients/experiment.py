@@ -20,6 +20,7 @@ from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseClient, BaseSchema, Conflict
 
+
 class ParamConflictError(Exception):
     def __init__(self, response, message, conflicting_params=None):
         self.response = response
@@ -352,7 +353,7 @@ class ExperimentClient(BaseClient):
         run_id : uuid.UUID
         metrics : List[Metric], optional
             Each metric will be inserted.
-        params : List[Metric], optional
+        params : List[Param], optional
             Each param will be inserted and rejected if the given key is
             present.
         tags : List[Tag], optional
@@ -367,7 +368,7 @@ class ExperimentClient(BaseClient):
             {"metrics": metrics, "params": params, "tags": tags}
         )
         try:
-            return self._patch_raw(endpoint, json=payload)
+            self._patch_raw(endpoint, json=payload)
         except Conflict as err:
             if err.error_code == "conflicting_params":
                 raise ParamConflictError(
@@ -376,4 +377,4 @@ class ExperimentClient(BaseClient):
                     err.response.json()["parameterKeys"],
                 )
             else:
-                raise err
+                raise
