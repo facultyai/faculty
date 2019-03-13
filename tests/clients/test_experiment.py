@@ -38,7 +38,7 @@ from faculty.clients.experiment import (
     Pagination,
     PaginationSchema,
     Param,
-    ParamConflictError,
+    ParamConflict,
     ParamSchema,
     Tag,
     TagSchema,
@@ -490,6 +490,6 @@ def test_log_run_data_param_conflict(mocker):
 
     client = ExperimentClient(mocker.Mock())
 
-    with pytest.raises(ParamConflictError, match=expected_message):
+    with pytest.raises(ParamConflict, match=expected_message):
         client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
     run_data_schema_mock.assert_called_once_with()
