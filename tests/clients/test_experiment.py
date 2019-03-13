@@ -34,6 +34,8 @@ from faculty.clients.experiment import (
     PageSchema,
     Pagination,
     PaginationSchema,
+    Tag,
+    TagSchema,
 )
 
 
@@ -74,6 +76,9 @@ RUN_STARTED_AT_STRING_JAVA = "2018-03-10T11:39:12.11Z"
 RUN_ENDED_AT = datetime(2018, 3, 10, 11, 39, 15, 110000, tzinfo=UTC)
 RUN_ENDED_AT_STRING = "2018-03-10T11:39:15.11Z"
 
+TAG = Tag(key="tag-key", value="tag-value")
+TAG_BODY = {"key": "tag-key", "value": "tag-value"}
+
 EXPERIMENT_RUN = ExperimentRun(
     id=EXPERIMENT_RUN_ID,
     experiment_id=EXPERIMENT.id,
@@ -82,6 +87,7 @@ EXPERIMENT_RUN = ExperimentRun(
     started_at=RUN_STARTED_AT,
     ended_at=RUN_ENDED_AT,
     deleted_at=DELETED_AT,
+    tags=[TAG],
 )
 EXPERIMENT_RUN_BODY = {
     "experimentId": EXPERIMENT.id,
@@ -91,6 +97,7 @@ EXPERIMENT_RUN_BODY = {
     "startedAt": RUN_STARTED_AT_STRING_JAVA,
     "endedAt": RUN_ENDED_AT_STRING,
     "deletedAt": DELETED_AT_STRING,
+    "tags": [TAG_BODY],
 }
 
 PAGE = Page(start=3, limit=10)
@@ -119,6 +126,11 @@ LIST_EXPERIMENT_RUNS_RESPONSE_BODY = {
     "runs": [EXPERIMENT_RUN_BODY],
     "pagination": PAGINATION_BODY,
 }
+
+
+def test_tag_schema():
+    data = TagSchema().load(TAG_BODY)
+    assert data == TAG
 
 
 def test_experiment_schema():

@@ -28,6 +28,8 @@ class ExperimentRunStatus(Enum):
     SCHEDULED = "scheduled"
 
 
+Tag = namedtuple("Tag", ["key", "value"])
+
 Experiment = namedtuple(
     "Experiment",
     [
@@ -52,6 +54,7 @@ ExperimentRun = namedtuple(
         "started_at",
         "ended_at",
         "deleted_at",
+        "tags",
     ],
 )
 
@@ -60,6 +63,15 @@ Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
 ListExperimentRunsResponse = namedtuple(
     "ListExperimentRunsResponse", ["runs", "pagination"]
 )
+
+
+class TagSchema(BaseSchema):
+    key = fields.String(data_key="key")
+    value = fields.String(data_key="value")
+
+    @post_load
+    def make_tag(self, data):
+        return Tag(**data)
 
 
 class ExperimentSchema(BaseSchema):
@@ -88,6 +100,7 @@ class ExperimentRunSchema(BaseSchema):
     started_at = fields.DateTime(data_key="startedAt", required=True)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
     deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
+    tags = fields.Nested(TagSchema, many=True, required=True)
 
     @post_load
     def make_experiment_run(self, data):
@@ -121,11 +134,6 @@ class ListExperimentRunsResponseSchema(BaseSchema):
     @post_load
     def make_list_runs_response_schema(self, data):
         return ListExperimentRunsResponse(**data)
-
-
-class TagSchema(BaseSchema):
-    key = fields.String(data_key="key")
-    value = fields.String(data_key="value")
 
 
 class CreateRunSchema(BaseSchema):
