@@ -23,7 +23,7 @@ from faculty.clients.base import BaseClient, BaseSchema, Conflict
 
 class ParamConflict(Exception):
     def __init__(self, message, conflicting_params=None):
-        self.message = message
+        super(ParamConflict, self).__init__(message)
         if conflicting_params is None:
             self.conflicting_params = []
         else:
@@ -110,10 +110,10 @@ class ExperimentRunSchema(BaseSchema):
 class MetricSchema(BaseSchema):
     key = fields.String(required=True)
     value = fields.Float(required=True)
-    timestamp = fields.DateTime(missing=None)
+    timestamp = fields.DateTime(required=True)
 
     @post_load
-    def make_experiment_run_metric(self, data):
+    def make_metric(self, data):
         return Metric(**data)
 
 
@@ -122,7 +122,7 @@ class ParamSchema(BaseSchema):
     value = fields.String(required=True)
 
     @post_load
-    def make_experiment_run_param(self, data):
+    def make_param(self, data):
         return Param(**data)
 
 
@@ -131,7 +131,7 @@ class TagSchema(BaseSchema):
     value = fields.String(required=True)
 
     @post_load
-    def make_experiment_run_tag(self, data):
+    def make_tag(self, data):
         return Tag(**data)
 
 
