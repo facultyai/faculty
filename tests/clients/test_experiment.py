@@ -102,11 +102,11 @@ EXPERIMENT_RUN_BODY = {
 TAG = Tag(key="tag-key", value="tag-value")
 TAG_BODY = {"key": "tag-key", "value": "tag-value"}
 
-OTHER_TAG = Tag(key="other-tag-key", value="tag-value")
-OTHER_TAG_BODY = {"key": "other-tag-key", "value": "tag-value"}
+OTHER_TAG = Tag(key="other-tag-key", value="other-tag-value")
+OTHER_TAG_BODY = {"key": "other-tag-key", "value": "other-tag-value"}
 
-PARAM = Param(key="parameter-key", value="tag-value")
-PARAM_BODY = {"key": "parameter-key", "value": "tag-value"}
+PARAM = Param(key="param-key", value="tag-value")
+PARAM_BODY = {"key": "param-key", "value": "tag-value"}
 
 METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
 METRIC_TIMESTAMP_STRING = "2018-03-12T16:20:22.122Z"

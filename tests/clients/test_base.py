@@ -16,6 +16,8 @@
 from collections import namedtuple
 
 import pytest
+from marshmallow import fields, post_load
+
 from faculty.clients.base import (
     BadGateway,
     BadRequest,
@@ -32,7 +34,6 @@ from faculty.clients.base import (
     ServiceUnavailable,
     Unauthorized,
 )
-from marshmallow import fields, post_load
 
 MOCK_SERVICE_NAME = "test-service"
 MOCK_ENDPOINT = "/endpoint"
