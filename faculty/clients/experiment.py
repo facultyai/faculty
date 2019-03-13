@@ -202,7 +202,12 @@ class ExperimentClient(BaseClient):
         return self._get(endpoint, ExperimentSchema(many=True))
 
     def create_run(
-        self, project_id, experiment_id, started_at, artifact_location=None
+        self,
+        project_id,
+        experiment_id,
+        started_at,
+        artifact_location=None,
+        tags=[],
     ):
         """Create a run in a project.
 
@@ -229,7 +234,7 @@ class ExperimentClient(BaseClient):
             {
                 "started_at": started_at,
                 "artifact_location": artifact_location,
-                "tags": [],
+                "tags": tags,
             }
         )
         return self._post(endpoint, ExperimentRunSchema(), json=payload)
