@@ -100,13 +100,14 @@ class ExperimentRunSchema(BaseSchema):
         return ExperimentRun(**data)
 
 
-class ExperimentRunTagSchema(BaseSchema):
+class ExperimentRunMetricSchema(BaseSchema):
     key = fields.String(required=True)
-    value = fields.String(required=True)
+    value = fields.Float(required=True)
+    timestamp = fields.DateTime(missing=None)
 
     @post_load
-    def make_experiment_run_tag(self, data):
-        return ExperimentRunTag(**data)
+    def make_experiment_run_metric(self, data):
+        return ExperimentRunMetric(**data)
 
 
 class ExperimentRunParamSchema(BaseSchema):
@@ -118,14 +119,13 @@ class ExperimentRunParamSchema(BaseSchema):
         return ExperimentRunParam(**data)
 
 
-class ExperimentRunMetricSchema(BaseSchema):
+class ExperimentRunTagSchema(BaseSchema):
     key = fields.String(required=True)
-    value = fields.Float(required=True)
-    timestamp = fields.DateTime(missing=None)
+    value = fields.String(required=True)
 
     @post_load
-    def make_experiment_run_metric(self, data):
-        return ExperimentRunMetric(**data)
+    def make_experiment_run_tag(self, data):
+        return ExperimentRunTag(**data)
 
 
 class ExperimentRunDataSchema(BaseSchema):
@@ -343,12 +343,12 @@ class ExperimentClient(BaseClient):
         ----------
         project_id : uuid.UUID
         run_id : uuid.UUID
-        metrics : List[experiments.ExperimentRunMetric], optional
+        metrics : List[ExperimentRunMetric], optional
             Each metric will be inserted.
-        params : List[experiments.ExperimentRunMetric], optional
+        params : List[ExperimentRunMetric], optional
             Each param will be inserted and rejected if the given key is
             present.
-        tags : List[experiments.ExperimentRunTag], optional
+        tags : List[ExperimentRunTag], optional
             Each tag be upserted.
 
         Returns
@@ -357,10 +357,6 @@ class ExperimentClient(BaseClient):
         """
         endpoint = "/project/{}/run/{}/data".format(project_id, run_id)
         payload = ExperimentRunDataSchema().dump(
-            {
-                "metrics": ExperimentRunMetricSchema(many=True).dump(metrics),
-                "params": ExperimentRunParamSchema(many=True).dump(params),
-                "tags": ExperimentRunTagSchema(many=True).dump(tags),
-            }
+            {"metrics": metrics, "params": params, "tags": tags}
         )
         return self._patch_raw(endpoint, json=payload)

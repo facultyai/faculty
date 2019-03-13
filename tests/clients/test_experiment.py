@@ -110,7 +110,6 @@ EXPERIMENT_RUN_PARAM = ExperimentRunParam(
 )
 EXPERIMENT_RUN_PARAM_BODY = {"key": "parameter-key", "value": "tag-value"}
 
-
 METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
 METRIC_TIMESTAMP_STRING = "2018-03-12T16:20:22.122Z"
 EXPERIMENT_RUN_METRIC = ExperimentRunMetric(
@@ -123,9 +122,9 @@ EXPERIMENT_RUN_METRIC_BODY = {
 }
 
 EXPERIMENT_RUN_DATA_BODY = {
-    "metrics": [ExperimentRunMetricSchema().dump(EXPERIMENT_RUN_METRIC)],
-    "params": [ExperimentRunParamSchema().dump(EXPERIMENT_RUN_PARAM)],
-    "tags": [ExperimentRunTagSchema().dump(EXPERIMENT_RUN_TAG)],
+    "metrics": [EXPERIMENT_RUN_METRIC],
+    "params": [EXPERIMENT_RUN_PARAM],
+    "tags": [EXPERIMENT_RUN_TAG],
 }
 
 
@@ -198,6 +197,11 @@ def test_create_run_schema(started_at, artifact_location):
         "startedAt": RUN_STARTED_AT_STRING_PYTHON,
         "artifactLocation": artifact_location,
     }
+
+
+def test_experiment_run_schema():
+    data = ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
+    assert data == EXPERIMENT_RUN
 
 
 def test_experiment_run_metric_schema():
@@ -411,7 +415,7 @@ def test_experiment_client_list_runs_page(mocker):
     )
 
 
-def test_log_metadata(mocker):
+def test_log_run_data(mocker):
     mocker.patch.object(ExperimentClient, "_patch_raw")
     run_data_schema_mock = mocker.patch(
         "faculty.clients.experiment.ExperimentRunDataSchema"
@@ -435,7 +439,7 @@ def test_log_metadata(mocker):
     )
 
 
-def test_log_metadata_empty_data(mocker):
+def test_log_run_data_empty_data(mocker):
     mocker.patch.object(ExperimentClient, "_patch_raw")
     run_data_schema_mock = mocker.patch(
         "faculty.clients.experiment.ExperimentRunDataSchema"
@@ -452,7 +456,7 @@ def test_log_metadata_empty_data(mocker):
     )
 
 
-def test_log_metadata_multiple_tags(mocker):
+def test_log_run_data_multiple_tags(mocker):
     mocker.patch.object(ExperimentClient, "_patch_raw")
     run_data_schema_mock = mocker.patch(
         "faculty.clients.experiment.ExperimentRunDataSchema"
