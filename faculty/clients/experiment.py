@@ -123,9 +123,15 @@ class ListExperimentRunsResponseSchema(BaseSchema):
         return ListExperimentRunsResponse(**data)
 
 
+class TagSchema(BaseSchema):
+    key = fields.String(data_key="key")
+    value = fields.String(data_key="value")
+
+
 class CreateRunSchema(BaseSchema):
     started_at = fields.DateTime(data_key="startedAt")
     artifact_location = fields.String(data_key="artifactLocation")
+    tags = fields.Nested(TagSchema, many=True, required=True)
 
 
 class ExperimentClient(BaseClient):
@@ -212,7 +218,11 @@ class ExperimentClient(BaseClient):
             project_id, experiment_id
         )
         payload = CreateRunSchema().dump(
-            {"started_at": started_at, "artifact_location": artifact_location}
+            {
+                "started_at": started_at,
+                "artifact_location": artifact_location,
+                "tags": [],
+            }
         )
         return self._post(endpoint, ExperimentRunSchema(), json=payload)
 

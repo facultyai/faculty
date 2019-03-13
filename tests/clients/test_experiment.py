@@ -244,7 +244,11 @@ def test_experiment_create_run(mocker):
 
     request_schema_mock.assert_called_once_with()
     dump_mock.assert_called_once_with(
-        {"started_at": started_at, "artifact_location": artifact_location}
+        {
+            "started_at": started_at,
+            "artifact_location": artifact_location,
+            "tags": [],
+        }
     )
     response_schema_mock.assert_called_once_with()
     ExperimentClient._post.assert_called_once_with(
