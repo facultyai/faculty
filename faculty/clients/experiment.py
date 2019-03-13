@@ -18,7 +18,16 @@ from enum import Enum
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseSchema, BaseClient
+from faculty.clients.base import BaseClient, BaseSchema, Conflict
+
+class ParamConflictError(Exception):
+    def __init__(self, response, message, conflicting_params=None):
+        self.response = response
+        self.message = message
+        if conflicting_params is None:
+            self.conflicting_params = []
+        else:
+            self.conflicting_params = conflicting_params
 
 
 class ExperimentRunStatus(Enum):
@@ -357,4 +366,14 @@ class ExperimentClient(BaseClient):
         payload = ExperimentRunDataSchema().dump(
             {"metrics": metrics, "params": params, "tags": tags}
         )
-        return self._patch_raw(endpoint, json=payload)
+        try:
+            return self._patch_raw(endpoint, json=payload)
+        except Conflict as err:
+            if err.error_code == "conflicting_params":
+                raise ParamConflictError(
+                    err.response,
+                    err.error,
+                    err.response.json()["parameterKeys"],
+                )
+            else:
+                raise err

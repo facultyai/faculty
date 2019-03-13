@@ -57,6 +57,7 @@ BAD_RESPONSE_STATUSES = [
 
 HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 
+
 @pytest.fixture
 def session(mocker):
     session = mocker.Mock()

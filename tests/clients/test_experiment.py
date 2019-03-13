@@ -17,31 +17,32 @@ from datetime import datetime
 from uuid import uuid4
 
 import pytest
-from pytz import UTC
 from marshmallow import ValidationError
+from pytz import UTC
 
+from faculty.clients.base import Conflict
 from faculty.clients.experiment import (
+    CreateRunSchema,
     Experiment,
-    ExperimentSchema,
     ExperimentClient,
     ExperimentRun,
-    Metric,
-    MetricSchema,
-    Param,
-    ParamSchema,
-    Tag,
-    TagSchema,
     ExperimentRunSchema,
     ExperimentRunStatus,
-    CreateRunSchema,
+    ExperimentSchema,
     ListExperimentRunsResponse,
     ListExperimentRunsResponseSchema,
+    Metric,
+    MetricSchema,
     Page,
     PageSchema,
     Pagination,
     PaginationSchema,
+    Param,
+    ParamConflictError,
+    ParamSchema,
+    Tag,
+    TagSchema,
 )
-
 
 PROJECT_ID = uuid4()
 EXPERIMENT_ID = 661
@@ -471,3 +472,24 @@ def test_log_run_data_multiple_tags(mocker):
         "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
         json=run_data_dump_mock.return_value,
     )
+
+
+def test_log_run_data_param_conflict(mocker):
+    expected_message = "bad params"
+    expected_error_code = "conflicting_params"
+    json_mock = mocker.Mock()
+    json_mock.json.return_value = {"parameterKeys": ["bad-key"]}
+    response_mock = Conflict(json_mock, expected_message, expected_error_code)
+
+    mocker.patch.object(
+        ExperimentClient, "_patch_raw", side_effect=response_mock
+    )
+    run_data_schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunDataSchema"
+    )
+
+    client = ExperimentClient(mocker.Mock())
+
+    with pytest.raises(ParamConflictError, match=expected_message):
+        client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
+    run_data_schema_mock.assert_called_once_with()
