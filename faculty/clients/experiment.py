@@ -353,8 +353,8 @@ class ExperimentClient(BaseClient):
         metrics : List[Metric], optional
             Each metric will be inserted.
         params : List[Param], optional
-            Each param will be inserted and rejected if the given key is
-            present.
+            Each param will be inserted. Note that on a name conflict the 
+            entire operation will be rejected.
         tags : List[Tag], optional
             Each tag be upserted.
 
