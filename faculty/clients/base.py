@@ -93,7 +93,7 @@ class BaseSchema(Schema):
 
 class ErrorSchema(BaseSchema):
     error = fields.String(missing=None)
-    error_code = fields.String(data_key="error_code", missing=None)
+    error_code = fields.String(data_key="errorCode", missing=None)
 
 
 def _check_status(response):
