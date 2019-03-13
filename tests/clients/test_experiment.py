@@ -26,6 +26,7 @@ from faculty.clients.experiment import (
     Experiment,
     ExperimentClient,
     ExperimentRun,
+    ExperimentRunDataSchema,
     ExperimentRunSchema,
     ExperimentRunStatus,
     ExperimentSchema,
@@ -98,30 +99,28 @@ EXPERIMENT_RUN_BODY = {
     "endedAt": RUN_ENDED_AT_STRING,
     "deletedAt": DELETED_AT_STRING,
 }
-EXPERIMENT_RUN_TAG = Tag(key="tag-key", value="tag-value")
-EXPERIMENT_RUN_TAG_BODY = {"key": "tag-key", "value": "tag-value"}
+TAG = Tag(key="tag-key", value="tag-value")
+TAG_BODY = {"key": "tag-key", "value": "tag-value"}
 
-OTHER_EXPERIMENT_RUN_TAG = Tag(key="other-tag-key", value="tag-value")
-OTHER_EXPERIMENT_RUN_TAG_BODY = {"key": "other-tag-key", "value": "tag-value"}
+OTHER_TAG = Tag(key="other-tag-key", value="tag-value")
+OTHER_TAG_BODY = {"key": "other-tag-key", "value": "tag-value"}
 
-EXPERIMENT_RUN_PARAM = Param(key="parameter-key", value="tag-value")
-EXPERIMENT_RUN_PARAM_BODY = {"key": "parameter-key", "value": "tag-value"}
+PARAM = Param(key="parameter-key", value="tag-value")
+PARAM_BODY = {"key": "parameter-key", "value": "tag-value"}
 
 METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
 METRIC_TIMESTAMP_STRING = "2018-03-12T16:20:22.122Z"
-EXPERIMENT_RUN_METRIC = Metric(
-    key="metric-key", value=123, timestamp=METRIC_TIMESTAMP
-)
-EXPERIMENT_RUN_METRIC_BODY = {
+METRIC = Metric(key="metric-key", value=123, timestamp=METRIC_TIMESTAMP)
+METRIC_BODY = {
     "key": "metric-key",
     "value": 123,
     "timestamp": METRIC_TIMESTAMP_STRING,
 }
 
 EXPERIMENT_RUN_DATA_BODY = {
-    "metrics": [EXPERIMENT_RUN_METRIC],
-    "params": [EXPERIMENT_RUN_PARAM],
-    "tags": [EXPERIMENT_RUN_TAG],
+    "metrics": [METRIC_BODY],
+    "params": [PARAM_BODY],
+    "tags": [TAG_BODY],
 }
 
 
@@ -202,18 +201,33 @@ def test_experiment_run_schema():
 
 
 def test_experiment_run_metric_schema():
-    data = MetricSchema().load(EXPERIMENT_RUN_METRIC_BODY)
-    assert data == EXPERIMENT_RUN_METRIC
+    data = MetricSchema().load(METRIC_BODY)
+    assert data == METRIC
 
 
 def test_experiment_run_param_schema():
-    data = ParamSchema().load(EXPERIMENT_RUN_PARAM_BODY)
-    assert data == EXPERIMENT_RUN_PARAM
+    data = ParamSchema().load(PARAM_BODY)
+    assert data == PARAM
 
 
 def test_experiment_run_tag_schema():
-    data = TagSchema().load(EXPERIMENT_RUN_TAG_BODY)
-    assert data == EXPERIMENT_RUN_TAG
+    data = TagSchema().load(TAG_BODY)
+    assert data == TAG
+
+
+def test_experiment_run_data_schema():
+    data = ExperimentRunDataSchema().load(EXPERIMENT_RUN_DATA_BODY)
+    assert data == {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
+
+
+def test_experiment_run_data_schema_empty():
+    data = ExperimentRunDataSchema().load({})
+    assert data == {}
+
+
+def test_experiment_run_data_schema_multiple():
+    data = ExperimentRunDataSchema().load({"tags": [TAG_BODY, OTHER_TAG_BODY]})
+    assert data == {"tags": [TAG, OTHER_TAG]}
 
 
 @pytest.mark.parametrize("description", [None, "experiment description"])
@@ -423,51 +437,14 @@ def test_log_run_data(mocker):
     client.log_run_data(
         PROJECT_ID,
         EXPERIMENT_RUN_ID,
-        metrics=[EXPERIMENT_RUN_METRIC],
-        params=[EXPERIMENT_RUN_PARAM],
-        tags=[EXPERIMENT_RUN_TAG],
+        metrics=[METRIC],
+        params=[PARAM],
+        tags=[TAG],
     )
+    expected_body = {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
 
     run_data_schema_mock.assert_called_once_with()
-    run_data_dump_mock.assert_called_once_with(EXPERIMENT_RUN_DATA_BODY)
-    ExperimentClient._patch_raw.assert_called_once_with(
-        "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
-        json=run_data_dump_mock.return_value,
-    )
-
-
-def test_log_run_data_empty_data(mocker):
-    mocker.patch.object(ExperimentClient, "_patch_raw")
-    run_data_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunDataSchema"
-    )
-    run_data_dump_mock = run_data_schema_mock.return_value.dump
-
-    client = ExperimentClient(mocker.Mock())
-    client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
-
-    run_data_schema_mock.assert_called_once_with()
-    ExperimentClient._patch_raw.assert_called_once_with(
-        "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
-        json=run_data_dump_mock.return_value,
-    )
-
-
-def test_log_run_data_multiple_tags(mocker):
-    mocker.patch.object(ExperimentClient, "_patch_raw")
-    run_data_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunDataSchema"
-    )
-    run_data_dump_mock = run_data_schema_mock.return_value.dump
-
-    client = ExperimentClient(mocker.Mock())
-    client.log_run_data(
-        PROJECT_ID,
-        EXPERIMENT_RUN_ID,
-        tags=[EXPERIMENT_RUN_TAG, OTHER_EXPERIMENT_RUN_TAG],
-    )
-
-    run_data_schema_mock.assert_called_once_with()
+    run_data_dump_mock.assert_called_once_with(expected_body)
     ExperimentClient._patch_raw.assert_called_once_with(
         "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
         json=run_data_dump_mock.return_value,
