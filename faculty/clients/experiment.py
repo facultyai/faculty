@@ -55,11 +55,9 @@ ExperimentRun = namedtuple(
     ],
 )
 
-ExperimentRunMetric = namedtuple(
-    "ExperimentRunMetric", ["key", "value", "timestamp"]
-)
-ExperimentRunParam = namedtuple("ExperimentRunParam", ["key", "value"])
-ExperimentRunTag = namedtuple("ExperimentRunTag", ["key", "value"])
+Metric = namedtuple("Metric", ["key", "value", "timestamp"])
+Param = namedtuple("Param", ["key", "value"])
+Tag = namedtuple("Tag", ["key", "value"])
 
 Page = namedtuple("Page", ["start", "limit"])
 Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
@@ -100,38 +98,38 @@ class ExperimentRunSchema(BaseSchema):
         return ExperimentRun(**data)
 
 
-class ExperimentRunMetricSchema(BaseSchema):
+class MetricSchema(BaseSchema):
     key = fields.String(required=True)
     value = fields.Float(required=True)
     timestamp = fields.DateTime(missing=None)
 
     @post_load
     def make_experiment_run_metric(self, data):
-        return ExperimentRunMetric(**data)
+        return Metric(**data)
 
 
-class ExperimentRunParamSchema(BaseSchema):
+class ParamSchema(BaseSchema):
     key = fields.String(required=True)
     value = fields.String(required=True)
 
     @post_load
     def make_experiment_run_param(self, data):
-        return ExperimentRunParam(**data)
+        return Param(**data)
 
 
-class ExperimentRunTagSchema(BaseSchema):
+class TagSchema(BaseSchema):
     key = fields.String(required=True)
     value = fields.String(required=True)
 
     @post_load
     def make_experiment_run_tag(self, data):
-        return ExperimentRunTag(**data)
+        return Tag(**data)
 
 
 class ExperimentRunDataSchema(BaseSchema):
-    metrics = fields.List(fields.Nested(ExperimentRunMetricSchema))
-    params = fields.List(fields.Nested(ExperimentRunParamSchema))
-    tags = fields.List(fields.Nested(ExperimentRunTagSchema))
+    metrics = fields.List(fields.Nested(MetricSchema))
+    params = fields.List(fields.Nested(ParamSchema))
+    tags = fields.List(fields.Nested(TagSchema))
 
 
 class PageSchema(BaseSchema):
@@ -343,12 +341,12 @@ class ExperimentClient(BaseClient):
         ----------
         project_id : uuid.UUID
         run_id : uuid.UUID
-        metrics : List[ExperimentRunMetric], optional
+        metrics : List[Metric], optional
             Each metric will be inserted.
-        params : List[ExperimentRunMetric], optional
+        params : List[Metric], optional
             Each param will be inserted and rejected if the given key is
             present.
-        tags : List[ExperimentRunTag], optional
+        tags : List[Tag], optional
             Each tag be upserted.
 
         Returns

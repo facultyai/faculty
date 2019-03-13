@@ -25,12 +25,12 @@ from faculty.clients.experiment import (
     ExperimentSchema,
     ExperimentClient,
     ExperimentRun,
-    ExperimentRunMetric,
-    ExperimentRunMetricSchema,
-    ExperimentRunParam,
-    ExperimentRunParamSchema,
-    ExperimentRunTag,
-    ExperimentRunTagSchema,
+    Metric,
+    MetricSchema,
+    Param,
+    ParamSchema,
+    Tag,
+    TagSchema,
     ExperimentRunSchema,
     ExperimentRunStatus,
     CreateRunSchema,
@@ -97,22 +97,18 @@ EXPERIMENT_RUN_BODY = {
     "endedAt": RUN_ENDED_AT_STRING,
     "deletedAt": DELETED_AT_STRING,
 }
-EXPERIMENT_RUN_TAG = ExperimentRunTag(key="tag-key", value="tag-value")
+EXPERIMENT_RUN_TAG = Tag(key="tag-key", value="tag-value")
 EXPERIMENT_RUN_TAG_BODY = {"key": "tag-key", "value": "tag-value"}
 
-OTHER_EXPERIMENT_RUN_TAG = ExperimentRunTag(
-    key="other-tag-key", value="tag-value"
-)
+OTHER_EXPERIMENT_RUN_TAG = Tag(key="other-tag-key", value="tag-value")
 OTHER_EXPERIMENT_RUN_TAG_BODY = {"key": "other-tag-key", "value": "tag-value"}
 
-EXPERIMENT_RUN_PARAM = ExperimentRunParam(
-    key="parameter-key", value="tag-value"
-)
+EXPERIMENT_RUN_PARAM = Param(key="parameter-key", value="tag-value")
 EXPERIMENT_RUN_PARAM_BODY = {"key": "parameter-key", "value": "tag-value"}
 
 METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
 METRIC_TIMESTAMP_STRING = "2018-03-12T16:20:22.122Z"
-EXPERIMENT_RUN_METRIC = ExperimentRunMetric(
+EXPERIMENT_RUN_METRIC = Metric(
     key="metric-key", value=123, timestamp=METRIC_TIMESTAMP
 )
 EXPERIMENT_RUN_METRIC_BODY = {
@@ -205,17 +201,17 @@ def test_experiment_run_schema():
 
 
 def test_experiment_run_metric_schema():
-    data = ExperimentRunMetricSchema().load(EXPERIMENT_RUN_METRIC_BODY)
+    data = MetricSchema().load(EXPERIMENT_RUN_METRIC_BODY)
     assert data == EXPERIMENT_RUN_METRIC
 
 
 def test_experiment_run_param_schema():
-    data = ExperimentRunParamSchema().load(EXPERIMENT_RUN_PARAM_BODY)
+    data = ParamSchema().load(EXPERIMENT_RUN_PARAM_BODY)
     assert data == EXPERIMENT_RUN_PARAM
 
 
 def test_experiment_run_tag_schema():
-    data = ExperimentRunTagSchema().load(EXPERIMENT_RUN_TAG_BODY)
+    data = TagSchema().load(EXPERIMENT_RUN_TAG_BODY)
     assert data == EXPERIMENT_RUN_TAG
 
 
