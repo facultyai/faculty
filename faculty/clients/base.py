@@ -103,7 +103,7 @@ def _check_status(response):
             data = ErrorSchema().load(response.json())
         except (ValueError, ValidationError):
             data = {}
-        raise cls(response, data.get("error"), data.get("errorCode"))
+        raise cls(response, data.get("error"), data.get("error_code"))
 
 
 def _deserialise_response(schema, response):
@@ -145,7 +145,6 @@ class BaseClient(object):
         url = self.session.service_url(self.SERVICE_NAME, endpoint)
         response = self.http_session.request(method, url, *args, **kwargs)
         if check_status:
-            print(response)
             _check_status(response)
         return response
 
