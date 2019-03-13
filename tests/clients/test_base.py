@@ -16,24 +16,23 @@
 from collections import namedtuple
 
 import pytest
-from marshmallow import fields, post_load
-
 from faculty.clients.base import (
-    BaseSchema,
-    BaseClient,
-    InvalidResponse,
-    HttpError,
-    BadRequest,
-    Unauthorized,
-    Forbidden,
-    NotFound,
-    MethodNotAllowed,
-    Conflict,
-    InternalServerError,
     BadGateway,
-    ServiceUnavailable,
+    BadRequest,
+    BaseClient,
+    BaseSchema,
+    Conflict,
+    Forbidden,
     GatewayTimeout,
+    HttpError,
+    InternalServerError,
+    InvalidResponse,
+    MethodNotAllowed,
+    NotFound,
+    ServiceUnavailable,
+    Unauthorized,
 )
+from marshmallow import fields, post_load
 
 MOCK_SERVICE_NAME = "test-service"
 MOCK_ENDPOINT = "/endpoint"
@@ -57,7 +56,6 @@ BAD_RESPONSE_STATUSES = [
 ]
 
 HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
-
 
 @pytest.fixture
 def session(mocker):

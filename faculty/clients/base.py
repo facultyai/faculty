@@ -23,9 +23,10 @@ class InvalidResponse(Exception):
 
 
 class HttpError(Exception):
-    def __init__(self, response, error=None):
+    def __init__(self, response, error=None, error_code=None):
         self.response = response
         self.error = error
+        self.error_code = error_code
 
 
 HTTPError = HttpError  # For backwards compatiblity
@@ -92,6 +93,7 @@ class BaseSchema(Schema):
 
 class ErrorSchema(BaseSchema):
     error = fields.String(required=True)
+    error_code = fields.String(required=True)
 
 
 def _extract_error(response):
@@ -102,10 +104,20 @@ def _extract_error(response):
         return None
 
 
+def _extract_error_code(response):
+    try:
+        data = response.json()
+        return ErrorSchema().load(data)["errorCode"]
+    except (ValueError, ValidationError):
+        return None
+
+
 def _check_status(response):
     if response.status_code >= 400:
         cls = HTTP_ERRORS.get(response.status_code, HttpError)
-        raise cls(response, _extract_error(response))
+        raise cls(
+            response, _extract_error(response), _extract_error_code(response)
+        )
 
 
 def _deserialise_response(schema, response):
