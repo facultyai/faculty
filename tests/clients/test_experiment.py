@@ -224,13 +224,13 @@ def test_experiment_run_data_schema():
 
 
 def test_experiment_run_data_schema_empty():
-    data = ExperimentRunDataSchema().load({})
+    data = ExperimentRunDataSchema().dump({})
     assert data == {}
 
 
 def test_experiment_run_data_schema_multiple():
-    data = ExperimentRunDataSchema().load({"tags": [TAG_BODY, OTHER_TAG_BODY]})
-    assert data == {"tags": [TAG, OTHER_TAG]}
+    data = ExperimentRunDataSchema().dump({"tags": [TAG, OTHER_TAG]})
+    assert data == {"tags": [TAG_BODY, OTHER_TAG_BODY]}
 
 
 @pytest.mark.parametrize("description", [None, "experiment description"])
