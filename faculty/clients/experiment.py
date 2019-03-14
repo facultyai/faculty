@@ -207,7 +207,7 @@ class ExperimentClient(BaseClient):
         experiment_id,
         started_at,
         artifact_location=None,
-        tags=[],
+        tags=None,
     ):
         """Create a run in a project.
 
@@ -222,12 +222,15 @@ class ExperimentClient(BaseClient):
             The location of the artifact repository to use for this run.
             If omitted, the value of `artifact_location` for the experiment
             will be used.
-        tags: dict[str, str]
+        tags: List[Tag]
 
         Returns
         -------
         ExperimentRun
         """
+        if tags is None:
+            tags = []
+
         endpoint = "/project/{}/experiment/{}/run".format(
             project_id, experiment_id
         )
