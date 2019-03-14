@@ -76,6 +76,34 @@ ListExperimentRunsResponse = namedtuple(
 )
 
 
+class MetricSchema(BaseSchema):
+    key = fields.String(required=True)
+    value = fields.Float(required=True)
+    timestamp = fields.DateTime(required=True)
+
+    @post_load
+    def make_metric(self, data):
+        return Metric(**data)
+
+
+class ParamSchema(BaseSchema):
+    key = fields.String(required=True)
+    value = fields.String(required=True)
+
+    @post_load
+    def make_param(self, data):
+        return Param(**data)
+
+
+class TagSchema(BaseSchema):
+    key = fields.String(required=True)
+    value = fields.String(required=True)
+
+    @post_load
+    def make_tag(self, data):
+        return Tag(**data)
+
+
 class ExperimentSchema(BaseSchema):
     id = fields.Integer(data_key="experimentId", required=True)
     name = fields.String(required=True)
@@ -107,34 +135,6 @@ class ExperimentRunSchema(BaseSchema):
     @post_load
     def make_experiment_run(self, data):
         return ExperimentRun(**data)
-
-
-class MetricSchema(BaseSchema):
-    key = fields.String(required=True)
-    value = fields.Float(required=True)
-    timestamp = fields.DateTime(required=True)
-
-    @post_load
-    def make_metric(self, data):
-        return Metric(**data)
-
-
-class ParamSchema(BaseSchema):
-    key = fields.String(required=True)
-    value = fields.String(required=True)
-
-    @post_load
-    def make_param(self, data):
-        return Param(**data)
-
-
-class TagSchema(BaseSchema):
-    key = fields.String(required=True)
-    value = fields.String(required=True)
-
-    @post_load
-    def make_tag(self, data):
-        return Tag(**data)
 
 
 class ExperimentRunDataSchema(BaseSchema):
