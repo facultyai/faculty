@@ -241,6 +241,26 @@ class ExperimentClient(BaseClient):
         endpoint = "/project/{}/experiment".format(project_id)
         return self._get(endpoint, ExperimentSchema(many=True))
 
+    def update(self, project_id, experiment_id, name=None, description=None):
+        """Update the name and/or description of an experiment.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        experiment_id : int
+        name : str, optional
+            The new name of the experiment. If not provided, the name will not
+            be modified.
+        description : str, optional
+            The new description of the experiment. If not provided, the
+            description will not be modified.
+        """
+        endpoint = "/project/{}/experiment/{}".format(
+            project_id, experiment_id
+        )
+        payload = {"name": name, "description": description}
+        self._patch_raw(endpoint, json=payload)
+
     def delete(self, project_id, experiment_id):
         """Delete a specified experiment.
 

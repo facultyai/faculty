@@ -303,6 +303,33 @@ def test_experiment_client_list(mocker):
     )
 
 
+@pytest.mark.parametrize("name", [None, "new name"])
+@pytest.mark.parametrize("description", [None, "new description"])
+def test_experiment_client_update(mocker, name, description):
+    mocker.patch.object(ExperimentClient, "_patch_raw")
+
+    client = ExperimentClient(mocker.Mock())
+    client.update(
+        PROJECT_ID, EXPERIMENT_ID, name=name, description=description
+    )
+
+    ExperimentClient._patch_raw.assert_called_once_with(
+        "/project/{}/experiment/{}".format(PROJECT_ID, EXPERIMENT_ID),
+        json={"name": name, "description": description},
+    )
+
+
+def test_delete(mocker):
+    mocker.patch.object(ExperimentClient, "_delete_raw")
+
+    client = ExperimentClient(mocker.Mock())
+    client.delete(PROJECT_ID, EXPERIMENT_ID)
+
+    ExperimentClient._delete_raw.assert_called_once_with(
+        "/project/{}/experiment/{}".format(PROJECT_ID, EXPERIMENT_ID)
+    )
+
+
 def test_experiment_create_run(mocker):
     mocker.patch.object(ExperimentClient, "_post", return_value=EXPERIMENT_RUN)
     request_schema_mock = mocker.patch(
@@ -510,14 +537,3 @@ def test_log_run_data_empty(mocker):
 
     client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
     ExperimentClient._patch_raw.assert_not_called()
-
-
-def test_delete(mocker):
-    mocker.patch.object(ExperimentClient, "_delete_raw")
-
-    client = ExperimentClient(mocker.Mock())
-    client.delete(PROJECT_ID, EXPERIMENT_ID)
-
-    ExperimentClient._delete_raw.assert_called_once_with(
-        "/project/{}/experiment/{}".format(PROJECT_ID, EXPERIMENT_ID)
-    )
