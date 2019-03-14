@@ -18,7 +18,16 @@ from enum import Enum
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseSchema, BaseClient
+from faculty.clients.base import BaseClient, BaseSchema, Conflict
+
+
+class ParamConflict(Exception):
+    def __init__(self, message, conflicting_params=None):
+        super(ParamConflict, self).__init__(message)
+        if conflicting_params is None:
+            self.conflicting_params = []
+        else:
+            self.conflicting_params = conflicting_params
 
 
 class ExperimentRunStatus(Enum):
@@ -54,6 +63,10 @@ ExperimentRun = namedtuple(
         "deleted_at",
     ],
 )
+
+Metric = namedtuple("Metric", ["key", "value", "timestamp"])
+Param = namedtuple("Param", ["key", "value"])
+Tag = namedtuple("Tag", ["key", "value"])
 
 Page = namedtuple("Page", ["start", "limit"])
 Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
@@ -92,6 +105,40 @@ class ExperimentRunSchema(BaseSchema):
     @post_load
     def make_experiment_run(self, data):
         return ExperimentRun(**data)
+
+
+class MetricSchema(BaseSchema):
+    key = fields.String(required=True)
+    value = fields.Float(required=True)
+    timestamp = fields.DateTime(required=True)
+
+    @post_load
+    def make_metric(self, data):
+        return Metric(**data)
+
+
+class ParamSchema(BaseSchema):
+    key = fields.String(required=True)
+    value = fields.String(required=True)
+
+    @post_load
+    def make_param(self, data):
+        return Param(**data)
+
+
+class TagSchema(BaseSchema):
+    key = fields.String(required=True)
+    value = fields.String(required=True)
+
+    @post_load
+    def make_tag(self, data):
+        return Tag(**data)
+
+
+class ExperimentRunDataSchema(BaseSchema):
+    metrics = fields.List(fields.Nested(MetricSchema))
+    params = fields.List(fields.Nested(ParamSchema))
+    tags = fields.List(fields.Nested(TagSchema))
 
 
 class PageSchema(BaseSchema):
@@ -293,3 +340,36 @@ class ExperimentClient(BaseClient):
         return self._get(
             endpoint, ListExperimentRunsResponseSchema(), params=query_params
         )
+
+    def log_run_data(
+        self, project_id, run_id, metrics=None, params=None, tags=None
+    ):
+        """Update the data of a run.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        run_id : uuid.UUID
+        metrics : List[Metric], optional
+            Each metric will be inserted.
+        params : List[Param], optional
+            Each param will be inserted. Note that on a name conflict the
+            entire operation will be rejected.
+        tags : List[Tag], optional
+            Each tag be upserted.
+        """
+        if all([kwarg is None for kwarg in [metrics, params, tags]]):
+            return
+        endpoint = "/project/{}/run/{}/data".format(project_id, run_id)
+        payload = ExperimentRunDataSchema().dump(
+            {"metrics": metrics, "params": params, "tags": tags}
+        )
+        try:
+            self._patch_raw(endpoint, json=payload)
+        except Conflict as err:
+            if err.error_code == "conflicting_params":
+                raise ParamConflict(
+                    err.error, err.response.json()["parameterKeys"]
+                )
+            else:
+                raise

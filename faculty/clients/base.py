@@ -23,9 +23,10 @@ class InvalidResponse(Exception):
 
 
 class HttpError(Exception):
-    def __init__(self, response, error=None):
+    def __init__(self, response, error=None, error_code=None):
         self.response = response
         self.error = error
+        self.error_code = error_code
 
 
 HTTPError = HttpError  # For backwards compatiblity
@@ -91,21 +92,18 @@ class BaseSchema(Schema):
 
 
 class ErrorSchema(BaseSchema):
-    error = fields.String(required=True)
-
-
-def _extract_error(response):
-    try:
-        data = response.json()
-        return ErrorSchema().load(data)["error"]
-    except (ValueError, ValidationError):
-        return None
+    error = fields.String(missing=None)
+    error_code = fields.String(data_key="errorCode", missing=None)
 
 
 def _check_status(response):
     if response.status_code >= 400:
         cls = HTTP_ERRORS.get(response.status_code, HttpError)
-        raise cls(response, _extract_error(response))
+        try:
+            data = ErrorSchema().load(response.json())
+        except (ValueError, ValidationError):
+            data = {}
+        raise cls(response, data.get("error"), data.get("error_code"))
 
 
 def _deserialise_response(schema, response):
@@ -169,6 +167,13 @@ class BaseClient(object):
 
     def _put(self, endpoint, schema, **kwargs):
         response = self._put_raw(endpoint, **kwargs)
+        return _deserialise_response(schema, response)
+
+    def _patch_raw(self, endpoint, *args, **kwargs):
+        return self._request("PATCH", endpoint, *args, **kwargs)
+
+    def _patch(self, endpoint, schema, **kwargs):
+        response = self._patch_raw(endpoint, **kwargs)
         return _deserialise_response(schema, response)
 
     def _delete_raw(self, endpoint, *args, **kwargs):
