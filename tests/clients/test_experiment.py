@@ -458,9 +458,9 @@ def test_log_run_data(mocker):
 def test_log_run_data_param_conflict(mocker):
     message = "bad params"
     error_code = "conflicting_params"
-    json_mock = mocker.Mock()
-    json_mock.json.return_value = {"parameterKeys": ["bad-key"]}
-    exception = Conflict(json_mock, message, error_code)
+    response_mock = mocker.Mock()
+    response_mock.json.return_value = {"parameterKeys": ["bad-key"]}
+    exception = Conflict(response_mock, message, error_code)
 
     mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
     run_data_schema_mock = mocker.patch(
@@ -475,8 +475,8 @@ def test_log_run_data_param_conflict(mocker):
 
 
 def test_log_run_data_other_conflict(mocker):
-    json_mock = mocker.Mock()
-    exception = Conflict(json_mock, "", "")
+    response_mock = mocker.Mock()
+    exception = Conflict(response_mock, "", "")
 
     mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
     client = ExperimentClient(mocker.Mock())
