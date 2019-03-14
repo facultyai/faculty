@@ -37,8 +37,6 @@ class ExperimentRunStatus(Enum):
     SCHEDULED = "scheduled"
 
 
-Tag = namedtuple("Tag", ["key", "value"])
-
 Experiment = namedtuple(
     "Experiment",
     [
@@ -76,15 +74,6 @@ Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
 ListExperimentRunsResponse = namedtuple(
     "ListExperimentRunsResponse", ["runs", "pagination"]
 )
-
-
-class TagSchema(BaseSchema):
-    key = fields.String(data_key="key")
-    value = fields.String(data_key="value")
-
-    @post_load
-    def make_tag(self, data):
-        return Tag(**data)
 
 
 class ExperimentSchema(BaseSchema):
