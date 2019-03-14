@@ -357,12 +357,8 @@ class ExperimentClient(BaseClient):
             entire operation will be rejected.
         tags : List[Tag], optional
             Each tag be upserted.
-
-        Returns
-        -------
-        None
         """
-        if all([t is None for t in [metrics, params, tags]]):
+        if all([kwarg is None for kwarg in [metrics, params, tags]]):
             return
         endpoint = "/project/{}/run/{}/data".format(project_id, run_id)
         payload = ExperimentRunDataSchema().dump(

@@ -105,16 +105,17 @@ TAG_BODY = {"key": "tag-key", "value": "tag-value"}
 OTHER_TAG = Tag(key="other-tag-key", value="other-tag-value")
 OTHER_TAG_BODY = {"key": "other-tag-key", "value": "other-tag-value"}
 
-PARAM = Param(key="param-key", value="tag-value")
-PARAM_BODY = {"key": "param-key", "value": "tag-value"}
+PARAM = Param(key="param-key", value="param-value")
+PARAM_BODY = {"key": "param-key", "value": "param-value"}
 
 METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
-METRIC_TIMESTAMP_STRING = "2018-03-12T16:20:22.122Z"
+METRIC_TIMESTAMP_STRING_JAVA = "2018-03-12T16:20:22.122Z"
+METRIC_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:22.122000+00:00"
 METRIC = Metric(key="metric-key", value=123, timestamp=METRIC_TIMESTAMP)
 METRIC_BODY = {
     "key": "metric-key",
-    "value": 123,
-    "timestamp": METRIC_TIMESTAMP_STRING,
+    "value": 123.0,
+    "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
 }
 
 EXPERIMENT_RUN_DATA_BODY = {
@@ -216,8 +217,10 @@ def test_experiment_run_tag_schema():
 
 
 def test_experiment_run_data_schema():
-    data = ExperimentRunDataSchema().load(EXPERIMENT_RUN_DATA_BODY)
-    assert data == {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
+    data = ExperimentRunDataSchema().dump(
+        {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
+    )
+    assert data == EXPERIMENT_RUN_DATA_BODY
 
 
 def test_experiment_run_data_schema_empty():
