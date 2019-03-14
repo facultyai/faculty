@@ -17,27 +17,33 @@ from datetime import datetime
 from uuid import uuid4
 
 import pytest
-from pytz import UTC
 from marshmallow import ValidationError
+from pytz import UTC
 
+from faculty.clients.base import Conflict
 from faculty.clients.experiment import (
+    CreateRunSchema,
     Experiment,
-    ExperimentSchema,
     ExperimentClient,
     ExperimentRun,
+    ExperimentRunDataSchema,
     ExperimentRunSchema,
     ExperimentRunStatus,
-    CreateRunSchema,
+    ExperimentSchema,
     ListExperimentRunsResponse,
     ListExperimentRunsResponseSchema,
+    Metric,
+    MetricSchema,
     Page,
     PageSchema,
     Pagination,
     PaginationSchema,
+    Param,
+    ParamConflict,
+    ParamSchema,
     Tag,
     TagSchema,
 )
-
 
 PROJECT_ID = uuid4()
 EXPERIMENT_ID = 661
@@ -48,7 +54,6 @@ LAST_UPDATED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
 LAST_UPDATED_AT_STRING = "2018-03-10T11:32:30.172Z"
 DELETED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
 DELETED_AT_STRING = "2018-03-10T11:37:42.482Z"
-
 
 EXPERIMENT = Experiment(
     id=EXPERIMENT_ID,
@@ -99,6 +104,31 @@ EXPERIMENT_RUN_BODY = {
     "deletedAt": DELETED_AT_STRING,
     "tags": [TAG_BODY],
 }
+TAG = Tag(key="tag-key", value="tag-value")
+TAG_BODY = {"key": "tag-key", "value": "tag-value"}
+
+OTHER_TAG = Tag(key="other-tag-key", value="other-tag-value")
+OTHER_TAG_BODY = {"key": "other-tag-key", "value": "other-tag-value"}
+
+PARAM = Param(key="param-key", value="param-value")
+PARAM_BODY = {"key": "param-key", "value": "param-value"}
+
+METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
+METRIC_TIMESTAMP_STRING_JAVA = "2018-03-12T16:20:22.122Z"
+METRIC_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:22.122000+00:00"
+METRIC = Metric(key="metric-key", value=123, timestamp=METRIC_TIMESTAMP)
+METRIC_BODY = {
+    "key": "metric-key",
+    "value": 123.0,
+    "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+}
+
+EXPERIMENT_RUN_DATA_BODY = {
+    "metrics": [METRIC_BODY],
+    "params": [PARAM_BODY],
+    "tags": [TAG_BODY],
+}
+
 
 PAGE = Page(start=3, limit=10)
 PAGE_BODY = {"start": PAGE.start, "limit": PAGE.limit}
@@ -150,11 +180,6 @@ def test_experiment_schema_invalid():
         ExperimentSchema().load({})
 
 
-def test_experiment_run_schema():
-    data = ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
-    assert data == EXPERIMENT_RUN
-
-
 @pytest.mark.parametrize(
     "data_key, field", [("endedAt", "ended_at"), ("deletedAt", "deleted_at")]
 )
@@ -179,6 +204,43 @@ def test_create_run_schema(started_at, artifact_location):
         "startedAt": RUN_STARTED_AT_STRING_PYTHON,
         "artifactLocation": artifact_location,
     }
+
+
+def test_experiment_run_schema():
+    data = ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
+    assert data == EXPERIMENT_RUN
+
+
+def test_experiment_run_metric_schema():
+    data = MetricSchema().load(METRIC_BODY)
+    assert data == METRIC
+
+
+def test_experiment_run_param_schema():
+    data = ParamSchema().load(PARAM_BODY)
+    assert data == PARAM
+
+
+def test_experiment_run_tag_schema():
+    data = TagSchema().load(TAG_BODY)
+    assert data == TAG
+
+
+def test_experiment_run_data_schema():
+    data = ExperimentRunDataSchema().dump(
+        {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
+    )
+    assert data == EXPERIMENT_RUN_DATA_BODY
+
+
+def test_experiment_run_data_schema_empty():
+    data = ExperimentRunDataSchema().dump({})
+    assert data == {}
+
+
+def test_experiment_run_data_schema_multiple():
+    data = ExperimentRunDataSchema().dump({"tags": [TAG, OTHER_TAG]})
+    assert data == {"tags": [TAG_BODY, OTHER_TAG_BODY]}
 
 
 @pytest.mark.parametrize("description", [None, "experiment description"])
@@ -379,3 +441,64 @@ def test_experiment_client_list_runs_page(mocker):
         schema_mock.return_value,
         params=[("start", 20), ("limit", 10)],
     )
+
+
+def test_log_run_data(mocker):
+    mocker.patch.object(ExperimentClient, "_patch_raw")
+    run_data_schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunDataSchema"
+    )
+    run_data_dump_mock = run_data_schema_mock.return_value.dump
+
+    client = ExperimentClient(mocker.Mock())
+    client.log_run_data(
+        PROJECT_ID,
+        EXPERIMENT_RUN_ID,
+        metrics=[METRIC],
+        params=[PARAM],
+        tags=[TAG],
+    )
+
+    run_data_schema_mock.assert_called_once_with()
+    run_data_dump_mock.assert_called_once_with(
+        {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
+    )
+    ExperimentClient._patch_raw.assert_called_once_with(
+        "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
+        json=run_data_dump_mock.return_value,
+    )
+
+
+def test_log_run_data_param_conflict(mocker):
+    message = "bad params"
+    error_code = "conflicting_params"
+    response_mock = mocker.Mock()
+    response_mock.json.return_value = {"parameterKeys": ["bad-key"]}
+    exception = Conflict(response_mock, message, error_code)
+
+    mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
+
+    client = ExperimentClient(mocker.Mock())
+
+    with pytest.raises(ParamConflict, match=message):
+        client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
+
+
+def test_log_run_data_other_conflict(mocker):
+    response_mock = mocker.Mock()
+    exception = Conflict(response_mock, "", "")
+
+    mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
+    client = ExperimentClient(mocker.Mock())
+
+    with pytest.raises(Conflict):
+        client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
+
+
+def test_log_run_data_empty(mocker):
+    mocker.patch.object(ExperimentClient, "_patch_raw")
+
+    client = ExperimentClient(mocker.Mock())
+
+    client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
+    ExperimentClient._patch_raw.assert_not_called()

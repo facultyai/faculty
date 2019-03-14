@@ -19,20 +19,21 @@ import pytest
 from marshmallow import fields, post_load
 
 from faculty.clients.base import (
-    BaseSchema,
-    BaseClient,
-    InvalidResponse,
-    HttpError,
-    BadRequest,
-    Unauthorized,
-    Forbidden,
-    NotFound,
-    MethodNotAllowed,
-    Conflict,
-    InternalServerError,
     BadGateway,
-    ServiceUnavailable,
+    BadRequest,
+    BaseClient,
+    BaseSchema,
+    Conflict,
+    ErrorSchema,
+    Forbidden,
     GatewayTimeout,
+    HttpError,
+    InternalServerError,
+    InvalidResponse,
+    MethodNotAllowed,
+    NotFound,
+    ServiceUnavailable,
+    Unauthorized,
 )
 
 MOCK_SERVICE_NAME = "test-service"
@@ -56,7 +57,14 @@ BAD_RESPONSE_STATUSES = [
     (418, HttpError),
 ]
 
-HTTP_METHODS = ["GET", "POST", "PUT", "DELETE"]
+HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
+
+
+def test_error_schema():
+    data = ErrorSchema().load(
+        {"error": "error message", "errorCode": "error code"}
+    )
+    assert data == {"error": "error message", "error_code": "error code"}
 
 
 @pytest.fixture
@@ -149,6 +157,23 @@ def test_put(requests_mock, session, patch_auth):
 
     client = DummyClient(session)
     response = client._put(
+        MOCK_ENDPOINT, DummySchema(), json={"test": "payload"}
+    )
+
+    assert response == DummyObject(foo="bar")
+    assert mock.last_request.json() == {"test": "payload"}
+
+
+def test_patch(requests_mock, session, patch_auth):
+
+    mock = requests_mock.patch(
+        MOCK_SERVICE_URL,
+        request_headers=AUTHORIZATION_HEADER,
+        json={"foo": "bar"},
+    )
+
+    client = DummyClient(session)
+    response = client._patch(
         MOCK_ENDPOINT, DummySchema(), json={"test": "payload"}
     )
 
