@@ -110,7 +110,7 @@ EXPERIMENT_RUN = ExperimentRun(
     deleted_at=DELETED_AT,
     tags=[TAG],
     params=[PARAM],
-    metrics=[METRIC]
+    metrics=[METRIC],
 )
 EXPERIMENT_RUN_BODY = {
     "experimentId": EXPERIMENT.id,
@@ -193,13 +193,19 @@ def test_experiment_run_schema_nullable_field(data_key, field):
     ids=["timezone", "no timezone"],
 )
 @pytest.mark.parametrize("artifact_location", [None, "faculty:project-id"])
-def test_create_run_schema(started_at, artifact_location):
+@pytest.mark.parametrize("tags", [[], [{"key": "key", "value": "value"}]])
+def test_create_run_schema(started_at, artifact_location, tags):
     data = CreateRunSchema().dump(
-        {"started_at": started_at, "artifact_location": artifact_location}
+        {
+            "started_at": started_at,
+            "artifact_location": artifact_location,
+            "tags": tags,
+        }
     )
     assert data == {
         "startedAt": RUN_STARTED_AT_STRING_PYTHON,
         "artifactLocation": artifact_location,
+        "tags": tags,
     }
 
 
