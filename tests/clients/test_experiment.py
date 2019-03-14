@@ -463,15 +463,11 @@ def test_log_run_data_param_conflict(mocker):
     exception = Conflict(response_mock, message, error_code)
 
     mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
-    run_data_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunDataSchema"
-    )
 
     client = ExperimentClient(mocker.Mock())
 
     with pytest.raises(ParamConflict, match=message):
         client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
-    run_data_schema_mock.assert_called_once_with()
 
 
 def test_log_run_data_other_conflict(mocker):
