@@ -160,11 +160,6 @@ LIST_EXPERIMENT_RUNS_RESPONSE_BODY = {
 }
 
 
-def test_tag_schema():
-    data = TagSchema().load(TAG_BODY)
-    assert data == TAG
-
-
 def test_experiment_schema():
     data = ExperimentSchema().load(EXPERIMENT_BODY)
     assert data == EXPERIMENT
