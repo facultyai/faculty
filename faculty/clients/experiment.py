@@ -63,7 +63,7 @@ ExperimentRun = namedtuple(
         "deleted_at",
         "tags",
         "params",
-        "metrics"
+        "metrics",
     ],
 )
 
