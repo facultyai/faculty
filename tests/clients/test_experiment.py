@@ -84,29 +84,6 @@ RUN_ENDED_AT_STRING = "2018-03-10T11:39:15.11Z"
 TAG = Tag(key="tag-key", value="tag-value")
 TAG_BODY = {"key": "tag-key", "value": "tag-value"}
 
-EXPERIMENT_RUN = ExperimentRun(
-    id=EXPERIMENT_RUN_ID,
-    experiment_id=EXPERIMENT.id,
-    artifact_location="faculty:",
-    status=ExperimentRunStatus.RUNNING,
-    started_at=RUN_STARTED_AT,
-    ended_at=RUN_ENDED_AT,
-    deleted_at=DELETED_AT,
-    tags=[TAG],
-)
-EXPERIMENT_RUN_BODY = {
-    "experimentId": EXPERIMENT.id,
-    "runId": str(EXPERIMENT_RUN_ID),
-    "artifactLocation": "faculty:",
-    "status": "running",
-    "startedAt": RUN_STARTED_AT_STRING_JAVA,
-    "endedAt": RUN_ENDED_AT_STRING,
-    "deletedAt": DELETED_AT_STRING,
-    "tags": [TAG_BODY],
-}
-TAG = Tag(key="tag-key", value="tag-value")
-TAG_BODY = {"key": "tag-key", "value": "tag-value"}
-
 OTHER_TAG = Tag(key="other-tag-key", value="other-tag-value")
 OTHER_TAG_BODY = {"key": "other-tag-key", "value": "other-tag-value"}
 
@@ -121,6 +98,31 @@ METRIC_BODY = {
     "key": "metric-key",
     "value": 123.0,
     "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+}
+
+EXPERIMENT_RUN = ExperimentRun(
+    id=EXPERIMENT_RUN_ID,
+    experiment_id=EXPERIMENT.id,
+    artifact_location="faculty:",
+    status=ExperimentRunStatus.RUNNING,
+    started_at=RUN_STARTED_AT,
+    ended_at=RUN_ENDED_AT,
+    deleted_at=DELETED_AT,
+    tags=[TAG],
+    params=[PARAM],
+    metrics=[METRIC]
+)
+EXPERIMENT_RUN_BODY = {
+    "experimentId": EXPERIMENT.id,
+    "runId": str(EXPERIMENT_RUN_ID),
+    "artifactLocation": "faculty:",
+    "status": "running",
+    "startedAt": RUN_STARTED_AT_STRING_JAVA,
+    "endedAt": RUN_ENDED_AT_STRING,
+    "deletedAt": DELETED_AT_STRING,
+    "tags": [TAG_BODY],
+    "metrics": [METRIC_BODY],
+    "params": [PARAM_BODY],
 }
 
 EXPERIMENT_RUN_DATA_BODY = {
