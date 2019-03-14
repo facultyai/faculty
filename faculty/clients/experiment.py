@@ -62,6 +62,8 @@ ExperimentRun = namedtuple(
         "ended_at",
         "deleted_at",
         "tags",
+        "params",
+        "metrics"
     ],
 )
 
@@ -131,6 +133,8 @@ class ExperimentRunSchema(BaseSchema):
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
     deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
     tags = fields.Nested(TagSchema, many=True, required=True)
+    params = fields.Nested(ParamSchema, many=True, required=True)
+    metrics = fields.Nested(MetricSchema, many=True, required=True)
 
     @post_load
     def make_experiment_run(self, data):
