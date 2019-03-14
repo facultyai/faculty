@@ -61,14 +61,10 @@ HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 
 
 def test_error_schema():
-    data = ErrorSchema().load({
-        "error": "error message",
-        "errorCode": "error code"
-    })
-    assert data == {
-        "error": "error message",
-        "error_code": "error code"
-    }
+    data = ErrorSchema().load(
+        {"error": "error message", "errorCode": "error code"}
+    )
+    assert data == {"error": "error message", "error_code": "error code"}
 
 
 @pytest.fixture

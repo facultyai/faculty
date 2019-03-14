@@ -468,7 +468,7 @@ def test_log_run_data_param_conflict(mocker):
     client = ExperimentClient(mocker.Mock())
 
     with pytest.raises(ParamConflict, match=expected_message):
-        client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
+        client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
     run_data_schema_mock.assert_called_once_with()
 
 
@@ -486,5 +486,18 @@ def test_log_run_data_other_conflict(mocker):
     client = ExperimentClient(mocker.Mock())
 
     with pytest.raises(Conflict):
-        client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
+        client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
     run_data_schema_mock.assert_called_once_with()
+
+
+def test_log_run_data_empty(mocker):
+    mocker.patch.object(ExperimentClient, "_patch_raw")
+    run_data_schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunDataSchema"
+    )
+
+    client = ExperimentClient(mocker.Mock())
+
+    client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
+    ExperimentClient._patch_raw.assert_not_called()
+    run_data_schema_mock.assert_not_called()

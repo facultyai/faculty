@@ -362,6 +362,8 @@ class ExperimentClient(BaseClient):
         -------
         None
         """
+        if all([t is None for t in [metrics, params, tags]]):
+            return
         endpoint = "/project/{}/run/{}/data".format(project_id, run_id)
         payload = ExperimentRunDataSchema().dump(
             {"metrics": metrics, "params": params, "tags": tags}
