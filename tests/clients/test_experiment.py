@@ -444,10 +444,11 @@ def test_log_run_data(mocker):
         params=[PARAM],
         tags=[TAG],
     )
-    expected_body = {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
 
     run_data_schema_mock.assert_called_once_with()
-    run_data_dump_mock.assert_called_once_with(expected_body)
+    run_data_dump_mock.assert_called_once_with(
+        {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
+    )
     ExperimentClient._patch_raw.assert_called_once_with(
         "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
         json=run_data_dump_mock.return_value,
@@ -455,33 +456,29 @@ def test_log_run_data(mocker):
 
 
 def test_log_run_data_param_conflict(mocker):
-    expected_message = "bad params"
-    expected_error_code = "conflicting_params"
+    message = "bad params"
+    error_code = "conflicting_params"
     json_mock = mocker.Mock()
     json_mock.json.return_value = {"parameterKeys": ["bad-key"]}
-    response_mock = Conflict(json_mock, expected_message, expected_error_code)
+    exception = Conflict(json_mock, message, error_code)
 
-    mocker.patch.object(
-        ExperimentClient, "_patch_raw", side_effect=response_mock
-    )
+    mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
     run_data_schema_mock = mocker.patch(
         "faculty.clients.experiment.ExperimentRunDataSchema"
     )
 
     client = ExperimentClient(mocker.Mock())
 
-    with pytest.raises(ParamConflict, match=expected_message):
+    with pytest.raises(ParamConflict, match=message):
         client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
     run_data_schema_mock.assert_called_once_with()
 
 
 def test_log_run_data_other_conflict(mocker):
     json_mock = mocker.Mock()
-    response_mock = Conflict(json_mock, "", "")
+    exception = Conflict(json_mock, "", "")
 
-    mocker.patch.object(
-        ExperimentClient, "_patch_raw", side_effect=response_mock
-    )
+    mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
     run_data_schema_mock = mocker.patch(
         "faculty.clients.experiment.ExperimentRunDataSchema"
     )
@@ -495,12 +492,8 @@ def test_log_run_data_other_conflict(mocker):
 
 def test_log_run_data_empty(mocker):
     mocker.patch.object(ExperimentClient, "_patch_raw")
-    run_data_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ExperimentRunDataSchema"
-    )
 
     client = ExperimentClient(mocker.Mock())
 
     client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
     ExperimentClient._patch_raw.assert_not_called()
-    run_data_schema_mock.assert_not_called()
