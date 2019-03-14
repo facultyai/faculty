@@ -229,6 +229,11 @@ def test_experiment_run_tag_schema():
     assert data == TAG
 
 
+def test_experiment_run_tag_schema_dump():
+    data = TagSchema().dump(TAG_BODY)
+    assert data == TAG_BODY
+
+
 def test_experiment_run_data_schema():
     data = ExperimentRunDataSchema().dump(
         {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
