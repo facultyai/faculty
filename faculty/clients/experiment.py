@@ -267,10 +267,13 @@ class ExperimentClient(BaseClient):
         -------
         List[Experiment]
         """
+        query_params = []
         if lifecycle_stage is not None:
             query_params.append(("lifecycleStage", lifecycle_stage))
         endpoint = "/project/{}/experiment".format(project_id)
-        return self._get(endpoint, ExperimentSchema(many=True), params=query_params)
+        return self._get(
+            endpoint, ExperimentSchema(many=True), params=query_params
+        )
 
     def update(self, project_id, experiment_id, name=None, description=None):
         """Update the name and/or description of an experiment.
