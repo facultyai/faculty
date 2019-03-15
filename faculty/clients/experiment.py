@@ -248,11 +248,7 @@ class ExperimentClient(BaseClient):
         )
         return self._get(endpoint, ExperimentSchema())
 
-    def list(
-        self,
-        project_id,
-        lifecycle_stage=None,
-    ):
+    def list(self, project_id, lifecycle_stage=None):
         """List the experiments in a project.
 
         Parameters
