@@ -248,19 +248,29 @@ class ExperimentClient(BaseClient):
         )
         return self._get(endpoint, ExperimentSchema())
 
-    def list(self, project_id):
+    def list(
+        self,
+        project_id,
+        lifecycle_stage=None,
+    ):
         """List the experiments in a project.
 
         Parameters
         ----------
         project_id : uuid.UUID
+        lifecycle_stage : str, optional
+            To filter experiments in the given lifecycle stage only
+            ("active" | "deleted"). By default, all experiments in the
+            project are returned.
 
         Returns
         -------
         List[Experiment]
         """
+        if lifecycle_stage is not None:
+            query_params.append(("lifecycleStage", lifecycle_stage))
         endpoint = "/project/{}/experiment".format(project_id)
-        return self._get(endpoint, ExperimentSchema(many=True))
+        return self._get(endpoint, ExperimentSchema(many=True), params=query_params)
 
     def update(self, project_id, experiment_id, name=None, description=None):
         """Update the name and/or description of an experiment.

@@ -319,6 +319,21 @@ def test_experiment_client_list(mocker):
     )
 
 
+def test_experiment_client_list_lifecycle_filter(mocker):
+    mocker.patch.object(ExperimentClient, "_get", return_value=[EXPERIMENT])
+    schema_mock = mocker.patch("faculty.clients.experiment.ExperimentSchema")
+
+    client = ExperimentClient(mocker.Mock())
+    assert client.list(PROJECT_ID, lifecycle_stage="active") == [EXPERIMENT]
+
+    schema_mock.assert_called_once_with(many=True)
+    ExperimentClient._get.assert_called_once_with(
+        "/project/{}/experiment".format(PROJECT_ID),
+        schema_mock.return_value,
+        params=[("lifecycleStage", "active")]
+    )
+
+
 @pytest.mark.parametrize("name", [None, "new name"])
 @pytest.mark.parametrize("description", [None, "new description"])
 def test_experiment_client_update(mocker, name, description):
