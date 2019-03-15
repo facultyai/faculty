@@ -214,22 +214,22 @@ def test_experiment_run_schema():
     assert data == EXPERIMENT_RUN
 
 
-def test_experiment_run_metric_schema():
+def test_metric_schema():
     data = MetricSchema().load(METRIC_BODY)
     assert data == METRIC
 
 
-def test_experiment_run_param_schema():
+def test_param_schema():
     data = ParamSchema().load(PARAM_BODY)
     assert data == PARAM
 
 
-def test_experiment_run_tag_schema():
+def test_tag_schema():
     data = TagSchema().load(TAG_BODY)
     assert data == TAG
 
 
-def test_experiment_run_tag_schema_dump():
+def test_tag_schema_dump():
     data = TagSchema().dump(TAG_BODY)
     assert data == TAG_BODY
 
