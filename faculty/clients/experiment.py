@@ -61,6 +61,9 @@ ExperimentRun = namedtuple(
         "started_at",
         "ended_at",
         "deleted_at",
+        "tags",
+        "params",
+        "metrics",
     ],
 )
 
@@ -73,38 +76,6 @@ Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
 ListExperimentRunsResponse = namedtuple(
     "ListExperimentRunsResponse", ["runs", "pagination"]
 )
-
-
-class ExperimentSchema(BaseSchema):
-    id = fields.Integer(data_key="experimentId", required=True)
-    name = fields.String(required=True)
-    description = fields.String(required=True)
-    artifact_location = fields.String(
-        data_key="artifactLocation", required=True
-    )
-    created_at = fields.DateTime(data_key="createdAt", required=True)
-    last_updated_at = fields.DateTime(data_key="lastUpdatedAt", required=True)
-    deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
-
-    @post_load
-    def make_experiment(self, data):
-        return Experiment(**data)
-
-
-class ExperimentRunSchema(BaseSchema):
-    id = fields.UUID(data_key="runId", required=True)
-    experiment_id = fields.Integer(data_key="experimentId", required=True)
-    artifact_location = fields.String(
-        data_key="artifactLocation", required=True
-    )
-    status = EnumField(ExperimentRunStatus, by_value=True, required=True)
-    started_at = fields.DateTime(data_key="startedAt", required=True)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
-    deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
-
-    @post_load
-    def make_experiment_run(self, data):
-        return ExperimentRun(**data)
 
 
 class MetricSchema(BaseSchema):
@@ -133,6 +104,41 @@ class TagSchema(BaseSchema):
     @post_load
     def make_tag(self, data):
         return Tag(**data)
+
+
+class ExperimentSchema(BaseSchema):
+    id = fields.Integer(data_key="experimentId", required=True)
+    name = fields.String(required=True)
+    description = fields.String(required=True)
+    artifact_location = fields.String(
+        data_key="artifactLocation", required=True
+    )
+    created_at = fields.DateTime(data_key="createdAt", required=True)
+    last_updated_at = fields.DateTime(data_key="lastUpdatedAt", required=True)
+    deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
+
+    @post_load
+    def make_experiment(self, data):
+        return Experiment(**data)
+
+
+class ExperimentRunSchema(BaseSchema):
+    id = fields.UUID(data_key="runId", required=True)
+    experiment_id = fields.Integer(data_key="experimentId", required=True)
+    artifact_location = fields.String(
+        data_key="artifactLocation", required=True
+    )
+    status = EnumField(ExperimentRunStatus, by_value=True, required=True)
+    started_at = fields.DateTime(data_key="startedAt", required=True)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
+    tags = fields.Nested(TagSchema, many=True, required=True)
+    params = fields.Nested(ParamSchema, many=True, required=True)
+    metrics = fields.Nested(MetricSchema, many=True, required=True)
+
+    @post_load
+    def make_experiment_run(self, data):
+        return ExperimentRun(**data)
 
 
 class ExperimentRunDataSchema(BaseSchema):
@@ -173,6 +179,7 @@ class ListExperimentRunsResponseSchema(BaseSchema):
 class CreateRunSchema(BaseSchema):
     started_at = fields.DateTime(data_key="startedAt")
     artifact_location = fields.String(data_key="artifactLocation")
+    tags = fields.Nested(TagSchema, many=True, required=True)
 
 
 class ExperimentClient(BaseClient):
@@ -235,7 +242,12 @@ class ExperimentClient(BaseClient):
         return self._get(endpoint, ExperimentSchema(many=True))
 
     def create_run(
-        self, project_id, experiment_id, started_at, artifact_location=None
+        self,
+        project_id,
+        experiment_id,
+        started_at,
+        artifact_location=None,
+        tags=None,
     ):
         """Create a run in a project.
 
@@ -250,16 +262,24 @@ class ExperimentClient(BaseClient):
             The location of the artifact repository to use for this run.
             If omitted, the value of `artifact_location` for the experiment
             will be used.
+        tags: List[Tag]
 
         Returns
         -------
         ExperimentRun
         """
+        if tags is None:
+            tags = []
+
         endpoint = "/project/{}/experiment/{}/run".format(
             project_id, experiment_id
         )
         payload = CreateRunSchema().dump(
-            {"started_at": started_at, "artifact_location": artifact_location}
+            {
+                "started_at": started_at,
+                "artifact_location": artifact_location,
+                "tags": tags,
+            }
         )
         return self._post(endpoint, ExperimentRunSchema(), json=payload)
 

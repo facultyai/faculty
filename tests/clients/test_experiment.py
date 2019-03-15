@@ -81,24 +81,6 @@ RUN_STARTED_AT_STRING_JAVA = "2018-03-10T11:39:12.11Z"
 RUN_ENDED_AT = datetime(2018, 3, 10, 11, 39, 15, 110000, tzinfo=UTC)
 RUN_ENDED_AT_STRING = "2018-03-10T11:39:15.11Z"
 
-EXPERIMENT_RUN = ExperimentRun(
-    id=EXPERIMENT_RUN_ID,
-    experiment_id=EXPERIMENT.id,
-    artifact_location="faculty:",
-    status=ExperimentRunStatus.RUNNING,
-    started_at=RUN_STARTED_AT,
-    ended_at=RUN_ENDED_AT,
-    deleted_at=DELETED_AT,
-)
-EXPERIMENT_RUN_BODY = {
-    "experimentId": EXPERIMENT.id,
-    "runId": str(EXPERIMENT_RUN_ID),
-    "artifactLocation": "faculty:",
-    "status": "running",
-    "startedAt": RUN_STARTED_AT_STRING_JAVA,
-    "endedAt": RUN_ENDED_AT_STRING,
-    "deletedAt": DELETED_AT_STRING,
-}
 TAG = Tag(key="tag-key", value="tag-value")
 TAG_BODY = {"key": "tag-key", "value": "tag-value"}
 
@@ -116,6 +98,31 @@ METRIC_BODY = {
     "key": "metric-key",
     "value": 123.0,
     "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+}
+
+EXPERIMENT_RUN = ExperimentRun(
+    id=EXPERIMENT_RUN_ID,
+    experiment_id=EXPERIMENT.id,
+    artifact_location="faculty:",
+    status=ExperimentRunStatus.RUNNING,
+    started_at=RUN_STARTED_AT,
+    ended_at=RUN_ENDED_AT,
+    deleted_at=DELETED_AT,
+    tags=[TAG],
+    params=[PARAM],
+    metrics=[METRIC],
+)
+EXPERIMENT_RUN_BODY = {
+    "experimentId": EXPERIMENT.id,
+    "runId": str(EXPERIMENT_RUN_ID),
+    "artifactLocation": "faculty:",
+    "status": "running",
+    "startedAt": RUN_STARTED_AT_STRING_JAVA,
+    "endedAt": RUN_ENDED_AT_STRING,
+    "deletedAt": DELETED_AT_STRING,
+    "tags": [TAG_BODY],
+    "metrics": [METRIC_BODY],
+    "params": [PARAM_BODY],
 }
 
 EXPERIMENT_RUN_DATA_BODY = {
@@ -186,13 +193,19 @@ def test_experiment_run_schema_nullable_field(data_key, field):
     ids=["timezone", "no timezone"],
 )
 @pytest.mark.parametrize("artifact_location", [None, "faculty:project-id"])
-def test_create_run_schema(started_at, artifact_location):
+@pytest.mark.parametrize("tags", [[], [{"key": "key", "value": "value"}]])
+def test_create_run_schema(started_at, artifact_location, tags):
     data = CreateRunSchema().dump(
-        {"started_at": started_at, "artifact_location": artifact_location}
+        {
+            "started_at": started_at,
+            "artifact_location": artifact_location,
+            "tags": tags,
+        }
     )
     assert data == {
         "startedAt": RUN_STARTED_AT_STRING_PYTHON,
         "artifactLocation": artifact_location,
+        "tags": tags,
     }
 
 
@@ -201,19 +214,24 @@ def test_experiment_run_schema():
     assert data == EXPERIMENT_RUN
 
 
-def test_experiment_run_metric_schema():
+def test_metric_schema():
     data = MetricSchema().load(METRIC_BODY)
     assert data == METRIC
 
 
-def test_experiment_run_param_schema():
+def test_param_schema():
     data = ParamSchema().load(PARAM_BODY)
     assert data == PARAM
 
 
-def test_experiment_run_tag_schema():
+def test_tag_schema():
     data = TagSchema().load(TAG_BODY)
     assert data == TAG
+
+
+def test_tag_schema_dump():
+    data = TagSchema().dump(TAG_BODY)
+    assert data == TAG_BODY
 
 
 def test_experiment_run_data_schema():
@@ -308,7 +326,11 @@ def test_experiment_create_run(mocker):
 
     request_schema_mock.assert_called_once_with()
     dump_mock.assert_called_once_with(
-        {"started_at": started_at, "artifact_location": artifact_location}
+        {
+            "started_at": started_at,
+            "artifact_location": artifact_location,
+            "tags": [],
+        }
     )
     response_schema_mock.assert_called_once_with()
     ExperimentClient._post.assert_called_once_with(
