@@ -249,11 +249,15 @@ class ExperimentClient(BaseClient):
 
         project_id : uuid.UUID
         experiment_id : int
+
+        Returns
+        -------
+        None
         """
         endpoint = "/project/{}/experiment/{}".format(
             project_id, experiment_id
         )
-        return self._delete_raw(endpoint)
+        self._delete_raw(endpoint)
 
     def create_run(
         self,
