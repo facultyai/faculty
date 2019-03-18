@@ -114,6 +114,11 @@ class TagSchema(BaseSchema):
         return Tag(**data)
 
 
+class LifecycleStageFilter(Enum):
+    ACTIVE_ONLY = "active"
+    DELETED_ONLY = "deleted"
+
+
 class ExperimentSchema(BaseSchema):
     id = fields.Integer(data_key="experimentId", required=True)
     name = fields.String(required=True)
@@ -254,9 +259,9 @@ class ExperimentClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
-        lifecycle_stage : str, optional
+        lifecycle_stage : LifecycleStageFilter, optional
             To filter experiments in the given lifecycle stage only
-            ("active" | "deleted"). By default, all experiments in the
+            (ACTIVE_ONLY | DELETED_ONLY). By default, all experiments in the
             project are returned.
 
         Returns
@@ -265,7 +270,7 @@ class ExperimentClient(BaseClient):
         """
         query_params = []
         if lifecycle_stage is not None:
-            query_params.append(("lifecycleStage", lifecycle_stage))
+            query_params.append(("lifecycleStage", lifecycle_stage.value))
         endpoint = "/project/{}/experiment".format(project_id)
         return self._get(
             endpoint, ExperimentSchema(many=True), params=query_params

@@ -31,6 +31,7 @@ from faculty.clients.experiment import (
     ExperimentRunSchema,
     ExperimentRunStatus,
     ExperimentSchema,
+    LifecycleStageFilter,
     ListExperimentRunsResponse,
     ListExperimentRunsResponseSchema,
     Metric,
@@ -326,7 +327,10 @@ def test_experiment_client_list_lifecycle_filter(mocker):
     schema_mock = mocker.patch("faculty.clients.experiment.ExperimentSchema")
 
     client = ExperimentClient(mocker.Mock())
-    assert client.list(PROJECT_ID, lifecycle_stage="active") == [EXPERIMENT]
+    returned_experiments = client.list(
+        PROJECT_ID, lifecycle_stage=LifecycleStageFilter.ACTIVE_ONLY
+    )
+    assert returned_experiments == [EXPERIMENT]
 
     schema_mock.assert_called_once_with(many=True)
     ExperimentClient._get.assert_called_once_with(
