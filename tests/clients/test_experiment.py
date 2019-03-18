@@ -510,3 +510,15 @@ def test_log_run_data_empty(mocker):
 
     client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
     ExperimentClient._patch_raw.assert_not_called()
+
+
+def test_delete(mocker):
+    mocker.patch.object(ExperimentClient, "_delete_raw")
+
+    client = ExperimentClient(mocker.Mock())
+    result = client.delete(PROJECT_ID, EXPERIMENT_ID)
+
+    assert result is None
+    ExperimentClient._delete_raw.assert_called_once_with(
+        "/project/{}/experiment/{}".format(PROJECT_ID, EXPERIMENT_ID)
+    )
