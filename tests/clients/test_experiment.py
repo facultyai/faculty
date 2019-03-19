@@ -285,9 +285,7 @@ def test_experiment_client_create_name_conflict(mocker):
     with pytest.raises(
         ExperimentNameConflict, match="name 'experiment name' already exists"
     ):
-        client.create(
-            PROJECT_ID, "experiment name", "description", "artifact/location"
-        )
+        client.create(PROJECT_ID, "experiment name")
 
 
 def test_experiment_client_get(mocker):
