@@ -114,9 +114,9 @@ class TagSchema(BaseSchema):
         return Tag(**data)
 
 
-class LifecycleStageFilter(Enum):
-    ACTIVE_ONLY = "active"
-    DELETED_ONLY = "deleted"
+class LifecycleStage(Enum):
+    ACTIVE = "active"
+    DELETED = "deleted"
 
 
 class ExperimentSchema(BaseSchema):
@@ -259,9 +259,9 @@ class ExperimentClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
-        lifecycle_stage : LifecycleStageFilter, optional
+        lifecycle_stage : LifecycleStage, optional
             To filter experiments in the given lifecycle stage only
-            (ACTIVE_ONLY | DELETED_ONLY). By default, all experiments in the
+            (ACTIVE | DELETED). By default, all experiments in the
             project are returned.
 
         Returns
