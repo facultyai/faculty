@@ -516,9 +516,8 @@ def test_delete(mocker):
     mocker.patch.object(ExperimentClient, "_delete_raw")
 
     client = ExperimentClient(mocker.Mock())
-    result = client.delete(PROJECT_ID, EXPERIMENT_ID)
+    client.delete(PROJECT_ID, EXPERIMENT_ID)
 
-    assert result is None
     ExperimentClient._delete_raw.assert_called_once_with(
         "/project/{}/experiment/{}".format(PROJECT_ID, EXPERIMENT_ID)
     )

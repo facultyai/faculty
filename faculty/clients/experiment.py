@@ -246,13 +246,8 @@ class ExperimentClient(BaseClient):
 
         Parameters
         ----------
-
         project_id : uuid.UUID
         experiment_id : int
-
-        Returns
-        -------
-        None
         """
         endpoint = "/project/{}/experiment/{}".format(
             project_id, experiment_id
