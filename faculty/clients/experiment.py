@@ -21,6 +21,13 @@ from marshmallow_enum import EnumField
 from faculty.clients.base import BaseClient, BaseSchema, Conflict
 
 
+class ExperimentNameConflict(Exception):
+    def __init__(self, name):
+        tpl = "An experiment with name '{}' already exists in that project"
+        message = tpl.format(name)
+        super(ExperimentNameConflict, self).__init__(message)
+
+
 class ParamConflict(Exception):
     def __init__(self, message, conflicting_params=None):
         super(ParamConflict, self).__init__(message)
@@ -259,7 +266,13 @@ class ExperimentClient(BaseClient):
             project_id, experiment_id
         )
         payload = {"name": name, "description": description}
-        self._patch_raw(endpoint, json=payload)
+        try:
+            self._patch_raw(endpoint, json=payload)
+        except Conflict as err:
+            if err.error_code == "experiment_name_conflict":
+                raise ExperimentNameConflict(name)
+            else:
+                raise
 
     def delete(self, project_id, experiment_id):
         """Delete a specified experiment.

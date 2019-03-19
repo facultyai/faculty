@@ -25,6 +25,7 @@ from faculty.clients.experiment import (
     CreateRunSchema,
     Experiment,
     ExperimentClient,
+    ExperimentNameConflict,
     ExperimentRun,
     ExperimentRunDataSchema,
     ExperimentRunSchema,
@@ -317,6 +318,18 @@ def test_experiment_client_update(mocker, name, description):
         "/project/{}/experiment/{}".format(PROJECT_ID, EXPERIMENT_ID),
         json={"name": name, "description": description},
     )
+
+
+def test_experiment_client_update_name_conflict(mocker):
+    error_code = "experiment_name_conflict"
+    exception = Conflict(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
+
+    client = ExperimentClient(mocker.Mock())
+    with pytest.raises(
+        ExperimentNameConflict, match="name 'new name' already exists"
+    ):
+        client.update(PROJECT_ID, EXPERIMENT_ID, name="new name")
 
 
 def test_delete(mocker):
