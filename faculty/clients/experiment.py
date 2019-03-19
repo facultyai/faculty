@@ -215,7 +215,13 @@ class ExperimentClient(BaseClient):
             "description": description,
             "artifactLocation": artifact_location,
         }
-        return self._post(endpoint, ExperimentSchema(), json=payload)
+        try:
+            return self._post(endpoint, ExperimentSchema(), json=payload)
+        except Conflict as err:
+            if err.error_code == "experiment_name_conflict":
+                raise ExperimentNameConflict(name)
+            else:
+                raise
 
     def get(self, project_id, experiment_id):
         """Get a specified experiment.

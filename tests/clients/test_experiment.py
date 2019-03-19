@@ -276,6 +276,20 @@ def test_experiment_client_create(mocker, description, artifact_location):
     )
 
 
+def test_experiment_client_create_name_conflict(mocker):
+    error_code = "experiment_name_conflict"
+    exception = Conflict(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ExperimentClient, "_post", side_effect=exception)
+
+    client = ExperimentClient(mocker.Mock())
+    with pytest.raises(
+        ExperimentNameConflict, match="name 'experiment name' already exists"
+    ):
+        client.create(
+            PROJECT_ID, "experiment name", "description", "artifact/location"
+        )
+
+
 def test_experiment_client_get(mocker):
     mocker.patch.object(ExperimentClient, "_get", return_value=EXPERIMENT)
     schema_mock = mocker.patch("faculty.clients.experiment.ExperimentSchema")
