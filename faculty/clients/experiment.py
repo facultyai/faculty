@@ -208,6 +208,12 @@ class ExperimentClient(BaseClient):
         Returns
         -------
         Experiment
+
+        Raises
+        ------
+        ExperimentNameConflict
+            When an experiment of the provided name already exists in the
+            project.
         """
         endpoint = "/project/{}/experiment".format(project_id)
         payload = {
@@ -267,6 +273,12 @@ class ExperimentClient(BaseClient):
         description : str, optional
             The new description of the experiment. If not provided, the
             description will not be modified.
+
+        Raises
+        ------
+        ExperimentNameConflict
+            When an experiment of the provided name already exists in the
+            project.
         """
         endpoint = "/project/{}/experiment/{}".format(
             project_id, experiment_id
@@ -429,6 +441,12 @@ class ExperimentClient(BaseClient):
             entire operation will be rejected.
         tags : List[Tag], optional
             Each tag be upserted.
+
+        Raises
+        ------
+        ParamConflict
+            When a provided param already exists and has a different value than
+            was specified.
         """
         if all([kwarg is None for kwarg in [metrics, params, tags]]):
             return
