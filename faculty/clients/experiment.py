@@ -21,6 +21,13 @@ from marshmallow_enum import EnumField
 from faculty.clients.base import BaseClient, BaseSchema, Conflict
 
 
+class ExperimentNameConflict(Exception):
+    def __init__(self, name):
+        tpl = "An experiment with name '{}' already exists in that project"
+        message = tpl.format(name)
+        super(ExperimentNameConflict, self).__init__(message)
+
+
 class ParamConflict(Exception):
     def __init__(self, message, conflicting_params=None):
         super(ParamConflict, self).__init__(message)
@@ -201,6 +208,12 @@ class ExperimentClient(BaseClient):
         Returns
         -------
         Experiment
+
+        Raises
+        ------
+        ExperimentNameConflict
+            When an experiment of the provided name already exists in the
+            project.
         """
         endpoint = "/project/{}/experiment".format(project_id)
         payload = {
@@ -208,7 +221,13 @@ class ExperimentClient(BaseClient):
             "description": description,
             "artifactLocation": artifact_location,
         }
-        return self._post(endpoint, ExperimentSchema(), json=payload)
+        try:
+            return self._post(endpoint, ExperimentSchema(), json=payload)
+        except Conflict as err:
+            if err.error_code == "experiment_name_conflict":
+                raise ExperimentNameConflict(name)
+            else:
+                raise
 
     def get(self, project_id, experiment_id):
         """Get a specified experiment.
@@ -240,6 +259,38 @@ class ExperimentClient(BaseClient):
         """
         endpoint = "/project/{}/experiment".format(project_id)
         return self._get(endpoint, ExperimentSchema(many=True))
+
+    def update(self, project_id, experiment_id, name=None, description=None):
+        """Update the name and/or description of an experiment.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        experiment_id : int
+        name : str, optional
+            The new name of the experiment. If not provided, the name will not
+            be modified.
+        description : str, optional
+            The new description of the experiment. If not provided, the
+            description will not be modified.
+
+        Raises
+        ------
+        ExperimentNameConflict
+            When an experiment of the provided name already exists in the
+            project.
+        """
+        endpoint = "/project/{}/experiment/{}".format(
+            project_id, experiment_id
+        )
+        payload = {"name": name, "description": description}
+        try:
+            self._patch_raw(endpoint, json=payload)
+        except Conflict as err:
+            if err.error_code == "experiment_name_conflict":
+                raise ExperimentNameConflict(name)
+            else:
+                raise
 
     def delete(self, project_id, experiment_id):
         """Delete a specified experiment.
@@ -390,6 +441,12 @@ class ExperimentClient(BaseClient):
             entire operation will be rejected.
         tags : List[Tag], optional
             Each tag be upserted.
+
+        Raises
+        ------
+        ParamConflict
+            When a provided param already exists and has a different value than
+            was specified.
         """
         if all([kwarg is None for kwarg in [metrics, params, tags]]):
             return
