@@ -241,6 +241,19 @@ class ExperimentClient(BaseClient):
         endpoint = "/project/{}/experiment".format(project_id)
         return self._get(endpoint, ExperimentSchema(many=True))
 
+    def delete(self, project_id, experiment_id):
+        """Delete a specified experiment.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        experiment_id : int
+        """
+        endpoint = "/project/{}/experiment/{}".format(
+            project_id, experiment_id
+        )
+        self._delete_raw(endpoint)
+
     def create_run(
         self,
         project_id,
