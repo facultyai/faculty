@@ -27,15 +27,19 @@ from faculty.clients.account import (
 
 
 USER_ID = uuid.uuid4()
+USERNAME = "joe_bloggs"
+
+ACCOUNT = Account(user_id=USER_ID, username=USERNAME)
+ACCOUNT_BODY = {"userId": str(USER_ID), "username": USERNAME}
 
 
 def test_account_schema():
-    data = AccountSchema().load({"userId": str(USER_ID)})
-    assert data == Account(user_id=USER_ID)
+    data = AccountSchema().load(ACCOUNT_BODY)
+    assert data == ACCOUNT
 
 
 @pytest.mark.parametrize(
-    "data", [{}, {"id": str(USER_ID)}, {"userId": "not-a-uuid"}]
+    "data", [{}, {"userId": "not-a-uuid", "username": USERNAME}]
 )
 def test_account_schema_invalid(data):
     with pytest.raises(ValidationError):
@@ -43,26 +47,21 @@ def test_account_schema_invalid(data):
 
 
 def test_authentication_response_schema():
-    data = AuthenticationResponseSchema().load(
-        {"account": {"userId": str(USER_ID)}}
-    )
-    assert data == AuthenticationResponse(account=Account(user_id=USER_ID))
+    data = AuthenticationResponseSchema().load({"account": ACCOUNT_BODY})
+    assert data == AuthenticationResponse(account=ACCOUNT)
 
 
-@pytest.mark.parametrize(
-    "data",
-    [{}, {"account": {"id": str(USER_ID)}}, {"account": "not-an-account"}],
-)
+@pytest.mark.parametrize("data", [{}, {"account": "not-an-account"}])
 def test_authentication_response_schema_invalid(data):
     with pytest.raises(ValidationError):
         AuthenticationResponseSchema().load(data)
 
 
-def test_account_client_authenticated_user_id(mocker):
+def test_account_client_authenticated_account(mocker):
     mocker.patch.object(
         AccountClient,
         "_get",
-        return_value=AuthenticationResponse(account=Account(user_id=USER_ID)),
+        return_value=AuthenticationResponse(account=ACCOUNT),
     )
 
     schema_mock = mocker.patch(
@@ -71,8 +70,20 @@ def test_account_client_authenticated_user_id(mocker):
 
     client = AccountClient(mocker.Mock())
 
-    assert client.authenticated_user_id() == USER_ID
+    assert client.authenticated_account() == ACCOUNT
 
     AccountClient._get.assert_called_once_with(
         "/authenticate", schema_mock.return_value
     )
+
+
+def test_account_client_authenticated_user_id(mocker):
+    mocker.patch.object(
+        AccountClient, "authenticated_account", return_value=ACCOUNT
+    )
+
+    client = AccountClient(mocker.Mock())
+
+    assert client.authenticated_user_id() == USER_ID
+
+    AccountClient.authenticated_account.assert_called_once_with()

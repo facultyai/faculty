@@ -20,11 +20,12 @@ from marshmallow import fields, post_load
 from faculty.clients.base import BaseSchema, BaseClient
 
 
-Account = namedtuple("Account", ["user_id"])
+Account = namedtuple("Account", ["user_id", "username"])
 
 
 class AccountSchema(BaseSchema):
     user_id = fields.UUID(data_key="userId", required=True)
+    username = fields.String(required=True)
 
     @post_load
     def make_account(self, data):
@@ -46,6 +47,9 @@ class AccountClient(BaseClient):
 
     SERVICE_NAME = "hudson"
 
-    def authenticated_user_id(self):
+    def authenticated_account(self):
         data = self._get("/authenticate", AuthenticationResponseSchema())
-        return data.account.user_id
+        return data.account
+
+    def authenticated_user_id(self):
+        return self.authenticated_account().user_id
