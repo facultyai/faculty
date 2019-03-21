@@ -268,9 +268,9 @@ class ExperimentClient(BaseClient):
         -------
         List[Experiment]
         """
-        query_params = []
+        query_params = {}
         if lifecycle_stage is not None:
-            query_params.append(("lifecycleStage", lifecycle_stage.value))
+            query_params["lifecycleStage"] = lifecycle_stage.value
         endpoint = "/project/{}/experiment".format(project_id)
         return self._get(
             endpoint, ExperimentSchema(many=True), params=query_params

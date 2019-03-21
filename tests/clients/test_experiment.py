@@ -318,7 +318,7 @@ def test_experiment_client_list(mocker):
     ExperimentClient._get.assert_called_once_with(
         "/project/{}/experiment".format(PROJECT_ID),
         schema_mock.return_value,
-        params=[],
+        params={},
     )
 
 
@@ -336,7 +336,7 @@ def test_experiment_client_list_lifecycle_filter(mocker):
     ExperimentClient._get.assert_called_once_with(
         "/project/{}/experiment".format(PROJECT_ID),
         schema_mock.return_value,
-        params=[("lifecycleStage", "active")],
+        params={"lifecycleStage": "active"},
     )
 
 
