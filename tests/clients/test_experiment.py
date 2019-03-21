@@ -586,3 +586,81 @@ def test_log_run_data_empty(mocker):
 
     client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
     ExperimentClient._patch_raw.assert_not_called()
+
+
+def test_update_run_info(mocker):
+    mocker.patch.object(ExperimentClient, "_patch_raw")
+    run_info_schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunInfoSchema"
+    )
+    run_info_dump_mock = run_info_schema_mock.return_value.dump
+
+    client = ExperimentClient(mocker.Mock())
+    client.update_run_info(
+        PROJECT_ID,
+        EXPERIMENT_RUN_ID,
+        EXPERIMENT_RUN.status,
+        EXPERIMENT_RUN.ended_at,
+    )
+
+    run_info_schema_mock.assert_called_once_with()
+    run_info_dump_mock.assert_called_once_with(
+        {"status": EXPERIMENT_RUN.status, "ended_at": EXPERIMENT_RUN.ended_at}
+    )
+    ExperimentClient._patch_raw.assert_called_once_with(
+        "/project/{}/run/{}/info".format(PROJECT_ID, EXPERIMENT_RUN_ID),
+        json=run_info_dump_mock.return_value,
+    )
+
+
+def test_update_run_info_status_only(mocker):
+    mocker.patch.object(ExperimentClient, "_patch_raw")
+    run_info_schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunInfoSchema"
+    )
+    run_info_dump_mock = run_info_schema_mock.return_value.dump
+
+    client = ExperimentClient(mocker.Mock())
+    client.update_run_info(
+        PROJECT_ID, EXPERIMENT_RUN_ID, status=EXPERIMENT_RUN.status
+    )
+
+    run_info_schema_mock.assert_called_once_with()
+    run_info_dump_mock.assert_called_once_with(
+        {"status": EXPERIMENT_RUN.status, "ended_at": None}
+    )
+    ExperimentClient._patch_raw.assert_called_once_with(
+        "/project/{}/run/{}/info".format(PROJECT_ID, EXPERIMENT_RUN_ID),
+        json=run_info_dump_mock.return_value,
+    )
+
+
+def test_update_run_info_ended_at_only(mocker):
+    mocker.patch.object(ExperimentClient, "_patch_raw")
+    run_info_schema_mock = mocker.patch(
+        "faculty.clients.experiment.ExperimentRunInfoSchema"
+    )
+    run_info_dump_mock = run_info_schema_mock.return_value.dump
+
+    client = ExperimentClient(mocker.Mock())
+    client.update_run_info(
+        PROJECT_ID, EXPERIMENT_RUN_ID, ended_at=EXPERIMENT_RUN.ended_at
+    )
+
+    run_info_schema_mock.assert_called_once_with()
+    run_info_dump_mock.assert_called_once_with(
+        {"status": None, "ended_at": EXPERIMENT_RUN.ended_at}
+    )
+    ExperimentClient._patch_raw.assert_called_once_with(
+        "/project/{}/run/{}/info".format(PROJECT_ID, EXPERIMENT_RUN_ID),
+        json=run_info_dump_mock.return_value,
+    )
+
+
+def test_update_run_info_empty(mocker):
+    mocker.patch.object(ExperimentClient, "_patch_raw")
+
+    client = ExperimentClient(mocker.Mock())
+
+    client.update_run_info(PROJECT_ID, EXPERIMENT_RUN_ID)
+    ExperimentClient._patch_raw.assert_not_called()
