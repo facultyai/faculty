@@ -195,6 +195,8 @@ class ListExperimentRunsResponseSchema(BaseSchema):
 
 
 class CreateRunSchema(BaseSchema):
+    name = fields.String()
+    parent_run_id = fields.UUID(data_key="parentRunId")
     started_at = fields.DateTime(data_key="startedAt")
     artifact_location = fields.String(data_key="artifactLocation")
     tags = fields.Nested(TagSchema, many=True, required=True)
@@ -329,7 +331,9 @@ class ExperimentClient(BaseClient):
         self,
         project_id,
         experiment_id,
+        name,
         started_at,
+        parent_run_id=None,
         artifact_location=None,
         tags=None,
     ):
@@ -339,9 +343,12 @@ class ExperimentClient(BaseClient):
         ----------
         project_id : uuid.UUID
         experiment_id : int
+        name : str
         started_at : datetime.datetime
             Time at which the run was started. If the datetime does not have a
             timezone, it will be assumed to be in UTC.
+        parent_run_id : uuid.UUID, optional
+            The ID of the parent run, if any.
         artifact_location: str, optional
             The location of the artifact repository to use for this run.
             If omitted, the value of `artifact_location` for the experiment
@@ -360,6 +367,8 @@ class ExperimentClient(BaseClient):
         )
         payload = CreateRunSchema().dump(
             {
+                "name": name,
+                "parent_run_id": parent_run_id,
                 "started_at": started_at,
                 "artifact_location": artifact_location,
                 "tags": tags,

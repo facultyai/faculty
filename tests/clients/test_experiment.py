@@ -208,6 +208,7 @@ def test_experiment_run_schema_nullable_field(data_key, field):
     assert getattr(data, field) is None
 
 
+@pytest.mark.parametrize("parent_run_id", [None, PARENT_RUN_ID])
 @pytest.mark.parametrize(
     "started_at",
     [RUN_STARTED_AT, RUN_STARTED_AT_NO_TIMEZONE],
@@ -215,15 +216,19 @@ def test_experiment_run_schema_nullable_field(data_key, field):
 )
 @pytest.mark.parametrize("artifact_location", [None, "faculty:project-id"])
 @pytest.mark.parametrize("tags", [[], [{"key": "key", "value": "value"}]])
-def test_create_run_schema(started_at, artifact_location, tags):
+def test_create_run_schema(parent_run_id, started_at, artifact_location, tags):
     data = CreateRunSchema().dump(
         {
+            "name": EXPERIMENT_RUN_NAME,
+            "parent_run_id": parent_run_id,
             "started_at": started_at,
             "artifact_location": artifact_location,
             "tags": tags,
         }
     )
     assert data == {
+        "name": EXPERIMENT_RUN_NAME,
+        "parentRunId": None if parent_run_id is None else str(parent_run_id),
         "startedAt": RUN_STARTED_AT_STRING_PYTHON,
         "artifactLocation": artifact_location,
         "tags": tags,
@@ -406,7 +411,9 @@ def test_experiment_create_run(mocker):
     returned_run = client.create_run(
         PROJECT_ID,
         EXPERIMENT_ID,
+        EXPERIMENT_RUN_NAME,
         started_at,
+        PARENT_RUN_ID,
         artifact_location=artifact_location,
     )
     assert returned_run == EXPERIMENT_RUN
@@ -414,6 +421,8 @@ def test_experiment_create_run(mocker):
     request_schema_mock.assert_called_once_with()
     dump_mock.assert_called_once_with(
         {
+            "name": EXPERIMENT_RUN_NAME,
+            "parent_run_id": PARENT_RUN_ID,
             "started_at": started_at,
             "artifact_location": artifact_location,
             "tags": [],
