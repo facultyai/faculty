@@ -114,6 +114,11 @@ class TagSchema(BaseSchema):
         return Tag(**data)
 
 
+class LifecycleStage(Enum):
+    ACTIVE = "active"
+    DELETED = "deleted"
+
+
 class ExperimentSchema(BaseSchema):
     id = fields.Integer(data_key="experimentId", required=True)
     name = fields.String(required=True)
@@ -248,19 +253,28 @@ class ExperimentClient(BaseClient):
         )
         return self._get(endpoint, ExperimentSchema())
 
-    def list(self, project_id):
+    def list(self, project_id, lifecycle_stage=None):
         """List the experiments in a project.
 
         Parameters
         ----------
         project_id : uuid.UUID
+        lifecycle_stage : LifecycleStage, optional
+            To filter experiments in the given lifecycle stage only
+            (ACTIVE | DELETED). By default, all experiments in the
+            project are returned.
 
         Returns
         -------
         List[Experiment]
         """
+        query_params = {}
+        if lifecycle_stage is not None:
+            query_params["lifecycleStage"] = lifecycle_stage.value
         endpoint = "/project/{}/experiment".format(project_id)
-        return self._get(endpoint, ExperimentSchema(many=True))
+        return self._get(
+            endpoint, ExperimentSchema(many=True), params=query_params
+        )
 
     def update(self, project_id, experiment_id, name=None, description=None):
         """Update the name and/or description of an experiment.
