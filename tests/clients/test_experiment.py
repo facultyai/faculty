@@ -188,6 +188,11 @@ def test_experiment_schema_invalid():
         ExperimentSchema().load({})
 
 
+def test_experiment_run_schema():
+    data = ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
+    assert data == EXPERIMENT_RUN
+
+
 @pytest.mark.parametrize(
     "data_key, field",
     [
@@ -223,11 +228,6 @@ def test_create_run_schema(started_at, artifact_location, tags):
         "artifactLocation": artifact_location,
         "tags": tags,
     }
-
-
-def test_experiment_run_schema():
-    data = ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
-    assert data == EXPERIMENT_RUN
 
 
 def test_metric_schema():
