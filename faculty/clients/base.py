@@ -18,10 +18,6 @@ from marshmallow import Schema, fields, ValidationError, EXCLUDE
 from faculty.clients.auth import FacultyAuth
 
 
-class InvalidResponse(Exception):
-    pass
-
-
 class HttpError(Exception):
     def __init__(self, response, error=None, error_code=None):
         self.response = response
@@ -107,19 +103,8 @@ def _check_status(response):
 
 
 def _deserialise_response(schema, response):
-    try:
-        response_json = response.json()
-    except ValueError:
-        raise InvalidResponse("response body was not valid JSON")
-
-    try:
-        data = schema.load(response_json)
-    except ValidationError:
-        # TODO: log validation errors and possibly include them in raised
-        # exception
-        raise InvalidResponse("response content did not match expected format")
-
-    return data
+    response_json = response.json()
+    return schema.load(response_json)
 
 
 class BaseClient(object):

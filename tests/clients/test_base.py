@@ -16,7 +16,7 @@
 from collections import namedtuple
 
 import pytest
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, ValidationError
 
 from faculty.clients.base import (
     BadGateway,
@@ -29,7 +29,6 @@ from faculty.clients.base import (
     GatewayTimeout,
     HttpError,
     InternalServerError,
-    InvalidResponse,
     MethodNotAllowed,
     NotFound,
     ServiceUnavailable,
@@ -270,7 +269,7 @@ def test_invalid_json(requests_mock, session, patch_auth, http_method):
 
     client = DummyClient(session)
     method = getattr(client, "_{}".format(http_method.lower()))
-    with pytest.raises(InvalidResponse, match="not valid JSON"):
+    with pytest.raises(ValueError):
         method(MOCK_ENDPOINT, DummySchema())
 
 
@@ -286,5 +285,5 @@ def test_malformatted_json(requests_mock, session, patch_auth, http_method):
 
     client = DummyClient(session)
     method = getattr(client, "_{}".format(http_method.lower()))
-    with pytest.raises(InvalidResponse, match="not match expected format"):
+    with pytest.raises(ValidationError):
         method(MOCK_ENDPOINT, DummySchema())
