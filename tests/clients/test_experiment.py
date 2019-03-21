@@ -51,6 +51,8 @@ PROJECT_ID = uuid4()
 EXPERIMENT_ID = 661
 EXPERIMENT_RUN_ID = uuid4()
 EXPERIMENT_RUN_NUMBER = 3
+EXPERIMENT_RUN_NAME = "run name"
+PARENT_RUN_ID = uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 CREATED_AT_STRING = "2018-03-10T11:32:06.247Z"
 LAST_UPDATED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
@@ -106,6 +108,8 @@ METRIC_BODY = {
 EXPERIMENT_RUN = ExperimentRun(
     id=EXPERIMENT_RUN_ID,
     run_number=EXPERIMENT_RUN_NUMBER,
+    name=EXPERIMENT_RUN_NAME,
+    parent_run_id=PARENT_RUN_ID,
     experiment_id=EXPERIMENT.id,
     artifact_location="faculty:",
     status=ExperimentRunStatus.RUNNING,
@@ -120,6 +124,8 @@ EXPERIMENT_RUN_BODY = {
     "experimentId": EXPERIMENT.id,
     "runId": str(EXPERIMENT_RUN_ID),
     "runNumber": EXPERIMENT_RUN_NUMBER,
+    "name": EXPERIMENT_RUN_NAME,
+    "parentRunId": str(PARENT_RUN_ID),
     "artifactLocation": "faculty:",
     "status": "running",
     "startedAt": RUN_STARTED_AT_STRING_JAVA,
@@ -183,7 +189,12 @@ def test_experiment_schema_invalid():
 
 
 @pytest.mark.parametrize(
-    "data_key, field", [("endedAt", "ended_at"), ("deletedAt", "deleted_at")]
+    "data_key, field",
+    [
+        ("parentRunId", "parent_run_id"),
+        ("endedAt", "ended_at"),
+        ("deletedAt", "deleted_at"),
+    ],
 )
 def test_experiment_run_schema_nullable_field(data_key, field):
     body = EXPERIMENT_RUN_BODY.copy()

@@ -64,6 +64,8 @@ ExperimentRun = namedtuple(
         "id",
         "run_number",
         "experiment_id",
+        "name",
+        "parent_run_id",
         "artifact_location",
         "status",
         "started_at",
@@ -139,6 +141,8 @@ class ExperimentRunSchema(BaseSchema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
     experiment_id = fields.Integer(data_key="experimentId", required=True)
+    name = fields.String(required=True)
+    parent_run_id = fields.UUID(data_key="parentRunId", missing=None)
     artifact_location = fields.String(
         data_key="artifactLocation", required=True
     )
