@@ -31,6 +31,8 @@ setup(
         "pytz",
         "six",
         "enum34; python_version<'3.4'",
+        # Install marshmallow with 'reco' (recommended) extras to ensure a
+        # compatible version of python-dateutil is available
         "marshmallow[reco]==3.0.0rc3",
         "marshmallow_enum",
         "boto3",
