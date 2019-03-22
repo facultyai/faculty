@@ -495,6 +495,9 @@ class ExperimentClient(BaseClient):
         status: ExperimentRunStatus, optional
         ended_at: datetime, optional
 
+        Returns
+        -------
+        ExperimentRun
         """
         endpoint = "/project/{}/run/{}/info".format(project_id, run_id)
         payload = ExperimentRunInfoSchema().dump(
