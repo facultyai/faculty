@@ -51,6 +51,8 @@ PROJECT_ID = uuid4()
 EXPERIMENT_ID = 661
 EXPERIMENT_RUN_ID = uuid4()
 EXPERIMENT_RUN_NUMBER = 3
+EXPERIMENT_RUN_NAME = "run name"
+PARENT_RUN_ID = uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 CREATED_AT_STRING = "2018-03-10T11:32:06.247Z"
 LAST_UPDATED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
@@ -106,6 +108,8 @@ METRIC_BODY = {
 EXPERIMENT_RUN = ExperimentRun(
     id=EXPERIMENT_RUN_ID,
     run_number=EXPERIMENT_RUN_NUMBER,
+    name=EXPERIMENT_RUN_NAME,
+    parent_run_id=PARENT_RUN_ID,
     experiment_id=EXPERIMENT.id,
     artifact_location="faculty:",
     status=ExperimentRunStatus.RUNNING,
@@ -120,6 +124,8 @@ EXPERIMENT_RUN_BODY = {
     "experimentId": EXPERIMENT.id,
     "runId": str(EXPERIMENT_RUN_ID),
     "runNumber": EXPERIMENT_RUN_NUMBER,
+    "name": EXPERIMENT_RUN_NAME,
+    "parentRunId": str(PARENT_RUN_ID),
     "artifactLocation": "faculty:",
     "status": "running",
     "startedAt": RUN_STARTED_AT_STRING_JAVA,
@@ -182,8 +188,18 @@ def test_experiment_schema_invalid():
         ExperimentSchema().load({})
 
 
+def test_experiment_run_schema():
+    data = ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
+    assert data == EXPERIMENT_RUN
+
+
 @pytest.mark.parametrize(
-    "data_key, field", [("endedAt", "ended_at"), ("deletedAt", "deleted_at")]
+    "data_key, field",
+    [
+        ("parentRunId", "parent_run_id"),
+        ("endedAt", "ended_at"),
+        ("deletedAt", "deleted_at"),
+    ],
 )
 def test_experiment_run_schema_nullable_field(data_key, field):
     body = EXPERIMENT_RUN_BODY.copy()
@@ -192,6 +208,7 @@ def test_experiment_run_schema_nullable_field(data_key, field):
     assert getattr(data, field) is None
 
 
+@pytest.mark.parametrize("parent_run_id", [None, PARENT_RUN_ID])
 @pytest.mark.parametrize(
     "started_at",
     [RUN_STARTED_AT, RUN_STARTED_AT_NO_TIMEZONE],
@@ -199,24 +216,23 @@ def test_experiment_run_schema_nullable_field(data_key, field):
 )
 @pytest.mark.parametrize("artifact_location", [None, "faculty:project-id"])
 @pytest.mark.parametrize("tags", [[], [{"key": "key", "value": "value"}]])
-def test_create_run_schema(started_at, artifact_location, tags):
+def test_create_run_schema(parent_run_id, started_at, artifact_location, tags):
     data = CreateRunSchema().dump(
         {
+            "name": EXPERIMENT_RUN_NAME,
+            "parent_run_id": parent_run_id,
             "started_at": started_at,
             "artifact_location": artifact_location,
             "tags": tags,
         }
     )
     assert data == {
+        "name": EXPERIMENT_RUN_NAME,
+        "parentRunId": None if parent_run_id is None else str(parent_run_id),
         "startedAt": RUN_STARTED_AT_STRING_PYTHON,
         "artifactLocation": artifact_location,
         "tags": tags,
     }
-
-
-def test_experiment_run_schema():
-    data = ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
-    assert data == EXPERIMENT_RUN
 
 
 def test_metric_schema():
@@ -395,7 +411,9 @@ def test_experiment_create_run(mocker):
     returned_run = client.create_run(
         PROJECT_ID,
         EXPERIMENT_ID,
+        EXPERIMENT_RUN_NAME,
         started_at,
+        PARENT_RUN_ID,
         artifact_location=artifact_location,
     )
     assert returned_run == EXPERIMENT_RUN
@@ -403,6 +421,8 @@ def test_experiment_create_run(mocker):
     request_schema_mock.assert_called_once_with()
     dump_mock.assert_called_once_with(
         {
+            "name": EXPERIMENT_RUN_NAME,
+            "parent_run_id": PARENT_RUN_ID,
             "started_at": started_at,
             "artifact_location": artifact_location,
             "tags": [],
