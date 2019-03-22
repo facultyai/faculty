@@ -161,6 +161,11 @@ class ExperimentRunDataSchema(BaseSchema):
     tags = fields.List(fields.Nested(TagSchema))
 
 
+class ExperimentRunInfoSchema(BaseSchema):
+    status = EnumField(ExperimentRunStatus, by_value=True, required=True)
+    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+
+
 class PageSchema(BaseSchema):
     start = fields.Integer(required=True)
     limit = fields.Integer(required=True)
@@ -479,3 +484,23 @@ class ExperimentClient(BaseClient):
                 )
             else:
                 raise
+
+    def update_run_info(self, project_id, run_id, status=None, ended_at=None):
+        """Update the status and end time of a run.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        run_id : uuid.UUID
+        status: ExperimentRunStatus, optional
+        ended_at: datetime, optional
+
+        Returns
+        -------
+        ExperimentRun
+        """
+        endpoint = "/project/{}/run/{}/info".format(project_id, run_id)
+        payload = ExperimentRunInfoSchema().dump(
+            {"status": status, "ended_at": ended_at}
+        )
+        return self._patch(endpoint, ExperimentRunSchema(), json=payload)
