@@ -496,10 +496,8 @@ class ExperimentClient(BaseClient):
         ended_at: datetime, optional
 
         """
-        if status is None and ended_at is None:
-            return
         endpoint = "/project/{}/run/{}/info".format(project_id, run_id)
         payload = ExperimentRunInfoSchema().dump(
             {"status": status, "ended_at": ended_at}
         )
-        self._patch_raw(endpoint, json=payload)
+        return self._patch(endpoint, ExperimentRunSchema(), json=payload)
