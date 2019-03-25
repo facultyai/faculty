@@ -23,6 +23,7 @@ TEST_SECRETS = DatasetsSecrets(
     bucket="test-bucket",
     access_key="test-access-key",
     secret_key="test-secret-key",
+    region="test-region",
     verified=True,
 )
 
@@ -30,6 +31,7 @@ TEST_SECRETS_BODY = {
     "bucket": TEST_SECRETS.bucket,
     "access_key": TEST_SECRETS.access_key,
     "secret_key": TEST_SECRETS.secret_key,
+    "region": TEST_SECRETS.region,
     "verified": TEST_SECRETS.verified,
 }
 

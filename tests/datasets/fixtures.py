@@ -88,6 +88,7 @@ def _test_secrets():
         bucket=TEST_BUCKET_NAME,
         access_key=os.environ["AWS_ACCESS_KEY_ID"],
         secret_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+        region=os.environ["AWS_REGION"],
         verified=True,
     )
 
@@ -102,7 +103,7 @@ def s3_client():
         boto_session = boto3.session.Session(
             aws_access_key_id=secrets.access_key,
             aws_secret_access_key=secrets.secret_key,
-            region_name="eu-west-1",
+            region_name=secrets.region,
         )
         _S3_CLIENT_CACHE = boto_session.client("s3")
     return _S3_CLIENT_CACHE

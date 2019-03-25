@@ -87,7 +87,7 @@ class DatasetsSession(object):
         boto_session = boto3.session.Session(
             aws_access_key_id=secrets.access_key,
             aws_secret_access_key=secrets.secret_key,
-            region_name="eu-west-1",
+            region_name=secrets.region,
         )
 
         return boto_session.client("s3")
