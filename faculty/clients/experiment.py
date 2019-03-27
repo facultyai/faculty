@@ -556,3 +556,43 @@ class ExperimentClient(BaseClient):
             project_id, run_id, key
         )
         return self._get(endpoint, MetricHistorySchema())
+
+    def delete_runs(self, project_id, run_ids=None):
+        """Delete experiment runs.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        run_ids : List[uuid.UUID], optional
+            A list of run IDs to delete. If not specified, all runs in the
+            project will be deleted.
+        """
+
+        query_params = []
+        if run_ids is not None:
+            for run_id in run_ids:
+                query_params.append(("runId", str(run_id)))
+
+        endpoint = "/project/{}/run".format(project_id)
+
+        return self._delete_raw(endpoint, params=query_params)
+
+    def restore_runs(self, project_id, run_ids=None):
+        """Restore experiment runs.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        run_ids : List[uuid.UUID], optional
+            A list of run IDs to restore. If not specified, all runs in the
+            project will be restored.
+        """
+
+        query_params = []
+        if run_ids is not None:
+            for run_id in run_ids:
+                query_params.append(("runId", str(run_id)))
+
+        endpoint = "/project/{}/run/restore".format(project_id)
+
+        return self._put_raw(endpoint, params=query_params)

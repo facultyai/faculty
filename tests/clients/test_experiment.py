@@ -795,3 +795,55 @@ def test_get_metric_history(mocker):
         ),
         metric_history_schema_mock.return_value,
     )
+
+
+def test_delete_runs(mocker):
+    mocker.patch.object(ExperimentClient, "_delete_raw")
+    run_ids = [uuid4(), uuid4()]
+
+    client = ExperimentClient(mocker.Mock())
+
+    client.delete_runs(PROJECT_ID, run_ids)
+
+    ExperimentClient._delete_raw.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID),
+        params=[("runId", str(run_id)) for run_id in run_ids],
+    )
+
+
+def test_delete_runs_no_run_ids(mocker):
+    mocker.patch.object(ExperimentClient, "_delete_raw")
+
+    client = ExperimentClient(mocker.Mock())
+
+    client.delete_runs(PROJECT_ID)
+
+    ExperimentClient._delete_raw.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID), params=[]
+    )
+
+
+def test_restore_runs(mocker):
+    mocker.patch.object(ExperimentClient, "_put_raw")
+    run_ids = [uuid4(), uuid4()]
+
+    client = ExperimentClient(mocker.Mock())
+
+    client.restore_runs(PROJECT_ID, run_ids)
+
+    ExperimentClient._put_raw.assert_called_once_with(
+        "/project/{}/run/restore".format(PROJECT_ID),
+        params=[("runId", str(run_id)) for run_id in run_ids],
+    )
+
+
+def test_restore_runs_no_run_ids(mocker):
+    mocker.patch.object(ExperimentClient, "_put_raw")
+
+    client = ExperimentClient(mocker.Mock())
+
+    client.restore_runs(PROJECT_ID)
+
+    ExperimentClient._put_raw.assert_called_once_with(
+        "/project/{}/run/restore".format(PROJECT_ID), params=[]
+    )
