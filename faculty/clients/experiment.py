@@ -332,6 +332,19 @@ class ExperimentClient(BaseClient):
         )
         self._delete_raw(endpoint)
 
+    def restore(self, project_id, experiment_id):
+        """Restore a specified experiment.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        experiment_id : int
+        """
+        endpoint = "/project/{}/experiment/{}/restore".format(
+            project_id, experiment_id
+        )
+        self._put_raw(endpoint)
+
     def create_run(
         self,
         project_id,

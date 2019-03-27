@@ -395,6 +395,17 @@ def test_delete(mocker):
     )
 
 
+def test_restore(mocker):
+    mocker.patch.object(ExperimentClient, "_put_raw")
+
+    client = ExperimentClient(mocker.Mock())
+    client.restore(PROJECT_ID, EXPERIMENT_ID)
+
+    ExperimentClient._put_raw.assert_called_once_with(
+        "/project/{}/experiment/{}/restore".format(PROJECT_ID, EXPERIMENT_ID)
+    )
+
+
 def test_experiment_create_run(mocker):
     mocker.patch.object(ExperimentClient, "_post", return_value=EXPERIMENT_RUN)
     request_schema_mock = mocker.patch(
