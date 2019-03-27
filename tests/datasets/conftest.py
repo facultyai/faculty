@@ -43,6 +43,7 @@ def _test_secrets():
         bucket=TEST_BUCKET_NAME,
         access_key=os.environ["AWS_ACCESS_KEY_ID"],
         secret_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+        region=os.environ["AWS_REGION"],
         verified=True,
     )
 

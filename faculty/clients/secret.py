@@ -19,7 +19,8 @@ from marshmallow import fields, post_load
 from faculty.clients.base import BaseSchema, BaseClient
 
 DatasetsSecrets = namedtuple(
-    "DatasetsSecrets", ["bucket", "access_key", "secret_key", "verified"]
+    "DatasetsSecrets",
+    ["bucket", "access_key", "secret_key", "region", "verified"],
 )
 
 
@@ -27,6 +28,7 @@ class DatasetsSecretsSchema(BaseSchema):
     bucket = fields.String(required=True)
     access_key = fields.String(required=True)
     secret_key = fields.String(required=True)
+    region = fields.String(required=True)
     verified = fields.Boolean(required=True)
 
     @post_load
