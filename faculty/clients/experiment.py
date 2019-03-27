@@ -207,6 +207,14 @@ class CreateRunSchema(BaseSchema):
     tags = fields.Nested(TagSchema, many=True, required=True)
 
 
+class MetricHistorySchema(BaseSchema):
+    history = fields.Nested(MetricSchema, many=True, required=True)
+
+    @post_load
+    def extract_history(self, data):
+        return data["history"]
+
+
 class ExperimentClient(BaseClient):
 
     SERVICE_NAME = "atlas"
@@ -530,3 +538,21 @@ class ExperimentClient(BaseClient):
             {"status": status, "ended_at": ended_at}
         )
         return self._patch(endpoint, ExperimentRunSchema(), json=payload)
+
+    def get_metric_history(self, project_id, run_id, key):
+        """Get the history of a metric.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        run_id : uuid.UUID
+        key: string
+
+        Returns
+        -------
+        List[Metric], ordered by timestamp and value
+        """
+        endpoint = "/project/{}/run/{}/metric/{}/history".format(
+            project_id, run_id, key
+        )
+        return self._get(endpoint, MetricHistorySchema())

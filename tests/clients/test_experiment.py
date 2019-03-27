@@ -36,6 +36,7 @@ from faculty.clients.experiment import (
     ListExperimentRunsResponseSchema,
     Metric,
     MetricSchema,
+    MetricHistorySchema,
     Page,
     PageSchema,
     Pagination,
@@ -95,14 +96,37 @@ OTHER_TAG_BODY = {"key": "other-tag-key", "value": "other-tag-value"}
 PARAM = Param(key="param-key", value="param-value")
 PARAM_BODY = {"key": "param-key", "value": "param-value"}
 
+METRIC_KEY = "metric-key"
 METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
 METRIC_TIMESTAMP_STRING_JAVA = "2018-03-12T16:20:22.122Z"
 METRIC_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:22.122000+00:00"
-METRIC = Metric(key="metric-key", value=123, timestamp=METRIC_TIMESTAMP)
+METRIC = Metric(key=METRIC_KEY, value=123, timestamp=METRIC_TIMESTAMP)
 METRIC_BODY = {
-    "key": "metric-key",
+    "key": METRIC_KEY,
     "value": 123.0,
     "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+}
+
+METRIC_SECOND_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 30, 122000, tzinfo=UTC)
+METRIC_SECOND_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:30.122000+00:00"
+METRIC_SECOND_MEASURE = Metric(
+    key=METRIC_KEY, value=127, timestamp=METRIC_SECOND_TIMESTAMP
+)
+
+METRIC_HISTORY = [METRIC, METRIC_SECOND_MEASURE]
+METRIC_HISTORY_BODY = {
+    "history": [
+        {
+            "key": METRIC_KEY,
+            "value": 123.0,
+            "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+        },
+        {
+            "key": METRIC_KEY,
+            "value": 127.0,
+            "timestamp": METRIC_SECOND_TIMESTAMP_STRING_PYTHON,
+        },
+    ]
 }
 
 EXPERIMENT_RUN = ExperimentRun(
@@ -737,4 +761,37 @@ def test_update_run_info_empty(mocker):
         "/project/{}/run/{}/info".format(PROJECT_ID, EXPERIMENT_RUN_ID),
         run_schema_mock.return_value,
         json=run_info_dump_mock.return_value,
+    )
+
+
+def test_metric_history_schema():
+    data = MetricHistorySchema().load(METRIC_HISTORY_BODY)
+    assert data == METRIC_HISTORY
+
+
+def test_metric_history_schema_invalid():
+    with pytest.raises(ValidationError):
+        MetricHistorySchema().load({})
+
+
+def test_experiment_get_metric_history(mocker):
+    mocker.patch.object(ExperimentClient, "_get", return_value=METRIC_HISTORY)
+    metric_history_schema_mock = mocker.patch(
+        "faculty.clients.experiment.MetricHistorySchema"
+    )
+
+    client = ExperimentClient(mocker.Mock())
+
+    returned_metric_history = client.get_metric_history(
+        PROJECT_ID, EXPERIMENT_RUN_ID, METRIC_KEY
+    )
+    assert returned_metric_history == METRIC_HISTORY
+
+    metric_history_schema_mock.assert_called_once_with()
+
+    ExperimentClient._get.assert_called_once_with(
+        "/project/{}/run/{}/metric/{}/history".format(
+            PROJECT_ID, EXPERIMENT_RUN_ID, METRIC_KEY
+        ),
+        metric_history_schema_mock.return_value,
     )
