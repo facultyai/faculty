@@ -774,7 +774,7 @@ def test_metric_history_schema_invalid():
         MetricHistorySchema().load({})
 
 
-def test_experiment_get_metric_history(mocker):
+def test_get_metric_history(mocker):
     mocker.patch.object(ExperimentClient, "_get", return_value=METRIC_HISTORY)
     metric_history_schema_mock = mocker.patch(
         "faculty.clients.experiment.MetricHistorySchema"
