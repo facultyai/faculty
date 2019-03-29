@@ -86,6 +86,12 @@ Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
 ListExperimentRunsResponse = namedtuple(
     "ListExperimentRunsResponse", ["runs", "pagination"]
 )
+DeleteExperimentRunsResponse = namedtuple(
+    "DeleteExperimentRunsResponse", ["deleted_run_ids", "conflicted_run_ids"]
+)
+RestoreExperimentRunsResponse = namedtuple(
+    "RestoreExperimentRunsResponse", ["restored_run_ids", "conflicted_run_ids"]
+)
 
 
 class MetricSchema(BaseSchema):
@@ -205,6 +211,32 @@ class CreateRunSchema(BaseSchema):
     started_at = fields.DateTime(data_key="startedAt")
     artifact_location = fields.String(data_key="artifactLocation")
     tags = fields.Nested(TagSchema, many=True, required=True)
+
+
+class DeleteExperimentRunsResponseSchema(BaseSchema):
+    deleted_run_ids = fields.List(
+        fields.UUID(), data_key="deletedRunIds", required=True
+    )
+    conflicted_run_ids = fields.List(
+        fields.UUID(), data_key="conflictedRunIds", required=True
+    )
+
+    @post_load
+    def make_delete_runs_response(self, data):
+        return DeleteExperimentRunsResponse(**data)
+
+
+class RestoreExperimentRunsResponseSchema(BaseSchema):
+    restored_run_ids = fields.List(
+        fields.UUID(), data_key="restoredRunIds", required=True
+    )
+    conflicted_run_ids = fields.List(
+        fields.UUID(), data_key="conflictedRunIds", required=True
+    )
+
+    @post_load
+    def make_restore_runs_response(self, data):
+        return RestoreExperimentRunsResponse(**data)
 
 
 class MetricHistorySchema(BaseSchema):
@@ -556,3 +588,61 @@ class ExperimentClient(BaseClient):
             project_id, run_id, key
         )
         return self._get(endpoint, MetricHistorySchema())
+
+    def delete_runs(self, project_id, run_ids=None):
+        """Delete experiment runs.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        run_ids : List[uuid.UUID], optional
+            A list of run IDs to delete. If not specified, all runs in the
+            project will be deleted.
+
+        Returns
+        -------
+        DeleteExperimentRunsResponse
+            Containing lists of successfully deleted and conflicting (already
+            deleted) run IDs.
+        """
+
+        query_params = []
+        if run_ids is not None:
+            for run_id in run_ids:
+                query_params.append(("runId", str(run_id)))
+
+        endpoint = "/project/{}/run".format(project_id)
+
+        return self._delete(
+            endpoint, DeleteExperimentRunsResponseSchema(), params=query_params
+        )
+
+    def restore_runs(self, project_id, run_ids=None):
+        """Restore experiment runs.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        run_ids : List[uuid.UUID], optional
+            A list of run IDs to restore. If not specified, all runs in the
+            project will be restored.
+
+        Returns
+        -------
+        RestoreExperimentRunsResponse
+            Containing lists of successfully restored and conflicting (already
+            active) run IDs.
+        """
+
+        query_params = []
+        if run_ids is not None:
+            for run_id in run_ids:
+                query_params.append(("runId", str(run_id)))
+
+        endpoint = "/project/{}/run/restore".format(project_id)
+
+        return self._put(
+            endpoint,
+            RestoreExperimentRunsResponseSchema(),
+            params=query_params,
+        )

@@ -23,6 +23,8 @@ from pytz import UTC
 from faculty.clients.base import Conflict
 from faculty.clients.experiment import (
     CreateRunSchema,
+    DeleteExperimentRunsResponse,
+    DeleteExperimentRunsResponseSchema,
     Experiment,
     ExperimentClient,
     ExperimentNameConflict,
@@ -44,6 +46,8 @@ from faculty.clients.experiment import (
     Param,
     ParamConflict,
     ParamSchema,
+    RestoreExperimentRunsResponse,
+    RestoreExperimentRunsResponseSchema,
     Tag,
     TagSchema,
 )
@@ -192,6 +196,34 @@ LIST_EXPERIMENT_RUNS_RESPONSE = ListExperimentRunsResponse(
 LIST_EXPERIMENT_RUNS_RESPONSE_BODY = {
     "runs": [EXPERIMENT_RUN_BODY],
     "pagination": PAGINATION_BODY,
+}
+
+DELETE_EXPERIMENT_RUNS_RESPONSE = DeleteExperimentRunsResponse(
+    deleted_run_ids=[uuid4(), uuid4()], conflicted_run_ids=[uuid4(), uuid4()]
+)
+DELETE_EXPERIMENT_RUNS_RESPONSE_BODY = {
+    "deletedRunIds": [
+        str(run_id)
+        for run_id in DELETE_EXPERIMENT_RUNS_RESPONSE.deleted_run_ids
+    ],
+    "conflictedRunIds": [
+        str(run_id)
+        for run_id in DELETE_EXPERIMENT_RUNS_RESPONSE.conflicted_run_ids
+    ],
+}
+
+RESTORE_EXPERIMENT_RUNS_RESPONSE = RestoreExperimentRunsResponse(
+    restored_run_ids=[uuid4(), uuid4()], conflicted_run_ids=[uuid4(), uuid4()]
+)
+RESTORE_EXPERIMENT_RUNS_RESPONSE_BODY = {
+    "restoredRunIds": [
+        str(run_id)
+        for run_id in RESTORE_EXPERIMENT_RUNS_RESPONSE.restored_run_ids
+    ],
+    "conflictedRunIds": [
+        str(run_id)
+        for run_id in RESTORE_EXPERIMENT_RUNS_RESPONSE.conflicted_run_ids
+    ],
 }
 
 
@@ -513,6 +545,30 @@ def test_pagination_schema_nullable_field(field):
     assert getattr(data, field) is None
 
 
+def test_delete_experiment_runs_response_schema(mocker):
+    data = DeleteExperimentRunsResponseSchema().load(
+        DELETE_EXPERIMENT_RUNS_RESPONSE_BODY
+    )
+    assert data == DELETE_EXPERIMENT_RUNS_RESPONSE
+
+
+def test_delete_experiment_runs_response_schema_invalid(mocker):
+    with pytest.raises(ValidationError):
+        DeleteExperimentRunsResponseSchema().load({})
+
+
+def test_restore_experiment_runs_response_schema(mocker):
+    data = RestoreExperimentRunsResponseSchema().load(
+        RESTORE_EXPERIMENT_RUNS_RESPONSE_BODY
+    )
+    assert data == RESTORE_EXPERIMENT_RUNS_RESPONSE
+
+
+def test_restore_experiment_runs_response_schema_invalid(mocker):
+    with pytest.raises(ValidationError):
+        RestoreExperimentRunsResponseSchema().load({})
+
+
 def test_experiment_client_list_runs_all(mocker):
     mocker.patch.object(
         ExperimentClient, "_get", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
@@ -774,7 +830,7 @@ def test_metric_history_schema_invalid():
         MetricHistorySchema().load({})
 
 
-def test_experiment_get_metric_history(mocker):
+def test_get_metric_history(mocker):
     mocker.patch.object(ExperimentClient, "_get", return_value=METRIC_HISTORY)
     metric_history_schema_mock = mocker.patch(
         "faculty.clients.experiment.MetricHistorySchema"
@@ -794,4 +850,82 @@ def test_experiment_get_metric_history(mocker):
             PROJECT_ID, EXPERIMENT_RUN_ID, METRIC_KEY
         ),
         metric_history_schema_mock.return_value,
+    )
+
+
+def test_delete_runs(mocker):
+    mocker.patch.object(
+        ExperimentClient,
+        "_delete",
+        return_value=DELETE_EXPERIMENT_RUNS_RESPONSE,
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.DeleteExperimentRunsResponseSchema"
+    )
+    run_ids = [uuid4(), uuid4()]
+
+    client = ExperimentClient(mocker.Mock())
+    assert (
+        client.delete_runs(PROJECT_ID, run_ids)
+        == DELETE_EXPERIMENT_RUNS_RESPONSE
+    )
+
+    ExperimentClient._delete.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID),
+        schema_mock.return_value,
+        params=[("runId", str(run_id)) for run_id in run_ids],
+    )
+
+
+def test_delete_runs_no_run_ids(mocker):
+    mocker.patch.object(ExperimentClient, "_delete")
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.DeleteExperimentRunsResponseSchema"
+    )
+
+    client = ExperimentClient(mocker.Mock())
+    client.delete_runs(PROJECT_ID)
+
+    ExperimentClient._delete.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID),
+        schema_mock.return_value,
+        params=[],
+    )
+
+
+def test_restore_runs(mocker):
+    mocker.patch.object(
+        ExperimentClient, "_put", return_value=RESTORE_EXPERIMENT_RUNS_RESPONSE
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.RestoreExperimentRunsResponseSchema"
+    )
+    run_ids = [uuid4(), uuid4()]
+
+    client = ExperimentClient(mocker.Mock())
+    assert (
+        client.restore_runs(PROJECT_ID, run_ids)
+        == RESTORE_EXPERIMENT_RUNS_RESPONSE
+    )
+
+    ExperimentClient._put.assert_called_once_with(
+        "/project/{}/run/restore".format(PROJECT_ID),
+        schema_mock.return_value,
+        params=[("runId", str(run_id)) for run_id in run_ids],
+    )
+
+
+def test_restore_runs_no_run_ids(mocker):
+    mocker.patch.object(ExperimentClient, "_put")
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.RestoreExperimentRunsResponseSchema"
+    )
+
+    client = ExperimentClient(mocker.Mock())
+    client.restore_runs(PROJECT_ID)
+
+    ExperimentClient._put.assert_called_once_with(
+        "/project/{}/run/restore".format(PROJECT_ID),
+        schema_mock.return_value,
+        params=[],
     )
