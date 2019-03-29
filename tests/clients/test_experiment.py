@@ -23,6 +23,8 @@ from pytz import UTC
 from faculty.clients.base import Conflict
 from faculty.clients.experiment import (
     CreateRunSchema,
+    DeleteRunsResponse,
+    DeleteRunsResponseSchema,
     Experiment,
     ExperimentClient,
     ExperimentNameConflict,
@@ -44,6 +46,8 @@ from faculty.clients.experiment import (
     Param,
     ParamConflict,
     ParamSchema,
+    RestoreRunsResponse,
+    RestoreRunsResponseSchema,
     Tag,
     TagSchema,
 )
@@ -192,6 +196,30 @@ LIST_EXPERIMENT_RUNS_RESPONSE = ListExperimentRunsResponse(
 LIST_EXPERIMENT_RUNS_RESPONSE_BODY = {
     "runs": [EXPERIMENT_RUN_BODY],
     "pagination": PAGINATION_BODY,
+}
+
+DELETE_RUNS_RESPONSE = DeleteRunsResponse(
+    deleted_run_ids=[uuid4(), uuid4()], conflicted_run_ids=[uuid4(), uuid4()]
+)
+DELETE_RUNS_RESPONSE_BODY = {
+    "deletedRunIds": [
+        str(run_id) for run_id in DELETE_RUNS_RESPONSE.deleted_run_ids
+    ],
+    "conflictedRunIds": [
+        str(run_id) for run_id in DELETE_RUNS_RESPONSE.conflicted_run_ids
+    ],
+}
+
+RESTORE_RUNS_RESPONSE = RestoreRunsResponse(
+    restored_run_ids=[uuid4(), uuid4()], conflicted_run_ids=[uuid4(), uuid4()]
+)
+RESTORE_RUNS_RESPONSE_BODY = {
+    "restoredRunIds": [
+        str(run_id) for run_id in RESTORE_RUNS_RESPONSE.restored_run_ids
+    ],
+    "conflictedRunIds": [
+        str(run_id) for run_id in RESTORE_RUNS_RESPONSE.conflicted_run_ids
+    ],
 }
 
 
@@ -513,6 +541,27 @@ def test_pagination_schema_nullable_field(field):
     assert getattr(data, field) is None
 
 
+def test_delete_runs_response_schema(mocker):
+    print(DELETE_RUNS_RESPONSE_BODY)
+    data = DeleteRunsResponseSchema().load(DELETE_RUNS_RESPONSE_BODY)
+    assert data == DELETE_RUNS_RESPONSE
+
+
+def test_delete_runs_response_schema_invalid(mocker):
+    with pytest.raises(ValidationError):
+        DeleteRunsResponseSchema().load({})
+
+
+def test_restore_runs_response_schema(mocker):
+    data = RestoreRunsResponseSchema().load(RESTORE_RUNS_RESPONSE_BODY)
+    assert data == RESTORE_RUNS_RESPONSE
+
+
+def test_restore_runs_response_schema_invalid(mocker):
+    with pytest.raises(ValidationError):
+        RestoreRunsResponseSchema().load({})
+
+
 def test_experiment_client_list_runs_all(mocker):
     mocker.patch.object(
         ExperimentClient, "_get", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
@@ -798,52 +847,70 @@ def test_get_metric_history(mocker):
 
 
 def test_delete_runs(mocker):
-    mocker.patch.object(ExperimentClient, "_delete_raw")
+    mocker.patch.object(
+        ExperimentClient, "_delete", return_value=DELETE_RUNS_RESPONSE
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.DeleteRunsResponseSchema"
+    )
     run_ids = [uuid4(), uuid4()]
 
     client = ExperimentClient(mocker.Mock())
+    assert client.delete_runs(PROJECT_ID, run_ids) == DELETE_RUNS_RESPONSE
 
-    client.delete_runs(PROJECT_ID, run_ids)
-
-    ExperimentClient._delete_raw.assert_called_once_with(
+    ExperimentClient._delete.assert_called_once_with(
         "/project/{}/run".format(PROJECT_ID),
+        schema_mock.return_value,
         params=[("runId", str(run_id)) for run_id in run_ids],
     )
 
 
 def test_delete_runs_no_run_ids(mocker):
-    mocker.patch.object(ExperimentClient, "_delete_raw")
+    mocker.patch.object(ExperimentClient, "_delete")
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.DeleteRunsResponseSchema"
+    )
 
     client = ExperimentClient(mocker.Mock())
-
     client.delete_runs(PROJECT_ID)
 
-    ExperimentClient._delete_raw.assert_called_once_with(
-        "/project/{}/run".format(PROJECT_ID), params=[]
+    ExperimentClient._delete.assert_called_once_with(
+        "/project/{}/run".format(PROJECT_ID),
+        schema_mock.return_value,
+        params=[],
     )
 
 
 def test_restore_runs(mocker):
-    mocker.patch.object(ExperimentClient, "_put_raw")
+    mocker.patch.object(
+        ExperimentClient, "_put", return_value=RESTORE_RUNS_RESPONSE
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.RestoreRunsResponseSchema"
+    )
     run_ids = [uuid4(), uuid4()]
 
     client = ExperimentClient(mocker.Mock())
+    assert client.restore_runs(PROJECT_ID, run_ids) == RESTORE_RUNS_RESPONSE
 
-    client.restore_runs(PROJECT_ID, run_ids)
-
-    ExperimentClient._put_raw.assert_called_once_with(
+    ExperimentClient._put.assert_called_once_with(
         "/project/{}/run/restore".format(PROJECT_ID),
+        schema_mock.return_value,
         params=[("runId", str(run_id)) for run_id in run_ids],
     )
 
 
 def test_restore_runs_no_run_ids(mocker):
-    mocker.patch.object(ExperimentClient, "_put_raw")
+    mocker.patch.object(ExperimentClient, "_put")
+    schema_mock = mocker.patch(
+        "faculty.clients.experiment.RestoreRunsResponseSchema"
+    )
 
     client = ExperimentClient(mocker.Mock())
-
     client.restore_runs(PROJECT_ID)
 
-    ExperimentClient._put_raw.assert_called_once_with(
-        "/project/{}/run/restore".format(PROJECT_ID), params=[]
+    ExperimentClient._put.assert_called_once_with(
+        "/project/{}/run/restore".format(PROJECT_ID),
+        schema_mock.return_value,
+        params=[],
     )
