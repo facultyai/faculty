@@ -86,11 +86,11 @@ Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
 ListExperimentRunsResponse = namedtuple(
     "ListExperimentRunsResponse", ["runs", "pagination"]
 )
-DeleteRunsResponse = namedtuple(
-    "DeleteRunsResponse", ["deleted_run_ids", "conflicted_run_ids"]
+DeleteExperimentRunsResponse = namedtuple(
+    "DeleteExperimentRunsResponse", ["deleted_run_ids", "conflicted_run_ids"]
 )
-RestoreRunsResponse = namedtuple(
-    "RestoreRunsResponse", ["restored_run_ids", "conflicted_run_ids"]
+RestoreExperimentRunsResponse = namedtuple(
+    "RestoreExperimentRunsResponse", ["restored_run_ids", "conflicted_run_ids"]
 )
 
 
@@ -213,7 +213,7 @@ class CreateRunSchema(BaseSchema):
     tags = fields.Nested(TagSchema, many=True, required=True)
 
 
-class DeleteRunsResponseSchema(BaseSchema):
+class DeleteExperimentRunsResponseSchema(BaseSchema):
     deleted_run_ids = fields.List(
         fields.UUID(), data_key="deletedRunIds", required=True
     )
@@ -223,10 +223,10 @@ class DeleteRunsResponseSchema(BaseSchema):
 
     @post_load
     def make_delete_runs_response(self, data):
-        return DeleteRunsResponse(**data)
+        return DeleteExperimentRunsResponse(**data)
 
 
-class RestoreRunsResponseSchema(BaseSchema):
+class RestoreExperimentRunsResponseSchema(BaseSchema):
     restored_run_ids = fields.List(
         fields.UUID(), data_key="restoredRunIds", required=True
     )
@@ -236,7 +236,7 @@ class RestoreRunsResponseSchema(BaseSchema):
 
     @post_load
     def make_restore_runs_response(self, data):
-        return RestoreRunsResponse(**data)
+        return RestoreExperimentRunsResponse(**data)
 
 
 class MetricHistorySchema(BaseSchema):
@@ -601,7 +601,7 @@ class ExperimentClient(BaseClient):
 
         Returns
         -------
-        DeleteRunsResponse
+        DeleteExperimentRunsResponse
             Containing lists of successfully deleted and conflicting (already
             deleted) run IDs.
         """
@@ -614,7 +614,7 @@ class ExperimentClient(BaseClient):
         endpoint = "/project/{}/run".format(project_id)
 
         return self._delete(
-            endpoint, DeleteRunsResponseSchema(), params=query_params
+            endpoint, DeleteExperimentRunsResponseSchema(), params=query_params
         )
 
     def restore_runs(self, project_id, run_ids=None):
@@ -629,7 +629,7 @@ class ExperimentClient(BaseClient):
 
         Returns
         -------
-        RestoreRunsResponse
+        RestoreExperimentRunsResponse
             Containing lists of successfully restored and conflicting (already
             active) run IDs.
         """
@@ -642,5 +642,7 @@ class ExperimentClient(BaseClient):
         endpoint = "/project/{}/run/restore".format(project_id)
 
         return self._put(
-            endpoint, RestoreRunsResponseSchema(), params=query_params
+            endpoint,
+            RestoreExperimentRunsResponseSchema(),
+            params=query_params,
         )
