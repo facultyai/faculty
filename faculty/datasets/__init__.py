@@ -231,7 +231,7 @@ def _create_parent_directories(project_path, project_id, s3_client):
             bucket_path = path.projectpath_to_bucketpath(dirname, project_id)
             # Directories on S3 are empty objects with trailing '/' on the key
             s3_client.put_object(
-                Bucket=bucket, Key=bucket_path, ServerSideEncryption="AES256"
+                Bucket=bucket, Key=bucket_path
             )
 
 
@@ -252,7 +252,6 @@ def _put_file(local_path, project_path, project_id, s3_client):
         local_path,
         bucket,
         bucket_path,
-        ExtraArgs={"ServerSideEncryption": "AES256"},
     )
 
 
@@ -265,7 +264,7 @@ def _put_directory(local_path, project_path, project_id, s3_client):
     if not bucket_path.endswith("/"):
         bucket_path += "/"
     s3_client.put_object(
-        Bucket=bucket, Key=bucket_path, ServerSideEncryption="AES256"
+        Bucket=bucket, Key=bucket_path
     )
 
     # Recursively put the contents of the directory
@@ -453,7 +452,6 @@ def cp(source_path, destination_path, project_id=None, s3_client=None):
         copy_source,
         bucket,
         destination_bucket_path,
-        ExtraArgs={"ServerSideEncryption": "AES256"},
     )
 
 
