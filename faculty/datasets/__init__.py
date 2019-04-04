@@ -230,9 +230,7 @@ def _create_parent_directories(project_path, project_id, s3_client):
         if dirname not in all_objects:
             bucket_path = path.projectpath_to_bucketpath(dirname, project_id)
             # Directories on S3 are empty objects with trailing '/' on the key
-            s3_client.put_object(
-                Bucket=bucket, Key=bucket_path
-            )
+            s3_client.put_object(Bucket=bucket, Key=bucket_path)
 
 
 def _put_file(local_path, project_path, project_id, s3_client):
@@ -248,11 +246,7 @@ def _put_file(local_path, project_path, project_id, s3_client):
         ).format(repr(project_path), repr(local_path))
         raise DatasetsError(msg)
 
-    s3_client.upload_file(
-        local_path,
-        bucket,
-        bucket_path,
-    )
+    s3_client.upload_file(local_path, bucket, bucket_path)
 
 
 def _put_directory(local_path, project_path, project_id, s3_client):
@@ -263,9 +257,7 @@ def _put_directory(local_path, project_path, project_id, s3_client):
     # Directories on S3 are empty objects with trailing '/' on the key
     if not bucket_path.endswith("/"):
         bucket_path += "/"
-    s3_client.put_object(
-        Bucket=bucket, Key=bucket_path
-    )
+    s3_client.put_object(Bucket=bucket, Key=bucket_path)
 
     # Recursively put the contents of the directory
     for entry in os.listdir(local_path):
@@ -448,11 +440,7 @@ def cp(source_path, destination_path, project_id=None, s3_client=None):
     )
 
     copy_source = {"Bucket": bucket, "Key": source_bucket_path}
-    s3_client.copy(
-        copy_source,
-        bucket,
-        destination_bucket_path,
-    )
+    s3_client.copy(copy_source, bucket, destination_bucket_path)
 
 
 def rm(project_path, project_id=None, s3_client=None):
