@@ -28,6 +28,7 @@ from faculty.clients.experiment import (
     Experiment,
     ExperimentClient,
     ExperimentNameConflict,
+    ExperimentNotActiveConflict,
     ExperimentRun,
     ExperimentRunDataSchema,
     ExperimentRunSchema,
@@ -676,6 +677,21 @@ def test_log_run_data_param_conflict(mocker):
     client = ExperimentClient(mocker.Mock())
 
     with pytest.raises(ParamConflict, match=message):
+        client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
+
+
+def test_log_run_data_experiment_not_active_conflict(mocker):
+    message = "experiment not active"
+    error_code = "experiment_not_active"
+    response_mock = mocker.Mock()
+    response_mock.json.return_value = {"experimentId": "test-id"}
+    exception = Conflict(response_mock, message, error_code)
+
+    mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
+
+    client = ExperimentClient(mocker.Mock())
+
+    with pytest.raises(ExperimentNotActiveConflict, match=message):
         client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
 
 

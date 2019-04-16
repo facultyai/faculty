@@ -37,6 +37,12 @@ class ParamConflict(Exception):
             self.conflicting_params = conflicting_params
 
 
+class ExperimentNotActiveConflict(Exception):
+    def __init__(self, message, experiment_id):
+        super(ExperimentNotActiveConflict, self).__init__(message)
+        self.experiment_id = experiment_id
+
+
 class ExperimentRunStatus(Enum):
     RUNNING = "running"
     FINISHED = "finished"
@@ -534,6 +540,9 @@ class ExperimentClient(BaseClient):
         ParamConflict
             When a provided param already exists and has a different value than
             was specified.
+        ExperimentNotActiveConflict
+            When the run that is being updated refers to an experiment that is
+            deleted or does not exist
         """
         if all([kwarg is None for kwarg in [metrics, params, tags]]):
             return
@@ -547,6 +556,10 @@ class ExperimentClient(BaseClient):
             if err.error_code == "conflicting_params":
                 raise ParamConflict(
                     err.error, err.response.json()["parameterKeys"]
+                )
+            elif err.error_code == "experiment_not_active":
+                raise ExperimentNotActiveConflict(
+                    err.error, err.response.json()["experimentId"]
                 )
             else:
                 raise
