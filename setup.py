@@ -19,7 +19,7 @@ from setuptools import setup, find_packages
 setup(
     name="faculty",
     description="Python library for interacting with the Faculty platform.",
-    url="https://sherlockml.com",
+    url="https://faculty.ai/products-services/platform/",
     author="Faculty",
     author_email="opensource@faculty.ai",
     license="Apache Software License",
