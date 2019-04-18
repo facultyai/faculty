@@ -535,7 +535,7 @@ class ExperimentClient(BaseClient):
             When a provided param already exists and has a different value than
             was specified.
         """
-        if all([kwarg is None for kwarg in [metrics, params, tags]]):
+        if all(kwarg is None for kwarg in [metrics, params, tags]):
             return
         endpoint = "/project/{}/run/{}/data".format(project_id, run_id)
         payload = ExperimentRunDataSchema().dump(
