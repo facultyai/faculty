@@ -422,6 +422,12 @@ class ExperimentClient(BaseClient):
         Returns
         -------
         ExperimentRun
+
+        Raises
+        ------
+        ExperimentNotActiveConflict
+            When the run that is being updated refers to an experiment that is
+            deleted or does not exist
         """
         if tags is None:
             tags = []
@@ -438,7 +444,19 @@ class ExperimentClient(BaseClient):
                 "tags": tags,
             }
         )
-        return self._post(endpoint, ExperimentRunSchema(), json=payload)
+        try:
+            return self._post(endpoint, ExperimentRunSchema(), json=payload)
+        except Conflict as err:
+            if err.error_code == "conflicting_params":
+                raise ParamConflict(
+                    err.error, err.response.json()["parameterKeys"]
+                )
+            elif err.error_code == "experiment_not_active":
+                raise ExperimentNotActiveConflict(
+                    err.error, err.response.json()["experimentId"]
+                )
+            else:
+                raise
 
     def get_run(self, project_id, run_id):
         """Get a specified experiment run.
@@ -540,9 +558,6 @@ class ExperimentClient(BaseClient):
         ParamConflict
             When a provided param already exists and has a different value than
             was specified.
-        ExperimentNotActiveConflict
-            When the run that is being updated refers to an experiment that is
-            deleted or does not exist
         """
         if all([kwarg is None for kwarg in [metrics, params, tags]]):
             return

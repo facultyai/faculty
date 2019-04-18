@@ -504,6 +504,30 @@ def test_experiment_create_run(mocker):
     )
 
 
+def test_experiment_create_run_experiment_not_active_conflict(mocker):
+    message = "experiment not active"
+    error_code = "experiment_not_active"
+    response_mock = mocker.Mock()
+    response_mock.json.return_value = {"experimentId": "test-id"}
+    exception = Conflict(response_mock, message, error_code)
+
+    mocker.patch.object(ExperimentClient, "_post", side_effect=exception)
+    started_at = mocker.Mock()
+    artifact_location = mocker.Mock()
+
+    client = ExperimentClient(mocker.Mock())
+    with pytest.raises(ExperimentNotActiveConflict, match=message):
+        # client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
+        client.create_run(
+            PROJECT_ID,
+            EXPERIMENT_ID,
+            EXPERIMENT_RUN_NAME,
+            started_at,
+            PARENT_RUN_ID,
+            artifact_location=artifact_location,
+        )
+
+
 def test_experiment_client_get_run(mocker):
     mocker.patch.object(ExperimentClient, "_get", return_value=EXPERIMENT_RUN)
     schema_mock = mocker.patch(
@@ -677,21 +701,6 @@ def test_log_run_data_param_conflict(mocker):
     client = ExperimentClient(mocker.Mock())
 
     with pytest.raises(ParamConflict, match=message):
-        client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
-
-
-def test_log_run_data_experiment_not_active_conflict(mocker):
-    message = "experiment not active"
-    error_code = "experiment_not_active"
-    response_mock = mocker.Mock()
-    response_mock.json.return_value = {"experimentId": "test-id"}
-    exception = Conflict(response_mock, message, error_code)
-
-    mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
-
-    client = ExperimentClient(mocker.Mock())
-
-    with pytest.raises(ExperimentNotActiveConflict, match=message):
         client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
 
 
