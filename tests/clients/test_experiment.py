@@ -28,7 +28,7 @@ from faculty.clients.experiment import (
     Experiment,
     ExperimentClient,
     ExperimentNameConflict,
-    ExperimentNotActiveConflict,
+    ExperimentDeleted,
     ExperimentRun,
     ExperimentRunDataSchema,
     ExperimentRunSchema,
@@ -504,9 +504,9 @@ def test_experiment_create_run(mocker):
     )
 
 
-def test_experiment_create_run_experiment_not_active_conflict(mocker):
-    message = "experiment not active"
-    error_code = "experiment_not_active"
+def test_experiment_create_run_experiment_deleted_conflict(mocker):
+    message = "experiment deleted"
+    error_code = "experiment_deleted"
     response_mock = mocker.Mock()
     response_mock.json.return_value = {"experimentId": "test-id"}
     exception = Conflict(response_mock, message, error_code)
@@ -516,8 +516,7 @@ def test_experiment_create_run_experiment_not_active_conflict(mocker):
     artifact_location = mocker.Mock()
 
     client = ExperimentClient(mocker.Mock())
-    with pytest.raises(ExperimentNotActiveConflict, match=message):
-        # client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID, params=[PARAM])
+    with pytest.raises(ExperimentDeleted, match=message):
         client.create_run(
             PROJECT_ID,
             EXPERIMENT_ID,
