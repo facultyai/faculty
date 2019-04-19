@@ -213,7 +213,9 @@ class EnvironmentCreationResponseSchema(BaseSchema):
 
     @post_load
     def make_environment(self, data):
-        return Environment(**data, created_at=None, updated_at=None)
+        data["created_at"] = None
+        data["updated_at"] = None
+        return Environment(**data)
 
 
 class DummySchema(BaseSchema):
