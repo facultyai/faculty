@@ -16,7 +16,7 @@
 from collections import namedtuple
 from enum import Enum
 
-from marshmallow import fields, post_dump, post_load
+from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseClient, BaseSchema
