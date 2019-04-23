@@ -426,8 +426,8 @@ class ExperimentClient(BaseClient):
         Raises
         ------
         ExperimentDeleted
-            When the run that is being created refers to an experiment that is
-            deleted or does not exist
+            When the run that is being updated refers to an
+            experiment that is deleted
         """
         if tags is None:
             tags = []
