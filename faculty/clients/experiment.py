@@ -37,6 +37,12 @@ class ParamConflict(Exception):
             self.conflicting_params = conflicting_params
 
 
+class ExperimentDeleted(Exception):
+    def __init__(self, message, experiment_id):
+        super(ExperimentDeleted, self).__init__(message)
+        self.experiment_id = experiment_id
+
+
 class ExperimentRunStatus(Enum):
     RUNNING = "running"
     FINISHED = "finished"
@@ -416,6 +422,12 @@ class ExperimentClient(BaseClient):
         Returns
         -------
         ExperimentRun
+
+        Raises
+        ------
+        ExperimentDeleted
+            When the run that is being updated refers to an experiment that is
+            deleted
         """
         if tags is None:
             tags = []
@@ -432,7 +444,15 @@ class ExperimentClient(BaseClient):
                 "tags": tags,
             }
         )
-        return self._post(endpoint, ExperimentRunSchema(), json=payload)
+        try:
+            return self._post(endpoint, ExperimentRunSchema(), json=payload)
+        except Conflict as err:
+            if err.error_code == "experiment_deleted":
+                raise ExperimentDeleted(
+                    err.error, err.response.json()["experimentId"]
+                )
+            else:
+                raise
 
     def get_run(self, project_id, run_id):
         """Get a specified experiment run.

@@ -28,6 +28,7 @@ from faculty.clients.experiment import (
     Experiment,
     ExperimentClient,
     ExperimentNameConflict,
+    ExperimentDeleted,
     ExperimentRun,
     ExperimentRunDataSchema,
     ExperimentRunSchema,
@@ -501,6 +502,29 @@ def test_experiment_create_run(mocker):
         response_schema_mock.return_value,
         json=dump_mock.return_value,
     )
+
+
+def test_experiment_create_run_experiment_deleted_conflict(mocker):
+    message = "experiment deleted"
+    error_code = "experiment_deleted"
+    response_mock = mocker.Mock()
+    response_mock.json.return_value = {"experimentId": 42}
+    exception = Conflict(response_mock, message, error_code)
+
+    mocker.patch.object(ExperimentClient, "_post", side_effect=exception)
+    started_at = mocker.Mock()
+    artifact_location = mocker.Mock()
+
+    client = ExperimentClient(mocker.Mock())
+    with pytest.raises(ExperimentDeleted, match=message):
+        client.create_run(
+            PROJECT_ID,
+            EXPERIMENT_ID,
+            EXPERIMENT_RUN_NAME,
+            started_at,
+            PARENT_RUN_ID,
+            artifact_location=artifact_location,
+        )
 
 
 def test_experiment_client_get_run(mocker):
