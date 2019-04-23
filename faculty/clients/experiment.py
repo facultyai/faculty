@@ -447,11 +447,7 @@ class ExperimentClient(BaseClient):
         try:
             return self._post(endpoint, ExperimentRunSchema(), json=payload)
         except Conflict as err:
-            if err.error_code == "conflicting_params":
-                raise ParamConflict(
-                    err.error, err.response.json()["parameterKeys"]
-                )
-            elif err.error_code == "experiment_deleted":
+            if err.error_code == "experiment_deleted":
                 raise ExperimentDeleted(
                     err.error, err.response.json()["experimentId"]
                 )

@@ -508,7 +508,7 @@ def test_experiment_create_run_experiment_deleted_conflict(mocker):
     message = "experiment deleted"
     error_code = "experiment_deleted"
     response_mock = mocker.Mock()
-    response_mock.json.return_value = {"experimentId": "test-id"}
+    response_mock.json.return_value = {"experimentId": 42}
     exception = Conflict(response_mock, message, error_code)
 
     mocker.patch.object(ExperimentClient, "_post", side_effect=exception)
