@@ -123,7 +123,7 @@ class PythonPackageSchema(BaseSchema):
 
 class PipSchema(BaseSchema):
     extra_index_urls = fields.List(
-        fields.String(), data_key="extraIndexUrls", required=True, many=True
+        fields.String(), data_key="extraIndexUrls", required=True
     )
     packages = fields.List(fields.Nested(PythonPackageSchema()), required=True)
 
