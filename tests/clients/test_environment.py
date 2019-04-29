@@ -72,13 +72,16 @@ PYTHON_PACKAGE_BODY_LATEST = {
     "version": VERSION_BODY_LATEST,
 }
 
-PIP = Pip(extra_index_urls=["Some URL"], packages=[PYTHON_PACKAGE])
+PIP = Pip(extra_index_urls=["http://example.com/"], packages=[PYTHON_PACKAGE])
 
-PIP_BODY = {"extraIndexUrls": ["Some URL"], "packages": [PYTHON_PACKAGE_BODY]}
+PIP_BODY = {
+    "extraIndexUrls": ["http://example.com/"],
+    "packages": [PYTHON_PACKAGE_BODY],
+}
 
-CONDA_BODY = {"channels": ["Some channel"], "packages": [PYTHON_PACKAGE_BODY]}
+CONDA_BODY = {"channels": ["conda-forge"], "packages": [PYTHON_PACKAGE_BODY]}
 
-CONDA = Conda(channels=["Some channel"], packages=[PYTHON_PACKAGE])
+CONDA = Conda(channels=["conda-forge"], packages=[PYTHON_PACKAGE])
 
 PYTHON_SPECIFICATION_BODY = {"pip": PIP_BODY, "conda": CONDA_BODY}
 
