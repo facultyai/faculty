@@ -53,6 +53,11 @@ from faculty.clients.environment import (
 VERSION = Version(constraint=Constraint.EQUAL, identifier="1.0.0")
 VERSION_LATEST = "latest"
 
+INVALID_VERSION = Version(
+    constraint=Constraint.EQUAL, identifier="not_semantic"
+)
+INVALID_VERSION_BODY = {"constraint": "==", "identifier": "not_semantic"}
+
 VERSION_BODY = {"constraint": "==", "identifier": "1.0.0"}
 VERSION_BODY_LATEST = "latest"
 
@@ -153,6 +158,14 @@ ENVIRONMENT_CREATION_RESPONSE_BODY = {
 def test_version_schema():
     data = VersionSchema().load(VERSION_BODY)
     assert data == VERSION
+
+
+def test_version_invalid():
+    with pytest.raises(ValidationError):
+        VersionSchema().load(INVALID_VERSION_BODY)
+
+    with pytest.raises(ValidationError):
+        VersionSchema().dump(INVALID_VERSION)
 
 
 def test_python_package_schema():

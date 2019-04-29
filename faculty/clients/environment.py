@@ -13,10 +13,17 @@
 # limitations under the License.
 
 
+import re
 from collections import namedtuple
 from enum import Enum
 
-from marshmallow import fields, post_load
+from marshmallow import (
+    ValidationError,
+    fields,
+    post_load,
+    validates_schema,
+    post_dump,
+)
 from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseClient, BaseSchema
@@ -67,10 +74,20 @@ EnvironmentUpdate = namedtuple(
     "EnvironmentUpdate", ["name", "description", "specification"]
 )
 
+VERSION_REGEX = re.compile(
+    r"^(?:\d+\!)?\d+(?:\.\d+)*(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?$"
+)
+
 
 class VersionSchema(BaseSchema):
     constraint = EnumField(Constraint, by_value=True, required=True)
     identifier = fields.String(required=True)
+
+    @validates_schema
+    @post_dump
+    def validate_version_format(self, data):
+        if not VERSION_REGEX.match(data["identifier"]):
+            raise ValidationError("Invalid version format", "identifier")
 
     @post_load
     def make_version(self, data):
