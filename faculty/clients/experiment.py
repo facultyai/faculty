@@ -617,7 +617,8 @@ class ExperimentClient(BaseClient):
         project_id : uuid.UUID
         run_ids : List[uuid.UUID], optional
             A list of run IDs to delete. If not specified, all runs in the
-            project will be deleted.
+            project will be deleted. If an empty list is passed, no runs
+            will be deleted.
 
         Returns
         -------
@@ -625,16 +626,26 @@ class ExperimentClient(BaseClient):
             Containing lists of successfully deleted and conflicting (already
             deleted) run IDs.
         """
+        endpoint = "/project/{}/run/delete/query".format(project_id)
 
-        query_params = []
+        payload = {}
         if run_ids is not None:
-            for run_id in run_ids:
-                query_params.append(("runId", str(run_id)))
+            if len(run_ids) == 0:
+                return DeleteExperimentRunsResponse(
+                    deleted_run_ids=[], conflicted_run_ids=[]
+                )
+            payload = {
+                "filter": {
+                    "operator": "or",
+                    "conditions": [
+                        {"by": "runId", "operator": "eq", "value": str(run_id)}
+                        for run_id in run_ids
+                    ],
+                }
+            }
 
-        endpoint = "/project/{}/run".format(project_id)
-
-        return self._delete(
-            endpoint, DeleteExperimentRunsResponseSchema(), params=query_params
+        return self._post(
+            endpoint, DeleteExperimentRunsResponseSchema(), json=payload
         )
 
     def restore_runs(self, project_id, run_ids=None):

@@ -879,9 +879,7 @@ def test_get_metric_history(mocker):
 
 def test_delete_runs(mocker):
     mocker.patch.object(
-        ExperimentClient,
-        "_delete",
-        return_value=DELETE_EXPERIMENT_RUNS_RESPONSE,
+        ExperimentClient, "_post", return_value=DELETE_EXPERIMENT_RUNS_RESPONSE
     )
     schema_mock = mocker.patch(
         "faculty.clients.experiment.DeleteExperimentRunsResponseSchema"
@@ -894,15 +892,25 @@ def test_delete_runs(mocker):
         == DELETE_EXPERIMENT_RUNS_RESPONSE
     )
 
-    ExperimentClient._delete.assert_called_once_with(
-        "/project/{}/run".format(PROJECT_ID),
+    expected_payload = {
+        "filter": {
+            "operator": "or",
+            "conditions": [
+                {"by": "runId", "operator": "eq", "value": str(run_ids[0])},
+                {"by": "runId", "operator": "eq", "value": str(run_ids[1])},
+            ],
+        }
+    }
+
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/run/delete/query".format(PROJECT_ID),
         schema_mock.return_value,
-        params=[("runId", str(run_id)) for run_id in run_ids],
+        json=expected_payload,
     )
 
 
 def test_delete_runs_no_run_ids(mocker):
-    mocker.patch.object(ExperimentClient, "_delete")
+    mocker.patch.object(ExperimentClient, "_post")
     schema_mock = mocker.patch(
         "faculty.clients.experiment.DeleteExperimentRunsResponseSchema"
     )
@@ -910,10 +918,20 @@ def test_delete_runs_no_run_ids(mocker):
     client = ExperimentClient(mocker.Mock())
     client.delete_runs(PROJECT_ID)
 
-    ExperimentClient._delete.assert_called_once_with(
-        "/project/{}/run".format(PROJECT_ID),
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/run/delete/query".format(PROJECT_ID),
         schema_mock.return_value,
-        params=[],
+        json={},
+    )
+
+
+def test_delete_runs_empty_list(mocker):
+    client = ExperimentClient(mocker.Mock())
+
+    assert client.delete_runs(
+        PROJECT_ID, run_ids=[]
+    ) == DeleteExperimentRunsResponse(
+        deleted_run_ids=[], conflicted_run_ids=[]
     )
 
 
