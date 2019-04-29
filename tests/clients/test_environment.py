@@ -160,12 +160,16 @@ def test_version_invalid():
         VersionSchema().dump(INVALID_VERSION)
 
 
-def test_python_package_schema():
-    data = PythonPackageSchema().load(PYTHON_PACKAGE_BODY)
-    assert data == PYTHON_PACKAGE
-
-    data = PythonPackageSchema().load(PYTHON_PACKAGE_BODY_LATEST)
-    assert data == PYTHON_PACKAGE_LATEST
+@pytest.mark.parametrize(
+    "body, expected",
+    [
+        (PYTHON_PACKAGE_BODY, PYTHON_PACKAGE),
+        (PYTHON_PACKAGE_BODY_LATEST, PYTHON_PACKAGE_LATEST),
+    ],
+)
+def test_python_package_schema(body, expected):
+    data = PythonPackageSchema().load(body)
+    assert data == expected
 
 
 def test_pip_schema():
