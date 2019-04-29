@@ -29,8 +29,8 @@ from faculty.clients.environment import (
     Constraint,
     Environment,
     EnvironmentClient,
-    EnvironmentCreationResponseSchema,
     EnvironmentCreationResponse,
+    EnvironmentCreationResponseSchema,
     EnvironmentSchema,
     EnvironmentUpdate,
     EnvironmentUpdateSchema,
@@ -44,68 +44,62 @@ from faculty.clients.environment import (
     PythonSpecificationSchema,
     Script,
     ScriptSchema,
-    VersionSchema,
     Specification,
     SpecificationSchema,
     Version,
+    VersionSchema,
 )
 
+VERSION_BODY = {"constraint": "==", "identifier": "1.0.0"}
 VERSION = Version(constraint=Constraint.EQUAL, identifier="1.0.0")
+
+VERSION_BODY_LATEST = "latest"
 VERSION_LATEST = "latest"
 
+INVALID_VERSION_BODY = {"constraint": "==", "identifier": "not_semantic"}
 INVALID_VERSION = Version(
     constraint=Constraint.EQUAL, identifier="not_semantic"
 )
-INVALID_VERSION_BODY = {"constraint": "==", "identifier": "not_semantic"}
 
-VERSION_BODY = {"constraint": "==", "identifier": "1.0.0"}
-VERSION_BODY_LATEST = "latest"
-
-PYTHON_PACKAGE = PythonPackage(name="tensorflow", version=VERSION)
 PYTHON_PACKAGE_BODY = {"name": "tensorflow", "version": VERSION_BODY}
+PYTHON_PACKAGE = PythonPackage(name="tensorflow", version=VERSION)
 
-PYTHON_PACKAGE_LATEST = PythonPackage(
-    name="tensorflow", version=VERSION_LATEST
-)
 PYTHON_PACKAGE_BODY_LATEST = {
     "name": "tensorflow",
     "version": VERSION_BODY_LATEST,
 }
+PYTHON_PACKAGE_LATEST = PythonPackage(
+    name="tensorflow", version=VERSION_LATEST
+)
 
-PIP = Pip(extra_index_urls=["http://example.com/"], packages=[PYTHON_PACKAGE])
 
 PIP_BODY = {
     "extraIndexUrls": ["http://example.com/"],
     "packages": [PYTHON_PACKAGE_BODY],
 }
+PIP = Pip(extra_index_urls=["http://example.com/"], packages=[PYTHON_PACKAGE])
+
 
 CONDA_BODY = {"channels": ["conda-forge"], "packages": [PYTHON_PACKAGE_BODY]}
-
 CONDA = Conda(channels=["conda-forge"], packages=[PYTHON_PACKAGE])
 
 PYTHON_SPECIFICATION_BODY = {"pip": PIP_BODY, "conda": CONDA_BODY}
-
 PYTHON_SPECIFICATION = PythonSpecification(conda=CONDA, pip=PIP)
 
 APT_PACKAGE_BODY = {"name": "cuda"}
-
 APT_PACKAGE = AptPackage(name="cuda")
 
 APT_BODY = {"packages": [APT_PACKAGE_BODY]}
-
 APT = Apt(packages=[APT_PACKAGE])
 
 PYTHON_BODY = {
     "Python2": PYTHON_SPECIFICATION_BODY,
     "Python3": PYTHON_SPECIFICATION_BODY,
 }
-
 PYTHON = Python(python2=PYTHON_SPECIFICATION, python3=PYTHON_SPECIFICATION)
 
 SCRIPT_STR = "# Edit your script\n"
-
 SCRIPT_BODY = {"script": SCRIPT_STR}
-
 SCRIPT = Script(script=SCRIPT_STR)
 
 SPECIFICATION_BODY = {
@@ -113,7 +107,6 @@ SPECIFICATION_BODY = {
     "bash": [SCRIPT_BODY],
     "python": PYTHON_BODY,
 }
-
 SPECIFICATION = Specification(apt=APT, bash=[SCRIPT], python=PYTHON)
 
 ENVIRONMENT_UPDATE_BODY = {
@@ -121,41 +114,37 @@ ENVIRONMENT_UPDATE_BODY = {
     "description": "A test environment",
     "specification": SPECIFICATION_BODY,
 }
-
 ENVIRONMENT_UPDATE = EnvironmentUpdate(
     name="Test", description="A test environment", specification=SPECIFICATION
 )
 
 PROJECT_ID = uuid.uuid4()
 ENVIRONMENT_ID = uuid.uuid4()
+AUTHOR_ID = uuid.uuid4()
 
+ENVIRONMENT_BODY = {
+    "environmentId": str(ENVIRONMENT_ID),
+    "projectId": str(PROJECT_ID),
+    "name": "Test environment",
+    "description": "Environment description",
+    "authorId": str(AUTHOR_ID),
+    "createdAt": "2018-10-03T04:20:00Z",
+    "updatedAt": "2018-11-03T04:21:15Z",
+    "specification": SPECIFICATION_BODY,
+}
 ENVIRONMENT = Environment(
     id=ENVIRONMENT_ID,
     project_id=PROJECT_ID,
-    name="Test Environment",
+    name="Test environment",
     description="Environment description",
-    author_id=uuid.uuid4(),
+    author_id=AUTHOR_ID,
     created_at=datetime.datetime(2018, 10, 3, 4, 20, 0, 0, tzinfo=UTC),
     updated_at=datetime.datetime(2018, 11, 3, 4, 21, 15, 0, tzinfo=UTC),
     specification=SPECIFICATION,
 )
 
-ENVIRONMENT_BODY = {
-    "environmentId": str(ENVIRONMENT.id),
-    "projectId": str(PROJECT_ID),
-    "name": ENVIRONMENT.name,
-    "description": ENVIRONMENT.description,
-    "authorId": str(ENVIRONMENT.author_id),
-    "createdAt": "2018-10-03T04:20:00Z",
-    "updatedAt": "2018-11-03T04:21:15Z",
-    "specification": SPECIFICATION_BODY,
-}
-
-ENVIRONMENT_CREATION_RESPONSE = EnvironmentCreationResponse(id=uuid.uuid4())
-
-ENVIRONMENT_CREATION_RESPONSE_BODY = {
-    "environmentId": str(ENVIRONMENT_CREATION_RESPONSE.id)
-}
+ENVIRONMENT_CREATION_RESPONSE_BODY = {"environmentId": str(ENVIRONMENT_ID)}
+ENVIRONMENT_CREATION_RESPONSE = EnvironmentCreationResponse(id=ENVIRONMENT_ID)
 
 
 def test_version_schema():
