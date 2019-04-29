@@ -61,6 +61,8 @@ Environment = namedtuple(
     ],
 )
 
+EnvironmentCreationResponse = namedtuple("EnvironmentCreationResponse", ["id"])
+
 EnvironmentUpdate = namedtuple(
     "EnvironmentUpdate", ["name", "description", "specification"]
 )
@@ -205,17 +207,10 @@ class EnvironmentUpdateSchema(BaseSchema):
 
 class EnvironmentCreationResponseSchema(BaseSchema):
     id = fields.UUID(data_key="environmentId", required=True)
-    project_id = fields.UUID(data_key="projectId", required=True)
-    name = fields.String(required=True)
-    description = fields.String(required=True)
-    author_id = fields.UUID(data_key="authorId", required=True)
-    specification = fields.Nested(SpecificationSchema(), required=True)
 
     @post_load
     def make_environment(self, data):
-        data["created_at"] = None
-        data["updated_at"] = None
-        return Environment(**data)
+        return EnvironmentCreationResponse(**data)
 
 
 class EnvironmentClient(BaseClient):
@@ -240,11 +235,12 @@ class EnvironmentClient(BaseClient):
 
     def create(self, project_id, content):
         endpoint = "/project/{}/environment".format(project_id)
-        return self._post(
+        response = self._post(
             endpoint,
             EnvironmentCreationResponseSchema(),
             json=EnvironmentUpdateSchema().dump(content),
         )
+        return response.id
 
     def delete(self, project_id, environment_id):
         endpoint = "/project/{}/environment/{}".format(

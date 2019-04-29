@@ -30,6 +30,7 @@ from faculty.clients.environment import (
     Environment,
     EnvironmentClient,
     EnvironmentCreationResponseSchema,
+    EnvironmentCreationResponse,
     EnvironmentSchema,
     EnvironmentUpdate,
     EnvironmentUpdateSchema,
@@ -142,24 +143,10 @@ ENVIRONMENT_BODY = {
     "specification": SPECIFICATION_BODY,
 }
 
-ENVIRONMENT_CREATION_RESPONSE = Environment(
-    id=uuid.uuid4(),
-    project_id=PROJECT_ID,
-    name="Test Environment",
-    description="Environment description",
-    author_id=uuid.uuid4(),
-    created_at=None,
-    updated_at=None,
-    specification=SPECIFICATION,
-)
+ENVIRONMENT_CREATION_RESPONSE = EnvironmentCreationResponse(id=uuid.uuid4())
 
 ENVIRONMENT_CREATION_RESPONSE_BODY = {
-    "environmentId": str(ENVIRONMENT_CREATION_RESPONSE.id),
-    "projectId": str(PROJECT_ID),
-    "name": ENVIRONMENT_CREATION_RESPONSE.name,
-    "description": ENVIRONMENT_CREATION_RESPONSE.description,
-    "authorId": str(ENVIRONMENT_CREATION_RESPONSE.author_id),
-    "specification": SPECIFICATION_BODY,
+    "environmentId": str(ENVIRONMENT_CREATION_RESPONSE.id)
 }
 
 
@@ -297,7 +284,7 @@ def test_environment_client_create(mocker):
     client = EnvironmentClient(mocker.Mock())
     assert (
         client.create(PROJECT_ID, ENVIRONMENT_UPDATE)
-        == ENVIRONMENT_CREATION_RESPONSE
+        == ENVIRONMENT_CREATION_RESPONSE.id
     )
 
     EnvironmentUpdateSchema.dump.assert_called_once_with(ENVIRONMENT_UPDATE)
