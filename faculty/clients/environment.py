@@ -84,7 +84,6 @@ class VersionSchema(BaseSchema):
     identifier = fields.String(required=True)
 
     @validates_schema
-    @post_dump
     def validate_version_format(self, data):
         if not VERSION_REGEX.match(data["identifier"]):
             raise ValidationError("Invalid version format", "identifier")
@@ -92,6 +91,11 @@ class VersionSchema(BaseSchema):
     @post_load
     def make_version(self, data):
         return Version(**data)
+
+    @post_dump
+    def dump_version(self, data):
+        self.validate_version_format(data)
+        return data
 
 
 class VersionField(fields.Field):
