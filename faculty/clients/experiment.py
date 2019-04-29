@@ -656,7 +656,8 @@ class ExperimentClient(BaseClient):
         project_id : uuid.UUID
         run_ids : List[uuid.UUID], optional
             A list of run IDs to restore. If not specified, all runs in the
-            project will be restored.
+            project will be restored. If an empty list is passed, no runs
+            will be restored.
 
         Returns
         -------
@@ -664,16 +665,24 @@ class ExperimentClient(BaseClient):
             Containing lists of successfully restored and conflicting (already
             active) run IDs.
         """
+        endpoint = "/project/{}/run/restore/query".format(project_id)
 
-        query_params = []
+        payload = {}
         if run_ids is not None:
-            for run_id in run_ids:
-                query_params.append(("runId", str(run_id)))
+            if len(run_ids) == 0:
+                return RestoreExperimentRunsResponse(
+                    restored_run_ids=[], conflicted_run_ids=[]
+                )
+            payload = {
+                "filter": {
+                    "operator": "or",
+                    "conditions": [
+                        {"by": "runId", "operator": "eq", "value": str(run_id)}
+                        for run_id in run_ids
+                    ],
+                }
+            }
 
-        endpoint = "/project/{}/run/restore".format(project_id)
-
-        return self._put(
-            endpoint,
-            RestoreExperimentRunsResponseSchema(),
-            params=query_params,
+        return self._post(
+            endpoint, RestoreExperimentRunsResponseSchema(), json=payload
         )

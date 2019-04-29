@@ -937,7 +937,9 @@ def test_delete_runs_empty_list(mocker):
 
 def test_restore_runs(mocker):
     mocker.patch.object(
-        ExperimentClient, "_put", return_value=RESTORE_EXPERIMENT_RUNS_RESPONSE
+        ExperimentClient,
+        "_post",
+        return_value=RESTORE_EXPERIMENT_RUNS_RESPONSE,
     )
     schema_mock = mocker.patch(
         "faculty.clients.experiment.RestoreExperimentRunsResponseSchema"
@@ -950,15 +952,25 @@ def test_restore_runs(mocker):
         == RESTORE_EXPERIMENT_RUNS_RESPONSE
     )
 
-    ExperimentClient._put.assert_called_once_with(
-        "/project/{}/run/restore".format(PROJECT_ID),
+    expected_payload = {
+        "filter": {
+            "operator": "or",
+            "conditions": [
+                {"by": "runId", "operator": "eq", "value": str(run_ids[0])},
+                {"by": "runId", "operator": "eq", "value": str(run_ids[1])},
+            ],
+        }
+    }
+
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/run/restore/query".format(PROJECT_ID),
         schema_mock.return_value,
-        params=[("runId", str(run_id)) for run_id in run_ids],
+        json=expected_payload,
     )
 
 
 def test_restore_runs_no_run_ids(mocker):
-    mocker.patch.object(ExperimentClient, "_put")
+    mocker.patch.object(ExperimentClient, "_post")
     schema_mock = mocker.patch(
         "faculty.clients.experiment.RestoreExperimentRunsResponseSchema"
     )
@@ -966,8 +978,18 @@ def test_restore_runs_no_run_ids(mocker):
     client = ExperimentClient(mocker.Mock())
     client.restore_runs(PROJECT_ID)
 
-    ExperimentClient._put.assert_called_once_with(
-        "/project/{}/run/restore".format(PROJECT_ID),
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/run/restore/query".format(PROJECT_ID),
         schema_mock.return_value,
-        params=[],
+        json={},
+    )
+
+
+def test_restore_runs_empty_list(mocker):
+    client = ExperimentClient(mocker.Mock())
+
+    assert client.restore_runs(
+        PROJECT_ID, run_ids=[]
+    ) == RestoreExperimentRunsResponse(
+        restored_run_ids=[], conflicted_run_ids=[]
     )
