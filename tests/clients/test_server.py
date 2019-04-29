@@ -179,7 +179,11 @@ def test_ssh_details_schema_invalid():
 
 def test_server_client_create_shared(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
-    schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
+    server_id_schema_mock = mocker.patch(
+        "faculty.clients.server.ServerIdSchema"
+    )
+    mocker.patch.object(ServerClient, "_get", return_value=SHARED_SERVER)
+    server_schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
 
     client = ServerClient(mocker.Mock())
 
@@ -197,13 +201,13 @@ def test_server_client_create_shared(mocker):
             image_version,
             initial_environment_ids,
         )
-        == SERVER_ID
+        == SHARED_SERVER
     )
 
-    schema_mock.assert_called_once_with()
+    server_id_schema_mock.assert_called_once_with()
     ServerClient._post.assert_called_once_with(
         "/instance/{}".format(PROJECT_ID),
-        schema_mock.return_value,
+        server_id_schema_mock.return_value,
         json={
             "instanceType": server_type,
             "instanceSizeType": "custom",
@@ -218,11 +222,20 @@ def test_server_client_create_shared(mocker):
             ],
         },
     )
+    server_schema_mock.assert_called_once_with()
+    ServerClient._get.assert_called_once_with(
+        "/instance/{}/{}".format(PROJECT_ID, SERVER_ID),
+        server_schema_mock.return_value,
+    )
 
 
 def test_server_client_create_dedicated(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
-    schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
+    server_id_schema_mock = mocker.patch(
+        "faculty.clients.server.ServerIdSchema"
+    )
+    mocker.patch.object(ServerClient, "_get", return_value=DEDICATED_SERVER)
+    server_schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
 
     client = ServerClient(mocker.Mock())
 
@@ -240,13 +253,13 @@ def test_server_client_create_dedicated(mocker):
             image_version,
             initial_environment_ids,
         )
-        == SERVER_ID
+        == DEDICATED_SERVER
     )
 
-    schema_mock.assert_called_once_with()
+    server_id_schema_mock.assert_called_once_with()
     ServerClient._post.assert_called_once_with(
         "/instance/{}".format(PROJECT_ID),
-        schema_mock.return_value,
+        server_id_schema_mock.return_value,
         json={
             "instanceType": server_type,
             "instanceSizeType": DEDICATED_RESOURCES.node_type,
@@ -257,24 +270,34 @@ def test_server_client_create_dedicated(mocker):
             ],
         },
     )
+    server_schema_mock.assert_called_once_with()
+    ServerClient._get.assert_called_once_with(
+        "/instance/{}/{}".format(PROJECT_ID, SERVER_ID),
+        server_schema_mock.return_value,
+    )
 
 
 def test_server_client_create_minimal(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
-    schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
+    server_id_schema_mock = mocker.patch(
+        "faculty.clients.server.ServerIdSchema"
+    )
+    mocker.patch.object(ServerClient, "_get", return_value=SHARED_SERVER)
+    server_schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
 
     client = ServerClient(mocker.Mock())
 
     server_type = "jupyter"
 
     assert (
-        client.create(PROJECT_ID, server_type, SHARED_RESOURCES) == SERVER_ID
+        client.create(PROJECT_ID, server_type, SHARED_RESOURCES)
+        == SHARED_SERVER
     )
 
-    schema_mock.assert_called_once_with()
+    server_id_schema_mock.assert_called_once_with()
     ServerClient._post.assert_called_once_with(
         "/instance/{}".format(PROJECT_ID),
-        schema_mock.return_value,
+        server_id_schema_mock.return_value,
         json={
             "instanceType": server_type,
             "instanceSizeType": "custom",
@@ -283,6 +306,11 @@ def test_server_client_create_minimal(mocker):
                 "memoryMb": SHARED_RESOURCES.memory_mb,
             },
         },
+    )
+    server_schema_mock.assert_called_once_with()
+    ServerClient._get.assert_called_once_with(
+        "/instance/{}/{}".format(PROJECT_ID, SERVER_ID),
+        server_schema_mock.return_value,
     )
 
 

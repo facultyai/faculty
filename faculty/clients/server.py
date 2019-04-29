@@ -189,9 +189,10 @@ class ServerClient(BaseClient):
                 str(env_id) for env_id in initial_environment_ids
             ]
 
-        return self._post(
+        server_id = self._post(
             "/instance/{}".format(project_id), ServerIdSchema(), json=payload
         )
+        return self.get(project_id, server_id)
 
     def delete(self, server_id):
         endpoint = "/instance/{}".format(server_id)
