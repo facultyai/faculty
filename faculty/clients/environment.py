@@ -50,7 +50,7 @@ AptPackage = namedtuple("AptPackage", ["name"])
 
 Script = namedtuple("Script", ["script"])
 
-Python = namedtuple("Python", ["python_2", "python_3"])
+Python = namedtuple("Python", ["python2", "python3"])
 
 Specification = namedtuple("Specification", ["apt", "bash", "python"])
 
@@ -151,10 +151,10 @@ class PythonSpecificationSchema(BaseSchema):
 
 
 class PythonSchema(BaseSchema):
-    python_2 = fields.Nested(
+    python2 = fields.Nested(
         PythonSpecificationSchema(), required=True, data_key="Python2"
     )
-    python_3 = fields.Nested(
+    python3 = fields.Nested(
         PythonSpecificationSchema(), required=True, data_key="Python3"
     )
 
