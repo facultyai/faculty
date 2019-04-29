@@ -272,9 +272,7 @@ def test_environment_client_update(mocker):
     )
 
     client = EnvironmentClient(mocker.Mock())
-    assert (
-        client.update(PROJECT_ID, ENVIRONMENT_ID, ENVIRONMENT_UPDATE) is None
-    )
+    client.update(PROJECT_ID, ENVIRONMENT_ID, ENVIRONMENT_UPDATE)
 
     EnvironmentUpdateSchema.dump.assert_called_once_with(ENVIRONMENT_UPDATE)
     EnvironmentClient._put_raw.assert_called_once_with(
@@ -312,7 +310,7 @@ def test_environment_client_delete(mocker):
     mocker.patch.object(EnvironmentClient, "_delete_raw", return_value=None)
 
     client = EnvironmentClient(mocker.Mock())
-    assert client.delete(PROJECT_ID, ENVIRONMENT_ID) is None
+    client.delete(PROJECT_ID, ENVIRONMENT_ID)
 
     EnvironmentClient._delete_raw.assert_called_once_with(
         "/project/{}/environment/{}".format(PROJECT_ID, ENVIRONMENT_ID)
