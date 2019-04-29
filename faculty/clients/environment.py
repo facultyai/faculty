@@ -218,11 +218,6 @@ class EnvironmentCreationResponseSchema(BaseSchema):
         return Environment(**data)
 
 
-class DummySchema(BaseSchema):
-    def load(self, in_data):
-        return None
-
-
 class EnvironmentClient(BaseClient):
 
     SERVICE_NAME = "baskerville"
@@ -241,11 +236,7 @@ class EnvironmentClient(BaseClient):
         endpoint = "/project/{}/environment/{}".format(
             project_id, environment_id
         )
-        return self._put(
-            endpoint,
-            DummySchema(),
-            json=EnvironmentUpdateSchema().dump(update),
-        )
+        self._put_raw(endpoint, json=EnvironmentUpdateSchema().dump(update))
 
     def create(self, project_id, content):
         endpoint = "/project/{}/environment".format(project_id)
@@ -259,4 +250,4 @@ class EnvironmentClient(BaseClient):
         endpoint = "/project/{}/environment/{}".format(
             project_id, environment_id
         )
-        return self._delete(endpoint, schema=DummySchema())
+        self._delete_raw(endpoint)

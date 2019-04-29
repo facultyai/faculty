@@ -266,11 +266,10 @@ def test_environment_client_get(mocker):
 
 
 def test_environment_client_update(mocker):
-    mocker.patch.object(EnvironmentClient, "_put", return_value=None)
+    mocker.patch.object(EnvironmentClient, "_put_raw", return_value=None)
     mocker.patch.object(
         EnvironmentUpdateSchema, "dump", return_value=ENVIRONMENT_UPDATE_BODY
     )
-    schema_mock = mocker.patch("faculty.clients.environment.DummySchema")
 
     client = EnvironmentClient(mocker.Mock())
     assert (
@@ -278,9 +277,8 @@ def test_environment_client_update(mocker):
     )
 
     EnvironmentUpdateSchema.dump.assert_called_once_with(ENVIRONMENT_UPDATE)
-    EnvironmentClient._put.assert_called_once_with(
+    EnvironmentClient._put_raw.assert_called_once_with(
         "/project/{}/environment/{}".format(PROJECT_ID, ENVIRONMENT_ID),
-        schema_mock.return_value,
         json=ENVIRONMENT_UPDATE_BODY,
     )
 
@@ -311,13 +309,11 @@ def test_environment_client_create(mocker):
 
 
 def test_environment_client_delete(mocker):
-    mocker.patch.object(EnvironmentClient, "_delete", return_value=None)
-    schema_mock = mocker.patch("faculty.clients.environment.DummySchema")
+    mocker.patch.object(EnvironmentClient, "_delete_raw", return_value=None)
 
     client = EnvironmentClient(mocker.Mock())
     assert client.delete(PROJECT_ID, ENVIRONMENT_ID) is None
 
-    EnvironmentClient._delete.assert_called_once_with(
-        "/project/{}/environment/{}".format(PROJECT_ID, ENVIRONMENT_ID),
-        schema=schema_mock.return_value,
+    EnvironmentClient._delete_raw.assert_called_once_with(
+        "/project/{}/environment/{}".format(PROJECT_ID, ENVIRONMENT_ID)
     )
