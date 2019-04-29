@@ -44,7 +44,7 @@ from faculty.clients.environment import (
     PythonSpecificationSchema,
     Script,
     ScriptSchema,
-    SemverSchema,
+    VersionSchema,
     Specification,
     SpecificationSchema,
     Version,
@@ -150,8 +150,8 @@ ENVIRONMENT_CREATION_RESPONSE_BODY = {
 }
 
 
-def test_semver_schema():
-    data = SemverSchema().load(VERSION_BODY)
+def test_version_schema():
+    data = VersionSchema().load(VERSION_BODY)
     assert data == VERSION
 
 

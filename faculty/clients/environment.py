@@ -68,7 +68,7 @@ EnvironmentUpdate = namedtuple(
 )
 
 
-class SemverSchema(BaseSchema):
+class VersionSchema(BaseSchema):
     constraint = EnumField(Constraint, by_value=True, required=True)
     identifier = fields.String(required=True)
 
@@ -86,13 +86,13 @@ class VersionField(fields.Field):
         if value == "latest":
             return "latest"
         else:
-            return SemverSchema().load(value)
+            return VersionSchema().load(value)
 
     def _serialize(self, value, attr, obj, **kwargs):
         if value == "latest":
             return "latest"
         else:
-            return SemverSchema().dump(value)
+            return VersionSchema().dump(value)
 
 
 class PythonPackageSchema(BaseSchema):
