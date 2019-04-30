@@ -628,12 +628,14 @@ class ExperimentClient(BaseClient):
         """
         endpoint = "/project/{}/run/delete/query".format(project_id)
 
-        payload = {}
-        if run_ids is not None:
-            if len(run_ids) == 0:
-                return DeleteExperimentRunsResponse(
-                    deleted_run_ids=[], conflicted_run_ids=[]
-                )
+        if run_ids is None:
+            # Delete all runs in project
+            payload = {}  # No filter
+        elif len(run_ids) == 0:
+            return DeleteExperimentRunsResponse(
+                deleted_run_ids=[], conflicted_run_ids=[]
+            )
+        else:
             payload = {
                 "filter": {
                     "operator": "or",
@@ -667,12 +669,14 @@ class ExperimentClient(BaseClient):
         """
         endpoint = "/project/{}/run/restore/query".format(project_id)
 
-        payload = {}
-        if run_ids is not None:
-            if len(run_ids) == 0:
-                return RestoreExperimentRunsResponse(
-                    restored_run_ids=[], conflicted_run_ids=[]
-                )
+        if run_ids is None:
+            # Restore all runs in project
+            payload = {}  # No filter
+        elif len(run_ids) == 0:
+            return RestoreExperimentRunsResponse(
+                restored_run_ids=[], conflicted_run_ids=[]
+            )
+        else:
             payload = {
                 "filter": {
                     "operator": "or",
