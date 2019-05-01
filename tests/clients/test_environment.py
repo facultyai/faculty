@@ -147,15 +147,22 @@ ENVIRONMENT_CREATION_RESPONSE_BODY = {"environmentId": str(ENVIRONMENT_ID)}
 ENVIRONMENT_CREATION_RESPONSE = EnvironmentCreationResponse(id=ENVIRONMENT_ID)
 
 
-def test_version_schema():
+def test_version_schema_load():
     data = VersionSchema().load(VERSION_BODY)
     assert data == VERSION
 
 
-def test_version_invalid():
+def test_version_schema_dump():
+    data = VersionSchema().dump(VERSION)
+    assert data == VERSION_BODY
+
+
+def test_version_schema_load_invalid():
     with pytest.raises(ValidationError):
         VersionSchema().load(INVALID_VERSION_BODY)
 
+
+def test_version_schema_dump_invalid():
     with pytest.raises(ValidationError):
         VersionSchema().dump(INVALID_VERSION)
 
@@ -167,54 +174,111 @@ def test_version_invalid():
         (PYTHON_PACKAGE_BODY_LATEST, PYTHON_PACKAGE_LATEST),
     ],
 )
-def test_python_package_schema(body, expected):
+def test_python_package_schema_load(body, expected):
     data = PythonPackageSchema().load(body)
     assert data == expected
 
 
-def test_pip_schema():
+@pytest.mark.parametrize(
+    "object, expected",
+    [
+        (PYTHON_PACKAGE, PYTHON_PACKAGE_BODY),
+        (PYTHON_PACKAGE_LATEST, PYTHON_PACKAGE_BODY_LATEST),
+    ],
+)
+def test_python_package_schema_dump(object, expected):
+    data = PythonPackageSchema().dump(object)
+    assert data == expected
+
+
+def test_pip_schema_load():
     data = PipSchema().load(PIP_BODY)
     assert data == PIP
 
 
-def test_conda_schema():
+def test_pip_schema_dump():
+    data = PipSchema().dump(PIP)
+    assert data == PIP_BODY
+
+
+def test_conda_schema_load():
     data = CondaSchema().load(CONDA_BODY)
     assert data == CONDA
 
 
-def test_python_specification_schema():
+def test_conda_schema_dump():
+    data = CondaSchema().dump(CONDA)
+    assert data == CONDA_BODY
+
+
+def test_python_specification_schema_load():
     data = PythonSpecificationSchema().load(PYTHON_SPECIFICATION_BODY)
     assert data == PYTHON_SPECIFICATION
 
 
-def test_apt_package_schema():
+def test_python_specification_schema_dump():
+    data = PythonSpecificationSchema().dump(PYTHON_SPECIFICATION)
+    assert data == PYTHON_SPECIFICATION_BODY
+
+
+def test_apt_package_schema_load():
     data = AptPackageSchema().load(APT_PACKAGE_BODY)
     assert data == APT_PACKAGE
 
 
-def test_apt_schema():
+def test_apt_package_schema_dump():
+    data = AptPackageSchema().dump(APT_PACKAGE)
+    assert data == APT_PACKAGE_BODY
+
+
+def test_apt_schema_load():
     data = AptSchema().load(APT_BODY)
     assert data == APT
 
 
-def test_python_schema():
+def test_apt_schema_dump():
+    data = AptSchema().dump(APT)
+    assert data == APT_BODY
+
+
+def test_python_schema_load():
     data = PythonSchema().load(PYTHON_BODY)
     assert data == PYTHON
 
 
-def test_script_schema():
+def test_python_schema_dump():
+    data = PythonSchema().dump(PYTHON)
+    assert data == PYTHON_BODY
+
+
+def test_script_schema_load():
     data = ScriptSchema().load(SCRIPT_BODY)
     assert data == SCRIPT
 
 
-def test_specification_schema():
+def test_script_schema_dump():
+    data = ScriptSchema().dump(SCRIPT)
+    assert data == SCRIPT_BODY
+
+
+def test_specification_schema_load():
     data = SpecificationSchema().load(SPECIFICATION_BODY)
     assert data == SPECIFICATION
 
 
-def test_environment_update_schema():
+def test_specification_schema_dump():
+    data = SpecificationSchema().dump(SPECIFICATION)
+    assert data == SPECIFICATION_BODY
+
+
+def test_environment_update_schema_load():
     data = EnvironmentUpdateSchema().load(ENVIRONMENT_UPDATE_BODY)
     assert data == ENVIRONMENT_UPDATE
+
+
+def test_environment_update_schema_dump():
+    data = EnvironmentUpdateSchema().dump(ENVIRONMENT_UPDATE)
+    assert data == ENVIRONMENT_UPDATE_BODY
 
 
 def test_environment_creation_response_schema():
