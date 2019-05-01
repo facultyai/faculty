@@ -271,12 +271,12 @@ def test_specification_schema_dump():
     assert data == SPECIFICATION_BODY
 
 
-def test_environment_update_schema_load():
+def test_environment_create_update_schema_load():
     data = EnvironmentCreateUpdateSchema().load(ENVIRONMENT_CREATE_UPDATE_BODY)
     assert data == ENVIRONMENT_CREATE_UPDATE
 
 
-def test_environment_update_schema_dump():
+def test_environment_create_update_schema_dump():
     data = EnvironmentCreateUpdateSchema().dump(ENVIRONMENT_CREATE_UPDATE)
     assert data == ENVIRONMENT_CREATE_UPDATE_BODY
 
