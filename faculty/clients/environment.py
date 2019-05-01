@@ -35,25 +35,15 @@ class Constraint(Enum):
 
 
 Version = namedtuple("Version", ["constraint", "identifier"])
-
 PythonPackage = namedtuple("PythonPackage", ["name", "version"])
-
 Pip = namedtuple("Pip", ["extra_index_urls", "packages"])
-
 Conda = namedtuple("Conda", ["channels", "packages"])
-
 PythonSpecification = namedtuple("PythonSpecification", ["pip", "conda"])
-
 Apt = namedtuple("Apt", ["packages"])
-
 AptPackage = namedtuple("AptPackage", ["name"])
-
 Script = namedtuple("Script", ["script"])
-
 Python = namedtuple("Python", ["python2", "python3"])
-
 Specification = namedtuple("Specification", ["apt", "bash", "python"])
-
 Environment = namedtuple(
     "Environment",
     [
@@ -67,9 +57,7 @@ Environment = namedtuple(
         "specification",
     ],
 )
-
 EnvironmentCreationResponse = namedtuple("EnvironmentCreationResponse", ["id"])
-
 EnvironmentCreateUpdate = namedtuple(
     "EnvironmentCreateUpdate", ["name", "description", "specification"]
 )
