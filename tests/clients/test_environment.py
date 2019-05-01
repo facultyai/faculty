@@ -29,11 +29,11 @@ from faculty.clients.environment import (
     Constraint,
     Environment,
     EnvironmentClient,
+    EnvironmentCreateUpdate,
+    EnvironmentCreateUpdateSchema,
     EnvironmentCreationResponse,
     EnvironmentCreationResponseSchema,
     EnvironmentSchema,
-    EnvironmentCreateUpdate,
-    EnvironmentCreateUpdateSchema,
     Pip,
     PipSchema,
     Python,
@@ -109,24 +109,17 @@ SPECIFICATION_BODY = {
 }
 SPECIFICATION = Specification(apt=APT, bash=[SCRIPT], python=PYTHON)
 
-ENVIRONMENT_CREATE_UPDATE_BODY = {
-    "name": "Test",
-    "description": "A test environment",
-    "specification": SPECIFICATION_BODY,
-}
-ENVIRONMENT_CREATE_UPDATE = EnvironmentCreateUpdate(
-    name="Test", description="A test environment", specification=SPECIFICATION
-)
-
 PROJECT_ID = uuid.uuid4()
 ENVIRONMENT_ID = uuid.uuid4()
 AUTHOR_ID = uuid.uuid4()
+NAME = "Test environment"
+DESCRIPTION = "Environment description"
 
 ENVIRONMENT_BODY = {
     "environmentId": str(ENVIRONMENT_ID),
     "projectId": str(PROJECT_ID),
-    "name": "Test environment",
-    "description": "Environment description",
+    "name": NAME,
+    "description": DESCRIPTION,
     "authorId": str(AUTHOR_ID),
     "createdAt": "2018-10-03T04:20:00Z",
     "updatedAt": "2018-11-03T04:21:15Z",
@@ -135,8 +128,8 @@ ENVIRONMENT_BODY = {
 ENVIRONMENT = Environment(
     id=ENVIRONMENT_ID,
     project_id=PROJECT_ID,
-    name="Test environment",
-    description="Environment description",
+    name=NAME,
+    description=DESCRIPTION,
     author_id=AUTHOR_ID,
     created_at=datetime.datetime(2018, 10, 3, 4, 20, 0, 0, tzinfo=UTC),
     updated_at=datetime.datetime(2018, 11, 3, 4, 21, 15, 0, tzinfo=UTC),
@@ -145,6 +138,23 @@ ENVIRONMENT = Environment(
 
 ENVIRONMENT_CREATION_RESPONSE_BODY = {"environmentId": str(ENVIRONMENT_ID)}
 ENVIRONMENT_CREATION_RESPONSE = EnvironmentCreationResponse(id=ENVIRONMENT_ID)
+
+ENVIRONMENT_CREATE_UPDATE_BODY = {
+    "name": NAME,
+    "description": DESCRIPTION,
+    "specification": SPECIFICATION_BODY,
+}
+ENVIRONMENT_CREATE_UPDATE = EnvironmentCreateUpdate(
+    name=NAME, description=DESCRIPTION, specification=SPECIFICATION
+)
+ENVIRONMENT_CREATE_UPDATE_BODY_NO_DESCRIPTION = {
+    "name": NAME,
+    "description": None,
+    "specification": SPECIFICATION_BODY,
+}
+ENVIRONMENT_CREATE_UPDATE_NO_DESCRIPTION = EnvironmentCreateUpdate(
+    name=NAME, description=None, specification=SPECIFICATION
+)
 
 
 def test_version_schema_load():
@@ -271,14 +281,34 @@ def test_specification_schema_dump():
     assert data == SPECIFICATION_BODY
 
 
-def test_environment_create_update_schema_load():
-    data = EnvironmentCreateUpdateSchema().load(ENVIRONMENT_CREATE_UPDATE_BODY)
-    assert data == ENVIRONMENT_CREATE_UPDATE
+@pytest.mark.parametrize(
+    "body, expected",
+    [
+        (ENVIRONMENT_CREATE_UPDATE_BODY, ENVIRONMENT_CREATE_UPDATE),
+        (
+            ENVIRONMENT_CREATE_UPDATE_BODY_NO_DESCRIPTION,
+            ENVIRONMENT_CREATE_UPDATE_NO_DESCRIPTION,
+        ),
+    ],
+)
+def test_environment_create_update_schema_load(body, expected):
+    data = EnvironmentCreateUpdateSchema().load(body)
+    assert data == expected
 
 
-def test_environment_create_update_schema_dump():
-    data = EnvironmentCreateUpdateSchema().dump(ENVIRONMENT_CREATE_UPDATE)
-    assert data == ENVIRONMENT_CREATE_UPDATE_BODY
+@pytest.mark.parametrize(
+    "object, expected",
+    [
+        (ENVIRONMENT_CREATE_UPDATE, ENVIRONMENT_CREATE_UPDATE_BODY),
+        (
+            ENVIRONMENT_CREATE_UPDATE_NO_DESCRIPTION,
+            ENVIRONMENT_CREATE_UPDATE_BODY_NO_DESCRIPTION,
+        ),
+    ],
+)
+def test_environment_create_update_schema_dump(object, expected):
+    data = EnvironmentCreateUpdateSchema().dump(object)
+    assert data == expected
 
 
 def test_environment_creation_response_schema():
@@ -327,6 +357,10 @@ def test_environment_client_get(mocker):
 
 def test_environment_client_update(mocker):
     mocker.patch.object(EnvironmentClient, "_put_raw", return_value=None)
+    environment_update_create_mock = mocker.patch(
+        "faculty.clients.environment.EnvironmentCreateUpdate",
+        return_value=ENVIRONMENT_CREATE_UPDATE,
+    )
     mocker.patch.object(
         EnvironmentCreateUpdateSchema,
         "dump",
@@ -334,8 +368,11 @@ def test_environment_client_update(mocker):
     )
 
     client = EnvironmentClient(mocker.Mock())
-    client.update(PROJECT_ID, ENVIRONMENT_ID, ENVIRONMENT_CREATE_UPDATE)
+    client.update(PROJECT_ID, ENVIRONMENT_ID, NAME, SPECIFICATION, DESCRIPTION)
 
+    environment_update_create_mock.assert_called_once_with(
+        name=NAME, specification=SPECIFICATION, description=DESCRIPTION
+    )
     EnvironmentCreateUpdateSchema.dump.assert_called_once_with(
         ENVIRONMENT_CREATE_UPDATE
     )
@@ -349,6 +386,10 @@ def test_environment_client_create(mocker):
     mocker.patch.object(
         EnvironmentClient, "_post", return_value=ENVIRONMENT_CREATION_RESPONSE
     )
+    environment_update_create_mock = mocker.patch(
+        "faculty.clients.environment.EnvironmentCreateUpdate",
+        return_value=ENVIRONMENT_CREATE_UPDATE,
+    )
     mocker.patch.object(
         EnvironmentCreateUpdateSchema,
         "dump",
@@ -360,10 +401,12 @@ def test_environment_client_create(mocker):
 
     client = EnvironmentClient(mocker.Mock())
     assert (
-        client.create(PROJECT_ID, ENVIRONMENT_CREATE_UPDATE)
+        client.create(PROJECT_ID, NAME, SPECIFICATION, description=DESCRIPTION)
         == ENVIRONMENT_CREATION_RESPONSE.id
     )
-
+    environment_update_create_mock.assert_called_once_with(
+        name=NAME, specification=SPECIFICATION, description=DESCRIPTION
+    )
     EnvironmentCreateUpdateSchema.dump.assert_called_once_with(
         ENVIRONMENT_CREATE_UPDATE
     )

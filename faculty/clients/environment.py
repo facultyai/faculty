@@ -214,7 +214,7 @@ class EnvironmentSchema(BaseSchema):
 
 class EnvironmentCreateUpdateSchema(BaseSchema):
     name = fields.String(required=True)
-    description = fields.String(required=True)
+    description = fields.String(required=True, allow_none=True)
     specification = fields.Nested(SpecificationSchema(), required=True)
 
     @post_load
@@ -244,16 +244,24 @@ class EnvironmentClient(BaseClient):
         )
         return self._get(endpoint, EnvironmentSchema())
 
-    def update(self, project_id, environment_id, update):
+    def update(
+        self, project_id, environment_id, name, specification, description=None
+    ):
+        content = EnvironmentCreateUpdate(
+            name=name, specification=specification, description=description
+        )
         endpoint = "/project/{}/environment/{}".format(
             project_id, environment_id
         )
         self._put_raw(
-            endpoint, json=EnvironmentCreateUpdateSchema().dump(update)
+            endpoint, json=EnvironmentCreateUpdateSchema().dump(content)
         )
 
-    def create(self, project_id, content):
+    def create(self, project_id, name, specification, description=None):
         endpoint = "/project/{}/environment".format(project_id)
+        content = EnvironmentCreateUpdate(
+            name=name, specification=specification, description=description
+        )
         response = self._post(
             endpoint,
             EnvironmentCreationResponseSchema(),
