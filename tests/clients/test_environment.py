@@ -32,8 +32,8 @@ from faculty.clients.environment import (
     EnvironmentCreationResponse,
     EnvironmentCreationResponseSchema,
     EnvironmentSchema,
-    EnvironmentUpdate,
-    EnvironmentUpdateSchema,
+    EnvironmentCreateUpdate,
+    EnvironmentCreateUpdateSchema,
     Pip,
     PipSchema,
     Python,
@@ -109,12 +109,12 @@ SPECIFICATION_BODY = {
 }
 SPECIFICATION = Specification(apt=APT, bash=[SCRIPT], python=PYTHON)
 
-ENVIRONMENT_UPDATE_BODY = {
+ENVIRONMENT_CREATE_UPDATE_BODY = {
     "name": "Test",
     "description": "A test environment",
     "specification": SPECIFICATION_BODY,
 }
-ENVIRONMENT_UPDATE = EnvironmentUpdate(
+ENVIRONMENT_CREATE_UPDATE = EnvironmentCreateUpdate(
     name="Test", description="A test environment", specification=SPECIFICATION
 )
 
@@ -272,13 +272,13 @@ def test_specification_schema_dump():
 
 
 def test_environment_update_schema_load():
-    data = EnvironmentUpdateSchema().load(ENVIRONMENT_UPDATE_BODY)
-    assert data == ENVIRONMENT_UPDATE
+    data = EnvironmentCreateUpdateSchema().load(ENVIRONMENT_CREATE_UPDATE_BODY)
+    assert data == ENVIRONMENT_CREATE_UPDATE
 
 
 def test_environment_update_schema_dump():
-    data = EnvironmentUpdateSchema().dump(ENVIRONMENT_UPDATE)
-    assert data == ENVIRONMENT_UPDATE_BODY
+    data = EnvironmentCreateUpdateSchema().dump(ENVIRONMENT_CREATE_UPDATE)
+    assert data == ENVIRONMENT_CREATE_UPDATE_BODY
 
 
 def test_environment_creation_response_schema():
@@ -328,16 +328,20 @@ def test_environment_client_get(mocker):
 def test_environment_client_update(mocker):
     mocker.patch.object(EnvironmentClient, "_put_raw", return_value=None)
     mocker.patch.object(
-        EnvironmentUpdateSchema, "dump", return_value=ENVIRONMENT_UPDATE_BODY
+        EnvironmentCreateUpdateSchema,
+        "dump",
+        return_value=ENVIRONMENT_CREATE_UPDATE_BODY,
     )
 
     client = EnvironmentClient(mocker.Mock())
-    client.update(PROJECT_ID, ENVIRONMENT_ID, ENVIRONMENT_UPDATE)
+    client.update(PROJECT_ID, ENVIRONMENT_ID, ENVIRONMENT_CREATE_UPDATE)
 
-    EnvironmentUpdateSchema.dump.assert_called_once_with(ENVIRONMENT_UPDATE)
+    EnvironmentCreateUpdateSchema.dump.assert_called_once_with(
+        ENVIRONMENT_CREATE_UPDATE
+    )
     EnvironmentClient._put_raw.assert_called_once_with(
         "/project/{}/environment/{}".format(PROJECT_ID, ENVIRONMENT_ID),
-        json=ENVIRONMENT_UPDATE_BODY,
+        json=ENVIRONMENT_CREATE_UPDATE_BODY,
     )
 
 
@@ -346,7 +350,9 @@ def test_environment_client_create(mocker):
         EnvironmentClient, "_post", return_value=ENVIRONMENT_CREATION_RESPONSE
     )
     mocker.patch.object(
-        EnvironmentUpdateSchema, "dump", return_value=ENVIRONMENT_UPDATE_BODY
+        EnvironmentCreateUpdateSchema,
+        "dump",
+        return_value=ENVIRONMENT_CREATE_UPDATE_BODY,
     )
     schema_mock = mocker.patch(
         "faculty.clients.environment.EnvironmentCreationResponseSchema"
@@ -354,15 +360,17 @@ def test_environment_client_create(mocker):
 
     client = EnvironmentClient(mocker.Mock())
     assert (
-        client.create(PROJECT_ID, ENVIRONMENT_UPDATE)
+        client.create(PROJECT_ID, ENVIRONMENT_CREATE_UPDATE)
         == ENVIRONMENT_CREATION_RESPONSE.id
     )
 
-    EnvironmentUpdateSchema.dump.assert_called_once_with(ENVIRONMENT_UPDATE)
+    EnvironmentCreateUpdateSchema.dump.assert_called_once_with(
+        ENVIRONMENT_CREATE_UPDATE
+    )
     EnvironmentClient._post.assert_called_once_with(
         "/project/{}/environment".format(PROJECT_ID),
         schema_mock.return_value,
-        json=ENVIRONMENT_UPDATE_BODY,
+        json=ENVIRONMENT_CREATE_UPDATE_BODY,
     )
 
 

@@ -70,8 +70,8 @@ Environment = namedtuple(
 
 EnvironmentCreationResponse = namedtuple("EnvironmentCreationResponse", ["id"])
 
-EnvironmentUpdate = namedtuple(
-    "EnvironmentUpdate", ["name", "description", "specification"]
+EnvironmentCreateUpdate = namedtuple(
+    "EnvironmentCreateUpdate", ["name", "description", "specification"]
 )
 
 VERSION_REGEX = re.compile(
@@ -212,14 +212,14 @@ class EnvironmentSchema(BaseSchema):
         return Environment(**data)
 
 
-class EnvironmentUpdateSchema(BaseSchema):
+class EnvironmentCreateUpdateSchema(BaseSchema):
     name = fields.String(required=True)
     description = fields.String(required=True)
     specification = fields.Nested(SpecificationSchema(), required=True)
 
     @post_load
     def make_environment_update(self, data):
-        return EnvironmentUpdate(**data)
+        return EnvironmentCreateUpdate(**data)
 
 
 class EnvironmentCreationResponseSchema(BaseSchema):
@@ -248,14 +248,16 @@ class EnvironmentClient(BaseClient):
         endpoint = "/project/{}/environment/{}".format(
             project_id, environment_id
         )
-        self._put_raw(endpoint, json=EnvironmentUpdateSchema().dump(update))
+        self._put_raw(
+            endpoint, json=EnvironmentCreateUpdateSchema().dump(update)
+        )
 
     def create(self, project_id, content):
         endpoint = "/project/{}/environment".format(project_id)
         response = self._post(
             endpoint,
             EnvironmentCreationResponseSchema(),
-            json=EnvironmentUpdateSchema().dump(content),
+            json=EnvironmentCreateUpdateSchema().dump(content),
         )
         return response.id
 
