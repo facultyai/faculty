@@ -21,7 +21,7 @@ from marshmallow import (
     ValidationError,
     fields,
     post_load,
-    validates_schema,
+    validates,
     post_dump,
 )
 from marshmallow_enum import EnumField
@@ -71,10 +71,10 @@ class VersionSchema(BaseSchema):
     constraint = EnumField(Constraint, by_value=True, required=True)
     identifier = fields.String(required=True)
 
-    @validates_schema
+    @validates("identifier")
     def validate_version_format(self, data):
-        if not VERSION_REGEX.match(data["identifier"]):
-            raise ValidationError("Invalid version format", "identifier")
+        if not VERSION_REGEX.match(data):
+            raise ValidationError("Invalid version format")
 
     @post_load
     def make_version(self, data):
@@ -82,7 +82,7 @@ class VersionSchema(BaseSchema):
 
     @post_dump
     def dump_version(self, data):
-        self.validate_version_format(data)
+        self.validate_version_format(data["identifier"])
         return data
 
 
