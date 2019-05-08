@@ -56,9 +56,9 @@ VERSION = Version(constraint=Constraint.EQUAL, identifier="1.0.0")
 VERSION_BODY_LATEST = "latest"
 VERSION_LATEST = "latest"
 
-INVALID_VERSION_BODY = {"constraint": "==", "identifier": "not_semantic"}
+INVALID_VERSION_BODY = {"constraint": "==", "identifier": "invalid-identifier"}
 INVALID_VERSION = Version(
-    constraint=Constraint.EQUAL, identifier="not_semantic"
+    constraint=Constraint.EQUAL, identifier="invalid-identifier"
 )
 
 PYTHON_PACKAGE_BODY = {"name": "tensorflow", "version": VERSION_BODY}
