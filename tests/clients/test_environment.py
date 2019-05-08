@@ -105,6 +105,17 @@ PYTHON_BODY_PYTHON2_NONE = {
 }
 PYTHON_PYTHON2_NONE = Python(python2=None, python3=PYTHON_SPECIFICATION)
 
+PYTHON_BODY_MISSING_PYTHON3 = {"Python2": PYTHON_SPECIFICATION_BODY}
+PYTHON_BODY_PYTHON3_NONE = {
+    "Python2": PYTHON_SPECIFICATION_BODY,
+    "Python3": None,
+}
+PYTHON_PYTHON3_NONE = Python(python2=PYTHON_SPECIFICATION, python3=None)
+
+PYTHON_BODY_MISSING_KEYS = {}
+PYTHON_BODY_NONE = {"Python2": None, "Python3": None}
+PYTHON_NONE = Python(python2=None, python3=None)
+
 SCRIPT_STR = "# Edit your script\n"
 SCRIPT_BODY = {"script": SCRIPT_STR}
 SCRIPT = Script(script=SCRIPT_STR)
@@ -263,6 +274,8 @@ def test_apt_schema_dump():
     [
         (PYTHON_BODY, PYTHON),
         (PYTHON_BODY_MISSING_PYTHON2, PYTHON_PYTHON2_NONE),
+        (PYTHON_BODY_MISSING_PYTHON3, PYTHON_PYTHON3_NONE),
+        (PYTHON_BODY_MISSING_KEYS, PYTHON_NONE),
     ],
 )
 def test_python_schema_load(body, expected):
@@ -272,7 +285,12 @@ def test_python_schema_load(body, expected):
 
 @pytest.mark.parametrize(
     "object, expected",
-    [(PYTHON, PYTHON_BODY), (PYTHON_PYTHON2_NONE, PYTHON_BODY_PYTHON2_NONE)],
+    [
+        (PYTHON, PYTHON_BODY),
+        (PYTHON_PYTHON2_NONE, PYTHON_BODY_PYTHON2_NONE),
+        (PYTHON_PYTHON3_NONE, PYTHON_BODY_PYTHON3_NONE),
+        (PYTHON_NONE, PYTHON_BODY_NONE),
+    ],
 )
 def test_python_schema_dump(object, expected):
     data = PythonSchema().dump(object)
@@ -374,7 +392,7 @@ def test_environment_client_get(mocker):
 
 
 def test_environment_client_update(mocker):
-    mocker.patch.object(EnvironmentClient, "_put_raw", return_value=None)
+    mocker.patch.object(EnvironmentClient, "_put_raw")
     environment_update_create_mock = mocker.patch(
         "faculty.clients.environment.EnvironmentCreateUpdate",
         return_value=ENVIRONMENT_CREATE_UPDATE,
