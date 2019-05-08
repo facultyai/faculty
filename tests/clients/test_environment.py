@@ -98,6 +98,13 @@ PYTHON_BODY = {
 }
 PYTHON = Python(python2=PYTHON_SPECIFICATION, python3=PYTHON_SPECIFICATION)
 
+PYTHON_BODY_MISSING_PYTHON2 = {"Python3": PYTHON_SPECIFICATION_BODY}
+PYTHON_BODY_PYTHON2_NONE = {
+    "Python2": None,
+    "Python3": PYTHON_SPECIFICATION_BODY,
+}
+PYTHON_PYTHON2_NONE = Python(python2=None, python3=PYTHON_SPECIFICATION)
+
 SCRIPT_STR = "# Edit your script\n"
 SCRIPT_BODY = {"script": SCRIPT_STR}
 SCRIPT = Script(script=SCRIPT_STR)
@@ -251,14 +258,25 @@ def test_apt_schema_dump():
     assert data == APT_BODY
 
 
-def test_python_schema_load():
-    data = PythonSchema().load(PYTHON_BODY)
-    assert data == PYTHON
+@pytest.mark.parametrize(
+    "body, expected",
+    [
+        (PYTHON_BODY, PYTHON),
+        (PYTHON_BODY_MISSING_PYTHON2, PYTHON_PYTHON2_NONE),
+    ],
+)
+def test_python_schema_load(body, expected):
+    data = PythonSchema().load(body)
+    assert data == expected
 
 
-def test_python_schema_dump():
-    data = PythonSchema().dump(PYTHON)
-    assert data == PYTHON_BODY
+@pytest.mark.parametrize(
+    "object, expected",
+    [(PYTHON, PYTHON_BODY), (PYTHON_PYTHON2_NONE, PYTHON_BODY_PYTHON2_NONE)],
+)
+def test_python_schema_dump(object, expected):
+    data = PythonSchema().dump(object)
+    assert data == expected
 
 
 def test_script_schema_load():

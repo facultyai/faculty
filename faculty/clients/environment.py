@@ -143,8 +143,12 @@ class PythonSpecificationSchema(BaseSchema):
 
 
 class PythonSchema(BaseSchema):
-    python2 = fields.Nested(PythonSpecificationSchema(), data_key="Python2")
-    python3 = fields.Nested(PythonSpecificationSchema(), data_key="Python3")
+    python2 = fields.Nested(
+        PythonSpecificationSchema(), data_key="Python2", missing=None
+    )
+    python3 = fields.Nested(
+        PythonSpecificationSchema(), data_key="Python3", missing=None
+    )
 
     @post_load
     def make_python(self, data):
