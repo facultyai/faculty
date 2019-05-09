@@ -36,10 +36,10 @@ from faculty.clients.environment import (
     EnvironmentSchema,
     Pip,
     PipSchema,
-    Python,
+    PythonSpecification,
     PythonPackage,
     PythonPackageSchema,
-    PythonSchema,
+    PythonSpecificationSchema,
     PythonEnvironment,
     PythonEnvironmentSchema,
     Script,
@@ -92,29 +92,39 @@ APT_PACKAGE = AptPackage(name="cuda")
 APT_BODY = {"packages": [APT_PACKAGE_BODY]}
 APT = Apt(packages=[APT_PACKAGE])
 
-PYTHON_BODY = {
+PYTHON_SPECIFICATION_BODY = {
     "Python2": PYTHON_ENVIRONMENT_BODY,
     "Python3": PYTHON_ENVIRONMENT_BODY,
 }
-PYTHON = Python(python2=PYTHON_ENVIRONMENT, python3=PYTHON_ENVIRONMENT)
+PYTHON_SPECIFICATION = PythonSpecification(
+    python2=PYTHON_ENVIRONMENT, python3=PYTHON_ENVIRONMENT
+)
 
-PYTHON_BODY_MISSING_PYTHON2 = {"Python3": PYTHON_ENVIRONMENT_BODY}
-PYTHON_BODY_PYTHON2_NONE = {
+PYTHON_SPECIFICATION_BODY_MISSING_PYTHON2 = {
+    "Python3": PYTHON_ENVIRONMENT_BODY
+}
+PYTHON_SPECIFICATION_BODY_PYTHON2_NONE = {
     "Python2": None,
     "Python3": PYTHON_ENVIRONMENT_BODY,
 }
-PYTHON_PYTHON2_NONE = Python(python2=None, python3=PYTHON_ENVIRONMENT)
+PYTHON_SPECIFICATION_PYTHON2_NONE = PythonSpecification(
+    python2=None, python3=PYTHON_ENVIRONMENT
+)
 
-PYTHON_BODY_MISSING_PYTHON3 = {"Python2": PYTHON_ENVIRONMENT_BODY}
-PYTHON_BODY_PYTHON3_NONE = {
+PYTHON_SPECIFICATION_BODY_MISSING_PYTHON3 = {
+    "Python2": PYTHON_ENVIRONMENT_BODY
+}
+PYTHON_SPECIFICATION_BODY_PYTHON3_NONE = {
     "Python2": PYTHON_ENVIRONMENT_BODY,
     "Python3": None,
 }
-PYTHON_PYTHON3_NONE = Python(python2=PYTHON_ENVIRONMENT, python3=None)
+PYTHON_SPECIFICATION_PYTHON3_NONE = PythonSpecification(
+    python2=PYTHON_ENVIRONMENT, python3=None
+)
 
-PYTHON_BODY_MISSING_KEYS = {}
-PYTHON_BODY_NONE = {"Python2": None, "Python3": None}
-PYTHON_NONE = Python(python2=None, python3=None)
+PYTHON_SPECIFICATION_BODY_MISSING_KEYS = {}
+PYTHON_SPECIFICATION_BODY_NONE = {"Python2": None, "Python3": None}
+PYTHON_SPECIFICATION_NONE = PythonSpecification(python2=None, python3=None)
 
 SCRIPT_STR = "# Edit your script\n"
 SCRIPT_BODY = {"script": SCRIPT_STR}
@@ -123,9 +133,11 @@ SCRIPT = Script(script=SCRIPT_STR)
 SPECIFICATION_BODY = {
     "apt": APT_BODY,
     "bash": [SCRIPT_BODY],
-    "python": PYTHON_BODY,
+    "python": PYTHON_SPECIFICATION_BODY,
 }
-SPECIFICATION = Specification(apt=APT, bash=[SCRIPT], python=PYTHON)
+SPECIFICATION = Specification(
+    apt=APT, bash=[SCRIPT], python=PYTHON_SPECIFICATION
+)
 
 PROJECT_ID = uuid.uuid4()
 ENVIRONMENT_ID = uuid.uuid4()
@@ -272,28 +284,40 @@ def test_apt_schema_dump():
 @pytest.mark.parametrize(
     "body, expected",
     [
-        (PYTHON_BODY, PYTHON),
-        (PYTHON_BODY_MISSING_PYTHON2, PYTHON_PYTHON2_NONE),
-        (PYTHON_BODY_MISSING_PYTHON3, PYTHON_PYTHON3_NONE),
-        (PYTHON_BODY_MISSING_KEYS, PYTHON_NONE),
+        (PYTHON_SPECIFICATION_BODY, PYTHON_SPECIFICATION),
+        (
+            PYTHON_SPECIFICATION_BODY_MISSING_PYTHON2,
+            PYTHON_SPECIFICATION_PYTHON2_NONE,
+        ),
+        (
+            PYTHON_SPECIFICATION_BODY_MISSING_PYTHON3,
+            PYTHON_SPECIFICATION_PYTHON3_NONE,
+        ),
+        (PYTHON_SPECIFICATION_BODY_MISSING_KEYS, PYTHON_SPECIFICATION_NONE),
     ],
 )
 def test_python_schema_load(body, expected):
-    data = PythonSchema().load(body)
+    data = PythonSpecificationSchema().load(body)
     assert data == expected
 
 
 @pytest.mark.parametrize(
     "object, expected",
     [
-        (PYTHON, PYTHON_BODY),
-        (PYTHON_PYTHON2_NONE, PYTHON_BODY_PYTHON2_NONE),
-        (PYTHON_PYTHON3_NONE, PYTHON_BODY_PYTHON3_NONE),
-        (PYTHON_NONE, PYTHON_BODY_NONE),
+        (PYTHON_SPECIFICATION, PYTHON_SPECIFICATION_BODY),
+        (
+            PYTHON_SPECIFICATION_PYTHON2_NONE,
+            PYTHON_SPECIFICATION_BODY_PYTHON2_NONE,
+        ),
+        (
+            PYTHON_SPECIFICATION_PYTHON3_NONE,
+            PYTHON_SPECIFICATION_BODY_PYTHON3_NONE,
+        ),
+        (PYTHON_SPECIFICATION_NONE, PYTHON_SPECIFICATION_BODY_NONE),
     ],
 )
 def test_python_schema_dump(object, expected):
-    data = PythonSchema().dump(object)
+    data = PythonSpecificationSchema().dump(object)
     assert data == expected
 
 

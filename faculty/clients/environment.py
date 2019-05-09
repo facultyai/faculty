@@ -42,7 +42,7 @@ PythonEnvironment = namedtuple("PythonEnvironment", ["pip", "conda"])
 Apt = namedtuple("Apt", ["packages"])
 AptPackage = namedtuple("AptPackage", ["name"])
 Script = namedtuple("Script", ["script"])
-Python = namedtuple("Python", ["python2", "python3"])
+PythonSpecification = namedtuple("PythonSpecification", ["python2", "python3"])
 Specification = namedtuple("Specification", ["apt", "bash", "python"])
 Environment = namedtuple(
     "Environment",
@@ -142,7 +142,7 @@ class PythonEnvironmentSchema(BaseSchema):
         return PythonEnvironment(**data)
 
 
-class PythonSchema(BaseSchema):
+class PythonSpecificationSchema(BaseSchema):
     python2 = fields.Nested(
         PythonEnvironmentSchema(), data_key="Python2", missing=None
     )
@@ -152,7 +152,7 @@ class PythonSchema(BaseSchema):
 
     @post_load
     def make_python(self, data):
-        return Python(**data)
+        return PythonSpecification(**data)
 
 
 class AptPackageSchema(BaseSchema):
@@ -182,7 +182,7 @@ class ScriptSchema(BaseSchema):
 class SpecificationSchema(BaseSchema):
     apt = fields.Nested(AptSchema(), required=True)
     bash = fields.List(fields.Nested(ScriptSchema()), required=True)
-    python = fields.Nested(PythonSchema(), required=True)
+    python = fields.Nested(PythonSpecificationSchema(), required=True)
 
     @post_load
     def make_specification(self, data):
