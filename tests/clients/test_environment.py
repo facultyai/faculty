@@ -40,8 +40,8 @@ from faculty.clients.environment import (
     PythonPackage,
     PythonPackageSchema,
     PythonSchema,
-    PythonSpecification,
-    PythonSpecificationSchema,
+    PythonEnvironment,
+    PythonEnvironmentSchema,
     Script,
     ScriptSchema,
     Specification,
@@ -83,8 +83,8 @@ PIP = Pip(extra_index_urls=["http://example.com/"], packages=[PYTHON_PACKAGE])
 CONDA_BODY = {"channels": ["conda-forge"], "packages": [PYTHON_PACKAGE_BODY]}
 CONDA = Conda(channels=["conda-forge"], packages=[PYTHON_PACKAGE])
 
-PYTHON_SPECIFICATION_BODY = {"pip": PIP_BODY, "conda": CONDA_BODY}
-PYTHON_SPECIFICATION = PythonSpecification(conda=CONDA, pip=PIP)
+PYTHON_ENVIRONMENT_BODY = {"pip": PIP_BODY, "conda": CONDA_BODY}
+PYTHON_ENVIRONMENT = PythonEnvironment(conda=CONDA, pip=PIP)
 
 APT_PACKAGE_BODY = {"name": "cuda"}
 APT_PACKAGE = AptPackage(name="cuda")
@@ -93,24 +93,24 @@ APT_BODY = {"packages": [APT_PACKAGE_BODY]}
 APT = Apt(packages=[APT_PACKAGE])
 
 PYTHON_BODY = {
-    "Python2": PYTHON_SPECIFICATION_BODY,
-    "Python3": PYTHON_SPECIFICATION_BODY,
+    "Python2": PYTHON_ENVIRONMENT_BODY,
+    "Python3": PYTHON_ENVIRONMENT_BODY,
 }
-PYTHON = Python(python2=PYTHON_SPECIFICATION, python3=PYTHON_SPECIFICATION)
+PYTHON = Python(python2=PYTHON_ENVIRONMENT, python3=PYTHON_ENVIRONMENT)
 
-PYTHON_BODY_MISSING_PYTHON2 = {"Python3": PYTHON_SPECIFICATION_BODY}
+PYTHON_BODY_MISSING_PYTHON2 = {"Python3": PYTHON_ENVIRONMENT_BODY}
 PYTHON_BODY_PYTHON2_NONE = {
     "Python2": None,
-    "Python3": PYTHON_SPECIFICATION_BODY,
+    "Python3": PYTHON_ENVIRONMENT_BODY,
 }
-PYTHON_PYTHON2_NONE = Python(python2=None, python3=PYTHON_SPECIFICATION)
+PYTHON_PYTHON2_NONE = Python(python2=None, python3=PYTHON_ENVIRONMENT)
 
-PYTHON_BODY_MISSING_PYTHON3 = {"Python2": PYTHON_SPECIFICATION_BODY}
+PYTHON_BODY_MISSING_PYTHON3 = {"Python2": PYTHON_ENVIRONMENT_BODY}
 PYTHON_BODY_PYTHON3_NONE = {
-    "Python2": PYTHON_SPECIFICATION_BODY,
+    "Python2": PYTHON_ENVIRONMENT_BODY,
     "Python3": None,
 }
-PYTHON_PYTHON3_NONE = Python(python2=PYTHON_SPECIFICATION, python3=None)
+PYTHON_PYTHON3_NONE = Python(python2=PYTHON_ENVIRONMENT, python3=None)
 
 PYTHON_BODY_MISSING_KEYS = {}
 PYTHON_BODY_NONE = {"Python2": None, "Python3": None}
@@ -240,13 +240,13 @@ def test_conda_schema_dump():
 
 
 def test_python_specification_schema_load():
-    data = PythonSpecificationSchema().load(PYTHON_SPECIFICATION_BODY)
-    assert data == PYTHON_SPECIFICATION
+    data = PythonEnvironmentSchema().load(PYTHON_ENVIRONMENT_BODY)
+    assert data == PYTHON_ENVIRONMENT
 
 
 def test_python_specification_schema_dump():
-    data = PythonSpecificationSchema().dump(PYTHON_SPECIFICATION)
-    assert data == PYTHON_SPECIFICATION_BODY
+    data = PythonEnvironmentSchema().dump(PYTHON_ENVIRONMENT)
+    assert data == PYTHON_ENVIRONMENT_BODY
 
 
 def test_apt_package_schema_load():

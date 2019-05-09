@@ -38,7 +38,7 @@ Version = namedtuple("Version", ["constraint", "identifier"])
 PythonPackage = namedtuple("PythonPackage", ["name", "version"])
 Pip = namedtuple("Pip", ["extra_index_urls", "packages"])
 Conda = namedtuple("Conda", ["channels", "packages"])
-PythonSpecification = namedtuple("PythonSpecification", ["pip", "conda"])
+PythonEnvironment = namedtuple("PythonEnvironment", ["pip", "conda"])
 Apt = namedtuple("Apt", ["packages"])
 AptPackage = namedtuple("AptPackage", ["name"])
 Script = namedtuple("Script", ["script"])
@@ -133,21 +133,21 @@ class CondaSchema(BaseSchema):
         return Conda(**data)
 
 
-class PythonSpecificationSchema(BaseSchema):
+class PythonEnvironmentSchema(BaseSchema):
     conda = fields.Nested(CondaSchema(), required=True)
     pip = fields.Nested(PipSchema(), required=True)
 
     @post_load
     def make_python_specification(self, data):
-        return PythonSpecification(**data)
+        return PythonEnvironment(**data)
 
 
 class PythonSchema(BaseSchema):
     python2 = fields.Nested(
-        PythonSpecificationSchema(), data_key="Python2", missing=None
+        PythonEnvironmentSchema(), data_key="Python2", missing=None
     )
     python3 = fields.Nested(
-        PythonSpecificationSchema(), data_key="Python3", missing=None
+        PythonEnvironmentSchema(), data_key="Python3", missing=None
     )
 
     @post_load
