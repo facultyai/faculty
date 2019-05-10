@@ -251,12 +251,12 @@ def test_conda_schema_dump():
     assert data == CONDA_BODY
 
 
-def test_python_specification_schema_load():
+def test_python_environment_schema_load():
     data = PythonEnvironmentSchema().load(PYTHON_ENVIRONMENT_BODY)
     assert data == PYTHON_ENVIRONMENT
 
 
-def test_python_specification_schema_dump():
+def test_python_environment_schema_dump():
     data = PythonEnvironmentSchema().dump(PYTHON_ENVIRONMENT)
     assert data == PYTHON_ENVIRONMENT_BODY
 
@@ -296,7 +296,7 @@ def test_apt_schema_dump():
         (PYTHON_SPECIFICATION_BODY_MISSING_KEYS, PYTHON_SPECIFICATION_NONE),
     ],
 )
-def test_python_schema_load(body, expected):
+def test_python_specification_schema_load(body, expected):
     data = PythonSpecificationSchema().load(body)
     assert data == expected
 
@@ -316,7 +316,7 @@ def test_python_schema_load(body, expected):
         (PYTHON_SPECIFICATION_NONE, PYTHON_SPECIFICATION_BODY_NONE),
     ],
 )
-def test_python_schema_dump(object, expected):
+def test_python_specification_schema_dump(object, expected):
     data = PythonSpecificationSchema().dump(object)
     assert data == expected
 
