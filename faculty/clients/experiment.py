@@ -14,8 +14,9 @@
 
 from collections import namedtuple
 from enum import Enum
+import uuid
 
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, utils as marshmallow_utils
 from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseClient, BaseSchema, Conflict
@@ -41,6 +42,12 @@ class ExperimentDeleted(Exception):
     def __init__(self, message, experiment_id):
         super(ExperimentDeleted, self).__init__(message)
         self.experiment_id = experiment_id
+
+
+class RunQueryFilterValidation(Exception):
+    def __init__(self, message, value):
+        super(RunQueryFilterValidation, self).__init__(message)
+        self.value = value
 
 
 class ExperimentRunStatus(Enum):
@@ -98,6 +105,119 @@ DeleteExperimentRunsResponse = namedtuple(
 RestoreExperimentRunsResponse = namedtuple(
     "RestoreExperimentRunsResponse", ["restored_run_ids", "conflicted_run_ids"]
 )
+
+SingleFilter = namedtuple("SingleFilter", ["by", "key", "operator", "value"])
+
+CompoundFilter = namedtuple("CompoundFilter", ["operator", "conditions"])
+
+
+class SingleFilterOperator(Enum):
+    DEFINED = "defined"
+    EQUAL_TO = "eq"
+    NOT_EQUAL_TO = "ne"
+    LESS_THAN = "lt"
+    LESS_THAN_OR_EQUAL_TO = "le"
+    GREATER_THAN = "gt"
+    GREATER_THAN_OR_EQUAL_TO = "ge"
+
+
+class SingleFilterBy(Enum):
+    PROJECT_ID = "projectId"
+    EXPERIMENT_ID = "experimentId"
+    RUN_ID = "runId"
+    DELETED_AT = "deletedAt"
+    TAG = "tag"
+    PARAM = "param"
+    METRIC = "metric"
+
+
+class CompoundFilterOperator(Enum):
+    AND = "and"
+    OR = "or"
+
+
+class SingleFilterValueField(fields.Field):
+    """
+    Field that serialises/deserialises a run filter.
+    """
+
+    def _is_valid_uuid(self, value, obj):
+        return (
+            isinstance(value, uuid.UUID)
+            and (
+                obj.by == SingleFilterBy.PROJECT_ID
+                or obj.by == SingleFilterBy.RUN_ID
+            )
+        )
+
+    def _is_valid_experiment_id(self, value, obj):
+        return (
+            isinstance(value, int)
+            and obj.by == SingleFilterBy.EXPERIMENT_ID
+        )
+
+    def _is_directly_stringifiable(self, value, obj):
+        return (
+            self._is_valid_uuid(value, obj)
+            or self._is_valid_experiment_id(value, obj)
+            or obj.by == SingleFilterBy.TAG
+            or obj.by == SingleFilterBy.PARAM
+            or obj.by == SingleFilterBy.METRIC
+        )
+
+    def _deserialize(self, value, attr, obj, **kwargs):
+        pass
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if self._is_directly_stringifiable(value, obj):
+            return str(value)
+        elif obj.by == SingleFilterBy.DELETED_AT:
+            return marshmallow_utils.from_iso_datetime(str(value))
+        else:
+            raise RunQueryFilterValidation(
+                "Validation error serialising run query filter",
+                value
+            )
+
+
+class FilterField(fields.Field):
+    """
+    Field that serialises/deserialises a run filter.
+    """
+
+    def _deserialize(self, value, attr, obj, **kwargs):
+        if value is None:
+            return None
+        elif isinstance(value, SingleFilter):
+            return SingleFilterSchema().load(value)
+        else:
+            return CompoundFilterSchema().load(value)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if value is None:
+            return None
+        if isinstance(value, SingleFilter):
+            return SingleFilterSchema().dump(value)
+        else:
+            return CompoundFilterSchema().dump(value)
+
+
+class SingleFilterSchema(BaseSchema):
+    by = EnumField(SingleFilterBy, by_value=True, required=True)
+    operator = EnumField(SingleFilterOperator, by_value=True, required=True)
+    value = SingleFilterValueField(required=True)
+
+
+class CompoundFilterSchema(BaseSchema):
+    operator = EnumField(
+        CompoundFilterOperator, by_value=True, required=True)
+    conditions = fields.List(FilterField())
+
+
+class QueryRunsSchema(BaseSchema):
+    filter = FilterField(required=True)
+    sort = fields.String()
+    page = fields.String()
 
 
 class MetricSchema(BaseSchema):

@@ -23,6 +23,8 @@ from pytz import UTC
 from faculty.clients.base import Conflict
 from faculty.clients.experiment import (
     CreateRunSchema,
+    CompoundFilter,
+    CompoundFilterOperator,
     DeleteExperimentRunsResponse,
     DeleteExperimentRunsResponseSchema,
     Experiment,
@@ -47,8 +49,12 @@ from faculty.clients.experiment import (
     Param,
     ParamConflict,
     ParamSchema,
+    QueryRunsSchema,
     RestoreExperimentRunsResponse,
     RestoreExperimentRunsResponseSchema,
+    SingleFilter,
+    SingleFilterBy,
+    SingleFilterOperator,
     Tag,
     TagSchema,
 )
@@ -226,6 +232,42 @@ RESTORE_EXPERIMENT_RUNS_RESPONSE_BODY = {
         for run_id in RESTORE_EXPERIMENT_RUNS_RESPONSE.conflicted_run_ids
     ],
 }
+
+# TODO: testing query stuff
+
+
+def test_query_runs_schema():
+    queryRunsObj = {
+        "filter": CompoundFilter(
+            operator=CompoundFilterOperator.AND,
+            conditions=[
+                SingleFilter(
+                    SingleFilterBy.EXPERIMENT_ID,
+                    None, SingleFilterOperator.EQUAL_TO, 7),
+                None
+            ]
+        ),
+        "sort": "sort",
+        "page": "page"
+    }
+    expected_json = {
+        "filter": {
+            "operator": "and",
+            "conditions": [
+                {
+                    "by": "experimentId",
+                    "operator": "eq",
+                    "value": '7'
+                },
+                None
+            ]
+        },
+        "sort": "sort",
+        "page": "page"
+    }
+    data = QueryRunsSchema().dump(queryRunsObj)
+    assert data == expected_json
+# TODO: testing query stuff
 
 
 def test_experiment_schema():
