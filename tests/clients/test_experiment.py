@@ -238,41 +238,6 @@ RESTORE_EXPERIMENT_RUNS_RESPONSE_BODY = {
 }
 
 
-def test_query_runs_schema():
-    queryRunsObj = QueryRuns(
-        CompoundFilter(
-            operator=CompoundFilterOperator.AND,
-            conditions=[
-                SingleFilter(
-                    SingleFilterBy.TAG,
-                    "tag_key", SingleFilterOperator.EQUAL_TO, "tag_value"),
-                None
-            ]
-        ),
-        [Sort(SortBy.PARAM, "param_key", SortOrder.ASC), \
-            Sort(SortBy.RUN_NUMBER, None, SortOrder.DESC)],
-        PAGE
-    )
-    expected_json = {
-        "filter": {
-            "operator": "and",
-            "conditions": [
-                {
-                    "by": "tag",
-                    "key": "tag_key",
-                    "operator": "eq",
-                    "value": "tag_value"
-                },
-                None
-            ]
-        },
-        "sort": [{"by": "param", "key": "param_key", "order": "asc"}, {"by": "runNumber", "key": None, "order": "desc"}],
-        "page": PAGE_BODY
-    }
-    data = QueryRunsSchema().dump(queryRunsObj)
-    assert data == expected_json
-
-
 def test_experiment_schema():
     data = ExperimentSchema().load(EXPERIMENT_BODY)
     assert data == EXPERIMENT
@@ -372,6 +337,90 @@ def test_experiment_run_data_schema_empty():
 def test_experiment_run_data_schema_multiple():
     data = ExperimentRunDataSchema().dump({"tags": [TAG, OTHER_TAG]})
     assert data == {"tags": [TAG_BODY, OTHER_TAG_BODY]}
+
+
+# check that all three fields are nullable
+# check all types of filter
+# check all types of sort
+
+PROJECT_ID_FILTER = SingleFilter(
+    by=SingleFilterBy.PROJECT_ID, key="k", operator=SingleFilterOperator.EQUAL_TO, value=PROJECT_ID)
+PROJECT_ID_FILTER_BODY = {
+    "by": "projectId",
+    "key": "k",
+    "operator": "eq",
+    "value": str(PROJECT_ID)
+}
+
+TAG_FILTER = SingleFilter(
+    by=SingleFilterBy.TAG, key="tag_key", operator=SingleFilterOperator.EQUAL_TO, value="tag_value")
+TAG_FILTER_BODY = {
+    "by": "tag",
+    "key": "tag_key",
+    "operator": "eq",
+    "value": "tag_value"
+}
+
+AND_FILTER = CompoundFilter(
+    operator=CompoundFilterOperator.AND,
+    conditions=[
+        SingleFilter(
+            SingleFilterBy.TAG,
+            "tag_key", SingleFilterOperator.EQUAL_TO, "tag_value"),
+        None
+    ]
+)
+AND_FILTER_BODY = {
+    "operator": "and",
+    "conditions": [
+        {
+            "by": "tag",
+            "key": "tag_key",
+            "operator": "eq",
+            "value": "tag_value"
+        },
+        None
+    ]
+}
+
+MULTI_SORT = [
+    Sort(SortBy.PARAM, "param_key", SortOrder.ASC),
+    Sort(SortBy.RUN_NUMBER, None, SortOrder.DESC)
+]
+MULTI_SORT_BODY = [
+    {"by": "param", "key": "param_key", "order": "asc"},
+    {"by": "runNumber", "key": None, "order": "desc"}]
+
+
+@pytest.mark.parametrize(
+    "pfilter,pfilter_body",
+    [
+        [None, None],
+        [PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY],
+        [TAG_FILTER, TAG_FILTER_BODY],
+        [AND_FILTER, AND_FILTER_BODY]
+    ]
+)
+@pytest.mark.parametrize(
+    "psort,psort_body",
+    [
+        [None, None],
+        [MULTI_SORT, MULTI_SORT_BODY]
+    ]
+)
+def test_query_runs_schema(mocker, pfilter, psort, pfilter_body, psort_body):
+    queryRunsObj = {
+        "filter": pfilter,
+        "sort": psort,
+        "page": PAGE
+    }
+    expected_json = {
+        "filter": pfilter_body,
+        "sort": psort_body,
+        "page": PAGE_BODY
+    }
+    data = QueryRunsSchema().dump(queryRunsObj)
+    assert data == expected_json
 
 
 @pytest.mark.parametrize("description", [None, "experiment description"])

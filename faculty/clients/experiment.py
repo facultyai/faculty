@@ -339,6 +339,7 @@ class SingleFilterValueField(fields.Field):
         elif obj.by == SingleFilterBy.DELETED_AT:
             return marshmallow_utils.from_iso_datetime(str(value))
         else:
+            print(value)
             raise RunQueryFilterValidation(
                 "Validation error serialising run query filter",
                 value
