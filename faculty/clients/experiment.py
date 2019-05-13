@@ -337,7 +337,7 @@ class SingleFilterValueField(fields.Field):
         if self._is_directly_stringifiable(value, obj):
             return str(value)
         elif obj.by == SingleFilterBy.DELETED_AT:
-            return marshmallow_utils.from_iso_datetime(str(value))
+            return marshmallow_utils.from_iso_datetime(str(value)).isoformat()
         else:
             print(value)
             raise RunQueryFilterValidation(

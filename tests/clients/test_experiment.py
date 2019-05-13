@@ -75,6 +75,7 @@ LAST_UPDATED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
 LAST_UPDATED_AT_STRING = "2018-03-10T11:32:30.172Z"
 DELETED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
 DELETED_AT_STRING = "2018-03-10T11:37:42.482Z"
+DELETED_AT_STRING_PYTHON = "2018-03-10T11:37:42.482000+00:00"
 
 EXPERIMENT = Experiment(
     id=EXPERIMENT_ID,
@@ -344,12 +345,39 @@ def test_experiment_run_data_schema_multiple():
 # check all types of sort
 
 PROJECT_ID_FILTER = SingleFilter(
-    by=SingleFilterBy.PROJECT_ID, key="k", operator=SingleFilterOperator.EQUAL_TO, value=PROJECT_ID)
+    by=SingleFilterBy.PROJECT_ID, key=None, operator=SingleFilterOperator.EQUAL_TO, value=PROJECT_ID)
 PROJECT_ID_FILTER_BODY = {
     "by": "projectId",
-    "key": "k",
+    "key": None,
     "operator": "eq",
     "value": str(PROJECT_ID)
+}
+
+EXPERIMENT_ID_FILTER = SingleFilter(
+    by=SingleFilterBy.EXPERIMENT_ID,  key=None, operator=SingleFilterOperator.EQUAL_TO, value=1)
+EXPERIMENT_ID_BODY = {
+    "by": "experimentId",
+    "key": None,
+    "operator": "eq",
+    "value": "1"
+}
+
+RUN_ID_FILTER = SingleFilter(
+    by=SingleFilterBy.RUN_ID,  key=None, operator=SingleFilterOperator.EQUAL_TO, value=EXPERIMENT_RUN_ID)
+RUN_ID_BODY = {
+    "by": "runId",
+    "key": None,
+    "operator": "eq",
+    "value": str(EXPERIMENT_RUN_ID)
+}
+
+DELETED_AT_FILTER = SingleFilter(
+    by=SingleFilterBy.DELETED_AT,  key=None, operator=SingleFilterOperator.EQUAL_TO, value=DELETED_AT)
+DELETED_AT_BODY = {
+    "by": "deletedAt",
+    "key": None,
+    "operator": "eq",
+    "value": DELETED_AT_STRING_PYTHON
 }
 
 TAG_FILTER = SingleFilter(
@@ -359,6 +387,24 @@ TAG_FILTER_BODY = {
     "key": "tag_key",
     "operator": "eq",
     "value": "tag_value"
+}
+
+PARAM_FILTER = SingleFilter(
+    by=SingleFilterBy.PARAM, key="param_key", operator=SingleFilterOperator.EQUAL_TO, value="param_value")
+PARAM_FILTER_BODY = {
+    "by": "param",
+    "key": "param_key",
+    "operator": "eq",
+    "value": "param_value"
+}
+
+METRIC_FILTER = SingleFilter(
+    by=SingleFilterBy.METRIC, key="metric_key", operator=SingleFilterOperator.EQUAL_TO, value="metric_value")
+METRIC_FILTER_BODY = {
+    "by": "metric",
+    "key": "metric_key",
+    "operator": "eq",
+    "value": "metric_value"
 }
 
 AND_FILTER = CompoundFilter(
@@ -397,7 +443,12 @@ MULTI_SORT_BODY = [
     [
         [None, None],
         [PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY],
+        [EXPERIMENT_ID_FILTER, EXPERIMENT_ID_BODY],
+        [RUN_ID_FILTER, RUN_ID_BODY],
+        [DELETED_AT_FILTER, DELETED_AT_BODY],
         [TAG_FILTER, TAG_FILTER_BODY],
+        [PARAM_FILTER, PARAM_FILTER_BODY],
+        [METRIC_FILTER, METRIC_FILTER_BODY],        
         [AND_FILTER, AND_FILTER_BODY]
     ]
 )
