@@ -246,6 +246,7 @@ class PageSchema(BaseSchema):
     def make_page(self, data):
         return Page(**data)
 
+QueryRuns = namedtuple("QueryRuns", ["filter", "sort", "page"])
 
 class QueryRunsSchema(BaseSchema):
     filter = FilterField(required=True)

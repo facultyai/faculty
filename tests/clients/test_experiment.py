@@ -49,6 +49,7 @@ from faculty.clients.experiment import (
     Param,
     ParamConflict,
     ParamSchema,
+    QueryRuns,
     QueryRunsSchema,
     RestoreExperimentRunsResponse,
     RestoreExperimentRunsResponseSchema,
@@ -236,10 +237,10 @@ RESTORE_EXPERIMENT_RUNS_RESPONSE_BODY = {
     ],
 }
 
-# TODO: testing query stuff
+
 def test_query_runs_schema():
-    queryRunsObj = {
-        "filter": CompoundFilter(
+    queryRunsObj = QueryRuns(
+        CompoundFilter(
             operator=CompoundFilterOperator.AND,
             conditions=[
                 SingleFilter(
@@ -248,10 +249,10 @@ def test_query_runs_schema():
                 None
             ]
         ),
-        "sort": [Sort(SortBy.PARAM, "param_key", SortOrder.ASC), \
+        [Sort(SortBy.PARAM, "param_key", SortOrder.ASC), \
             Sort(SortBy.RUN_NUMBER, None, SortOrder.DESC)],
-        "page": PAGE
-    }
+        PAGE
+    )
     expected_json = {
         "filter": {
             "operator": "and",
@@ -270,7 +271,7 @@ def test_query_runs_schema():
     }
     data = QueryRunsSchema().dump(queryRunsObj)
     assert data == expected_json
-# TODO: testing query stuff
+
 
 def test_experiment_schema():
     data = ExperimentSchema().load(EXPERIMENT_BODY)
