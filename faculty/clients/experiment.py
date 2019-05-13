@@ -138,14 +138,16 @@ class CompoundFilterOperator(Enum):
 
 _Sort = namedtuple("_Sort", ["by", "key", "order"])
 
+
 class Sort(_Sort):
-    def __new__(self, by, key, order):
+    def __new__(cls, by, key, order):
         if by in [SortBy.STARTED_AT, SortBy.RUN_NUMBER, SortBy.DURATION] and key is not None:
             raise ValueError("key must be none for type {}".format(by))
         elif by in [SortBy.TAG, SortBy.PARAM, SortBy.METRIC] and key is None:
             raise ValueError("key must not be none for type {}".format(by))
-        self = super(Sort, self).__init__(by, key, order)
+        self = super(Sort, cls).__new__(cls, by, key, order)
         return self
+
 
 class SortBy(Enum):
     STARTED_AT = "startedAt"
@@ -343,7 +345,6 @@ class SingleFilterValueField(fields.Field):
         elif obj.by == SingleFilterBy.DELETED_AT:
             return marshmallow_utils.from_iso_datetime(str(value)).isoformat()
         else:
-            print(value)
             raise RunQueryFilterValidation(
                 "Validation error serialising run query filter", value
             )
