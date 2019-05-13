@@ -153,6 +153,9 @@ class SortOrder(Enum):
     DESC = "desc"
 
 
+QueryRuns = namedtuple("QueryRuns", ["filter", "sort", "page"])
+
+
 class PageSchema(BaseSchema):
     start = fields.Integer(required=True)
     limit = fields.Integer(required=True)
@@ -161,7 +164,6 @@ class PageSchema(BaseSchema):
     def make_page(self, data):
         return Page(**data)
 
-QueryRuns = namedtuple("QueryRuns", ["filter", "sort", "page"])
 
 class MetricSchema(BaseSchema):
     key = fields.String(required=True)
