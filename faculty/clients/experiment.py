@@ -136,86 +136,7 @@ class CompoundFilterOperator(Enum):
     OR = "or"
 
 
-class SingleFilterValueField(fields.Field):
-    """
-    Field that serialises/deserialises a run filter.
-    """
-
-    def _is_valid_uuid(self, value, obj):
-        return (
-            isinstance(value, uuid.UUID)
-            and (
-                obj.by == SingleFilterBy.PROJECT_ID
-                or obj.by == SingleFilterBy.RUN_ID
-            )
-        )
-
-    def _is_valid_experiment_id(self, value, obj):
-        return (
-            isinstance(value, int)
-            and obj.by == SingleFilterBy.EXPERIMENT_ID
-        )
-
-    def _is_directly_stringifiable(self, value, obj):
-        return (
-            self._is_valid_uuid(value, obj)
-            or self._is_valid_experiment_id(value, obj)
-            or obj.by == SingleFilterBy.TAG
-            or obj.by == SingleFilterBy.PARAM
-            or obj.by == SingleFilterBy.METRIC
-        )
-
-    def _deserialize(self, value, attr, obj, **kwargs):
-        pass
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        if self._is_directly_stringifiable(value, obj):
-            return str(value)
-        elif obj.by == SingleFilterBy.DELETED_AT:
-            return marshmallow_utils.from_iso_datetime(str(value))
-        else:
-            raise RunQueryFilterValidation(
-                "Validation error serialising run query filter",
-                value
-            )
-
-
-class FilterField(fields.Field):
-    """
-    Field that serialises/deserialises a run filter.
-    """
-
-    def _deserialize(self, value, attr, obj, **kwargs):
-        if value is None:
-            return None
-        elif isinstance(value, SingleFilter):
-            return SingleFilterSchema().load(value)
-        else:
-            return CompoundFilterSchema().load(value)
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        if value is None:
-            return None
-        if isinstance(value, SingleFilter):
-            return SingleFilterSchema().dump(value)
-        else:
-            return CompoundFilterSchema().dump(value)
-
-
-class SingleFilterSchema(BaseSchema):
-    by = EnumField(SingleFilterBy, by_value=True, required=True)
-    key = fields.String()
-    operator = EnumField(SingleFilterOperator, by_value=True, required=True)
-    value = SingleFilterValueField(required=True)
-
-
-class CompoundFilterSchema(BaseSchema):
-    operator = EnumField(
-        CompoundFilterOperator, by_value=True, required=True)
-    conditions = fields.List(FilterField())
-
-
-Sort = namedtuple("Sort",["by", "key", "order"])
+Sort = namedtuple("Sort", ["by", "key", "order"])
 
 
 class SortBy(Enum):
@@ -232,12 +153,6 @@ class SortOrder(Enum):
     DESC = "desc"
 
 
-class SortSchema(BaseSchema):
-    by = EnumField(SortBy, by_value=True, required=True)
-    key = fields.String()
-    order = EnumField(SortOrder, by_value=True, required=True)
-
-
 class PageSchema(BaseSchema):
     start = fields.Integer(required=True)
     limit = fields.Integer(required=True)
@@ -247,12 +162,6 @@ class PageSchema(BaseSchema):
         return Page(**data)
 
 QueryRuns = namedtuple("QueryRuns", ["filter", "sort", "page"])
-
-class QueryRunsSchema(BaseSchema):
-    filter = FilterField(required=True)
-    sort = fields.List(fields.Nested(SortSchema))
-    page = fields.Nested(PageSchema, missing=None)
-
 
 class MetricSchema(BaseSchema):
     key = fields.String(required=True)
@@ -388,6 +297,97 @@ class RestoreExperimentRunsResponseSchema(BaseSchema):
     @post_load
     def make_restore_runs_response(self, data):
         return RestoreExperimentRunsResponse(**data)
+
+
+class SingleFilterValueField(fields.Field):
+    """
+    Field that serialises/deserialises a run filter.
+    """
+
+    def _is_valid_uuid(self, value, obj):
+        return (
+            isinstance(value, uuid.UUID)
+            and (
+                obj.by == SingleFilterBy.PROJECT_ID
+                or obj.by == SingleFilterBy.RUN_ID
+            )
+        )
+
+    def _is_valid_experiment_id(self, value, obj):
+        return (
+            isinstance(value, int)
+            and obj.by == SingleFilterBy.EXPERIMENT_ID
+        )
+
+    def _is_directly_stringifiable(self, value, obj):
+        return (
+            self._is_valid_uuid(value, obj)
+            or self._is_valid_experiment_id(value, obj)
+            or obj.by == SingleFilterBy.TAG
+            or obj.by == SingleFilterBy.PARAM
+            or obj.by == SingleFilterBy.METRIC
+        )
+
+    def _deserialize(self, value, attr, obj, **kwargs):
+        pass
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if self._is_directly_stringifiable(value, obj):
+            return str(value)
+        elif obj.by == SingleFilterBy.DELETED_AT:
+            return marshmallow_utils.from_iso_datetime(str(value))
+        else:
+            raise RunQueryFilterValidation(
+                "Validation error serialising run query filter",
+                value
+            )
+
+
+class FilterField(fields.Field):
+    """
+    Field that serialises/deserialises a run filter.
+    """
+
+    def _deserialize(self, value, attr, obj, **kwargs):
+        if value is None:
+            return None
+        elif isinstance(value, SingleFilter):
+            return SingleFilterSchema().load(value)
+        else:
+            return CompoundFilterSchema().load(value)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if value is None:
+            return None
+        if isinstance(value, SingleFilter):
+            return SingleFilterSchema().dump(value)
+        else:
+            return CompoundFilterSchema().dump(value)
+
+
+class SingleFilterSchema(BaseSchema):
+    by = EnumField(SingleFilterBy, by_value=True, required=True)
+    key = fields.String()
+    operator = EnumField(SingleFilterOperator, by_value=True, required=True)
+    value = SingleFilterValueField(required=True)
+
+
+class CompoundFilterSchema(BaseSchema):
+    operator = EnumField(
+        CompoundFilterOperator, by_value=True, required=True)
+    conditions = fields.List(FilterField())
+
+
+class SortSchema(BaseSchema):
+    by = EnumField(SortBy, by_value=True, required=True)
+    key = fields.String()
+    order = EnumField(SortOrder, by_value=True, required=True)
+
+
+class QueryRunsSchema(BaseSchema):
+    filter = FilterField(required=True)
+    sort = fields.List(fields.Nested(SortSchema))
+    page = fields.Nested(PageSchema, missing=None)
 
 
 class MetricHistorySchema(BaseSchema):
