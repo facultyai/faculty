@@ -307,18 +307,14 @@ class SingleFilterValueField(fields.Field):
     """
 
     def _is_valid_uuid(self, value, obj):
-        return (
-            isinstance(value, uuid.UUID)
-            and (
-                obj.by == SingleFilterBy.PROJECT_ID
-                or obj.by == SingleFilterBy.RUN_ID
-            )
+        return isinstance(value, uuid.UUID) and (
+            obj.by == SingleFilterBy.PROJECT_ID
+            or obj.by == SingleFilterBy.RUN_ID
         )
 
     def _is_valid_experiment_id(self, value, obj):
         return (
-            isinstance(value, int)
-            and obj.by == SingleFilterBy.EXPERIMENT_ID
+            isinstance(value, int) and obj.by == SingleFilterBy.EXPERIMENT_ID
         )
 
     def _is_directly_stringifiable(self, value, obj):
@@ -341,8 +337,7 @@ class SingleFilterValueField(fields.Field):
         else:
             print(value)
             raise RunQueryFilterValidation(
-                "Validation error serialising run query filter",
-                value
+                "Validation error serialising run query filter", value
             )
 
 
@@ -376,8 +371,7 @@ class SingleFilterSchema(BaseSchema):
 
 
 class CompoundFilterSchema(BaseSchema):
-    operator = EnumField(
-        CompoundFilterOperator, by_value=True, required=True)
+    operator = EnumField(CompoundFilterOperator, by_value=True, required=True)
     conditions = fields.List(FilterField())
 
 
