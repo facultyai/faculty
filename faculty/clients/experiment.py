@@ -204,6 +204,7 @@ class FilterField(fields.Field):
 
 class SingleFilterSchema(BaseSchema):
     by = EnumField(SingleFilterBy, by_value=True, required=True)
+    key = fields.String()
     operator = EnumField(SingleFilterOperator, by_value=True, required=True)
     value = SingleFilterValueField(required=True)
 
@@ -214,10 +215,42 @@ class CompoundFilterSchema(BaseSchema):
     conditions = fields.List(FilterField())
 
 
+Sort = namedtuple("Sort",["by", "key", "order"])
+
+
+class SortBy(Enum):
+    STARTED_AT = "startedAt"
+    RUN_NUMBER = "runNumber"
+    DURATION = "duration"
+    TAG = "tag"
+    PARAM = "param"
+    METRIC = "metric"
+
+
+class SortOrder(Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+class SortSchema(BaseSchema):
+    by = EnumField(SortBy, by_value=True, required=True)
+    key = fields.String()
+    order = EnumField(SortOrder, by_value=True, required=True)
+
+
+class PageSchema(BaseSchema):
+    start = fields.Integer(required=True)
+    limit = fields.Integer(required=True)
+
+    @post_load
+    def make_page(self, data):
+        return Page(**data)
+
+
 class QueryRunsSchema(BaseSchema):
     filter = FilterField(required=True)
-    sort = fields.String()
-    page = fields.String()
+    sort = fields.List(fields.Nested(SortSchema))
+    page = fields.Nested(PageSchema, missing=None)
 
 
 class MetricSchema(BaseSchema):
@@ -300,15 +333,6 @@ class ExperimentRunDataSchema(BaseSchema):
 class ExperimentRunInfoSchema(BaseSchema):
     status = EnumField(ExperimentRunStatus, by_value=True, required=True)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
-
-
-class PageSchema(BaseSchema):
-    start = fields.Integer(required=True)
-    limit = fields.Integer(required=True)
-
-    @post_load
-    def make_page(self, data):
-        return Page(**data)
 
 
 class PaginationSchema(BaseSchema):

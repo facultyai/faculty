@@ -55,6 +55,9 @@ from faculty.clients.experiment import (
     SingleFilter,
     SingleFilterBy,
     SingleFilterOperator,
+    Sort,
+    SortBy,
+    SortOrder,
     Tag,
     TagSchema,
 )
@@ -234,41 +237,40 @@ RESTORE_EXPERIMENT_RUNS_RESPONSE_BODY = {
 }
 
 # TODO: testing query stuff
-
-
 def test_query_runs_schema():
     queryRunsObj = {
         "filter": CompoundFilter(
             operator=CompoundFilterOperator.AND,
             conditions=[
                 SingleFilter(
-                    SingleFilterBy.EXPERIMENT_ID,
-                    None, SingleFilterOperator.EQUAL_TO, 7),
+                    SingleFilterBy.TAG,
+                    "tag_key", SingleFilterOperator.EQUAL_TO, "tag_value"),
                 None
             ]
         ),
-        "sort": "sort",
-        "page": "page"
+        "sort": [Sort(SortBy.PARAM, "param_key", SortOrder.ASC), \
+            Sort(SortBy.RUN_NUMBER, None, SortOrder.DESC)],
+        "page": PAGE
     }
     expected_json = {
         "filter": {
             "operator": "and",
             "conditions": [
                 {
-                    "by": "experimentId",
+                    "by": "tag",
+                    "key": "tag_key",
                     "operator": "eq",
-                    "value": '7'
+                    "value": "tag_value"
                 },
                 None
             ]
         },
-        "sort": "sort",
-        "page": "page"
+        "sort": [{"by": "param", "key": "param_key", "order": "asc"}, {"by": "runNumber", "key": None, "order": "desc"}],
+        "page": PAGE_BODY
     }
     data = QueryRunsSchema().dump(queryRunsObj)
     assert data == expected_json
 # TODO: testing query stuff
-
 
 def test_experiment_schema():
     data = ExperimentSchema().load(EXPERIMENT_BODY)
