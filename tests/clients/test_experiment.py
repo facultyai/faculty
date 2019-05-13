@@ -344,200 +344,205 @@ def test_experiment_run_data_schema_multiple():
 # check all types of filter
 # check all types of sort
 
-PROJECT_ID_FILTER = SingleFilter(
-    SingleFilterBy.PROJECT_ID, None, SingleFilterOperator.EQUAL_TO, PROJECT_ID
-)
-PROJECT_ID_FILTER_BODY = {
-    "by": "projectId",
-    "key": None,
-    "operator": "eq",
-    "value": str(PROJECT_ID),
-}
+# PROJECT_ID_FILTER = SingleFilter(
+#     SingleFilterBy.PROJECT_ID, None, SingleFilterOperator.EQUAL_TO, PROJECT_ID
+# )
+# PROJECT_ID_FILTER_BODY = {
+#     "by": "projectId",
+#     "key": None,
+#     "operator": "eq",
+#     "value": str(PROJECT_ID),
+# }
 
-EXPERIMENT_ID_FILTER = SingleFilter(
-    SingleFilterBy.EXPERIMENT_ID, None, SingleFilterOperator.EQUAL_TO, 1
-)
-EXPERIMENT_ID_BODY = {
-    "by": "experimentId",
-    "key": None,
-    "operator": "eq",
-    "value": "1",
-}
+# EXPERIMENT_ID_FILTER = SingleFilter(
+#     SingleFilterBy.EXPERIMENT_ID, None, SingleFilterOperator.EQUAL_TO, 1
+# )
+# EXPERIMENT_ID_BODY = {
+#     "by": "experimentId",
+#     "key": None,
+#     "operator": "eq",
+#     "value": "1",
+# }
 
-RUN_ID_FILTER = SingleFilter(
-    SingleFilterBy.RUN_ID,
-    None,
-    SingleFilterOperator.EQUAL_TO,
-    EXPERIMENT_RUN_ID,
-)
-RUN_ID_BODY = {
-    "by": "runId",
-    "key": None,
-    "operator": "eq",
-    "value": str(EXPERIMENT_RUN_ID),
-}
+# RUN_ID_FILTER = SingleFilter(
+#     SingleFilterBy.RUN_ID,
+#     None,
+#     SingleFilterOperator.EQUAL_TO,
+#     EXPERIMENT_RUN_ID,
+# )
+# RUN_ID_BODY = {
+#     "by": "runId",
+#     "key": None,
+#     "operator": "eq",
+#     "value": str(EXPERIMENT_RUN_ID),
+# }
 
-DELETED_AT_FILTER = SingleFilter(
-    SingleFilterBy.DELETED_AT, None, SingleFilterOperator.EQUAL_TO, DELETED_AT
-)
-DELETED_AT_BODY = {
-    "by": "deletedAt",
-    "key": None,
-    "operator": "eq",
-    "value": DELETED_AT_STRING_PYTHON,
-}
+# DELETED_AT_FILTER = SingleFilter(
+#     SingleFilterBy.DELETED_AT, None, SingleFilterOperator.EQUAL_TO, DELETED_AT
+# )
+# DELETED_AT_BODY = {
+#     "by": "deletedAt",
+#     "key": None,
+#     "operator": "eq",
+#     "value": DELETED_AT_STRING_PYTHON,
+# }
 
-TAG_FILTER = SingleFilter(
-    SingleFilterBy.TAG, "tag_key", SingleFilterOperator.EQUAL_TO, "tag_value"
-)
-TAG_FILTER_BODY = {
-    "by": "tag",
-    "key": "tag_key",
-    "operator": "eq",
-    "value": "tag_value",
-}
+# TAG_FILTER = SingleFilter(
+#     SingleFilterBy.TAG, "tag_key", SingleFilterOperator.EQUAL_TO, "tag_value"
+# )
+# TAG_FILTER_BODY = {
+#     "by": "tag",
+#     "key": "tag_key",
+#     "operator": "eq",
+#     "value": "tag_value",
+# }
 
-PARAM_FILTER = SingleFilter(
-    SingleFilterBy.PARAM,
-    "param_key",
-    SingleFilterOperator.EQUAL_TO,
-    "param_value",
-)
-PARAM_FILTER_BODY = {
-    "by": "param",
-    "key": "param_key",
-    "operator": "eq",
-    "value": "param_value",
-}
+# PARAM_FILTER = SingleFilter(
+#     SingleFilterBy.PARAM,
+#     "param_key",
+#     SingleFilterOperator.EQUAL_TO,
+#     "param_value",
+# )
+# PARAM_FILTER_BODY = {
+#     "by": "param",
+#     "key": "param_key",
+#     "operator": "eq",
+#     "value": "param_value",
+# }
 
-METRIC_FILTER = SingleFilter(
-    SingleFilterBy.METRIC,
-    "metric_key",
-    SingleFilterOperator.EQUAL_TO,
-    "metric_value",
-)
-METRIC_FILTER_BODY = {
-    "by": "metric",
-    "key": "metric_key",
-    "operator": "eq",
-    "value": "metric_value",
-}
+# METRIC_FILTER = SingleFilter(
+#     SingleFilterBy.METRIC,
+#     "metric_key",
+#     SingleFilterOperator.EQUAL_TO,
+#     "metric_value",
+# )
+# METRIC_FILTER_BODY = {
+#     "by": "metric",
+#     "key": "metric_key",
+#     "operator": "eq",
+#     "value": "metric_value",
+# }
 
-AND_FILTER = CompoundFilter(
-    operator=CompoundFilterOperator.AND,
-    conditions=[
-        SingleFilter(
-            SingleFilterBy.TAG,
-            "tag_key",
-            SingleFilterOperator.EQUAL_TO,
-            "tag_value",
-        ),
-        None,
-    ],
-)
-AND_FILTER_BODY = {
-    "operator": "and",
-    "conditions": [
-        {
-            "by": "tag",
-            "key": "tag_key",
-            "operator": "eq",
-            "value": "tag_value",
-        },
-        None,
-    ],
-}
+# AND_FILTER = CompoundFilter(
+#     operator=CompoundFilterOperator.AND,
+#     conditions=[
+#         SingleFilter(
+#             SingleFilterBy.TAG,
+#             "tag_key",
+#             SingleFilterOperator.EQUAL_TO,
+#             "tag_value",
+#         ),
+#         None,
+#     ],
+# )
+# AND_FILTER_BODY = {
+#     "operator": "and",
+#     "conditions": [
+#         {
+#             "by": "tag",
+#             "key": "tag_key",
+#             "operator": "eq",
+#             "value": "tag_value",
+#         },
+#         None,
+#     ],
+# }
 
-OR_FILTER = CompoundFilter(
-    operator=CompoundFilterOperator.OR,
-    conditions=[
-        SingleFilter(
-            SingleFilterBy.TAG,
-            "tag_key",
-            SingleFilterOperator.EQUAL_TO,
-            "tag_value",
-        ),
-        None,
-    ],
-)
-OR_FILTER_BODY = {
-    "operator": "or",
-    "conditions": [
-        {
-            "by": "tag",
-            "key": "tag_key",
-            "operator": "eq",
-            "value": "tag_value",
-        },
-        None,
-    ],
-}
+# OR_FILTER = CompoundFilter(
+#     operator=CompoundFilterOperator.OR,
+#     conditions=[
+#         SingleFilter(
+#             SingleFilterBy.TAG,
+#             "tag_key",
+#             SingleFilterOperator.EQUAL_TO,
+#             "tag_value",
+#         ),
+#         None,
+#     ],
+# )
+# OR_FILTER_BODY = {
+#     "operator": "or",
+#     "conditions": [
+#         {
+#             "by": "tag",
+#             "key": "tag_key",
+#             "operator": "eq",
+#             "value": "tag_value",
+#         },
+#         None,
+#     ],
+# }
 
-RUN_NUMBER_SORT = [Sort(SortBy.RUN_NUMBER, None, SortOrder.ASC)]
-RUN_NUMBER_SORT_BODY = [{"by": "runNumber", "key": None, "order": "asc"}]
+# RUN_NUMBER_SORT = [Sort(SortBy.RUN_NUMBER, None, SortOrder.ASC)]
+# RUN_NUMBER_SORT_BODY = [{"by": "runNumber", "key": None, "order": "asc"}]
 
-STARTED_AT_SORT = [Sort(SortBy.STARTED_AT, None, SortOrder.DESC)]
-STARTED_AT_SORT_BODY = [{"by": "startedAt", "key": None, "order": "desc"}]
+# STARTED_AT_SORT = [Sort(SortBy.STARTED_AT, None, SortOrder.DESC)]
+# STARTED_AT_SORT_BODY = [{"by": "startedAt", "key": None, "order": "desc"}]
 
-DURATION_SORT = [Sort(SortBy.DURATION, None, SortOrder.DESC)]
-DURATION_SORT_BODY = [{"by": "duration", "key": None, "order": "desc"}]
+# DURATION_SORT = [Sort(SortBy.DURATION, None, SortOrder.DESC)]
+# DURATION_SORT_BODY = [{"by": "duration", "key": None, "order": "desc"}]
 
-PARAM_SORT = [Sort(SortBy.PARAM, "param_key", SortOrder.DESC)]
-PARAM_SORT_BODY = [{"by": "param", "key": "param_key", "order": "desc"}]
+# PARAM_SORT = [Sort(SortBy.PARAM, "param_key", SortOrder.DESC)]
+# PARAM_SORT_BODY = [{"by": "param", "key": "param_key", "order": "desc"}]
 
-TAG_SORT = [Sort(SortBy.TAG, "tag_key", SortOrder.DESC)]
-TAG_SORT_BODY = [{"by": "tag", "key": "tag_key", "order": "desc"}]
+# TAG_SORT = [Sort(SortBy.TAG, "tag_key", SortOrder.DESC)]
+# TAG_SORT_BODY = [{"by": "tag", "key": "tag_key", "order": "desc"}]
 
-METRIC_SORT = [Sort(SortBy.METRIC, "metric_key", SortOrder.DESC)]
-METRIC_SORT_BODY = [{"by": "metric", "key": "metric_key", "order": "desc"}]
+# METRIC_SORT = [Sort(SortBy.METRIC, "metric_key", SortOrder.DESC)]
+# METRIC_SORT_BODY = [{"by": "metric", "key": "metric_key", "order": "desc"}]
 
-MULTI_SORT = [
-    Sort(SortBy.PARAM, "param_key", SortOrder.ASC),
-    Sort(SortBy.RUN_NUMBER, None, SortOrder.DESC),
-]
-MULTI_SORT_BODY = [
-    {"by": "param", "key": "param_key", "order": "asc"},
-    {"by": "runNumber", "key": None, "order": "desc"},
-]
+# MULTI_SORT = [
+#     Sort(SortBy.PARAM, "param_key", SortOrder.ASC),
+#     Sort(SortBy.RUN_NUMBER, None, SortOrder.DESC),
+# ]
+# MULTI_SORT_BODY = [
+#     {"by": "param", "key": "param_key", "order": "asc"},
+#     {"by": "runNumber", "key": None, "order": "desc"},
+# ]
 
 
-@pytest.mark.parametrize(
-    "pfilter,pfilter_body",
-    [
-        [None, None],
-        [PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY],
-        [EXPERIMENT_ID_FILTER, EXPERIMENT_ID_BODY],
-        [RUN_ID_FILTER, RUN_ID_BODY],
-        [DELETED_AT_FILTER, DELETED_AT_BODY],
-        [TAG_FILTER, TAG_FILTER_BODY],
-        [PARAM_FILTER, PARAM_FILTER_BODY],
-        [METRIC_FILTER, METRIC_FILTER_BODY],
-        [AND_FILTER, AND_FILTER_BODY],
-    ],
-)
-@pytest.mark.parametrize(
-    "psort,psort_body",
-    [
-        [None, None],
-        [RUN_NUMBER_SORT, RUN_NUMBER_SORT_BODY],
-        [STARTED_AT_SORT, STARTED_AT_SORT_BODY],
-        [DURATION_SORT, DURATION_SORT_BODY],
-        [PARAM_SORT, PARAM_SORT_BODY],
-        [TAG_SORT, TAG_SORT_BODY],
-        [METRIC_SORT, METRIC_SORT_BODY],
-        [MULTI_SORT, MULTI_SORT_BODY],
-    ],
-)
-def test_query_runs_schema(mocker, pfilter, psort, pfilter_body, psort_body):
-    queryRunsObj = QueryRuns(pfilter, psort, PAGE)
-    expected_json = {
-        "filter": pfilter_body,
-        "sort": psort_body,
-        "page": PAGE_BODY,
-    }
-    data = QueryRunsSchema().dump(queryRunsObj)
-    assert data == expected_json
+# @pytest.mark.parametrize(
+#     "pfilter,pfilter_body",
+#     [
+#         [None, None],
+#         [PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY],
+#         [EXPERIMENT_ID_FILTER, EXPERIMENT_ID_BODY],
+#         [RUN_ID_FILTER, RUN_ID_BODY],
+#         [DELETED_AT_FILTER, DELETED_AT_BODY],
+#         [TAG_FILTER, TAG_FILTER_BODY],
+#         [PARAM_FILTER, PARAM_FILTER_BODY],
+#         [METRIC_FILTER, METRIC_FILTER_BODY],
+#         [AND_FILTER, AND_FILTER_BODY],
+#     ],
+# )
+# @pytest.mark.parametrize(
+#     "psort,psort_body",
+#     [
+#         [None, None],
+#         [RUN_NUMBER_SORT, RUN_NUMBER_SORT_BODY],
+#         [STARTED_AT_SORT, STARTED_AT_SORT_BODY],
+#         [DURATION_SORT, DURATION_SORT_BODY],
+#         [PARAM_SORT, PARAM_SORT_BODY],
+#         [TAG_SORT, TAG_SORT_BODY],
+#         [METRIC_SORT, METRIC_SORT_BODY],
+#         [MULTI_SORT, MULTI_SORT_BODY],
+#     ],
+# )
+# def test_query_runs_schema(mocker, pfilter, psort, pfilter_body, psort_body):
+#     queryRunsObj = QueryRuns(pfilter, psort, PAGE)
+#     expected_json = {
+#         "filter": pfilter_body,
+#         "sort": psort_body,
+#         "page": PAGE_BODY,
+#     }
+#     data = QueryRunsSchema().dump(queryRunsObj)
+#     assert data == expected_json
 
+def test_sort_validation(mocker):
+    with pytest.raises(
+        ValueError, match="key must be none for type {}".format(SortBy.RUN_NUMBER)
+    ):
+        Sort(SortBy.RUN_NUMBER, "invalid_number", SortOrder.ASC)
 
 @pytest.mark.parametrize("description", [None, "experiment description"])
 @pytest.mark.parametrize("artifact_location", [None, "s3://mybucket"])

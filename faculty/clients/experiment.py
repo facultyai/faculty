@@ -136,8 +136,16 @@ class CompoundFilterOperator(Enum):
     OR = "or"
 
 
-Sort = namedtuple("Sort", ["by", "key", "order"])
+_Sort = namedtuple("_Sort", ["by", "key", "order"])
 
+class Sort(_Sort):
+    def __new__(self, by, key, order):
+        if by in [SortBy.STARTED_AT, SortBy.RUN_NUMBER, SortBy.DURATION] and key is not None:
+            raise ValueError("key must be none for type {}".format(by))
+        elif by in [SortBy.TAG, SortBy.PARAM, SortBy.METRIC] and key is None:
+            raise ValueError("key must not be none for type {}".format(by))
+        self = super(Sort, self).__init__(by, key, order)
+        return self
 
 class SortBy(Enum):
     STARTED_AT = "startedAt"
