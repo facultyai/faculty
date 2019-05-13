@@ -429,6 +429,46 @@ AND_FILTER_BODY = {
     ]
 }
 
+OR_FILTER = CompoundFilter(
+    operator=CompoundFilterOperator.OR,
+    conditions=[
+        SingleFilter(
+            SingleFilterBy.TAG,
+            "tag_key", SingleFilterOperator.EQUAL_TO, "tag_value"),
+        None
+    ]
+)
+OR_FILTER_BODY = {
+    "operator": "or",
+    "conditions": [
+        {
+            "by": "tag",
+            "key": "tag_key",
+            "operator": "eq",
+            "value": "tag_value"
+        },
+        None
+    ]
+}
+
+RUN_NUMBER_SORT = [Sort(SortBy.RUN_NUMBER, None, SortOrder.ASC)]
+RUN_NUMBER_SORT_BODY = [{"by": "runNumber", "key": None, "order": "asc"}]
+
+STARTED_AT_SORT = [Sort(SortBy.STARTED_AT, None, SortOrder.DESC)]
+STARTED_AT_SORT_BODY = [{"by": "startedAt", "key": None, "order": "desc"}]
+
+DURATION_SORT = [Sort(SortBy.DURATION, None, SortOrder.DESC)]
+DURATION_SORT_BODY = [{"by": "duration", "key": None, "order": "desc"}]
+
+PARAM_SORT = [Sort(SortBy.PARAM, "param_key", SortOrder.DESC)]
+PARAM_SORT_BODY = [{"by": "param", "key": "param_key", "order": "desc"}]
+
+TAG_SORT = [Sort(SortBy.TAG, "tag_key", SortOrder.DESC)]
+TAG_SORT_BODY = [{"by": "tag", "key": "tag_key", "order": "desc"}]
+
+METRIC_SORT = [Sort(SortBy.METRIC, "metric_key", SortOrder.DESC)]
+METRIC_SORT_BODY = [{"by": "metric", "key": "metric_key", "order": "desc"}]
+
 MULTI_SORT = [
     Sort(SortBy.PARAM, "param_key", SortOrder.ASC),
     Sort(SortBy.RUN_NUMBER, None, SortOrder.DESC)
@@ -448,7 +488,7 @@ MULTI_SORT_BODY = [
         [DELETED_AT_FILTER, DELETED_AT_BODY],
         [TAG_FILTER, TAG_FILTER_BODY],
         [PARAM_FILTER, PARAM_FILTER_BODY],
-        [METRIC_FILTER, METRIC_FILTER_BODY],        
+        [METRIC_FILTER, METRIC_FILTER_BODY],
         [AND_FILTER, AND_FILTER_BODY]
     ]
 )
@@ -456,6 +496,12 @@ MULTI_SORT_BODY = [
     "psort,psort_body",
     [
         [None, None],
+        [RUN_NUMBER_SORT, RUN_NUMBER_SORT_BODY],
+        [STARTED_AT_SORT, STARTED_AT_SORT_BODY],
+        [DURATION_SORT, DURATION_SORT_BODY],
+        [PARAM_SORT, PARAM_SORT_BODY],
+        [TAG_SORT, TAG_SORT_BODY],
+        [METRIC_SORT, METRIC_SORT_BODY],
         [MULTI_SORT, MULTI_SORT_BODY]
     ]
 )
