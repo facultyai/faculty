@@ -526,7 +526,6 @@ MULTI_SORT_BODY = [
 )
 def test_query_runs_schema(mocker, pfilter, psort, pfilter_body, psort_body):
     queryRunsObj = QueryRuns(pfilter, psort, PAGE)
-    s = Sort(SortBy.RUN_NUMBER, None, SortOrder.ASC)
     expected_json = {
         "filter": pfilter_body,
         "sort": psort_body,
@@ -539,7 +538,7 @@ def test_query_runs_schema(mocker, pfilter, psort, pfilter_body, psort_body):
 def test_sort_validation(mocker):
     with pytest.raises(
         ValueError,
-        match="key must be none for type {}".format(SortBy.RUN_NUMBER)
+        match="key must be none for type {}".format(SortBy.RUN_NUMBER),
     ):
         Sort(SortBy.RUN_NUMBER, "invalid_number", SortOrder.ASC)
 

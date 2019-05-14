@@ -144,7 +144,7 @@ class SingleFilterBy(Enum):
         return self in {
             SingleFilterBy.TAG,
             SingleFilterBy.PARAM,
-            SingleFilterBy.METRIC
+            SingleFilterBy.METRIC,
         }
 
 
