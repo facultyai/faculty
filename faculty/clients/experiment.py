@@ -709,12 +709,7 @@ class ExperimentClient(BaseClient):
         )
 
     def query_runs(
-        self,
-        project_id,
-        filter=None,
-        sort=None,
-        start=None,
-        limit=None,
+        self, project_id, filter=None, sort=None, start=None, limit=None
     ):
         """Query experiment runs.
 
@@ -733,12 +728,12 @@ class ExperimentClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
-        filter: either a SingleFilter object or a CompoundFilter object, optional
-            To filter runs of experiments with the given filter. By default, runs 
-            from all experiments are returned.
+        filter: either SingleFilter object or CompoundFilter object, optional
+            To filter runs of experiments with the given filter. By default,
+            runs from all experiments are returned.
         sort: List[Sort], optional
-            Runs are ordered using sorting elements lexicographically. By default,
-            experiment runs are sorted by their startedAt value.  
+            Runs are ordered using sorting elements lexicographically. By
+            default, experiment runs are sorted by their startedAt value.
         start : int, optional
             The (zero-indexed) starting point of runs to retrieve.
         limit : int, optional
@@ -750,9 +745,12 @@ class ExperimentClient(BaseClient):
         """
         endpoint = "/project/{}/run/query".format(project_id)
         # runs_query = QueryRuns(filter, sort, Page(start, limit))
-        payload = QueryRunsSchema().dump(QueryRuns(filter, sort, Page(start, limit)))
-        return self._post(endpoint, ListExperimentRunsResponseSchema(), json=payload)
-
+        payload = QueryRunsSchema().dump(
+            QueryRuns(filter, sort, Page(start, limit))
+        )
+        return self._post(
+            endpoint, ListExperimentRunsResponseSchema(), json=payload
+        )
 
     def log_run_data(
         self, project_id, run_id, metrics=None, params=None, tags=None

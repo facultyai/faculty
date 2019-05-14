@@ -536,7 +536,7 @@ def test_query_runs_schema(mocker, pfilter, psort, pfilter_body, psort_body):
 
 
 def test_single_filter_validation(mocker):
-    with pytest.raises(  
+    with pytest.raises(
         ValueError,
         match="key must be none for filter type {}".format(
             SingleFilterBy.PROJECT_ID
@@ -921,27 +921,20 @@ def test_experiment_client_query_runs(mocker):
     dump_mock = request_schema_mock.return_value.dump
 
     test_filter = SingleFilter(
-         SingleFilterBy.EXPERIMENT_ID,
-         None, 
-         SingleFilterOperator.EQUAL_TO,
-         "2"
+        SingleFilterBy.EXPERIMENT_ID, None, SingleFilterOperator.EQUAL_TO, "2"
     )
     test_sort = [Sort(SortBy.METRIC, "metric_key", SortOrder.ASC)]
 
     client = ExperimentClient(mocker.Mock())
     list_result = client.query_runs(
-        PROJECT_ID,
-        filter=test_filter, 
-        sort=test_sort,
-        start=20, 
-        limit=10
+        PROJECT_ID, filter=test_filter, sort=test_sort, start=20, limit=10
     )
 
     assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
 
     request_schema_mock.assert_called_once_with()
     dump_mock.assert_called_once_with(
-        QueryRuns(test_filter, test_sort, Page(20, 10))   
+        QueryRuns(test_filter, test_sort, Page(20, 10))
     )
     response_schema_mock.assert_called_once_with()
     ExperimentClient._post.assert_called_once_with(
@@ -949,7 +942,6 @@ def test_experiment_client_query_runs(mocker):
         response_schema_mock.return_value,
         json=dump_mock.return_value,
     )
-
 
 
 def test_log_run_data(mocker):
