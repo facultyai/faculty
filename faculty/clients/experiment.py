@@ -361,8 +361,8 @@ class SingleFilterValueField(fields.Field):
             }
         )
 
-    def _deserialize(self, value, attr, obj, **kwargs):
-        pass
+    def _deserialize(self, value, attr, data, **kwargs):
+        return value
 
     def _serialize(self, value, attr, obj, **kwargs):
         if self._is_directly_stringifiable(value, obj):
