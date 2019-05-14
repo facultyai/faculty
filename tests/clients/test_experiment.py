@@ -535,12 +535,44 @@ def test_query_runs_schema(mocker, pfilter, psort, pfilter_body, psort_body):
     assert data == expected_json
 
 
+def test_single_filter_validation(mocker):
+    with pytest.raises(
+        ValueError,
+        match="key must be none for filter type {}".format(
+            SingleFilterBy.PROJECT_ID
+        ),
+    ):
+        SingleFilter(
+            SingleFilterBy.PROJECT_ID,
+            "invalid_key",
+            SingleFilterOperator.EQUAL_TO,
+            PROJECT_ID,
+        )
+    with pytest.raises(
+        ValueError,
+        match="key must not be none for filter type {}".format(
+            SingleFilterBy.TAG
+        ),
+    ):
+        SingleFilter(
+            SingleFilterBy.TAG,
+            None,
+            SingleFilterOperator.EQUAL_TO,
+            "tag_value",
+        )
+
+
 def test_sort_validation(mocker):
     with pytest.raises(
         ValueError,
-        match="key must be none for type {}".format(SortBy.RUN_NUMBER),
+        match="key must be none for sort type {}".format(SortBy.RUN_NUMBER),
     ):
         Sort(SortBy.RUN_NUMBER, "invalid_number", SortOrder.ASC)
+    with pytest.raises(
+        ValueError,
+        match="key must not be none for sort type {}".format(SortBy.TAG),
+    ):
+        Sort(SortBy.TAG, None, SortOrder.ASC)
 
 
 @pytest.mark.parametrize("description", [None, "experiment description"])
