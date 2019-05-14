@@ -49,17 +49,19 @@ class ExperimentRun(object):
         return cls(**client_object._asdict())
 
     @classmethod
-    def query(cls, project_id, experiment_ids=None):
+    def query(cls, project_id, filter=None, sort=None):
         def get_runs():
             client = faculty.client("experiment")
 
-            response = client.list_runs(project_id, experiment_ids)
+            response = client.query_runs(project_id, filter, sort)
+            print(response)
             yield from map(cls._from_client_model, response.runs)
 
             while response.pagination.next is not None:
-                response = client.list_runs(
+                response = client.query_runs(
                     project_id,
-                    experiment_ids,
+                    filter,
+                    sort,
                     start=response.pagination.next.start,
                     limit=response.pagination.next.limit,
                 )
