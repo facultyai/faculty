@@ -337,8 +337,7 @@ class SingleFilterValueField(fields.Field):
 
     def _is_valid_uuid(self, value, obj):
         return isinstance(value, uuid.UUID) and (
-            obj.by == SingleFilterBy.PROJECT_ID
-            or obj.by == SingleFilterBy.RUN_ID
+            obj.by in {SingleFilterBy.PROJECT_ID, SingleFilterBy.RUN_ID}
         )
 
     def _is_valid_experiment_id(self, value, obj):
@@ -350,9 +349,12 @@ class SingleFilterValueField(fields.Field):
         return (
             self._is_valid_uuid(value, obj)
             or self._is_valid_experiment_id(value, obj)
-            or obj.by == SingleFilterBy.TAG
-            or obj.by == SingleFilterBy.PARAM
-            or obj.by == SingleFilterBy.METRIC
+            or obj.by
+            in {
+                SingleFilterBy.TAG,
+                SingleFilterBy.PARAM,
+                SingleFilterBy.METRIC,
+            }
         )
 
     def _deserialize(self, value, attr, obj, **kwargs):
