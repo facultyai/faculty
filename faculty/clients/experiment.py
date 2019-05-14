@@ -708,6 +708,52 @@ class ExperimentClient(BaseClient):
             endpoint, ListExperimentRunsResponseSchema(), params=query_params
         )
 
+    def query_runs(
+        self,
+        project_id,
+        filter=None,
+        sort=None,
+        start=None,
+        limit=None,
+    ):
+        """Query experiment runs.
+
+        This method returns pages of runs. If less than the full number of runs
+        for the job is returned, the ``next`` page of the returned response
+        object will not be ``None``:
+
+        >>> response = client.query_runs(project_id)
+        >>> response.pagination.next
+        Page(start=10, limit=10)
+
+        Get all experiment runs by making successive calls to ``query_runs``,
+        passing the ``start`` and ``limit`` of the ``next`` page each time
+        until ``next`` is returned as ``None``.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        filter: either a SingleFilter object or a CompoundFilter object, optional
+            To filter runs of experiments with the given filter. By default, runs 
+            from all experiments are returned.
+        sort: List[Sort], optional
+            Runs are ordered using sorting elements lexicographically. By default,
+            experiment runs are sorted by their startedAt value.  
+        start : int, optional
+            The (zero-indexed) starting point of runs to retrieve.
+        limit : int, optional
+            The maximum number of runs to retrieve.
+
+        Returns
+        -------
+        ListExperimentRunsResponse
+        """
+        endpoint = "/project/{}/run/query".format(project_id)
+        # runs_query = QueryRuns(filter, sort, Page(start, limit))
+        payload = QueryRunsSchema().dump(QueryRuns(filter, sort, Page(start, limit)))
+        return self._post(endpoint, ListExperimentRunsResponseSchema(), json=payload)
+
+
     def log_run_data(
         self, project_id, run_id, metrics=None, params=None, tags=None
     ):
