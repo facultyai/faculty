@@ -108,11 +108,12 @@ RestoreExperimentRunsResponse = namedtuple(
 
 _SingleFilter = namedtuple("_SingleFilter", ["by", "key", "operator", "value"])
 
+
 class SingleFilter(_SingleFilter):
     def __new__(cls, by, key, operator, value):
-        if by.has_key() and key is None:
+        if by.filter_has_key() and key is None:
             raise ValueError("key must not be none for a {} filter".format(by))
-        elif not by.has_key() and key is not None:
+        elif not by.filter_has_key() and key is not None:
             raise ValueError("key must be none for a {} filter".format(by))
         return super(SingleFilter, cls).__new__(cls, by, key, operator, value)
 
@@ -139,8 +140,12 @@ class SingleFilterBy(Enum):
     PARAM = "param"
     METRIC = "metric"
 
-    def has_key(self):
-        return self in [SingleFilterBy.TAG, SingleFilterBy.PARAM, SingleFilterBy.METRIC]
+    def filter_has_key(self):
+        return self in {
+            SingleFilterBy.TAG,
+            SingleFilterBy.PARAM,
+            SingleFilterBy.METRIC
+        }
 
 
 class CompoundFilterOperator(Enum):
@@ -153,9 +158,9 @@ _Sort = namedtuple("_Sort", ["by", "key", "order"])
 
 class Sort(_Sort):
     def __new__(cls, by, key, order):
-        if by.has_key() and key is None: 
+        if by.filter_has_key() and key is None:
             raise ValueError("key must be none for type {}".format(by))
-        elif not by.has_key() and key is not None:
+        elif not by.filter_has_key() and key is not None:
             raise ValueError("key must be none for type {}".format(by))
         return super(Sort, cls).__new__(cls, by, key, order)
 
@@ -168,8 +173,8 @@ class SortBy(Enum):
     PARAM = "param"
     METRIC = "metric"
 
-    def has_key(self):
-        return self in [SortBy.TAG, SortBy.PARAM, SortBy.METRIC]
+    def filter_has_key(self):
+        return self in {SortBy.TAG, SortBy.PARAM, SortBy.METRIC}
 
 
 class SortOrder(Enum):
