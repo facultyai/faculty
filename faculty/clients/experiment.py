@@ -752,9 +752,7 @@ class ExperimentClient(BaseClient):
         page = None
         if start is not None and limit is not None:
             page = Page(start, limit)
-        payload = QueryRunsSchema().dump(
-            QueryRuns(filter, sort, page)
-        )
+        payload = QueryRunsSchema().dump(QueryRuns(filter, sort, page))
         return self._post(
             endpoint, ListExperimentRunsResponseSchema(), json=payload
         )

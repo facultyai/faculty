@@ -428,18 +428,13 @@ AND_FILTER = CompoundFilter(
             "tag_key",
             SingleFilterOperator.EQUAL_TO,
             "tag_value",
-        ),
+        )
     ],
 )
 AND_FILTER_BODY = {
     "operator": "and",
     "conditions": [
-        {
-            "by": "tag",
-            "key": "tag_key",
-            "operator": "eq",
-            "value": "tag_value",
-        },
+        {"by": "tag", "key": "tag_key", "operator": "eq", "value": "tag_value"}
     ],
 }
 
@@ -451,18 +446,18 @@ OR_FILTER = CompoundFilter(
             "tag_key",
             SingleFilterOperator.EQUAL_TO,
             "tag_value",
-            ),
+        ),
         CompoundFilter(
             operator=CompoundFilterOperator.AND,
             conditions=[
-            SingleFilter(
-                SingleFilterBy.TAG,
-                "tag_key",
-                SingleFilterOperator.EQUAL_TO,
-                "tag_value",
-                ),
+                SingleFilter(
+                    SingleFilterBy.TAG,
+                    "tag_key",
+                    SingleFilterOperator.EQUAL_TO,
+                    "tag_value",
+                )
             ],
-        )
+        ),
     ],
 )
 OR_FILTER_BODY = {
@@ -482,9 +477,9 @@ OR_FILTER_BODY = {
                     "key": "tag_key",
                     "operator": "eq",
                     "value": "tag_value",
-                },
+                }
             ],
-        }
+        },
     ],
 }
 
@@ -585,7 +580,7 @@ def test_single_filter_validation(mocker):
 def test_compound_filter_validation(mocker):
     with pytest.raises(
         RunQueryFilterValidation,
-        match="Validation error serialising a None filter"
+        match="Validation error serialising a None filter",
     ):
         filter = CompoundFilter(
             operator=CompoundFilterOperator.OR,
@@ -596,15 +591,12 @@ def test_compound_filter_validation(mocker):
                     SingleFilterOperator.EQUAL_TO,
                     "tag_value",
                 ),
-                None
+                None,
             ],
         )
 
         queryRunsObj = QueryRuns(filter, None, None)
         QueryRunsSchema().dump(queryRunsObj)
-
-
-
 
 
 def test_sort_validation(mocker):
