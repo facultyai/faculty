@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 from pytz import UTC
+import inspect
 
 from faculty.clients.experiment import (
     Experiment,
@@ -18,12 +19,12 @@ from faculty.clients.experiment import (
     Sort,
     SortBy,
     SortOrder,
-    Tag
+    Tag,
 )
 
 from faculty.experiments import (
     ExperimentRun as FacultyExperimentRun,
-    ExperimentRunQueryResult
+    ExperimentRunQueryResult,
 )
 
 
@@ -70,22 +71,14 @@ EXPERIMENT_RUN = ExperimentRun(
     metrics=[METRIC],
 )
 
-PAGINATION = Pagination(
-    start=20,
-    size=10,
-    previous=None,
-    next=None,
-)
+PAGINATION = Pagination(start=20, size=10, previous=None, next=None)
 
 LIST_EXPERIMENT_RUNS_RESPONSE = ListExperimentRunsResponse(
     runs=[EXPERIMENT_RUN], pagination=PAGINATION
 )
 
 FILTER = SingleFilter(
-    SingleFilterBy.EXPERIMENT_ID,
-    None,
-    SingleFilterOperator.EQUAL_TO,
-    "2"
+    SingleFilterBy.EXPERIMENT_ID, None, SingleFilterOperator.EQUAL_TO, "2"
 )
 
 SORT = [Sort(SortBy.METRIC, "metric_key", SortOrder.ASC)]
@@ -94,12 +87,12 @@ SORT = [Sort(SortBy.METRIC, "metric_key", SortOrder.ASC)]
 def test_experiment_run_query(mocker):
 
     experiment_client_mock = mocker.MagicMock()
-    experiment_client_mock.query_runs.return_value = LIST_EXPERIMENT_RUNS_RESPONSE
-    mocker.patch(
-        "faculty.client", return_value=experiment_client_mock
+    experiment_client_mock.query_runs.return_value = (
+        LIST_EXPERIMENT_RUNS_RESPONSE
     )
+    mocker.patch("faculty.client", return_value=experiment_client_mock)
 
-    expected_response = ExperimentRun(
+    expected_response = FacultyExperimentRun(
         id=EXPERIMENT_RUN_ID,
         run_number=EXPERIMENT_RUN_NUMBER,
         name=EXPERIMENT_RUN_NAME,
@@ -112,44 +105,30 @@ def test_experiment_run_query(mocker):
         deleted_at=DELETED_AT,
         tags=[TAG],
         params=[PARAM],
-        metrics=[METRIC]
+        metrics=[METRIC],
     )
 
     response = FacultyExperimentRun.query(PROJECT_ID, FILTER, SORT)
 
     assert isinstance(response, ExperimentRunQueryResult)
     returned_run = list(response)[0]
-
-
-    # assert all(i == j for i, j in list(zip([getattr(l, attr) for attr in dir(l)], [getattr(expected_response, attr) for attr in dir(expected_response)])))
-
-    #    response_schema_mock = mocker.patch(
-    #        "faculty.clients.experiment.ListExperimentRunsResponseSchema"
-    #    )
-    #    request_schema_mock = mocker.patch(
-    #        "faculty.clients.experiment.QueryRunsSchema"
-    #    )
-    #    dump_mock = request_schema_mock.return_value.dump
-
-    # test_filter = SingleFilter(
-    #     SingleFilterBy.EXPERIMENT_ID, None, SingleFilterOperator.EQUAL_TO, "2"
-    # )
-    #    test_sort = [Sort(SortBy.METRIC, "metric_key", SortOrder.ASC)]
-
-    #    client = ExperimentClient(mocker.Mock())
-    #    list_result = client.query_runs(
-    #        PROJECT_ID, filter=test_filter, sort=test_sort, start=20, limit=10
-    #    )
-
-    #    assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
-
-    #    request_schema_mock.assert_called_once_with()
-    #    dump_mock.assert_called_once_with(
-    #        QueryRuns(test_filter, test_sort, Page(20, 10))
-    #    )
-    #    response_schema_mock.assert_called_once_with()
-    #    ExperimentClient._post.assert_called_once_with(
-    #        "/project/{}/run/query".format(PROJECT_ID),
-    #        response_schema_mock.return_value,
-    #        json=dump_mock.return_value,
-    #    )
+    assert isinstance(returned_run, FacultyExperimentRun)
+    assert all(
+        list(
+            i == j
+            for i, j in (
+                list(
+                    zip(
+                        [
+                            getattr(returned_run, attr)
+                            for attr in returned_run.__dict__.keys()
+                        ],
+                        [
+                            getattr(expected_response, attr)
+                            for attr in expected_response.__dict__.keys()
+                        ],
+                    )
+                )
+            )
+        )
+    )

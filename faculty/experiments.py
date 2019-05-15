@@ -54,18 +54,18 @@ class ExperimentRun(object):
             client = faculty.client("experiment")
 
             response = client.query_runs(project_id, filter, sort)
-            return map(cls._from_client_model, response.runs)
-            # yield from map(cls._from_client_model, response.runs)
+            # return map(cls._from_client_model, response.runs)
+            yield from map(cls._from_client_model, response.runs)
 
-            # while response.pagination.next is not None:
-            #     response = client.query_runs(
-            #         project_id,
-            #         filter,
-            #         sort,
-            #         start=response.pagination.next.start,
-            #         limit=response.pagination.next.limit,
-            #     )
-            #     yield from map(cls._from_client_model, response.runs)
+            while response.pagination.next is not None:
+                response = client.query_runs(
+                    project_id,
+                    filter,
+                    sort,
+                    start=response.pagination.next.start,
+                    limit=response.pagination.next.limit,
+                )
+                yield from map(cls._from_client_model, response.runs)
 
         # Open question:
         # Should we evalutate the entire set of runs before returning the
