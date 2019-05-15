@@ -451,7 +451,18 @@ OR_FILTER = CompoundFilter(
             "tag_key",
             SingleFilterOperator.EQUAL_TO,
             "tag_value",
-        ),
+            ),
+        CompoundFilter(
+            operator=CompoundFilterOperator.AND,
+            conditions=[
+            SingleFilter(
+                SingleFilterBy.TAG,
+                "tag_key",
+                SingleFilterOperator.EQUAL_TO,
+                "tag_value",
+                ),
+            ],
+        )
     ],
 )
 OR_FILTER_BODY = {
@@ -463,6 +474,17 @@ OR_FILTER_BODY = {
             "operator": "eq",
             "value": "tag_value",
         },
+        {
+            "operator": "and",
+            "conditions": [
+                {
+                    "by": "tag",
+                    "key": "tag_key",
+                    "operator": "eq",
+                    "value": "tag_value",
+                },
+            ],
+        }
     ],
 }
 
