@@ -367,7 +367,7 @@ RUN_ID_FILTER = SingleFilter(
     SingleFilterOperator.EQUAL_TO,
     EXPERIMENT_RUN_ID,
 )
-RUN_ID_BODY = {
+RUN_ID_FILTER_BODY = {
     "by": "runId",
     "key": None,
     "operator": "eq",
@@ -377,7 +377,7 @@ RUN_ID_BODY = {
 DELETED_AT_FILTER = SingleFilter(
     SingleFilterBy.DELETED_AT, None, SingleFilterOperator.EQUAL_TO, DELETED_AT
 )
-DELETED_AT_BODY = {
+DELETED_AT_FILTER_BODY = {
     "by": "deletedAt",
     "key": None,
     "operator": "eq",
@@ -522,8 +522,8 @@ MULTI_SORT_BODY = [
         [None, None],
         [PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY],
         [EXPERIMENT_ID_FILTER, EXPERIMENT_ID_FILTER_BODY],
-        [RUN_ID_FILTER, RUN_ID_BODY],
-        [DELETED_AT_FILTER, DELETED_AT_BODY],
+        [RUN_ID_FILTER, RUN_ID_FILTER_BODY],
+        [DELETED_AT_FILTER, DELETED_AT_FILTER_BODY],
         [TAG_FILTER, TAG_FILTER_BODY],
         [PARAM_FILTER, PARAM_FILTER_BODY],
         [METRIC_FILTER, METRIC_FILTER_BODY],
