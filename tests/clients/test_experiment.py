@@ -53,6 +53,7 @@ from faculty.clients.experiment import (
     QueryRunsSchema,
     RestoreExperimentRunsResponse,
     RestoreExperimentRunsResponseSchema,
+    RunQueryFilterValidation,
     SingleFilter,
     SingleFilterBy,
     SingleFilterOperator,
@@ -353,7 +354,7 @@ PROJECT_ID_FILTER_BODY = {
 EXPERIMENT_ID_FILTER = SingleFilter(
     SingleFilterBy.EXPERIMENT_ID, None, SingleFilterOperator.EQUAL_TO, 1
 )
-EXPERIMENT_ID_BODY = {
+EXPERIMENT_ID_FILTER_BODY = {
     "by": "experimentId",
     "key": None,
     "operator": "eq",
@@ -428,7 +429,6 @@ AND_FILTER = CompoundFilter(
             SingleFilterOperator.EQUAL_TO,
             "tag_value",
         ),
-        None,
     ],
 )
 AND_FILTER_BODY = {
@@ -440,7 +440,6 @@ AND_FILTER_BODY = {
             "operator": "eq",
             "value": "tag_value",
         },
-        None,
     ],
 }
 
@@ -453,7 +452,6 @@ OR_FILTER = CompoundFilter(
             SingleFilterOperator.EQUAL_TO,
             "tag_value",
         ),
-        None,
     ],
 )
 OR_FILTER_BODY = {
@@ -465,7 +463,6 @@ OR_FILTER_BODY = {
             "operator": "eq",
             "value": "tag_value",
         },
-        None,
     ],
 }
 
@@ -502,13 +499,14 @@ MULTI_SORT_BODY = [
     [
         [None, None],
         [PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY],
-        [EXPERIMENT_ID_FILTER, EXPERIMENT_ID_BODY],
+        [EXPERIMENT_ID_FILTER, EXPERIMENT_ID_FILTER_BODY],
         [RUN_ID_FILTER, RUN_ID_BODY],
         [DELETED_AT_FILTER, DELETED_AT_BODY],
         [TAG_FILTER, TAG_FILTER_BODY],
         [PARAM_FILTER, PARAM_FILTER_BODY],
         [METRIC_FILTER, METRIC_FILTER_BODY],
         [AND_FILTER, AND_FILTER_BODY],
+        [OR_FILTER, OR_FILTER_BODY],
     ],
 )
 @pytest.mark.parametrize(
@@ -560,6 +558,31 @@ def test_single_filter_validation(mocker):
             SingleFilterOperator.EQUAL_TO,
             "tag_value",
         )
+
+
+def test_compound_filter_validation(mocker):
+    with pytest.raises(
+        RunQueryFilterValidation,
+        match="Validation error serialising a None filter"
+    ):
+        filter = CompoundFilter(
+            operator=CompoundFilterOperator.OR,
+            conditions=[
+                SingleFilter(
+                    SingleFilterBy.TAG,
+                    "tag_key",
+                    SingleFilterOperator.EQUAL_TO,
+                    "tag_value",
+                ),
+                None
+            ],
+        )
+
+        queryRunsObj = QueryRuns(filter, None, None)
+        QueryRunsSchema().dump(queryRunsObj)
+
+
+
 
 
 def test_sort_validation(mocker):

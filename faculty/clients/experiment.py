@@ -380,7 +380,7 @@ class FilterField(fields.Field):
     Field that serialises/deserialises a run filter.
     """
 
-    def _deserialize(self, value, attr, obj, **kwargs):
+    def _deserialize(self, value, attr, data, **kwargs):
         if value is None:
             return None
         elif isinstance(value, SingleFilter):
@@ -389,8 +389,13 @@ class FilterField(fields.Field):
             return CompoundFilterSchema().load(value)
 
     def _serialize(self, value, attr, obj, **kwargs):
-        if value is None:
+        print(type(obj))
+        if value is None and isinstance(obj, QueryRuns):
             return None
+        elif value is None:
+            raise RunQueryFilterValidation(
+                "Validation error serialising a None filter", value
+            )
         if isinstance(value, SingleFilter):
             return SingleFilterSchema().dump(value)
         else:
@@ -406,7 +411,7 @@ class SingleFilterSchema(BaseSchema):
 
 class CompoundFilterSchema(BaseSchema):
     operator = EnumField(CompoundFilterOperator, by_value=True, required=True)
-    conditions = fields.List(FilterField())
+    conditions = fields.List(FilterField(skip_if=None))
 
 
 class SortSchema(BaseSchema):
