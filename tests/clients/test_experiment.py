@@ -421,65 +421,24 @@ METRIC_FILTER_BODY = {
 }
 
 AND_FILTER = CompoundFilter(
-    operator=CompoundFilterOperator.AND,
-    conditions=[
-        SingleFilter(
-            SingleFilterBy.TAG,
-            "tag_key",
-            SingleFilterOperator.EQUAL_TO,
-            "tag_value",
-        )
-    ],
+    operator=CompoundFilterOperator.AND, conditions=[TAG_FILTER]
 )
-AND_FILTER_BODY = {
-    "operator": "and",
-    "conditions": [
-        {"by": "tag", "key": "tag_key", "operator": "eq", "value": "tag_value"}
-    ],
-}
+AND_FILTER_BODY = {"operator": "and", "conditions": [TAG_FILTER_BODY]}
 
 OR_FILTER = CompoundFilter(
     operator=CompoundFilterOperator.OR,
     conditions=[
-        SingleFilter(
-            SingleFilterBy.TAG,
-            "tag_key",
-            SingleFilterOperator.EQUAL_TO,
-            "tag_value",
-        ),
+        TAG_FILTER,
         CompoundFilter(
-            operator=CompoundFilterOperator.AND,
-            conditions=[
-                SingleFilter(
-                    SingleFilterBy.TAG,
-                    "tag_key",
-                    SingleFilterOperator.EQUAL_TO,
-                    "tag_value",
-                )
-            ],
+            operator=CompoundFilterOperator.AND, conditions=[PARAM_FILTER]
         ),
     ],
 )
 OR_FILTER_BODY = {
     "operator": "or",
     "conditions": [
-        {
-            "by": "tag",
-            "key": "tag_key",
-            "operator": "eq",
-            "value": "tag_value",
-        },
-        {
-            "operator": "and",
-            "conditions": [
-                {
-                    "by": "tag",
-                    "key": "tag_key",
-                    "operator": "eq",
-                    "value": "tag_value",
-                }
-            ],
-        },
+        TAG_FILTER_BODY,
+        {"operator": "and", "conditions": [PARAM_FILTER_BODY]},
     ],
 }
 
