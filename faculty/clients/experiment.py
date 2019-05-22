@@ -733,7 +733,7 @@ class ExperimentClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
-        filter: either SingleFilter object or CompoundFilter object, optional
+        filter: SingleFilter or CompoundFilter, optional
             To filter runs of experiments with the given filter. By default,
             runs from all experiments are returned.
         sort: List[Sort], optional
