@@ -389,7 +389,6 @@ class FilterField(fields.Field):
             return CompoundFilterSchema().load(value)
 
     def _serialize(self, value, attr, obj, **kwargs):
-        print(type(obj))
         if value is None and isinstance(obj, QueryRuns):
             return None
         elif value is None:
