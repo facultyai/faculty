@@ -372,7 +372,7 @@ class SingleFilterValueField(fields.Field):
             field = fields.Str()
         elif obj.by == SingleFilterBy.PARAM:
             if isinstance(obj.value, int) or isinstance(obj.value, float):
-                field = fields.Float()
+                field = fields.Number()
             elif isinstance(obj.value, str):
                 field = fields.Str()
             else:
