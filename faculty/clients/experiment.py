@@ -14,12 +14,17 @@
 
 from collections import namedtuple
 from enum import Enum
-import uuid
 
-from marshmallow import fields, post_load, utils as marshmallow_utils
+from marshmallow import fields, post_load, ValidationError
 from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseClient, BaseSchema, Conflict
+
+error_messages = {
+    "invalid_param_value": "Invalid param value",
+    "invalid_filter_type": "Invalid filter type",
+    "invalid_none_filter": "A none filter",
+}
 
 
 class ExperimentNameConflict(Exception):
@@ -42,12 +47,6 @@ class ExperimentDeleted(Exception):
     def __init__(self, message, experiment_id):
         super(ExperimentDeleted, self).__init__(message)
         self.experiment_id = experiment_id
-
-
-class RunQueryFilterValidation(Exception):
-    def __init__(self, message, value):
-        super(RunQueryFilterValidation, self).__init__(message)
-        self.value = value
 
 
 class ExperimentRunStatus(Enum):
@@ -111,12 +110,24 @@ _SingleFilter = namedtuple("_SingleFilter", ["by", "key", "operator", "value"])
 
 class SingleFilter(_SingleFilter):
     def __new__(cls, by, key, operator, value):
-        if by.needs_key() and key is None:
+        if isinstance(by, SingleFilterBy) and by.needs_key() and key is None:
             raise ValueError(
                 "key must not be none for filter type {}".format(by)
             )
-        elif not by.needs_key() and key is not None:
+        elif (
+            isinstance(by, SingleFilterBy)
+            and not by.needs_key()
+            and key is not None
+        ):
             raise ValueError("key must be none for filter type {}".format(by))
+        elif by == SingleFilterBy.PARAM and operator.is_numeric_operator():
+            if not (isinstance(value, float) or isinstance(value, int)):
+                raise ValueError(
+                    (
+                        "value can not be type {}. It has to be either an int "
+                        + "or a float"
+                    ).format(type(value))
+                )
         return super(SingleFilter, cls).__new__(cls, by, key, operator, value)
 
 
@@ -131,6 +142,14 @@ class SingleFilterOperator(Enum):
     LESS_THAN_OR_EQUAL_TO = "le"
     GREATER_THAN = "gt"
     GREATER_THAN_OR_EQUAL_TO = "ge"
+
+    def is_numeric_operator(self):
+        return self in {
+            SingleFilterOperator.LESS_THAN,
+            SingleFilterOperator.LESS_THAN_OR_EQUAL_TO,
+            SingleFilterOperator.GREATER_THAN,
+            SingleFilterOperator.GREATER_THAN_OR_EQUAL_TO,
+        }
 
 
 class SingleFilterBy(Enum):
@@ -339,40 +358,30 @@ class SingleFilterValueField(fields.Field):
     Field that serialises/deserialises a run filter.
     """
 
-    def _is_valid_uuid(self, value, obj):
-        return isinstance(value, uuid.UUID) and (
-            obj.by in {SingleFilterBy.PROJECT_ID, SingleFilterBy.RUN_ID}
-        )
-
-    def _is_valid_experiment_id(self, value, obj):
-        return (
-            isinstance(value, int) and obj.by == SingleFilterBy.EXPERIMENT_ID
-        )
-
-    def _is_directly_stringifiable(self, value, obj):
-        return (
-            self._is_valid_uuid(value, obj)
-            or self._is_valid_experiment_id(value, obj)
-            or obj.by
-            in {
-                SingleFilterBy.TAG,
-                SingleFilterBy.PARAM,
-                SingleFilterBy.METRIC,
-            }
-        )
-
     def _deserialize(self, value, attr, data, **kwargs):
         return value
 
     def _serialize(self, value, attr, obj, **kwargs):
-        if self._is_directly_stringifiable(value, obj):
-            return str(value)
+        if obj.by in {SingleFilterBy.PROJECT_ID, SingleFilterBy.RUN_ID}:
+            field = fields.UUID()
+        elif obj.by == SingleFilterBy.EXPERIMENT_ID:
+            field = fields.Integer()
         elif obj.by == SingleFilterBy.DELETED_AT:
-            return marshmallow_utils.from_iso_datetime(str(value)).isoformat()
+            field = fields.DateTime()
+        elif obj.by == SingleFilterBy.TAG:
+            field = fields.Str()
+        elif obj.by == SingleFilterBy.PARAM:
+            if isinstance(obj.value, int) or isinstance(obj.value, float):
+                field = fields.Float()
+            elif isinstance(obj.value, str):
+                field = fields.Str()
+            else:
+                raise ValidationError(error_messages["invalid_param_value"])
+        elif obj.by == SingleFilterBy.METRIC:
+            field = fields.Float()
         else:
-            raise RunQueryFilterValidation(
-                "Validation error serialising run query filter", value
-            )
+            raise ValidationError(error_messages["invalid_filter_type"])
+        return field._serialize(value, attr, obj, **kwargs)
 
 
 class FilterField(fields.Field):
@@ -392,9 +401,7 @@ class FilterField(fields.Field):
         if value is None and isinstance(obj, QueryRuns):
             return None
         elif value is None:
-            raise RunQueryFilterValidation(
-                "Validation error serialising a None filter", value
-            )
+            raise ValidationError(error_messages["invalid_none_filter"])
         if isinstance(value, SingleFilter):
             return SingleFilterSchema().dump(value)
         else:

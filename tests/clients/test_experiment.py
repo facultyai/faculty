@@ -53,10 +53,10 @@ from faculty.clients.experiment import (
     QueryRunsSchema,
     RestoreExperimentRunsResponse,
     RestoreExperimentRunsResponseSchema,
-    RunQueryFilterValidation,
     SingleFilter,
     SingleFilterBy,
     SingleFilterOperator,
+    SingleFilterSchema,
     Sort,
     SortBy,
     SortOrder,
@@ -358,7 +358,7 @@ EXPERIMENT_ID_FILTER_BODY = {
     "by": "experimentId",
     "key": None,
     "operator": "eq",
-    "value": "1",
+    "value": 1,
 }
 
 RUN_ID_FILTER = SingleFilter(
@@ -394,13 +394,26 @@ TAG_FILTER_BODY = {
     "value": "tag_value",
 }
 
-PARAM_FILTER = SingleFilter(
+PARAM_NUM_FILTER = SingleFilter(
+    SingleFilterBy.PARAM,
+    "param_key",
+    SingleFilterOperator.GREATER_THAN_OR_EQUAL_TO,
+    1.0,
+)
+PARAM_NUM_FILTER_BODY = {
+    "by": "param",
+    "key": "param_key",
+    "operator": "ge",
+    "value": 1.0,
+}
+
+PARAM_TEXT_FILTER = SingleFilter(
     SingleFilterBy.PARAM,
     "param_key",
     SingleFilterOperator.EQUAL_TO,
     "param_value",
 )
-PARAM_FILTER_BODY = {
+PARAM_TEXT_FILTER_BODY = {
     "by": "param",
     "key": "param_key",
     "operator": "eq",
@@ -408,16 +421,13 @@ PARAM_FILTER_BODY = {
 }
 
 METRIC_FILTER = SingleFilter(
-    SingleFilterBy.METRIC,
-    "metric_key",
-    SingleFilterOperator.EQUAL_TO,
-    "metric_value",
+    SingleFilterBy.METRIC, "metric_key", SingleFilterOperator.EQUAL_TO, 1.0
 )
 METRIC_FILTER_BODY = {
     "by": "metric",
     "key": "metric_key",
     "operator": "eq",
-    "value": "metric_value",
+    "value": 1.0,
 }
 
 AND_FILTER = CompoundFilter(
@@ -430,7 +440,7 @@ OR_FILTER = CompoundFilter(
     conditions=[
         TAG_FILTER,
         CompoundFilter(
-            operator=CompoundFilterOperator.AND, conditions=[PARAM_FILTER]
+            operator=CompoundFilterOperator.AND, conditions=[PARAM_TEXT_FILTER]
         ),
     ],
 )
@@ -438,7 +448,7 @@ OR_FILTER_BODY = {
     "operator": "or",
     "conditions": [
         TAG_FILTER_BODY,
-        {"operator": "and", "conditions": [PARAM_FILTER_BODY]},
+        {"operator": "and", "conditions": [PARAM_TEXT_FILTER_BODY]},
     ],
 }
 
@@ -479,7 +489,8 @@ MULTI_SORT_BODY = [
         [RUN_ID_FILTER, RUN_ID_FILTER_BODY],
         [DELETED_AT_FILTER, DELETED_AT_FILTER_BODY],
         [TAG_FILTER, TAG_FILTER_BODY],
-        [PARAM_FILTER, PARAM_FILTER_BODY],
+        [PARAM_NUM_FILTER, PARAM_NUM_FILTER_BODY],
+        [PARAM_TEXT_FILTER, PARAM_TEXT_FILTER_BODY],
         [METRIC_FILTER, METRIC_FILTER_BODY],
         [AND_FILTER, AND_FILTER_BODY],
         [OR_FILTER, OR_FILTER_BODY],
@@ -509,6 +520,17 @@ def test_query_runs_schema(mocker, pfilter, psort, pfilter_body, psort_body):
     assert data == expected_json
 
 
+def test_single_filter_value_field_validation(mocker):
+    with pytest.raises(ValidationError):
+        singleFilterObj = SingleFilter(
+            SingleFilterBy.PARAM,
+            "param_key",
+            SingleFilterOperator.GREATER_THAN,
+            True,
+        )
+        SingleFilterSchema().dump(singleFilterObj)
+
+
 def test_single_filter_validation(mocker):
     with pytest.raises(
         ValueError,
@@ -534,13 +556,23 @@ def test_single_filter_validation(mocker):
             SingleFilterOperator.EQUAL_TO,
             "tag_value",
         )
+    with pytest.raises(
+        ValueError,
+        match=(
+            "value can not be type {}. It has to be either an int "
+            + "or a float"
+        ).format(type("param_value")),
+    ):
+        SingleFilter(
+            SingleFilterBy.PARAM,
+            "param_key",
+            SingleFilterOperator.GREATER_THAN,
+            "param_value",
+        )
 
 
 def test_compound_filter_validation(mocker):
-    with pytest.raises(
-        RunQueryFilterValidation,
-        match="Validation error serialising a None filter",
-    ):
+    with pytest.raises(ValidationError):
         filter = CompoundFilter(
             operator=CompoundFilterOperator.OR,
             conditions=[
