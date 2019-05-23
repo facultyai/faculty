@@ -481,7 +481,7 @@ MULTI_SORT_BODY = [
 
 
 @pytest.mark.parametrize(
-    "pfilter,pfilter_body",
+    "filter,filter_body",
     [
         [None, None],
         [PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY],
@@ -509,10 +509,10 @@ MULTI_SORT_BODY = [
         [MULTI_SORT, MULTI_SORT_BODY],
     ],
 )
-def test_query_runs_schema(mocker, pfilter, psort, pfilter_body, psort_body):
-    queryRunsObj = QueryRuns(pfilter, psort, PAGE)
+def test_query_runs_schema(mocker, filter, psort, filter_body, psort_body):
+    queryRunsObj = QueryRuns(filter, psort, PAGE)
     expected_json = {
-        "filter": pfilter_body,
+        "filter": filter_body,
         "sort": psort_body,
         "page": PAGE_BODY,
     }
