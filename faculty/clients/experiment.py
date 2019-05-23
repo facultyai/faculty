@@ -743,8 +743,9 @@ class ExperimentClient(BaseClient):
             To filter runs of experiments with the given filter. By default,
             runs from all experiments are returned.
         sort: List[Sort], optional
-            Runs are ordered using sorting elements lexicographically. By
-            default, experiment runs are sorted by their startedAt value.
+            Runs are order using the conditions in sort. The relative
+            importance of each condition gradually decreases in order.
+            By default, experiment runs are sorted by their startedAt value.
         start : int, optional
             The (zero-indexed) starting point of runs to retrieve.
         limit : int, optional
