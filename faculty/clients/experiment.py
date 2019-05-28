@@ -127,7 +127,7 @@ class SingleFilter(_SingleFilter):
         ):
             raise ValueError(
                 (
-                    "value can not be type {}. It has to be either an int "
+                    "invalid type {}. Value has to be either an int "
                     + "or a float"
                 ).format(type(value))
             )

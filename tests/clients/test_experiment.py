@@ -531,44 +531,41 @@ def test_single_filter_value_field_validation(mocker):
         SingleFilterSchema().dump(singleFilterObj)
 
 
-def test_single_filter_validation(mocker):
-    with pytest.raises(
-        ValueError,
-        match="key must be none for filter type {}".format(
-            SingleFilterBy.PROJECT_ID
-        ),
-    ):
-        SingleFilter(
+@pytest.mark.parametrize(
+    "by,key,op,value,err_msg",
+    [
+        [
             SingleFilterBy.PROJECT_ID,
             "invalid_key",
             SingleFilterOperator.EQUAL_TO,
             PROJECT_ID,
-        )
-    with pytest.raises(
-        ValueError,
-        match="key must not be none for filter type {}".format(
-            SingleFilterBy.TAG
-        ),
-    ):
-        SingleFilter(
+            "key must be none for filter type {}".format(
+                SingleFilterBy.PROJECT_ID
+            ),
+        ],
+        [
             SingleFilterBy.TAG,
             None,
             SingleFilterOperator.EQUAL_TO,
             "tag_value",
-        )
-    with pytest.raises(
-        ValueError,
-        match=(
-            "value can not be type {}. It has to be either an int "
-            + "or a float"
-        ).format(type("param_value")),
-    ):
-        SingleFilter(
+            "key must not be none for filter type {}".format(
+                SingleFilterBy.TAG
+            ),
+        ],
+        [
             SingleFilterBy.PARAM,
             "param_key",
             SingleFilterOperator.GREATER_THAN,
             "param_value",
-        )
+            "invalid type {}. Value has to be either an int or a float".format(
+                type("param_value")
+            ),
+        ],
+    ],
+)
+def test_single_filter_validation(mocker, by, key, op, value, err_msg):
+    with pytest.raises(ValueError, match=err_msg):
+        SingleFilter(by, key, op, value)
 
 
 def test_compound_filter_validation(mocker):
