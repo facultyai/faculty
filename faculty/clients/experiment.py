@@ -694,10 +694,11 @@ class ExperimentClient(BaseClient):
         -------
         ListExperimentRunsResponse
         """
-        if lifecycle_stage is not None:
-            raise NotImplementedError("lifecycle_stage is not supported.")
 
-        query_params = []
+        experiment_ids_filter = None
+        lifecycle_filter = None
+        filter = None
+
         if experiment_ids is not None:
             if len(experiment_ids) == 0:
                 return ListExperimentRunsResponse(
@@ -706,18 +707,37 @@ class ExperimentClient(BaseClient):
                         start=0, size=0, previous=None, next=None
                     ),
                 )
-            for experiment_id in experiment_ids:
-                query_params.append(("experimentId", experiment_id))
+            experiment_id_filters = [
+                SingleFilter(
+                    SingleFilterBy.EXPERIMENT_ID,
+                    None,
+                    SingleFilterOperator.EQUAL_TO,
+                    value,
+                )
+                for value in experiment_ids
+            ]
+            experiment_ids_filter = CompoundFilter(
+                CompoundFilterOperator.OR, experiment_id_filters
+            )
+        if lifecycle_stage is not None:
+            lifecycle_filter = SingleFilter(
+                SingleFilterBy.DELETED_AT,
+                None,
+                SingleFilterOperator.DEFINED,
+                lifecycle_stage == LifecycleStage.DELETED,
+            )
 
-        if start is not None:
-            query_params.append(("start", start))
-        if limit is not None:
-            query_params.append(("limit", limit))
+        if experiment_ids_filter is not None and lifecycle_filter is not None:
+            filter = CompoundFilter(
+                CompoundFilterOperator.AND,
+                [experiment_ids_filter, lifecycle_filter],
+            )
+        elif experiment_ids_filter is not None:
+            filter = experiment_ids_filter
+        elif lifecycle_filter is not None:
+            filter = lifecycle_filter
 
-        endpoint = "/project/{}/run".format(project_id)
-        return self._get(
-            endpoint, ListExperimentRunsResponseSchema(), params=query_params
-        )
+        return self.query_runs(project_id, filter, None, start, limit)
 
     def query_runs(
         self, project_id, filter=None, sort=None, start=None, limit=None

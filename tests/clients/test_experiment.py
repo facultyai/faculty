@@ -869,40 +869,73 @@ def test_restore_experiment_runs_response_schema_invalid(mocker):
 
 def test_experiment_client_list_runs_all(mocker):
     mocker.patch.object(
-        ExperimentClient, "_get", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
+        ExperimentClient, "_post", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
     )
-    schema_mock = mocker.patch(
+    response_schema_mock = mocker.patch(
         "faculty.clients.experiment.ListExperimentRunsResponseSchema"
     )
+    request_schema_mock = mocker.patch(
+        "faculty.clients.experiment.QueryRunsSchema"
+    )
+    dump_mock = request_schema_mock.return_value.dump
 
     client = ExperimentClient(mocker.Mock())
     list_result = client.list_runs(PROJECT_ID)
     assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
 
-    schema_mock.assert_called_once_with()
-    ExperimentClient._get.assert_called_once_with(
-        "/project/{}/run".format(PROJECT_ID),
-        schema_mock.return_value,
-        params=[],
+    response_schema_mock.assert_called_once_with()
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/run/query".format(PROJECT_ID),
+        response_schema_mock.return_value,
+        json=dump_mock.return_value,
     )
 
 
 def test_experiment_client_list_runs_experiments_filter(mocker):
     mocker.patch.object(
-        ExperimentClient, "_get", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
+        ExperimentClient, "_post", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
     )
-    schema_mock = mocker.patch(
+    response_schema_mock = mocker.patch(
         "faculty.clients.experiment.ListExperimentRunsResponseSchema"
     )
+    request_schema_mock = mocker.patch(
+        "faculty.clients.experiment.QueryRunsSchema"
+    )
+    dump_mock = request_schema_mock.return_value.dump
 
     client = ExperimentClient(mocker.Mock())
     list_result = client.list_runs(PROJECT_ID, experiment_ids=[123, 456])
     assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
-    schema_mock.assert_called_once_with()
-    ExperimentClient._get.assert_called_once_with(
-        "/project/{}/run".format(PROJECT_ID),
-        schema_mock.return_value,
-        params=[("experimentId", 123), ("experimentId", 456)],
+
+    response_schema_mock.assert_called_once_with()
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/run/query".format(PROJECT_ID),
+        response_schema_mock.return_value,
+        json=dump_mock.return_value,
+    )
+
+
+def test_experiment_client_list_runs_page(mocker):
+    mocker.patch.object(
+        ExperimentClient, "_post", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
+    )
+    response_schema_mock = mocker.patch(
+        "faculty.clients.experiment.ListExperimentRunsResponseSchema"
+    )
+    request_schema_mock = mocker.patch(
+        "faculty.clients.experiment.QueryRunsSchema"
+    )
+    dump_mock = request_schema_mock.return_value.dump
+
+    client = ExperimentClient(mocker.Mock())
+    list_result = client.list_runs(PROJECT_ID, start=20, limit=10)
+    assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
+
+    response_schema_mock.assert_called_once_with()
+    ExperimentClient._post.assert_called_once_with(
+        "/project/{}/run/query".format(PROJECT_ID),
+        response_schema_mock.return_value,
+        json=dump_mock.return_value,
     )
 
 
@@ -913,26 +946,6 @@ def test_experiment_client_list_runs_experiments_filter_empty(mocker):
     assert list_result == ListExperimentRunsResponse(
         runs=[],
         pagination=Pagination(start=0, size=0, previous=None, next=None),
-    )
-
-
-def test_experiment_client_list_runs_page(mocker):
-    mocker.patch.object(
-        ExperimentClient, "_get", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
-    )
-    schema_mock = mocker.patch(
-        "faculty.clients.experiment.ListExperimentRunsResponseSchema"
-    )
-
-    client = ExperimentClient(mocker.Mock())
-    list_result = client.list_runs(PROJECT_ID, start=20, limit=10)
-    assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
-
-    schema_mock.assert_called_once_with()
-    ExperimentClient._get.assert_called_once_with(
-        "/project/{}/run".format(PROJECT_ID),
-        schema_mock.return_value,
-        params=[("start", 20), ("limit", 10)],
     )
 
 
