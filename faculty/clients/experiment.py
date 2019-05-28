@@ -891,15 +891,19 @@ class ExperimentClient(BaseClient):
                 deleted_run_ids=[], conflicted_run_ids=[]
             )
         else:
-            payload = {
-                "filter": {
-                    "operator": "or",
-                    "conditions": [
-                        {"by": "runId", "operator": "eq", "value": str(run_id)}
-                        for run_id in run_ids
-                    ],
-                }
-            }
+            run_id_filters = [
+                SingleFilter(
+                    SingleFilterBy.RUN_ID,
+                    None,
+                    SingleFilterOperator.EQUAL_TO,
+                    run_id,
+                )
+                for run_id in run_ids
+            ]
+            run_ids_filter = CompoundFilter(
+                CompoundFilterOperator.OR, run_id_filters
+            )
+            payload = {"filter": run_ids_filter}
 
         return self._post(
             endpoint, DeleteExperimentRunsResponseSchema(), json=payload
@@ -932,15 +936,19 @@ class ExperimentClient(BaseClient):
                 restored_run_ids=[], conflicted_run_ids=[]
             )
         else:
-            payload = {
-                "filter": {
-                    "operator": "or",
-                    "conditions": [
-                        {"by": "runId", "operator": "eq", "value": str(run_id)}
-                        for run_id in run_ids
-                    ],
-                }
-            }
+            run_id_filters = [
+                SingleFilter(
+                    SingleFilterBy.RUN_ID,
+                    None,
+                    SingleFilterOperator.EQUAL_TO,
+                    run_id,
+                )
+                for run_id in run_ids
+            ]
+            run_ids_filter = CompoundFilter(
+                CompoundFilterOperator.OR, run_id_filters
+            )
+            payload = {"filter": run_ids_filter}
 
         return self._post(
             endpoint, RestoreExperimentRunsResponseSchema(), json=payload

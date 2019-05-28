@@ -1216,13 +1216,23 @@ def test_delete_runs(mocker):
     )
 
     expected_payload = {
-        "filter": {
-            "operator": "or",
-            "conditions": [
-                {"by": "runId", "operator": "eq", "value": str(run_ids[0])},
-                {"by": "runId", "operator": "eq", "value": str(run_ids[1])},
+        "filter": CompoundFilter(
+            CompoundFilterOperator.OR,
+            [
+                SingleFilter(
+                    SingleFilterBy.RUN_ID,
+                    None,
+                    SingleFilterOperator.EQUAL_TO,
+                    run_ids[0],
+                ),
+                SingleFilter(
+                    SingleFilterBy.RUN_ID,
+                    None,
+                    SingleFilterOperator.EQUAL_TO,
+                    run_ids[1],
+                ),
             ],
-        }
+        )
     }
 
     ExperimentClient._post.assert_called_once_with(
@@ -1276,13 +1286,23 @@ def test_restore_runs(mocker):
     )
 
     expected_payload = {
-        "filter": {
-            "operator": "or",
-            "conditions": [
-                {"by": "runId", "operator": "eq", "value": str(run_ids[0])},
-                {"by": "runId", "operator": "eq", "value": str(run_ids[1])},
+        "filter": CompoundFilter(
+            CompoundFilterOperator.OR,
+            [
+                SingleFilter(
+                    SingleFilterBy.RUN_ID,
+                    None,
+                    SingleFilterOperator.EQUAL_TO,
+                    run_ids[0],
+                ),
+                SingleFilter(
+                    SingleFilterBy.RUN_ID,
+                    None,
+                    SingleFilterOperator.EQUAL_TO,
+                    run_ids[1],
+                ),
             ],
-        }
+        )
     }
 
     ExperimentClient._post.assert_called_once_with(
