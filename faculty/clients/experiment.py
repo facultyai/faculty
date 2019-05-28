@@ -20,7 +20,7 @@ from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseClient, BaseSchema, Conflict
 
-error_messages = {
+_ERROR_MESSAGES = {
     "invalid_param_value": "Invalid param value",
     "invalid_filter_type": "Invalid filter type",
     "invalid_none_filter": "A none filter",
@@ -120,14 +120,17 @@ class SingleFilter(_SingleFilter):
             and key is not None
         ):
             raise ValueError("key must be none for filter type {}".format(by))
-        elif by == SingleFilterBy.PARAM and operator.is_numeric_operator():
-            if not (isinstance(value, float) or isinstance(value, int)):
-                raise ValueError(
-                    (
-                        "value can not be type {}. It has to be either an int "
-                        + "or a float"
-                    ).format(type(value))
-                )
+        elif (
+            by == SingleFilterBy.PARAM
+            and operator.is_numeric_operator()
+            and not (isinstance(value, float) or isinstance(value, int))
+        ):
+            raise ValueError(
+                (
+                    "value can not be type {}. It has to be either an int "
+                    + "or a float"
+                ).format(type(value))
+            )
         return super(SingleFilter, cls).__new__(cls, by, key, operator, value)
 
 
@@ -376,11 +379,11 @@ class SingleFilterValueField(fields.Field):
             elif isinstance(obj.value, str):
                 field = fields.Str()
             else:
-                raise ValidationError(error_messages["invalid_param_value"])
+                raise ValidationError(_ERROR_MESSAGES["invalid_param_value"])
         elif obj.by == SingleFilterBy.METRIC:
             field = fields.Float()
         else:
-            raise ValidationError(error_messages["invalid_filter_type"])
+            raise ValidationError(_ERROR_MESSAGES["invalid_filter_type"])
         return field._serialize(value, attr, obj, **kwargs)
 
 
@@ -401,7 +404,7 @@ class FilterField(fields.Field):
         if value is None and isinstance(obj, QueryRuns):
             return None
         elif value is None:
-            raise ValidationError(error_messages["invalid_none_filter"])
+            raise ValidationError(_ERROR_MESSAGES["invalid_none_filter"])
         if isinstance(value, SingleFilter):
             return SingleFilterSchema().dump(value)
         else:
@@ -715,9 +718,9 @@ class ExperimentClient(BaseClient):
                     SingleFilterBy.EXPERIMENT_ID,
                     None,
                     SingleFilterOperator.EQUAL_TO,
-                    value,
+                    experiment_id,
                 )
-                for value in experiment_ids
+                for experiment_id in experiment_ids
             ]
             experiment_ids_filter = CompoundFilter(
                 CompoundFilterOperator.OR, experiment_id_filters
