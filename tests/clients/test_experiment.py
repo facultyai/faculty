@@ -105,8 +105,16 @@ METRIC_KEY = "metric-key"
 METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
 METRIC_TIMESTAMP_STRING_JAVA = "2018-03-12T16:20:22.122Z"
 METRIC_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:22.122000+00:00"
-METRIC = Metric(key=METRIC_KEY, value=123, timestamp=METRIC_TIMESTAMP)
+METRIC = Metric(key=METRIC_KEY, value=123, timestamp=METRIC_TIMESTAMP, step=0)
 METRIC_BODY = {
+    "key": METRIC_KEY,
+    "value": 123.0,
+    "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+    "step": 0
+}
+
+METRIC_WITHOUT_STEP = Metric(key=METRIC_KEY, value=123, timestamp=METRIC_TIMESTAMP)
+METRIC_WITHOUT_STEP_BODY = {
     "key": METRIC_KEY,
     "value": 123.0,
     "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
@@ -115,7 +123,7 @@ METRIC_BODY = {
 METRIC_SECOND_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 30, 122000, tzinfo=UTC)
 METRIC_SECOND_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:30.122000+00:00"
 METRIC_SECOND_MEASURE = Metric(
-    key=METRIC_KEY, value=127, timestamp=METRIC_SECOND_TIMESTAMP
+    key=METRIC_KEY, value=127, timestamp=METRIC_SECOND_TIMESTAMP, step=0
 )
 
 METRIC_HISTORY = [METRIC, METRIC_SECOND_MEASURE]
@@ -125,11 +133,13 @@ METRIC_HISTORY_BODY = {
             "key": METRIC_KEY,
             "value": 123.0,
             "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+            "step": 0
         },
         {
             "key": METRIC_KEY,
             "value": 127.0,
             "timestamp": METRIC_SECOND_TIMESTAMP_STRING_PYTHON,
+            "step": 0
         },
     ]
 }
@@ -292,10 +302,10 @@ def test_create_run_schema(parent_run_id, started_at, artifact_location, tags):
     }
 
 
-def test_metric_schema():
-    data = MetricSchema().load(METRIC_BODY)
+@pytest.mark.parametrize("metric_body", [METRIC_BODY, METRIC_WITHOUT_STEP_BODY])
+def test_metric_schema(metric_body):
+    data = MetricSchema().load(metric_body)
     assert data == METRIC
-
 
 def test_param_schema():
     data = ParamSchema().load(PARAM_BODY)
@@ -311,10 +321,10 @@ def test_tag_schema_dump():
     data = TagSchema().dump(TAG_BODY)
     assert data == TAG_BODY
 
-
-def test_experiment_run_data_schema():
+@pytest.mark.parametrize("metric", [METRIC, METRIC_WITHOUT_STEP])
+def test_experiment_run_data_schema(metric):
     data = ExperimentRunDataSchema().dump(
-        {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
+        {"metrics": [metric], "params": [PARAM], "tags": [TAG]}
     )
     assert data == EXPERIMENT_RUN_DATA_BODY
 
@@ -661,8 +671,8 @@ def test_experiment_client_list_runs_page(mocker):
         params=[("start", 20), ("limit", 10)],
     )
 
-
-def test_log_run_data(mocker):
+@pytest.mark.parametrize("metric", [METRIC, METRIC_WITHOUT_STEP])
+def test_log_run_data(mocker, metric):
     mocker.patch.object(ExperimentClient, "_patch_raw")
     run_data_schema_mock = mocker.patch(
         "faculty.clients.experiment.ExperimentRunDataSchema"
@@ -673,14 +683,14 @@ def test_log_run_data(mocker):
     client.log_run_data(
         PROJECT_ID,
         EXPERIMENT_RUN_ID,
-        metrics=[METRIC],
+        metrics=[metric],
         params=[PARAM],
         tags=[TAG],
     )
 
     run_data_schema_mock.assert_called_once_with()
     run_data_dump_mock.assert_called_once_with(
-        {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
+        {"metrics": [metric], "params": [PARAM], "tags": [TAG]}
     )
     ExperimentClient._patch_raw.assert_called_once_with(
         "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
