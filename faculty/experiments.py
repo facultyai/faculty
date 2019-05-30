@@ -1,3 +1,4 @@
+import os
 from attr import attrs, attrib
 import pandas
 
@@ -49,7 +50,10 @@ class ExperimentRun(object):
         return cls(**client_object._asdict())
 
     @classmethod
-    def query(cls, project_id, filter=None, sort=None):
+    def query(cls, project_id=None, filter=None, sort=None):
+        if project_id is None:
+            project_id = os.environ["FACULTY_PROJECT_ID"]
+
         def get_runs():
             client = faculty.client("experiment")
 
