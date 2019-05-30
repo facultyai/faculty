@@ -39,6 +39,7 @@ from faculty.clients.experiment import (
     ListExperimentRunsResponseSchema,
     Metric,
     MetricSchema,
+    MetricHistory,
     MetricHistorySchema,
     Page,
     PageSchema,
@@ -126,8 +127,12 @@ METRIC_SECOND_MEASURE = Metric(
     key=METRIC_KEY, value=127, timestamp=METRIC_SECOND_TIMESTAMP, step=0
 )
 
-METRIC_HISTORY = [METRIC, METRIC_SECOND_MEASURE]
+METRIC_HISTORY = MetricHistory(3, False, METRIC_KEY, [METRIC, METRIC_SECOND_MEASURE, METRIC_WITHOUT_STEP])
+
 METRIC_HISTORY_BODY = {
+    "totalEntriesNumber": 3,
+    "subsampled": False,
+    "key": "metric-key",
     "history": [
         {
             "key": METRIC_KEY,
@@ -141,6 +146,12 @@ METRIC_HISTORY_BODY = {
             "timestamp": METRIC_SECOND_TIMESTAMP_STRING_PYTHON,
             "step": 0
         },
+        {
+            "key": METRIC_KEY,
+            "value": 123.0,
+            "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+            "step": 0
+        }
     ]
 }
 

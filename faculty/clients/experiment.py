@@ -100,6 +100,8 @@ RestoreExperimentRunsResponse = namedtuple(
     "RestoreExperimentRunsResponse", ["restored_run_ids", "conflicted_run_ids"]
 )
 
+MetricHistory = namedtuple("MetricHistory", ["total_entries_number", "subsampled", "key", "history"])
+
 
 class MetricSchema(BaseSchema):
     key = fields.String(required=True)
@@ -248,11 +250,14 @@ class RestoreExperimentRunsResponseSchema(BaseSchema):
 
 
 class MetricHistorySchema(BaseSchema):
+    total_entries_number = fields.Integer(data_key="totalEntriesNumber", required=True)
+    subsampled = fields.Boolean(required=True)
+    key = fields.String(required=True)
     history = fields.Nested(MetricSchema, many=True, required=True)
 
     @post_load
-    def extract_history(self, data):
-        return data["history"]
+    def make_history(self, data):
+        return MetricHistory(**data)
 
 
 class ExperimentClient(BaseClient):
