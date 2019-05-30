@@ -119,6 +119,7 @@ METRIC_WITHOUT_STEP_BODY = {
     "key": METRIC_KEY,
     "value": 123.0,
     "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+    "step": None
 }
 
 METRIC_SECOND_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 30, 122000, tzinfo=UTC)
@@ -150,7 +151,7 @@ METRIC_HISTORY_BODY = {
             "key": METRIC_KEY,
             "value": 123.0,
             "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
-            "step": 0
+            "step": None
         }
     ]
 }
@@ -313,10 +314,10 @@ def test_create_run_schema(parent_run_id, started_at, artifact_location, tags):
     }
 
 
-@pytest.mark.parametrize("metric_body", [METRIC_BODY, METRIC_WITHOUT_STEP_BODY])
-def test_metric_schema(metric_body):
+@pytest.mark.parametrize("metric_body, metric", [[METRIC_BODY, METRIC], [METRIC_WITHOUT_STEP_BODY, METRIC_WITHOUT_STEP]])
+def test_metric_schema(metric_body, metric):
     data = MetricSchema().load(metric_body)
-    assert data == METRIC
+    assert data == metric
 
 def test_param_schema():
     data = ParamSchema().load(PARAM_BODY)
@@ -332,12 +333,21 @@ def test_tag_schema_dump():
     data = TagSchema().dump(TAG_BODY)
     assert data == TAG_BODY
 
-@pytest.mark.parametrize("metric", [METRIC, METRIC_WITHOUT_STEP])
-def test_experiment_run_data_schema(metric):
+@pytest.mark.parametrize(
+    "metric,metric_body", 
+    [
+        [METRIC, METRIC_BODY],
+        [METRIC_WITHOUT_STEP, METRIC_WITHOUT_STEP_BODY]
+    ]
+)
+def test_experiment_run_data_schema(metric, metric_body):
     data = ExperimentRunDataSchema().dump(
         {"metrics": [metric], "params": [PARAM], "tags": [TAG]}
     )
-    assert data == EXPERIMENT_RUN_DATA_BODY
+
+    EXPECTED_EXPERIMENT_RUN_DATA_BODY = EXPERIMENT_RUN_DATA_BODY
+    EXPECTED_EXPERIMENT_RUN_DATA_BODY["metrics"] = [metric_body]
+    assert data == EXPECTED_EXPERIMENT_RUN_DATA_BODY
 
 
 def test_experiment_run_data_schema_empty():

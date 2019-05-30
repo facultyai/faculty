@@ -84,7 +84,7 @@ ExperimentRun = namedtuple(
 )
 
 Metric = namedtuple("Metric", ["key", "value", "timestamp", "step"])
-Metric.__new__.__defaults__ = (0,)
+Metric.__new__.__defaults__ = (None,)
 Param = namedtuple("Param", ["key", "value"])
 Tag = namedtuple("Tag", ["key", "value"])
 
@@ -107,7 +107,7 @@ class MetricSchema(BaseSchema):
     key = fields.String(required=True)
     value = fields.Float(required=True)
     timestamp = fields.DateTime(required=True)
-    step = fields.Integer(missing=0)
+    step = fields.Integer(missing=None)
 
     @post_load
     def make_metric(self, data):
