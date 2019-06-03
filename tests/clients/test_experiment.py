@@ -60,6 +60,7 @@ from faculty.clients.experiment import (
     Sort,
     SortBy,
     SortOrder,
+    SortSchema,
     Tag,
     TagSchema,
 )
@@ -97,6 +98,7 @@ EXPERIMENT_BODY = {
     "deletedAt": DELETED_AT_STRING,
 }
 
+RUN_ID = uuid4()
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
 RUN_STARTED_AT_NO_TIMEZONE = datetime(2018, 3, 10, 11, 39, 12, 110000)
 RUN_STARTED_AT_STRING_PYTHON = "2018-03-10T11:39:12.110000+00:00"
@@ -351,49 +353,6 @@ PROJECT_ID_FILTER_BODY = {
     "value": str(PROJECT_ID),
 }
 
-EXPERIMENT_ID_FILTER = SingleFilter(
-    SingleFilterBy.EXPERIMENT_ID, None, SingleFilterOperator.EQUAL_TO, 1
-)
-EXPERIMENT_ID_FILTER_BODY = {
-    "by": "experimentId",
-    "key": None,
-    "operator": "eq",
-    "value": 1,
-}
-
-RUN_ID_FILTER = SingleFilter(
-    SingleFilterBy.RUN_ID,
-    None,
-    SingleFilterOperator.EQUAL_TO,
-    EXPERIMENT_RUN_ID,
-)
-RUN_ID_FILTER_BODY = {
-    "by": "runId",
-    "key": None,
-    "operator": "eq",
-    "value": str(EXPERIMENT_RUN_ID),
-}
-
-DELETED_AT_FILTER = SingleFilter(
-    SingleFilterBy.DELETED_AT, None, SingleFilterOperator.EQUAL_TO, DELETED_AT
-)
-DELETED_AT_FILTER_BODY = {
-    "by": "deletedAt",
-    "key": None,
-    "operator": "eq",
-    "value": DELETED_AT_STRING_PYTHON,
-}
-
-DELETED_FILTER = SingleFilter(
-    SingleFilterBy.DELETED_AT, None, SingleFilterOperator.DEFINED, True
-)
-DELETED_FILTER_BODY = {
-    "by": "deletedAt",
-    "key": None,
-    "operator": "defined",
-    "value": True,
-}
-
 TAG_FILTER = SingleFilter(
     SingleFilterBy.TAG, "tag_key", SingleFilterOperator.EQUAL_TO, "tag_value"
 )
@@ -402,19 +361,6 @@ TAG_FILTER_BODY = {
     "key": "tag_key",
     "operator": "eq",
     "value": "tag_value",
-}
-
-PARAM_NUM_FILTER = SingleFilter(
-    SingleFilterBy.PARAM,
-    "param_key",
-    SingleFilterOperator.GREATER_THAN_OR_EQUAL_TO,
-    1.0,
-)
-PARAM_NUM_FILTER_BODY = {
-    "by": "param",
-    "key": "param_key",
-    "operator": "ge",
-    "value": 1.0,
 }
 
 PARAM_TEXT_FILTER = SingleFilter(
@@ -428,16 +374,6 @@ PARAM_TEXT_FILTER_BODY = {
     "key": "param_key",
     "operator": "eq",
     "value": "param_value",
-}
-
-METRIC_FILTER = SingleFilter(
-    SingleFilterBy.METRIC, "metric_key", SingleFilterOperator.EQUAL_TO, 1.0
-)
-METRIC_FILTER_BODY = {
-    "by": "metric",
-    "key": "metric_key",
-    "operator": "eq",
-    "value": 1.0,
 }
 
 AND_FILTER = CompoundFilter(
@@ -465,20 +401,8 @@ OR_FILTER_BODY = {
 RUN_NUMBER_SORT = [Sort(SortBy.RUN_NUMBER, None, SortOrder.ASC)]
 RUN_NUMBER_SORT_BODY = [{"by": "runNumber", "key": None, "order": "asc"}]
 
-STARTED_AT_SORT = [Sort(SortBy.STARTED_AT, None, SortOrder.DESC)]
-STARTED_AT_SORT_BODY = [{"by": "startedAt", "key": None, "order": "desc"}]
-
 DURATION_SORT = [Sort(SortBy.DURATION, None, SortOrder.DESC)]
 DURATION_SORT_BODY = [{"by": "duration", "key": None, "order": "desc"}]
-
-PARAM_SORT = [Sort(SortBy.PARAM, "param_key", SortOrder.DESC)]
-PARAM_SORT_BODY = [{"by": "param", "key": "param_key", "order": "desc"}]
-
-TAG_SORT = [Sort(SortBy.TAG, "tag_key", SortOrder.DESC)]
-TAG_SORT_BODY = [{"by": "tag", "key": "tag_key", "order": "desc"}]
-
-METRIC_SORT = [Sort(SortBy.METRIC, "metric_key", SortOrder.DESC)]
-METRIC_SORT_BODY = [{"by": "metric", "key": "metric_key", "order": "desc"}]
 
 MULTI_SORT = [
     Sort(SortBy.PARAM, "param_key", SortOrder.ASC),
@@ -491,32 +415,19 @@ MULTI_SORT_BODY = [
 
 
 @pytest.mark.parametrize(
-    "filter,filter_body",
+    "filter, filter_body",
     [
         [None, None],
         [PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY],
-        [EXPERIMENT_ID_FILTER, EXPERIMENT_ID_FILTER_BODY],
-        [RUN_ID_FILTER, RUN_ID_FILTER_BODY],
-        [DELETED_AT_FILTER, DELETED_AT_FILTER_BODY],
-        [DELETED_FILTER, DELETED_FILTER_BODY],
-        [TAG_FILTER, TAG_FILTER_BODY],
-        [PARAM_NUM_FILTER, PARAM_NUM_FILTER_BODY],
-        [PARAM_TEXT_FILTER, PARAM_TEXT_FILTER_BODY],
-        [METRIC_FILTER, METRIC_FILTER_BODY],
         [AND_FILTER, AND_FILTER_BODY],
         [OR_FILTER, OR_FILTER_BODY],
     ],
 )
 @pytest.mark.parametrize(
-    "psort,psort_body",
+    "psort, psort_body",
     [
         [None, None],
-        [RUN_NUMBER_SORT, RUN_NUMBER_SORT_BODY],
-        [STARTED_AT_SORT, STARTED_AT_SORT_BODY],
         [DURATION_SORT, DURATION_SORT_BODY],
-        [PARAM_SORT, PARAM_SORT_BODY],
-        [TAG_SORT, TAG_SORT_BODY],
-        [METRIC_SORT, METRIC_SORT_BODY],
         [MULTI_SORT, MULTI_SORT_BODY],
     ],
 )
@@ -528,6 +439,146 @@ def test_query_runs_schema(mocker, filter, psort, filter_body, psort_body):
         "page": PAGE_BODY,
     }
     data = QueryRunsSchema().dump(queryRunsObj)
+    assert data == expected_json
+
+
+@pytest.mark.parametrize(
+    "by,key,value,by_body,value_body",
+    [
+        [
+            SingleFilterBy.PROJECT_ID,
+            None,
+            PROJECT_ID,
+            "projectId",
+            str(PROJECT_ID),
+        ],
+        [
+            SingleFilterBy.EXPERIMENT_ID,
+            None,
+            EXPERIMENT_ID,
+            "experimentId",
+            EXPERIMENT_ID,
+        ],
+        [SingleFilterBy.RUN_ID, None, RUN_ID, "runId", str(RUN_ID)],
+        [
+            SingleFilterBy.DELETED_AT,
+            None,
+            DELETED_AT,
+            "deletedAt",
+            DELETED_AT_STRING_PYTHON,
+        ],
+        [SingleFilterBy.TAG, "tag-key", "tag-value", "tag", "tag-value"],
+        [
+            SingleFilterBy.PARAM,
+            "param-key",
+            "param-text-value",
+            "param",
+            "param-text-value",
+        ],
+        [SingleFilterBy.PARAM, "param-key", 1, "param", 1],
+        [SingleFilterBy.METRIC, "metric-key", 2.0, "metric", 2.0],
+    ],
+)
+@pytest.mark.parametrize(
+    "operator,operator_body",
+    [
+        [SingleFilterOperator.EQUAL_TO, "eq"],
+        [SingleFilterOperator.NOT_EQUAL_TO, "ne"],
+    ],
+)
+def test_single_filter_schema_equality_operators(
+    mocker, by, key, value, by_body, value_body, operator, operator_body
+):
+    singleFilterObj = SingleFilter(by, key, operator, value)
+    expected_json = {
+        "by": by_body,
+        "key": key,
+        "operator": operator_body,
+        "value": value_body,
+    }
+    data = SingleFilterSchema().dump(singleFilterObj)
+    assert data == expected_json
+
+
+@pytest.mark.parametrize(
+    "by,key,value,by_body,value_body",
+    [
+        [
+            SingleFilterBy.DELETED_AT,
+            None,
+            DELETED_AT,
+            "deletedAt",
+            DELETED_AT_STRING_PYTHON,
+        ],
+        [SingleFilterBy.PARAM, "param-key", 1, "param", 1],
+        [SingleFilterBy.METRIC, "metric-key", 2.0, "metric", 2.0],
+    ],
+)
+@pytest.mark.parametrize(
+    "operator,operator_body",
+    [
+        [SingleFilterOperator.LESS_THAN, "lt"],
+        [SingleFilterOperator.LESS_THAN_OR_EQUAL_TO, "le"],
+        [SingleFilterOperator.GREATER_THAN, "gt"],
+        [SingleFilterOperator.GREATER_THAN_OR_EQUAL_TO, "ge"],
+    ],
+)
+def test_single_filter_schema_relational_operators(
+    mocker, by, key, value, by_body, value_body, operator, operator_body
+):
+    singleFilterObj = SingleFilter(by, key, operator, value)
+    expected_json = {
+        "by": by_body,
+        "key": key,
+        "operator": operator_body,
+        "value": value_body,
+    }
+    data = SingleFilterSchema().dump(singleFilterObj)
+    assert data == expected_json
+
+
+@pytest.mark.parametrize(
+    "by,key,by_body",
+    [
+        [SingleFilterBy.PROJECT_ID, None, "projectId"],
+        [SingleFilterBy.EXPERIMENT_ID, None, "experimentId"],
+        [SingleFilterBy.RUN_ID, None, "runId"],
+        [SingleFilterBy.DELETED_AT, None, "deletedAt"],
+        [SingleFilterBy.TAG, "tag-key", "tag"],
+        [SingleFilterBy.PARAM, "param-key", "param"],
+        [SingleFilterBy.METRIC, "metric-key", "metric"],
+    ],
+)
+def test_single_filter_schema_defined_operator(mocker, by, key, by_body):
+    singleFilterObj = SingleFilter(by, key, SingleFilterOperator.DEFINED, True)
+    expected_json = {
+        "by": by_body,
+        "key": key,
+        "operator": "defined",
+        "value": True,
+    }
+    data = SingleFilterSchema().dump(singleFilterObj)
+    assert data == expected_json
+
+
+@pytest.mark.parametrize(
+    "by,key,by_body",
+    [
+        [SortBy.STARTED_AT, None, "startedAt"],
+        [SortBy.RUN_NUMBER, None, "runNumber"],
+        [SortBy.DURATION, None, "duration"],
+        [SortBy.TAG, "tag-key", "tag"],
+        [SortBy.PARAM, "param-key", "param"],
+        [SortBy.METRIC, "metric-key", "metric"],
+    ],
+)
+@pytest.mark.parametrize(
+    "order, order_body", [[SortOrder.ASC, "asc"], [SortOrder.DESC, "desc"]]
+)
+def test_sort_schema(mocker, by, key, by_body, order, order_body):
+    sortObj = Sort(by, key, order)
+    expected_json = {"by": by_body, "key": key, "order": order_body}
+    data = SortSchema().dump(sortObj)
     assert data == expected_json
 
 
