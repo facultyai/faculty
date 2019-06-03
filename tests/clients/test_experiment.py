@@ -384,6 +384,16 @@ DELETED_AT_FILTER_BODY = {
     "value": DELETED_AT_STRING_PYTHON,
 }
 
+DELETED_FILTER = SingleFilter(
+    SingleFilterBy.DELETED_AT, None, SingleFilterOperator.DEFINED, True
+)
+DELETED_FILTER_BODY = {
+    "by": "deletedAt",
+    "key": None,
+    "operator": "defined",
+    "value": True,
+}
+
 TAG_FILTER = SingleFilter(
     SingleFilterBy.TAG, "tag_key", SingleFilterOperator.EQUAL_TO, "tag_value"
 )
@@ -488,6 +498,7 @@ MULTI_SORT_BODY = [
         [EXPERIMENT_ID_FILTER, EXPERIMENT_ID_FILTER_BODY],
         [RUN_ID_FILTER, RUN_ID_FILTER_BODY],
         [DELETED_AT_FILTER, DELETED_AT_FILTER_BODY],
+        [DELETED_FILTER, DELETED_FILTER_BODY],
         [TAG_FILTER, TAG_FILTER_BODY],
         [PARAM_NUM_FILTER, PARAM_NUM_FILTER_BODY],
         [PARAM_TEXT_FILTER, PARAM_TEXT_FILTER_BODY],

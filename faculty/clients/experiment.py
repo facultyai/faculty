@@ -365,7 +365,9 @@ class SingleFilterValueField(fields.Field):
         return value
 
     def _serialize(self, value, attr, obj, **kwargs):
-        if obj.by in {SingleFilterBy.PROJECT_ID, SingleFilterBy.RUN_ID}:
+        if obj.operator == SingleFilterOperator.DEFINED:
+            field = fields.Boolean()
+        elif obj.by in {SingleFilterBy.PROJECT_ID, SingleFilterBy.RUN_ID}:
             field = fields.UUID()
         elif obj.by == SingleFilterBy.EXPERIMENT_ID:
             field = fields.Integer()
