@@ -131,7 +131,7 @@ METRIC_SECOND_MEASURE = Metric(
 )
 
 METRIC_HISTORY = MetricHistory(
-    3, False, METRIC_KEY, [METRIC, METRIC_SECOND_MEASURE, METRIC_WITHOUT_STEP]
+    3, False, METRIC_KEY, [METRIC, METRIC_SECOND_MEASURE]
 )
 
 METRIC_HISTORY_BODY = {
@@ -150,12 +150,6 @@ METRIC_HISTORY_BODY = {
             "value": 127.0,
             "timestamp": METRIC_SECOND_TIMESTAMP_STRING_PYTHON,
             "step": 0,
-        },
-        {
-            "key": METRIC_KEY,
-            "value": 123.0,
-            "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
-            "step": None,
         },
     ],
 }
@@ -318,13 +312,14 @@ def test_create_run_schema(parent_run_id, started_at, artifact_location, tags):
     }
 
 
-@pytest.mark.parametrize(
-    "metric_body, metric",
-    [[METRIC_BODY, METRIC], [METRIC_WITHOUT_STEP_BODY, METRIC_WITHOUT_STEP]],
-)
-def test_metric_schema(metric_body, metric):
-    data = MetricSchema().load(metric_body)
-    assert data == metric
+def test_metric_schema():
+    data = MetricSchema().load(METRIC_BODY)
+    assert data == METRIC
+
+
+def test_validation_metric_schema():
+    with pytest.raises(ValidationError, match="Field may not be null"):
+        MetricSchema().load(METRIC_WITHOUT_STEP_BODY)
 
 
 def test_param_schema():
@@ -699,8 +694,7 @@ def test_experiment_client_list_runs_page(mocker):
     )
 
 
-@pytest.mark.parametrize("metric", [METRIC, METRIC_WITHOUT_STEP])
-def test_log_run_data(mocker, metric):
+def test_log_run_data(mocker):
     mocker.patch.object(ExperimentClient, "_patch_raw")
     run_data_schema_mock = mocker.patch(
         "faculty.clients.experiment.ExperimentRunDataSchema"
@@ -711,14 +705,14 @@ def test_log_run_data(mocker, metric):
     client.log_run_data(
         PROJECT_ID,
         EXPERIMENT_RUN_ID,
-        metrics=[metric],
+        metrics=[METRIC],
         params=[PARAM],
         tags=[TAG],
     )
 
     run_data_schema_mock.assert_called_once_with()
     run_data_dump_mock.assert_called_once_with(
-        {"metrics": [metric], "params": [PARAM], "tags": [TAG]}
+        {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
     )
     ExperimentClient._patch_raw.assert_called_once_with(
         "/project/{}/run/{}/data".format(PROJECT_ID, EXPERIMENT_RUN_ID),
