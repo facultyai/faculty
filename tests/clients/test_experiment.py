@@ -149,7 +149,7 @@ METRIC_HISTORY_BODY = {
             "key": METRIC_KEY,
             "value": 127.0,
             "timestamp": METRIC_SECOND_TIMESTAMP_STRING_PYTHON,
-            "step": 0,
+            "step": 1,
         },
     ],
 }
