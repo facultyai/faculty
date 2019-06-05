@@ -115,7 +115,7 @@ METRIC_BODY = {
 }
 
 METRIC_WITHOUT_STEP = Metric(
-    key=METRIC_KEY, value=123, timestamp=METRIC_TIMESTAMP
+    key=METRIC_KEY, value=123, timestamp=METRIC_TIMESTAMP, step=None
 )
 METRIC_WITHOUT_STEP_BODY = {
     "key": METRIC_KEY,

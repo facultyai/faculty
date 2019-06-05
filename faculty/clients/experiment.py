@@ -84,15 +84,6 @@ ExperimentRun = namedtuple(
 )
 
 Metric = namedtuple("Metric", ["key", "value", "timestamp", "step"])
-
-
-class Metric(namedtuple("Metric", ["key", "value", "timestamp", "step"])):
-    __slots__ = ()
-
-    def __new__(cls, key, value, timestamp, step=None):
-        return super(Metric, cls).__new__(cls, key, value, timestamp, step)
-
-
 Param = namedtuple("Param", ["key", "value"])
 Tag = namedtuple("Tag", ["key", "value"])
 
