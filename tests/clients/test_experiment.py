@@ -317,11 +317,6 @@ def test_metric_schema():
     assert data == METRIC
 
 
-def test_validation_metric_schema():
-    with pytest.raises(ValidationError, match="Field may not be null"):
-        MetricSchema().load(METRIC_WITHOUT_STEP_BODY)
-
-
 def test_param_schema():
     data = ParamSchema().load(PARAM_BODY)
     assert data == PARAM
