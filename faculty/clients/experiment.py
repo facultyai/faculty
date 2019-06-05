@@ -48,6 +48,7 @@ class ExperimentRunStatus(Enum):
     FINISHED = "finished"
     FAILED = "failed"
     SCHEDULED = "scheduled"
+    KILLED = "killed"
 
 
 Experiment = namedtuple(
