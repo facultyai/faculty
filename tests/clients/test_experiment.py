@@ -114,16 +114,6 @@ METRIC_BODY = {
     "step": 0,
 }
 
-METRIC_WITHOUT_STEP = Metric(
-    key=METRIC_KEY, value=123, timestamp=METRIC_TIMESTAMP, step=None
-)
-METRIC_WITHOUT_STEP_BODY = {
-    "key": METRIC_KEY,
-    "value": 123.0,
-    "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
-    "step": None,
-}
-
 METRIC_SECOND_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 30, 122000, tzinfo=UTC)
 METRIC_SECOND_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:30.122000+00:00"
 METRIC_SECOND_MEASURE = Metric(
@@ -332,17 +322,13 @@ def test_tag_schema_dump():
     assert data == TAG_BODY
 
 
-@pytest.mark.parametrize(
-    "metric, metric_body",
-    [(METRIC, METRIC_BODY), (METRIC_WITHOUT_STEP, METRIC_WITHOUT_STEP_BODY)],
-)
-def test_experiment_run_data_schema(metric, metric_body):
+def test_experiment_run_data_schema():
     data = ExperimentRunDataSchema().dump(
-        {"metrics": [metric], "params": [PARAM], "tags": [TAG]}
+        {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
     )
 
     expected = EXPERIMENT_RUN_DATA_BODY.copy()
-    expected["metrics"] = [metric_body]
+    expected["metrics"] = [METRIC_BODY]
     assert data == expected
 
 
