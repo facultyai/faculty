@@ -346,9 +346,9 @@ def test_experiment_run_data_schema(metric, metric_body):
         {"metrics": [metric], "params": [PARAM], "tags": [TAG]}
     )
 
-    EXPECTED_EXPERIMENT_RUN_DATA_BODY = EXPERIMENT_RUN_DATA_BODY
-    EXPECTED_EXPERIMENT_RUN_DATA_BODY["metrics"] = [metric_body]
-    assert data == EXPECTED_EXPERIMENT_RUN_DATA_BODY
+    expected = EXPERIMENT_RUN_DATA_BODY.copy()
+    expected["metrics"] = [metric_body]
+    assert data == expected
 
 
 def test_experiment_run_data_schema_empty():
