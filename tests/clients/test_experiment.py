@@ -135,7 +135,7 @@ METRIC_HISTORY = MetricHistory(
 )
 
 METRIC_HISTORY_BODY = {
-    "totalEntriesNumber": 3,
+    "totalEntriesNumber": 2,
     "subsampled": False,
     "key": "metric-key",
     "history": [
