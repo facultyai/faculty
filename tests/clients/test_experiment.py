@@ -338,7 +338,7 @@ def test_tag_schema_dump():
 
 
 @pytest.mark.parametrize(
-    "metric,metric_body",
+    "metric, metric_body",
     [[METRIC, METRIC_BODY], [METRIC_WITHOUT_STEP, METRIC_WITHOUT_STEP_BODY]],
 )
 def test_experiment_run_data_schema(metric, metric_body):
