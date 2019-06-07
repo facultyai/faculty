@@ -20,12 +20,6 @@ from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseClient, BaseSchema, Conflict
 
-_ERROR_MESSAGES = {
-    "invalid_param_value": "Invalid param value",
-    "invalid_filter_type": "Invalid filter type",
-    "invalid_none_filter": "A none filter",
-}
-
 
 class ExperimentNameConflict(Exception):
     def __init__(self, name):
@@ -356,43 +350,69 @@ class RestoreExperimentRunsResponseSchema(BaseSchema):
         return RestoreExperimentRunsResponse(**data)
 
 
+class ParamValueField(fields.Field):
+    """Field that passes through strings or numbers."""
+
+    default_error_messages = {
+        "unsupported_type": "Param values must be of type str, int or float."
+    }
+
+    def _determine_field(self, value):
+        if isinstance(value, str):
+            return fields.String()
+        elif isinstance(value, int) or isinstance(value, float):
+            return fields.Number()
+        else:
+            self.fail("unsupported_type")
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        field = self._determine_field(value)
+        return field._deserialize(value, attr, data, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        field = self._determine_field(value)
+        return field._serialize(value, attr, obj, **kwargs)
+
+
 class SingleFilterValueField(fields.Field):
     """
     Field that serialises/deserialises a run filter.
     """
+
+    default_error_messages = {
+        "invalid_filter_operator": "Invalid filter operator."
+    }
+
+    FILTER_BY_FIELD_MAPPING = {
+        SingleFilterBy.PROJECT_ID: fields.UUID,
+        SingleFilterBy.RUN_ID: fields.UUID,
+        SingleFilterBy.EXPERIMENT_ID: fields.Integer,
+        SingleFilterBy.DELETED_AT: fields.DateTime,
+        SingleFilterBy.TAG: fields.String,
+        SingleFilterBy.PARAM: ParamValueField,
+        SingleFilterBy.METRIC: fields.Number,
+    }
 
     def _deserialize(self, value, attr, data, **kwargs):
         return value
 
     def _serialize(self, value, attr, obj, **kwargs):
         if obj.operator == SingleFilterOperator.DEFINED:
-            field = fields.Boolean()
-        elif obj.by in {SingleFilterBy.PROJECT_ID, SingleFilterBy.RUN_ID}:
-            field = fields.UUID()
-        elif obj.by == SingleFilterBy.EXPERIMENT_ID:
-            field = fields.Integer()
-        elif obj.by == SingleFilterBy.DELETED_AT:
-            field = fields.DateTime()
-        elif obj.by == SingleFilterBy.TAG:
-            field = fields.Str()
-        elif obj.by == SingleFilterBy.PARAM:
-            if isinstance(obj.value, int) or isinstance(obj.value, float):
-                field = fields.Number()
-            elif isinstance(obj.value, str):
-                field = fields.Str()
-            else:
-                raise ValidationError(_ERROR_MESSAGES["invalid_param_value"])
-        elif obj.by == SingleFilterBy.METRIC:
-            field = fields.Float()
+            field_cls = fields.Boolean
         else:
-            raise ValidationError(_ERROR_MESSAGES["invalid_filter_type"])
-        return field._serialize(value, attr, obj, **kwargs)
+            try:
+                field_cls = self.FILTER_BY_FIELD_MAPPING[obj.by]
+            except KeyError:
+                self.fail("invalid_filter_operator")
+        return field_cls()._serialize(value, attr, obj, **kwargs)
 
 
 class FilterField(fields.Field):
     """
     Field that serialises/deserialises a run filter.
     """
+
+    default_error_messages = {"invalid_none_filter": "A none filter"}
 
     def _deserialize(self, value, attr, data, **kwargs):
         if value is None:
@@ -406,7 +426,7 @@ class FilterField(fields.Field):
         if value is None and isinstance(obj, QueryRuns):
             return None
         elif value is None:
-            raise ValidationError(_ERROR_MESSAGES["invalid_none_filter"])
+            self.fail("invalid_none_filter")
         if isinstance(value, SingleFilter):
             return SingleFilterSchema().dump(value)
         else:
