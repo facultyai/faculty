@@ -444,7 +444,7 @@ class SingleFilterSchema(BaseSchema):
 
 class CompoundFilterSchema(BaseSchema):
     operator = EnumField(CompoundFilterOperator, by_value=True, required=True)
-    conditions = fields.List(FilterField(skip_if=None))
+    conditions = fields.List(FilterField())
 
 
 class SortSchema(BaseSchema):
