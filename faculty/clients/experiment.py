@@ -407,30 +407,50 @@ class SingleFilterValueField(fields.Field):
         return field_cls()._serialize(value, attr, obj, **kwargs)
 
 
+class OptionalField(fields.Field):
+    """Wrap another field, passing through Nones."""
+
+    def __init__(self, nested, *args, **kwargs):
+        self.nested = nested
+        super().__init__(*args, **kwargs)
+
+    def _deserialize(self, value, *args, **kwargs):
+        if value is None:
+            return None
+        else:
+            return self.nested._deserialize(value, *args, **kwargs)
+
+    def _serialize(self, value, *args, **kwargs):
+        if value is None:
+            return None
+        else:
+            return self.nested._serialize(value, *args, **kwargs)
+
+
 class FilterField(fields.Field):
     """
     Field that serialises/deserialises a run filter.
     """
 
-    default_error_messages = {"invalid_none_filter": "A none filter"}
+    default_error_messages = {
+        "invalid_filter_type": "Unsupported filter type."
+    }
 
     def _deserialize(self, value, attr, data, **kwargs):
-        if value is None:
-            return None
-        elif isinstance(value, SingleFilter):
+        # TODO: fix this - the isinstance check won't work as the filter hasn't
+        # yet been deserialised
+        if isinstance(value, SingleFilter):
             return SingleFilterSchema().load(value)
         else:
             return CompoundFilterSchema().load(value)
 
     def _serialize(self, value, attr, obj, **kwargs):
-        if value is None and isinstance(obj, QueryRuns):
-            return None
-        elif value is None:
-            self.fail("invalid_none_filter")
         if isinstance(value, SingleFilter):
             return SingleFilterSchema().dump(value)
-        else:
+        elif isinstance(value, CompoundFilter):
             return CompoundFilterSchema().dump(value)
+        else:
+            self.fail("invalid_filter_type")
 
 
 class SingleFilterSchema(BaseSchema):
@@ -452,7 +472,7 @@ class SortSchema(BaseSchema):
 
 
 class QueryRunsSchema(BaseSchema):
-    filter = FilterField(required=True)
+    filter = OptionalField(FilterField())
     sort = fields.List(fields.Nested(SortSchema))
     page = fields.Nested(PageSchema, missing=None)
 
