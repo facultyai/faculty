@@ -350,27 +350,20 @@ class RestoreExperimentRunsResponseSchema(BaseSchema):
         return RestoreExperimentRunsResponse(**data)
 
 
-class ParamValueField(fields.Field):
+class ParamFilterValueField(fields.Field):
     """Field that passes through strings or numbers."""
 
     default_error_messages = {
         "unsupported_type": "Param values must be of type str, int or float."
     }
 
-    def _determine_field(self, value):
+    def _serialize(self, value, attr, obj, **kwargs):
         if isinstance(value, str):
-            return fields.String()
+            field = fields.String()
         elif isinstance(value, int) or isinstance(value, float):
-            return fields.Number()
+            field = fields.Number()
         else:
             self.fail("unsupported_type")
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        field = self._determine_field(value)
-        return field._deserialize(value, attr, data, **kwargs)
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        field = self._determine_field(value)
         return field._serialize(value, attr, obj, **kwargs)
 
 
@@ -389,12 +382,9 @@ class SingleFilterValueField(fields.Field):
         SingleFilterBy.EXPERIMENT_ID: fields.Integer,
         SingleFilterBy.DELETED_AT: fields.DateTime,
         SingleFilterBy.TAG: fields.String,
-        SingleFilterBy.PARAM: ParamValueField,
+        SingleFilterBy.PARAM: ParamFilterValueField,
         SingleFilterBy.METRIC: fields.Number,
     }
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        return value
 
     def _serialize(self, value, attr, obj, **kwargs):
         if obj.operator == SingleFilterOperator.DEFINED:
@@ -435,14 +425,6 @@ class FilterField(fields.Field):
     default_error_messages = {
         "invalid_filter_type": "Unsupported filter type."
     }
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        # TODO: fix this - the isinstance check won't work as the filter hasn't
-        # yet been deserialised
-        if isinstance(value, SingleFilter):
-            return SingleFilterSchema().load(value)
-        else:
-            return CompoundFilterSchema().load(value)
 
     def _serialize(self, value, attr, obj, **kwargs):
         if isinstance(value, SingleFilter):
