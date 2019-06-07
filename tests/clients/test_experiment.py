@@ -417,25 +417,25 @@ MULTI_SORT_BODY = [
 @pytest.mark.parametrize(
     "filter, filter_body",
     [
-        [None, None],
-        [PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY],
-        [AND_FILTER, AND_FILTER_BODY],
-        [OR_FILTER, OR_FILTER_BODY],
+        (None, None),
+        (PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY),
+        (AND_FILTER, AND_FILTER_BODY),
+        (OR_FILTER, OR_FILTER_BODY),
     ],
 )
 @pytest.mark.parametrize(
-    "psort, psort_body",
+    "sort, sort_body",
     [
-        [None, None],
-        [DURATION_SORT, DURATION_SORT_BODY],
-        [MULTI_SORT, MULTI_SORT_BODY],
+        (None, None),
+        (DURATION_SORT, DURATION_SORT_BODY),
+        (MULTI_SORT, MULTI_SORT_BODY),
     ],
 )
-def test_query_runs_schema(mocker, filter, psort, filter_body, psort_body):
-    queryRunsObj = QueryRuns(filter, psort, PAGE)
+def test_query_runs_schema(mocker, filter, sort, filter_body, sort_body):
+    queryRunsObj = QueryRuns(filter, sort, PAGE)
     expected_json = {
         "filter": filter_body,
-        "sort": psort_body,
+        "sort": sort_body,
         "page": PAGE_BODY,
     }
     data = QueryRunsSchema().dump(queryRunsObj)
@@ -443,160 +443,154 @@ def test_query_runs_schema(mocker, filter, psort, filter_body, psort_body):
 
 
 @pytest.mark.parametrize(
-    "by,key,value,by_body,value_body",
+    "by, key, value, by_body, value_body",
     [
-        [
+        (
             SingleFilterBy.PROJECT_ID,
             None,
             PROJECT_ID,
             "projectId",
             str(PROJECT_ID),
-        ],
-        [
+        ),
+        (
             SingleFilterBy.EXPERIMENT_ID,
             None,
             EXPERIMENT_ID,
             "experimentId",
             EXPERIMENT_ID,
-        ],
-        [SingleFilterBy.RUN_ID, None, RUN_ID, "runId", str(RUN_ID)],
-        [
+        ),
+        (SingleFilterBy.RUN_ID, None, RUN_ID, "runId", str(RUN_ID)),
+        (
             SingleFilterBy.DELETED_AT,
             None,
             DELETED_AT,
             "deletedAt",
             DELETED_AT_STRING_PYTHON,
-        ],
-        [SingleFilterBy.TAG, "tag-key", "tag-value", "tag", "tag-value"],
-        [
+        ),
+        (SingleFilterBy.TAG, "tag-key", "tag-value", "tag", "tag-value"),
+        (
             SingleFilterBy.PARAM,
             "param-key",
             "param-text-value",
             "param",
             "param-text-value",
-        ],
-        [SingleFilterBy.PARAM, "param-key", 1, "param", 1],
-        [SingleFilterBy.METRIC, "metric-key", 2.0, "metric", 2.0],
+        ),
+        (SingleFilterBy.PARAM, "param-key", 1, "param", 1),
+        (SingleFilterBy.METRIC, "metric-key", 2.0, "metric", 2.0),
     ],
 )
 @pytest.mark.parametrize(
-    "operator,operator_body",
+    "operator, operator_body",
     [
-        [SingleFilterOperator.EQUAL_TO, "eq"],
-        [SingleFilterOperator.NOT_EQUAL_TO, "ne"],
+        (SingleFilterOperator.EQUAL_TO, "eq"),
+        (SingleFilterOperator.NOT_EQUAL_TO, "ne"),
     ],
 )
 def test_single_filter_schema_equality_operators(
-    mocker, by, key, value, by_body, value_body, operator, operator_body
+    by, key, value, by_body, value_body, operator, operator_body
 ):
-    singleFilterObj = SingleFilter(by, key, operator, value)
+    filter = SingleFilter(by, key, operator, value)
     expected_json = {
         "by": by_body,
         "key": key,
         "operator": operator_body,
         "value": value_body,
     }
-    data = SingleFilterSchema().dump(singleFilterObj)
+    data = SingleFilterSchema().dump(filter)
     assert data == expected_json
 
 
 @pytest.mark.parametrize(
-    "by,key,value,by_body,value_body",
+    "by, key, value, by_body, value_body",
     [
-        [
+        (
             SingleFilterBy.DELETED_AT,
             None,
             DELETED_AT,
             "deletedAt",
             DELETED_AT_STRING_PYTHON,
-        ],
-        [SingleFilterBy.PARAM, "param-key", 1, "param", 1],
-        [SingleFilterBy.METRIC, "metric-key", 2.0, "metric", 2.0],
+        ),
+        (SingleFilterBy.PARAM, "param-key", 1, "param", 1),
+        (SingleFilterBy.METRIC, "metric-key", 2.0, "metric", 2.0),
     ],
 )
 @pytest.mark.parametrize(
-    "operator,operator_body",
+    "operator, operator_body",
     [
-        [SingleFilterOperator.LESS_THAN, "lt"],
-        [SingleFilterOperator.LESS_THAN_OR_EQUAL_TO, "le"],
-        [SingleFilterOperator.GREATER_THAN, "gt"],
-        [SingleFilterOperator.GREATER_THAN_OR_EQUAL_TO, "ge"],
+        (SingleFilterOperator.LESS_THAN, "lt"),
+        (SingleFilterOperator.LESS_THAN_OR_EQUAL_TO, "le"),
+        (SingleFilterOperator.GREATER_THAN, "gt"),
+        (SingleFilterOperator.GREATER_THAN_OR_EQUAL_TO, "ge"),
     ],
 )
 def test_single_filter_schema_relational_operators(
-    mocker, by, key, value, by_body, value_body, operator, operator_body
+    by, key, value, by_body, value_body, operator, operator_body
 ):
-    singleFilterObj = SingleFilter(by, key, operator, value)
+    filter = SingleFilter(by, key, operator, value)
     expected_json = {
         "by": by_body,
         "key": key,
         "operator": operator_body,
         "value": value_body,
     }
-    data = SingleFilterSchema().dump(singleFilterObj)
+    data = SingleFilterSchema().dump(filter)
     assert data == expected_json
 
 
 @pytest.mark.parametrize(
-    "by,key,by_body",
+    "by, key, by_body",
     [
-        [SingleFilterBy.PROJECT_ID, None, "projectId"],
-        [SingleFilterBy.EXPERIMENT_ID, None, "experimentId"],
-        [SingleFilterBy.RUN_ID, None, "runId"],
-        [SingleFilterBy.DELETED_AT, None, "deletedAt"],
-        [SingleFilterBy.TAG, "tag-key", "tag"],
-        [SingleFilterBy.PARAM, "param-key", "param"],
-        [SingleFilterBy.METRIC, "metric-key", "metric"],
+        (SingleFilterBy.PROJECT_ID, None, "projectId"),
+        (SingleFilterBy.EXPERIMENT_ID, None, "experimentId"),
+        (SingleFilterBy.RUN_ID, None, "runId"),
+        (SingleFilterBy.DELETED_AT, None, "deletedAt"),
+        (SingleFilterBy.TAG, "tag-key", "tag"),
+        (SingleFilterBy.PARAM, "param-key", "param"),
+        (SingleFilterBy.METRIC, "metric-key", "metric"),
     ],
 )
-def test_single_filter_schema_defined_operator(mocker, by, key, by_body):
-    singleFilterObj = SingleFilter(by, key, SingleFilterOperator.DEFINED, True)
+def test_single_filter_schema_defined_operator(by, key, by_body):
+    filter = SingleFilter(by, key, SingleFilterOperator.DEFINED, True)
     expected_json = {
         "by": by_body,
         "key": key,
         "operator": "defined",
         "value": True,
     }
-    data = SingleFilterSchema().dump(singleFilterObj)
+    data = SingleFilterSchema().dump(filter)
     assert data == expected_json
 
 
 @pytest.mark.parametrize(
-    "by,key,by_body",
+    "by, value, message",
     [
-        [SortBy.STARTED_AT, None, "startedAt"],
-        [SortBy.RUN_NUMBER, None, "runNumber"],
-        [SortBy.DURATION, None, "duration"],
-        [SortBy.TAG, "tag-key", "tag"],
-        [SortBy.PARAM, "param-key", "param"],
-        [SortBy.METRIC, "metric-key", "metric"],
+        (SingleFilterBy.PROJECT_ID, "invalid", "Not a valid UUID."),
+        (SingleFilterBy.EXPERIMENT_ID, "string", "Not a valid integer."),
+        (SingleFilterBy.RUN_ID, "invalid", "Not a valid UUID."),
+        (
+            SingleFilterBy.DELETED_AT,
+            "invalid",
+            "cannot be formatted as a datetime",
+        ),
+        (SingleFilterBy.METRIC, "invalid", "Not a valid number."),
+        (SingleFilterBy.PARAM, None, "must be of type str, int or float"),
     ],
 )
-@pytest.mark.parametrize(
-    "order, order_body", [[SortOrder.ASC, "asc"], [SortOrder.DESC, "desc"]]
-)
-def test_sort_schema(mocker, by, key, by_body, order, order_body):
-    sortObj = Sort(by, key, order)
-    expected_json = {"by": by_body, "key": key, "order": order_body}
-    data = SortSchema().dump(sortObj)
-    assert data == expected_json
-
-
-def test_single_filter_value_field_validation(mocker):
-    with pytest.raises(ValidationError):
-        singleFilterObj = SingleFilter(
-            SingleFilterBy.PARAM,
-            "param_key",
-            SingleFilterOperator.GREATER_THAN,
-            True,
-        )
-        SingleFilterSchema().dump(singleFilterObj)
+def test_single_filter_invalid_value(by, value, message):
+    filter = SingleFilter(
+        by,
+        "key" if by.needs_key() else None,
+        SingleFilterOperator.EQUAL_TO,
+        value,
+    )
+    with pytest.raises(ValidationError, match=message):
+        SingleFilterSchema().dump(filter)
 
 
 @pytest.mark.parametrize(
-    "by,key,op,value,err_msg",
+    "by, key, operator, value, message",
     [
-        [
+        (
             SingleFilterBy.PROJECT_ID,
             "invalid_key",
             SingleFilterOperator.EQUAL_TO,
@@ -604,8 +598,8 @@ def test_single_filter_value_field_validation(mocker):
             "key must be none for filter type {}".format(
                 SingleFilterBy.PROJECT_ID
             ),
-        ],
-        [
+        ),
+        (
             SingleFilterBy.TAG,
             None,
             SingleFilterOperator.EQUAL_TO,
@@ -613,8 +607,8 @@ def test_single_filter_value_field_validation(mocker):
             "key must not be none for filter type {}".format(
                 SingleFilterBy.TAG
             ),
-        ],
-        [
+        ),
+        (
             SingleFilterBy.PARAM,
             "param_key",
             SingleFilterOperator.GREATER_THAN,
@@ -622,43 +616,60 @@ def test_single_filter_value_field_validation(mocker):
             "invalid type {}. Value has to be either an int or a float".format(
                 type("param_value")
             ),
-        ],
+        ),
     ],
 )
-def test_single_filter_validation(mocker, by, key, op, value, err_msg):
-    with pytest.raises(ValueError, match=err_msg):
-        SingleFilter(by, key, op, value)
+def test_single_filter_validation(by, key, operator, value, message):
+    with pytest.raises(ValueError, match=message):
+        SingleFilter(by, key, operator, value)
 
 
-def test_compound_filter_validation(mocker):
+def test_compound_filter_validation():
+    filter = CompoundFilter(
+        operator=CompoundFilterOperator.OR,
+        conditions=[
+            SingleFilter(
+                SingleFilterBy.TAG,
+                "tag_key",
+                SingleFilterOperator.EQUAL_TO,
+                "tag_value",
+            ),
+            None,
+        ],
+    )
+    run_query = QueryRuns(filter, None, None)
     with pytest.raises(ValidationError):
-        filter = CompoundFilter(
-            operator=CompoundFilterOperator.OR,
-            conditions=[
-                SingleFilter(
-                    SingleFilterBy.TAG,
-                    "tag_key",
-                    SingleFilterOperator.EQUAL_TO,
-                    "tag_value",
-                ),
-                None,
-            ],
-        )
-
-        queryRunsObj = QueryRuns(filter, None, None)
-        QueryRunsSchema().dump(queryRunsObj)
+        QueryRunsSchema().dump(run_query)
 
 
-def test_sort_validation(mocker):
-    with pytest.raises(
-        ValueError,
-        match="key must be none for sort type {}".format(SortBy.RUN_NUMBER),
-    ):
+@pytest.mark.parametrize(
+    "by, key, by_body",
+    [
+        (SortBy.STARTED_AT, None, "startedAt"),
+        (SortBy.RUN_NUMBER, None, "runNumber"),
+        (SortBy.DURATION, None, "duration"),
+        (SortBy.TAG, "tag-key", "tag"),
+        (SortBy.PARAM, "param-key", "param"),
+        (SortBy.METRIC, "metric-key", "metric"),
+    ],
+)
+@pytest.mark.parametrize(
+    "order, order_body", [(SortOrder.ASC, "asc"), (SortOrder.DESC, "desc")]
+)
+def test_sort_schema(by, key, by_body, order, order_body):
+    sort = Sort(by, key, order)
+    expected_json = {"by": by_body, "key": key, "order": order_body}
+    data = SortSchema().dump(sort)
+    assert data == expected_json
+
+
+def test_sort_validate_no_key():
+    with pytest.raises(ValueError, match="key must be none"):
         Sort(SortBy.RUN_NUMBER, "invalid_number", SortOrder.ASC)
-    with pytest.raises(
-        ValueError,
-        match="key must not be none for sort type {}".format(SortBy.TAG),
-    ):
+
+
+def test_sort_validate_has_key():
+    with pytest.raises(ValueError, match="key must not be none"):
         Sort(SortBy.TAG, None, SortOrder.ASC)
 
 
