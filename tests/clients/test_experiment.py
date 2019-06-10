@@ -118,14 +118,12 @@ METRIC_BODY = {
 }
 
 METRIC_DATA_POINT = MetricDataPoint(
-    value=123.0,
-    timestamp=datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC),
-    step=1,
+    value=METRIC.value, timestamp=METRIC.timestamp, step=METRIC.step
 )
 METRIC_DATA_POINT_BODY = {
-    "value": METRIC_DATA_POINT.value,
-    "timestamp": "2018-03-12T16:20:22.122000+00:00",
-    "step": METRIC_DATA_POINT.step,
+    "value": METRIC_BODY["value"],
+    "timestamp": METRIC_BODY["timestamp"],
+    "step": METRIC_BODY["step"],
 }
 
 METRIC_HISTORY = MetricHistory(
