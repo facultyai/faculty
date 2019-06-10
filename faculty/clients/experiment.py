@@ -101,7 +101,7 @@ RestoreExperimentRunsResponse = namedtuple(
 )
 
 MetricHistory = namedtuple(
-    "MetricHistory", ["total_entries_number", "subsampled", "key", "history"]
+    "MetricHistory", ["original_size", "subsampled", "key", "history"]
 )
 
 
@@ -252,9 +252,7 @@ class RestoreExperimentRunsResponseSchema(BaseSchema):
 
 
 class MetricHistorySchema(BaseSchema):
-    total_entries_number = fields.Integer(
-        data_key="totalEntriesNumber", required=True
-    )
+    original_size = fields.Integer(data_key="originalSize", required=True)
     subsampled = fields.Boolean(required=True)
     key = fields.String(required=True)
     history = fields.Nested(MetricSchema, many=True, required=True)

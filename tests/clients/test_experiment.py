@@ -123,11 +123,10 @@ METRIC_SECOND_MEASURE = Metric(
 METRIC_HISTORY = MetricHistory(
     2, False, METRIC_KEY, [METRIC, METRIC_SECOND_MEASURE]
 )
-
 METRIC_HISTORY_BODY = {
-    "totalEntriesNumber": 2,
-    "subsampled": False,
-    "key": "metric-key",
+    "originalSize": METRIC_HISTORY.original_size,
+    "subsampled": METRIC_HISTORY.subsampled,
+    "key": METRIC_KEY,
     "history": [
         {
             "key": METRIC_KEY,
