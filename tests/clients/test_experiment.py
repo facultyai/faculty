@@ -324,10 +324,7 @@ def test_experiment_run_data_schema():
     data = ExperimentRunDataSchema().dump(
         {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
     )
-
-    expected = EXPERIMENT_RUN_DATA_BODY.copy()
-    expected["metrics"] = [METRIC_BODY]
-    assert data == expected
+    assert data == EXPERIMENT_RUN_DATA_BODY
 
 
 def test_experiment_run_data_schema_empty():
