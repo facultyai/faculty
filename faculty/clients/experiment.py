@@ -254,6 +254,13 @@ class RestoreExperimentRunsResponseSchema(BaseSchema):
 
 
 class MetricDataPointSchema(BaseSchema):
+    """Deserialise a data point from the metric history endpoint.
+
+    This schema is written with the expectation that it is not used alongside
+    the metric subsampling feature, which can result in null timestamp or step,
+    or a non-integer step.
+    """
+
     value = fields.Float(required=True)
     timestamp = fields.DateTime(required=True)
     step = fields.Integer(required=True)
