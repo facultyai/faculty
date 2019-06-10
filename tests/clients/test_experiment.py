@@ -38,7 +38,9 @@ from faculty.clients.experiment import (
     ListExperimentRunsResponse,
     ListExperimentRunsResponseSchema,
     Metric,
+    MetricDataPoint,
     MetricSchema,
+    MetricHistory,
     MetricHistorySchema,
     Page,
     PageSchema,
@@ -102,36 +104,39 @@ PARAM = Param(key="param-key", value="param-value")
 PARAM_BODY = {"key": "param-key", "value": "param-value"}
 
 METRIC_KEY = "metric-key"
-METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
-METRIC_TIMESTAMP_STRING_JAVA = "2018-03-12T16:20:22.122Z"
-METRIC_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:22.122000+00:00"
-METRIC = Metric(key=METRIC_KEY, value=123, timestamp=METRIC_TIMESTAMP)
+METRIC = Metric(
+    key=METRIC_KEY,
+    value=123.0,
+    timestamp=datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC),
+    step=0,
+)
 METRIC_BODY = {
-    "key": METRIC_KEY,
-    "value": 123.0,
-    "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+    "key": METRIC.key,
+    "value": METRIC.value,
+    "timestamp": "2018-03-12T16:20:22.122000+00:00",
+    "step": METRIC.step,
 }
 
-METRIC_SECOND_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 30, 122000, tzinfo=UTC)
-METRIC_SECOND_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:30.122000+00:00"
-METRIC_SECOND_MEASURE = Metric(
-    key=METRIC_KEY, value=127, timestamp=METRIC_SECOND_TIMESTAMP
+METRIC_DATA_POINT = MetricDataPoint(
+    value=METRIC.value, timestamp=METRIC.timestamp, step=METRIC.step
 )
+METRIC_DATA_POINT_BODY = {
+    "value": METRIC_BODY["value"],
+    "timestamp": METRIC_BODY["timestamp"],
+    "step": METRIC_BODY["step"],
+}
 
-METRIC_HISTORY = [METRIC, METRIC_SECOND_MEASURE]
+METRIC_HISTORY = MetricHistory(
+    original_size=1,
+    subsampled=False,
+    key=METRIC_KEY,
+    history=[METRIC_DATA_POINT],
+)
 METRIC_HISTORY_BODY = {
-    "history": [
-        {
-            "key": METRIC_KEY,
-            "value": 123.0,
-            "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
-        },
-        {
-            "key": METRIC_KEY,
-            "value": 127.0,
-            "timestamp": METRIC_SECOND_TIMESTAMP_STRING_PYTHON,
-        },
-    ]
+    "originalSize": METRIC_HISTORY.original_size,
+    "subsampled": METRIC_HISTORY.subsampled,
+    "key": METRIC_HISTORY.key,
+    "history": [METRIC_DATA_POINT_BODY],
 }
 
 EXPERIMENT_RUN = ExperimentRun(
@@ -865,7 +870,7 @@ def test_get_metric_history(mocker):
     returned_metric_history = client.get_metric_history(
         PROJECT_ID, EXPERIMENT_RUN_ID, METRIC_KEY
     )
-    assert returned_metric_history == METRIC_HISTORY
+    assert returned_metric_history == [METRIC]
 
     metric_history_schema_mock.assert_called_once_with()
 
