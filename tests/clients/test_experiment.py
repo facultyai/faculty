@@ -38,6 +38,7 @@ from faculty.clients.experiment import (
     ListExperimentRunsResponse,
     ListExperimentRunsResponseSchema,
     Metric,
+    MetricDataPoint,
     MetricSchema,
     MetricHistory,
     MetricHistorySchema,
@@ -129,17 +130,29 @@ METRIC_STEP1_BODY = {
     "step": METRIC_STEP1.step,
 }
 
+METRIC_DATA_POINT = MetricDataPoint(
+    value=123.0,
+    timestamp=datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC),
+    step=0,
+)
+
+METRIC_DATA_POINT_BODY = {
+    "value": METRIC.value,
+    "timestamp": "2018-03-12T16:20:22.122000+00:00",
+    "step": 0,
+}
+
 METRIC_HISTORY = MetricHistory(
-    original_size=2,
+    original_size=1,
     subsampled=False,
     key=METRIC_KEY,
-    history=[METRIC, METRIC_STEP1],
+    history=[METRIC_DATA_POINT],
 )
 METRIC_HISTORY_BODY = {
     "originalSize": METRIC_HISTORY.original_size,
     "subsampled": METRIC_HISTORY.subsampled,
     "key": METRIC_HISTORY.key,
-    "history": [METRIC_BODY, METRIC_STEP1_BODY],
+    "history": [METRIC_DATA_POINT_BODY],
 }
 
 EXPERIMENT_RUN = ExperimentRun(
@@ -873,7 +886,7 @@ def test_get_metric_history(mocker):
     returned_metric_history = client.get_metric_history(
         PROJECT_ID, EXPERIMENT_RUN_ID, METRIC_KEY
     )
-    assert returned_metric_history == METRIC_HISTORY
+    assert returned_metric_history == [METRIC]
 
     metric_history_schema_mock.assert_called_once_with()
 

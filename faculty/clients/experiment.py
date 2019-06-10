@@ -100,6 +100,8 @@ RestoreExperimentRunsResponse = namedtuple(
     "RestoreExperimentRunsResponse", ["restored_run_ids", "conflicted_run_ids"]
 )
 
+MetricDataPoint = namedtuple("Metric", ["value", "timestamp", "step"])
+
 MetricHistory = namedtuple(
     "MetricHistory", ["original_size", "subsampled", "key", "history"]
 )
@@ -251,11 +253,21 @@ class RestoreExperimentRunsResponseSchema(BaseSchema):
         return RestoreExperimentRunsResponse(**data)
 
 
+class MetricDataPointSchema(BaseSchema):
+    value = fields.Float(required=True)
+    timestamp = fields.DateTime(required=True)
+    step = fields.Integer(required=True)
+
+    @post_load
+    def make_metric(self, data):
+        return MetricDataPoint(**data)
+
+
 class MetricHistorySchema(BaseSchema):
     original_size = fields.Integer(data_key="originalSize", required=True)
     subsampled = fields.Boolean(required=True)
     key = fields.String(required=True)
-    history = fields.Nested(MetricSchema, many=True, required=True)
+    history = fields.Nested(MetricDataPointSchema, many=True, required=True)
 
     @post_load
     def make_history(self, data):
@@ -616,7 +628,16 @@ class ExperimentClient(BaseClient):
         endpoint = "/project/{}/run/{}/metric/{}/history".format(
             project_id, run_id, key
         )
-        return self._get(endpoint, MetricHistorySchema())
+        metric_history = self._get(endpoint, MetricHistorySchema())
+        return [
+            Metric(
+                key=metric_history.key,
+                value=metric_data_point.value,
+                timestamp=metric_data_point.timestamp,
+                step=metric_data_point.step,
+            )
+            for metric_data_point in metric_history.history
+        ]
 
     def delete_runs(self, project_id, run_ids=None):
         """Delete experiment runs.
