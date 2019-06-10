@@ -103,44 +103,43 @@ PARAM = Param(key="param-key", value="param-value")
 PARAM_BODY = {"key": "param-key", "value": "param-value"}
 
 METRIC_KEY = "metric-key"
-METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
-METRIC_TIMESTAMP_STRING_JAVA = "2018-03-12T16:20:22.122Z"
-METRIC_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:22.122000+00:00"
-METRIC = Metric(key=METRIC_KEY, value=123, timestamp=METRIC_TIMESTAMP, step=0)
+METRIC = Metric(
+    key=METRIC_KEY,
+    value=123.0,
+    timestamp=datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC),
+    step=0,
+)
 METRIC_BODY = {
     "key": METRIC_KEY,
-    "value": 123.0,
-    "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
+    "value": METRIC.value,
+    "timestamp": "2018-03-12T16:20:22.122000+00:00",
     "step": 0,
 }
 
-METRIC_SECOND_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 30, 122000, tzinfo=UTC)
-METRIC_SECOND_TIMESTAMP_STRING_PYTHON = "2018-03-12T16:20:30.122000+00:00"
-METRIC_SECOND_MEASURE = Metric(
-    key=METRIC_KEY, value=127, timestamp=METRIC_SECOND_TIMESTAMP, step=1
+METRIC_STEP1 = Metric(
+    key=METRIC_KEY,
+    value=127.0,
+    timestamp=datetime(2018, 3, 12, 16, 20, 30, 122000, tzinfo=UTC),
+    step=1,
 )
+METRIC_STEP1_BODY = {
+    "key": METRIC_STEP1.key,
+    "value": METRIC_STEP1.value,
+    "timestamp": "2018-03-12T16:20:30.122000+00:00",
+    "step": METRIC_STEP1.step,
+}
 
 METRIC_HISTORY = MetricHistory(
-    2, False, METRIC_KEY, [METRIC, METRIC_SECOND_MEASURE]
+    original_size=2,
+    subsampled=False,
+    key=METRIC_KEY,
+    history=[METRIC, METRIC_STEP1],
 )
 METRIC_HISTORY_BODY = {
     "originalSize": METRIC_HISTORY.original_size,
     "subsampled": METRIC_HISTORY.subsampled,
-    "key": METRIC_KEY,
-    "history": [
-        {
-            "key": METRIC_KEY,
-            "value": 123.0,
-            "timestamp": METRIC_TIMESTAMP_STRING_PYTHON,
-            "step": 0,
-        },
-        {
-            "key": METRIC_KEY,
-            "value": 127.0,
-            "timestamp": METRIC_SECOND_TIMESTAMP_STRING_PYTHON,
-            "step": 1,
-        },
-    ],
+    "key": METRIC_HISTORY.key,
+    "history": [METRIC_BODY, METRIC_STEP1_BODY],
 }
 
 EXPERIMENT_RUN = ExperimentRun(
