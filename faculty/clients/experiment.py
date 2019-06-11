@@ -117,13 +117,12 @@ class SingleFilter(_SingleFilter):
             raise ValueError("key must be none for filter type {}".format(by))
         elif (
             by == SingleFilterBy.PARAM
-            and operator.is_numeric_operator()
+            and operator.is_numeric()
             and not (isinstance(value, float) or isinstance(value, int))
         ):
             raise ValueError(
                 (
-                    "invalid type {}. Value has to be either an int "
-                    + "or a float"
+                    "invalid type {}. Value has to be either an int or a float"
                 ).format(type(value))
             )
         return super(SingleFilter, cls).__new__(cls, by, key, operator, value)
@@ -141,7 +140,7 @@ class SingleFilterOperator(Enum):
     GREATER_THAN = "gt"
     GREATER_THAN_OR_EQUAL_TO = "ge"
 
-    def is_numeric_operator(self):
+    def is_numeric(self):
         return self in {
             SingleFilterOperator.LESS_THAN,
             SingleFilterOperator.LESS_THAN_OR_EQUAL_TO,
