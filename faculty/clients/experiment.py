@@ -48,6 +48,7 @@ class ExperimentRunStatus(Enum):
     FINISHED = "finished"
     FAILED = "failed"
     SCHEDULED = "scheduled"
+    KILLED = "killed"
 
 
 Experiment = namedtuple(
@@ -83,7 +84,7 @@ ExperimentRun = namedtuple(
     ],
 )
 
-Metric = namedtuple("Metric", ["key", "value", "timestamp"])
+Metric = namedtuple("Metric", ["key", "value", "timestamp", "step"])
 Param = namedtuple("Param", ["key", "value"])
 Tag = namedtuple("Tag", ["key", "value"])
 
@@ -214,10 +215,18 @@ class PageSchema(BaseSchema):
         return Page(**data)
 
 
+MetricDataPoint = namedtuple("Metric", ["value", "timestamp", "step"])
+
+MetricHistory = namedtuple(
+    "MetricHistory", ["original_size", "subsampled", "key", "history"]
+)
+
+
 class MetricSchema(BaseSchema):
     key = fields.String(required=True)
     value = fields.Float(required=True)
     timestamp = fields.DateTime(required=True)
+    step = fields.Integer(required=True)
 
     @post_load
     def make_metric(self, data):
@@ -459,12 +468,32 @@ class QueryRunsSchema(BaseSchema):
     page = fields.Nested(PageSchema, missing=None)
 
 
-class MetricHistorySchema(BaseSchema):
-    history = fields.Nested(MetricSchema, many=True, required=True)
+class MetricDataPointSchema(BaseSchema):
+    """Deserialise a data point from the metric history endpoint.
+
+    This schema is written with the expectation that it is not used alongside
+    the metric subsampling feature, which can result in null timestamp or step,
+    or a non-integer step.
+    """
+
+    value = fields.Float(required=True)
+    timestamp = fields.DateTime(required=True)
+    step = fields.Integer(required=True)
 
     @post_load
-    def extract_history(self, data):
-        return data["history"]
+    def make_metric(self, data):
+        return MetricDataPoint(**data)
+
+
+class MetricHistorySchema(BaseSchema):
+    original_size = fields.Integer(data_key="originalSize", required=True)
+    subsampled = fields.Boolean(required=True)
+    key = fields.String(required=True)
+    history = fields.Nested(MetricDataPointSchema, many=True, required=True)
+
+    @post_load
+    def make_history(self, data):
+        return MetricHistory(**data)
 
 
 class ExperimentClient(BaseClient):
@@ -889,7 +918,16 @@ class ExperimentClient(BaseClient):
         endpoint = "/project/{}/run/{}/metric/{}/history".format(
             project_id, run_id, key
         )
-        return self._get(endpoint, MetricHistorySchema())
+        metric_history = self._get(endpoint, MetricHistorySchema())
+        return [
+            Metric(
+                key=metric_history.key,
+                value=metric_data_point.value,
+                timestamp=metric_data_point.timestamp,
+                step=metric_data_point.step,
+            )
+            for metric_data_point in metric_history.history
+        ]
 
     def delete_runs(self, project_id, run_ids=None):
         """Delete experiment runs.
