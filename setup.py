@@ -35,6 +35,7 @@ setup(
         # compatible version of python-dateutil is available
         "marshmallow[reco]>=3.0.0rc3",
         "marshmallow_enum",
+        "marshmallow-oneofschema",
         "boto3",
         "botocore",
     ],
