@@ -22,49 +22,58 @@ from pytz import UTC
 
 from faculty.clients.base import Conflict
 from faculty.clients.experiment import (
-    CreateRunSchema,
+    ComparisonOperator,
     CompoundFilter,
-    CompoundFilterOperator,
+    CreateRunSchema,
     DeleteExperimentRunsResponse,
     DeleteExperimentRunsResponseSchema,
+    DeletedAtFilter,
+    DurationSort,
     Experiment,
     ExperimentClient,
-    ExperimentNameConflict,
     ExperimentDeleted,
+    ExperimentIdFilter,
+    ExperimentNameConflict,
     ExperimentRun,
     ExperimentRunDataSchema,
     ExperimentRunSchema,
     ExperimentRunStatus,
     ExperimentSchema,
+    FilterSchema,
     LifecycleStage,
     ListExperimentRunsResponse,
     ListExperimentRunsResponseSchema,
+    LogicalOperator,
     Metric,
     MetricDataPoint,
-    MetricSchema,
+    MetricFilter,
     MetricHistory,
     MetricHistorySchema,
+    MetricSchema,
+    MetricSort,
     Page,
     PageSchema,
     Pagination,
     PaginationSchema,
     Param,
     ParamConflict,
+    ParamFilter,
     ParamSchema,
-    QueryRuns,
-    QueryRunsSchema,
+    ParamSort,
+    ProjectIdFilter,
     RestoreExperimentRunsResponse,
     RestoreExperimentRunsResponseSchema,
-    SingleFilter,
-    SingleFilterBy,
-    SingleFilterOperator,
-    SingleFilterSchema,
-    Sort,
-    SortBy,
+    RunIdFilter,
+    RunNumberSort,
+    RunQuery,
+    RunQuerySchema,
     SortOrder,
     SortSchema,
+    StartedAtSort,
     Tag,
+    TagFilter,
     TagSchema,
+    TagSort,
 )
 
 PROJECT_ID = uuid4()
@@ -348,334 +357,315 @@ def test_experiment_run_data_schema_multiple():
     assert data == {"tags": [TAG_BODY, OTHER_TAG_BODY]}
 
 
-PROJECT_ID_FILTER = SingleFilter(
-    SingleFilterBy.PROJECT_ID, None, SingleFilterOperator.EQUAL_TO, PROJECT_ID
-)
+PROJECT_ID_FILTER = ProjectIdFilter(ComparisonOperator.EQUAL_TO, PROJECT_ID)
 PROJECT_ID_FILTER_BODY = {
     "by": "projectId",
-    "key": None,
     "operator": "eq",
     "value": str(PROJECT_ID),
 }
 
-TAG_FILTER = SingleFilter(
-    SingleFilterBy.TAG, "tag_key", SingleFilterOperator.EQUAL_TO, "tag_value"
-)
+TAG_FILTER = TagFilter("tag-key", ComparisonOperator.EQUAL_TO, "tag-value")
 TAG_FILTER_BODY = {
     "by": "tag",
-    "key": "tag_key",
+    "key": "tag-key",
     "operator": "eq",
-    "value": "tag_value",
+    "value": "tag-value",
 }
 
-PARAM_TEXT_FILTER = SingleFilter(
-    SingleFilterBy.PARAM,
-    "param_key",
-    SingleFilterOperator.EQUAL_TO,
-    "param_value",
-)
-PARAM_TEXT_FILTER_BODY = {
-    "by": "param",
-    "key": "param_key",
-    "operator": "eq",
-    "value": "param_value",
-}
 
-AND_FILTER = CompoundFilter(
-    operator=CompoundFilterOperator.AND, conditions=[TAG_FILTER]
-)
-AND_FILTER_BODY = {"operator": "and", "conditions": [TAG_FILTER_BODY]}
-
-OR_FILTER = CompoundFilter(
-    operator=CompoundFilterOperator.OR,
-    conditions=[
-        TAG_FILTER,
-        CompoundFilter(
-            operator=CompoundFilterOperator.AND, conditions=[PARAM_TEXT_FILTER]
-        ),
-    ],
-)
-OR_FILTER_BODY = {
-    "operator": "or",
-    "conditions": [
-        TAG_FILTER_BODY,
-        {"operator": "and", "conditions": [PARAM_TEXT_FILTER_BODY]},
-    ],
-}
-
-RUN_NUMBER_SORT = [Sort(SortBy.RUN_NUMBER, None, SortOrder.ASC)]
-RUN_NUMBER_SORT_BODY = [{"by": "runNumber", "key": None, "order": "asc"}]
-
-DURATION_SORT = [Sort(SortBy.DURATION, None, SortOrder.DESC)]
-DURATION_SORT_BODY = [{"by": "duration", "key": None, "order": "desc"}]
-
-MULTI_SORT = [
-    Sort(SortBy.PARAM, "param_key", SortOrder.ASC),
-    Sort(SortBy.RUN_NUMBER, None, SortOrder.DESC),
-]
-MULTI_SORT_BODY = [
-    {"by": "param", "key": "param_key", "order": "asc"},
-    {"by": "runNumber", "key": None, "order": "desc"},
+DEFINED_TEST_CASES = [
+    (ComparisonOperator.DEFINED, False, "defined", False),
+    (ComparisonOperator.DEFINED, True, "defined", True),
+    (ComparisonOperator.DEFINED, 0, "defined", False),
+    (ComparisonOperator.DEFINED, 1, "defined", True),
 ]
 
 
-@pytest.mark.parametrize(
-    "filter, filter_body",
-    [
-        (None, None),
-        (PROJECT_ID_FILTER, PROJECT_ID_FILTER_BODY),
-        (AND_FILTER, AND_FILTER_BODY),
-        (OR_FILTER, OR_FILTER_BODY),
-    ],
-)
-@pytest.mark.parametrize(
-    "sort, sort_body",
-    [
-        (None, None),
-        (DURATION_SORT, DURATION_SORT_BODY),
-        (MULTI_SORT, MULTI_SORT_BODY),
-    ],
-)
-def test_query_runs_schema(mocker, filter, sort, filter_body, sort_body):
-    queryRunsObj = QueryRuns(filter, sort, PAGE)
-    expected_json = {
-        "filter": filter_body,
-        "sort": sort_body,
-        "page": PAGE_BODY,
-    }
-    data = QueryRunsSchema().dump(queryRunsObj)
-    assert data == expected_json
+def discrete_test_cases(value, expected):
+    return DEFINED_TEST_CASES + [
+        (ComparisonOperator.EQUAL_TO, value, "eq", expected),
+        (ComparisonOperator.NOT_EQUAL_TO, value, "ne", expected),
+    ]
+
+
+def continuous_test_cases(value, expected):
+    return discrete_test_cases(value, expected) + [
+        (ComparisonOperator.GREATER_THAN, value, "gt", expected),
+        (ComparisonOperator.GREATER_THAN_OR_EQUAL_TO, value, "ge", expected),
+        (ComparisonOperator.LESS_THAN, value, "lt", expected),
+        (ComparisonOperator.LESS_THAN_OR_EQUAL_TO, value, "le", expected),
+    ]
 
 
 @pytest.mark.parametrize(
-    "by, key, value, by_body, value_body",
-    [
-        (
-            SingleFilterBy.PROJECT_ID,
-            None,
-            PROJECT_ID,
-            "projectId",
-            str(PROJECT_ID),
-        ),
-        (
-            SingleFilterBy.EXPERIMENT_ID,
-            None,
-            EXPERIMENT_ID,
-            "experimentId",
-            EXPERIMENT_ID,
-        ),
-        (SingleFilterBy.RUN_ID, None, RUN_ID, "runId", str(RUN_ID)),
-        (
-            SingleFilterBy.DELETED_AT,
-            None,
-            DELETED_AT,
-            "deletedAt",
-            DELETED_AT_STRING_PYTHON,
-        ),
-        (SingleFilterBy.TAG, "tag-key", "tag-value", "tag", "tag-value"),
-        (
-            SingleFilterBy.PARAM,
-            "param-key",
-            "param-text-value",
-            "param",
-            "param-text-value",
-        ),
-        (SingleFilterBy.PARAM, "param-key", 1, "param", 1),
-        (SingleFilterBy.METRIC, "metric-key", 2.0, "metric", 2.0),
-    ],
+    "operator, value, expected_operator, expected_value",
+    discrete_test_cases(PROJECT_ID, str(PROJECT_ID)),
 )
-@pytest.mark.parametrize(
-    "operator, operator_body",
-    [
-        (SingleFilterOperator.EQUAL_TO, "eq"),
-        (SingleFilterOperator.NOT_EQUAL_TO, "ne"),
-    ],
-)
-def test_single_filter_schema_equality_operators(
-    by, key, value, by_body, value_body, operator, operator_body
+def test_filter_schema_project_id(
+    operator, value, expected_operator, expected_value
 ):
-    filter = SingleFilter(by, key, operator, value)
-    expected_json = {
-        "by": by_body,
-        "key": key,
-        "operator": operator_body,
-        "value": value_body,
+    filter = ProjectIdFilter(operator, value)
+    data = FilterSchema().dump(filter)
+    assert data == {
+        "by": "projectId",
+        "operator": expected_operator,
+        "value": expected_value,
     }
-    data = SingleFilterSchema().dump(filter)
-    assert data == expected_json
 
 
 @pytest.mark.parametrize(
-    "by, key, value, by_body, value_body",
-    [
-        (
-            SingleFilterBy.DELETED_AT,
-            None,
-            DELETED_AT,
-            "deletedAt",
-            DELETED_AT_STRING_PYTHON,
-        ),
-        (SingleFilterBy.PARAM, "param-key", 1, "param", 1),
-        (SingleFilterBy.METRIC, "metric-key", 2.0, "metric", 2.0),
-    ],
+    "operator, value, expected_operator, expected_value",
+    discrete_test_cases(EXPERIMENT_ID, EXPERIMENT_ID),
 )
-@pytest.mark.parametrize(
-    "operator, operator_body",
-    [
-        (SingleFilterOperator.LESS_THAN, "lt"),
-        (SingleFilterOperator.LESS_THAN_OR_EQUAL_TO, "le"),
-        (SingleFilterOperator.GREATER_THAN, "gt"),
-        (SingleFilterOperator.GREATER_THAN_OR_EQUAL_TO, "ge"),
-    ],
-)
-def test_single_filter_schema_relational_operators(
-    by, key, value, by_body, value_body, operator, operator_body
+def test_filter_schema_experiment_id(
+    operator, value, expected_operator, expected_value
 ):
-    filter = SingleFilter(by, key, operator, value)
-    expected_json = {
-        "by": by_body,
-        "key": key,
-        "operator": operator_body,
-        "value": value_body,
+    filter = ExperimentIdFilter(operator, value)
+    data = FilterSchema().dump(filter)
+    assert data == {
+        "by": "experimentId",
+        "operator": expected_operator,
+        "value": expected_value,
     }
-    data = SingleFilterSchema().dump(filter)
-    assert data == expected_json
 
 
 @pytest.mark.parametrize(
-    "by, key, by_body",
-    [
-        (SingleFilterBy.PROJECT_ID, None, "projectId"),
-        (SingleFilterBy.EXPERIMENT_ID, None, "experimentId"),
-        (SingleFilterBy.RUN_ID, None, "runId"),
-        (SingleFilterBy.DELETED_AT, None, "deletedAt"),
-        (SingleFilterBy.TAG, "tag-key", "tag"),
-        (SingleFilterBy.PARAM, "param-key", "param"),
-        (SingleFilterBy.METRIC, "metric-key", "metric"),
-    ],
+    "operator, value, expected_operator, expected_value",
+    discrete_test_cases(RUN_ID, str(RUN_ID)),
 )
-def test_single_filter_schema_defined_operator(by, key, by_body):
-    filter = SingleFilter(by, key, SingleFilterOperator.DEFINED, True)
-    expected_json = {
-        "by": by_body,
-        "key": key,
-        "operator": "defined",
-        "value": True,
+def test_filter_schema_run_id(
+    operator, value, expected_operator, expected_value
+):
+    filter = RunIdFilter(operator, value)
+    data = FilterSchema().dump(filter)
+    assert data == {
+        "by": "runId",
+        "operator": expected_operator,
+        "value": expected_value,
     }
-    data = SingleFilterSchema().dump(filter)
-    assert data == expected_json
 
 
 @pytest.mark.parametrize(
-    "by, value, message",
-    [
-        (SingleFilterBy.PROJECT_ID, "invalid", "Not a valid UUID."),
-        (SingleFilterBy.EXPERIMENT_ID, "string", "Not a valid integer."),
-        (SingleFilterBy.RUN_ID, "invalid", "Not a valid UUID."),
-        (
-            SingleFilterBy.DELETED_AT,
-            "invalid",
-            "cannot be formatted as a datetime",
-        ),
-        (SingleFilterBy.METRIC, "invalid", "Not a valid number."),
-        (SingleFilterBy.PARAM, None, "must be of type str, int or float"),
-    ],
+    "operator, value, expected_operator, expected_value",
+    continuous_test_cases(DELETED_AT, DELETED_AT_STRING_PYTHON),
 )
-def test_single_filter_invalid_value(by, value, message):
-    filter = SingleFilter(
-        by,
-        "key" if by.needs_key() else None,
-        SingleFilterOperator.EQUAL_TO,
-        value,
-    )
-    with pytest.raises(ValidationError, match=message):
-        SingleFilterSchema().dump(filter)
+def test_filter_schema_deleted_at(
+    operator, value, expected_operator, expected_value
+):
+    filter = DeletedAtFilter(operator, value)
+    data = FilterSchema().dump(filter)
+    assert data == {
+        "by": "deletedAt",
+        "operator": expected_operator,
+        "value": expected_value,
+    }
 
 
 @pytest.mark.parametrize(
-    "by, key, operator, value, message",
+    "operator, value, expected_operator, expected_value",
+    discrete_test_cases("tag-value", "tag-value"),
+)
+def test_filter_schema_tag(operator, value, expected_operator, expected_value):
+    filter = TagFilter("tag-key", operator, value)
+    data = FilterSchema().dump(filter)
+    assert data == {
+        "by": "tag",
+        "key": "tag-key",
+        "operator": expected_operator,
+        "value": expected_value,
+    }
+
+
+@pytest.mark.parametrize(
+    "operator, value, expected_operator, expected_value",
+    discrete_test_cases("param-value", "param-value")
+    + continuous_test_cases(123.2, 123.2),
+)
+def test_filter_schema_param(
+    operator, value, expected_operator, expected_value
+):
+    filter = ParamFilter("param-key", operator, value)
+    data = FilterSchema().dump(filter)
+    assert data == {
+        "by": "param",
+        "key": "param-key",
+        "operator": expected_operator,
+        "value": expected_value,
+    }
+
+
+@pytest.mark.parametrize(
+    "operator, value, expected_operator, expected_value",
+    continuous_test_cases(45.6, 45.6),
+)
+def test_filter_schema_metric(
+    operator, value, expected_operator, expected_value
+):
+    filter = MetricFilter("metric-key", operator, value)
+    data = FilterSchema().dump(filter)
+    assert data == {
+        "by": "metric",
+        "key": "metric-key",
+        "operator": expected_operator,
+        "value": expected_value,
+    }
+
+
+@pytest.mark.parametrize(
+    "filter_type",
+    [ProjectIdFilter, ExperimentIdFilter, RunIdFilter, DeletedAtFilter],
+)
+def test_filter_schema_invalid_value_no_key(filter_type):
+    filter = filter_type(ComparisonOperator.EQUAL_TO, "invalid")
+    with pytest.raises(ValidationError):
+        FilterSchema().dump(filter)
+
+
+@pytest.mark.parametrize(
+    "filter_type, value", [(ParamFilter, None), (MetricFilter, "invalid")]
+)
+def test_filter_schema_invalid_value_with_key(filter_type, value):
+    filter = filter_type("key", ComparisonOperator.EQUAL_TO, value)
+    with pytest.raises(ValidationError):
+        FilterSchema().dump(filter)
+
+
+@pytest.mark.parametrize(
+    "filter_type, value",
     [
-        (
-            SingleFilterBy.PROJECT_ID,
-            "invalid_key",
-            SingleFilterOperator.EQUAL_TO,
-            PROJECT_ID,
-            "key must be none for filter type {}".format(
-                SingleFilterBy.PROJECT_ID
-            ),
-        ),
-        (
-            SingleFilterBy.TAG,
-            None,
-            SingleFilterOperator.EQUAL_TO,
-            "tag_value",
-            "key must not be none for filter type {}".format(
-                SingleFilterBy.TAG
-            ),
-        ),
-        (
-            SingleFilterBy.PARAM,
-            "param_key",
-            SingleFilterOperator.GREATER_THAN,
-            "param_value",
-            "invalid type {}. Value has to be either an int or a float".format(
-                type("param_value")
-            ),
-        ),
+        (ProjectIdFilter, PROJECT_ID),
+        (ExperimentIdFilter, EXPERIMENT_ID),
+        (RunIdFilter, RUN_ID),
     ],
 )
-def test_single_filter_validation(by, key, operator, value, message):
-    with pytest.raises(ValueError, match=message):
-        SingleFilter(by, key, operator, value)
+@pytest.mark.parametrize(
+    "operator",
+    [
+        ComparisonOperator.GREATER_THAN,
+        ComparisonOperator.GREATER_THAN_OR_EQUAL_TO,
+        ComparisonOperator.LESS_THAN,
+        ComparisonOperator.LESS_THAN_OR_EQUAL_TO,
+    ],
+)
+def test_filter_schema_invalid_operator_no_key(filter_type, value, operator):
+    filter = filter_type(operator, value)
+    with pytest.raises(ValidationError, match="Not a discrete operator"):
+        FilterSchema().dump(filter)
 
 
-def test_compound_filter_validation():
+@pytest.mark.parametrize(
+    "filter_type, value",
+    [(TagFilter, "tag-value"), (ParamFilter, "param-string-value")],
+)
+@pytest.mark.parametrize(
+    "operator",
+    [
+        ComparisonOperator.GREATER_THAN,
+        ComparisonOperator.GREATER_THAN_OR_EQUAL_TO,
+        ComparisonOperator.LESS_THAN,
+        ComparisonOperator.LESS_THAN_OR_EQUAL_TO,
+    ],
+)
+def test_filter_schema_invalid_operator_with_key(filter_type, value, operator):
+    filter = filter_type("key", operator, value)
+    with pytest.raises(ValidationError, match="Not a discrete operator"):
+        FilterSchema().dump(filter)
+
+
+@pytest.mark.parametrize(
+    "operator, expected_operator",
+    [(LogicalOperator.AND, "and"), (LogicalOperator.OR, "or")],
+)
+def test_filter_schema_compound(operator, expected_operator):
+    filter = CompoundFilter(operator, [PROJECT_ID_FILTER, TAG_FILTER])
+    data = FilterSchema().dump(filter)
+    assert data == {
+        "operator": expected_operator,
+        "conditions": [PROJECT_ID_FILTER_BODY, TAG_FILTER_BODY],
+    }
+
+
+def test_filter_schema_nested():
     filter = CompoundFilter(
-        operator=CompoundFilterOperator.OR,
-        conditions=[
-            SingleFilter(
-                SingleFilterBy.TAG,
-                "tag_key",
-                SingleFilterOperator.EQUAL_TO,
-                "tag_value",
+        LogicalOperator.AND,
+        [
+            CompoundFilter(
+                LogicalOperator.AND, [PROJECT_ID_FILTER, TAG_FILTER]
             ),
-            None,
+            CompoundFilter(
+                LogicalOperator.OR, [TAG_FILTER, PROJECT_ID_FILTER]
+            ),
         ],
     )
-    run_query = QueryRuns(filter, None, None)
-    with pytest.raises(ValidationError):
-        QueryRunsSchema().dump(run_query)
+    data = FilterSchema().dump(filter)
+    assert data == {
+        "operator": "and",
+        "conditions": [
+            {
+                "operator": "and",
+                "conditions": [PROJECT_ID_FILTER_BODY, TAG_FILTER_BODY],
+            },
+            {
+                "operator": "or",
+                "conditions": [TAG_FILTER_BODY, PROJECT_ID_FILTER_BODY],
+            },
+        ],
+    }
 
 
 @pytest.mark.parametrize(
-    "by, key, by_body",
+    "sort_type, by",
     [
-        (SortBy.STARTED_AT, None, "startedAt"),
-        (SortBy.RUN_NUMBER, None, "runNumber"),
-        (SortBy.DURATION, None, "duration"),
-        (SortBy.TAG, "tag-key", "tag"),
-        (SortBy.PARAM, "param-key", "param"),
-        (SortBy.METRIC, "metric-key", "metric"),
+        (StartedAtSort, "startedAt"),
+        (RunNumberSort, "runNumber"),
+        (DurationSort, "duration"),
     ],
 )
 @pytest.mark.parametrize(
-    "order, order_body", [(SortOrder.ASC, "asc"), (SortOrder.DESC, "desc")]
+    "order, expected_order", [(SortOrder.ASC, "asc"), (SortOrder.DESC, "desc")]
 )
-def test_sort_schema(by, key, by_body, order, order_body):
-    sort = Sort(by, key, order)
-    expected_json = {"by": by_body, "key": key, "order": order_body}
+def test_sort_schema_no_tag(sort_type, by, order, expected_order):
+    sort = sort_type(order)
     data = SortSchema().dump(sort)
-    assert data == expected_json
+    assert data == {"by": by, "order": expected_order}
 
 
-def test_sort_validate_no_key():
-    with pytest.raises(ValueError, match="key must be none"):
-        Sort(SortBy.RUN_NUMBER, "invalid_number", SortOrder.ASC)
+@pytest.mark.parametrize(
+    "sort_type, by",
+    [(TagSort, "tag"), (ParamSort, "param"), (MetricSort, "metric")],
+)
+@pytest.mark.parametrize(
+    "order, expected_order", [(SortOrder.ASC, "asc"), (SortOrder.DESC, "desc")]
+)
+def test_sort_schema_with_tag(sort_type, by, order, expected_order):
+    sort = sort_type("sort-key", order)
+    data = SortSchema().dump(sort)
+    assert data == {"by": by, "key": "sort-key", "order": expected_order}
 
 
-def test_sort_validate_has_key():
-    with pytest.raises(ValueError, match="key must not be none"):
-        Sort(SortBy.TAG, None, SortOrder.ASC)
+def test_run_query_schema(mocker):
+    mocker.patch.object(FilterSchema, "dump")
+    mocker.patch.object(SortSchema, "dump")
+    mocker.patch.object(PageSchema, "dump")
+
+    filter = mocker.Mock()
+    sorts = [mocker.Mock(), mocker.Mock()]
+    page = mocker.Mock()
+
+    run_query = RunQuery(filter, sorts, page)
+    data = RunQuerySchema().dump(run_query)
+
+    assert data == {
+        "filter": FilterSchema.dump.return_value,
+        "sort": [SortSchema.dump.return_value, SortSchema.dump.return_value],
+        "page": PageSchema.dump.return_value,
+    }
+
+
+def test_run_query_schema_defaults():
+    run_query = RunQuery(None, None, None)
+    data = RunQuerySchema().dump(run_query)
+    assert data == {"filter": None, "sort": None, "page": None}
 
 
 @pytest.mark.parametrize("description", [None, "experiment description"])
@@ -900,9 +890,14 @@ def test_list_runs_schema(mocker):
     assert data == LIST_EXPERIMENT_RUNS_RESPONSE
 
 
-def test_page_schema():
+def test_page_schema_load():
     data = PageSchema().load(PAGE_BODY)
     assert data == PAGE
+
+
+def test_page_schema_dump():
+    data = PageSchema().dump(PAGE)
+    assert data == PAGE_BODY
 
 
 def test_pagination_schema():
@@ -942,85 +937,46 @@ def test_restore_experiment_runs_response_schema_invalid(mocker):
         RestoreExperimentRunsResponseSchema().load({})
 
 
-def test_experiment_client_list_runs_all(mocker):
-    mocker.patch.object(
-        ExperimentClient, "_post", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
-    )
-    response_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ListExperimentRunsResponseSchema"
-    )
-    request_schema_mock = mocker.patch(
-        "faculty.clients.experiment.QueryRunsSchema"
-    )
-    dump_mock = request_schema_mock.return_value.dump
+def test_experiment_client_list_runs(mocker):
+    mocker.patch.object(ExperimentClient, "query_runs")
 
     client = ExperimentClient(mocker.Mock())
-    list_result = client.list_runs(PROJECT_ID)
-    assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
-
-    response_schema_mock.assert_called_once_with()
-    ExperimentClient._post.assert_called_once_with(
-        "/project/{}/run/query".format(PROJECT_ID),
-        response_schema_mock.return_value,
-        json=dump_mock.return_value,
+    response = client.list_runs(
+        PROJECT_ID,
+        experiment_ids=[123, 456],
+        lifecycle_stage=LifecycleStage.DELETED,
+        start=20,
+        limit=10,
     )
 
+    assert response == ExperimentClient.query_runs.return_value
+    expected_filter = CompoundFilter(
+        LogicalOperator.AND,
+        [
+            CompoundFilter(
+                LogicalOperator.OR,
+                [
+                    ExperimentIdFilter(ComparisonOperator.EQUAL_TO, 123),
+                    ExperimentIdFilter(ComparisonOperator.EQUAL_TO, 456),
+                ],
+            ),
+            DeletedAtFilter(ComparisonOperator.DEFINED, True),
+        ],
+    )
+    ExperimentClient.query_runs.assert_called_once_with(
+        PROJECT_ID, expected_filter, None, 20, 10
+    )
 
-def test_experiment_client_list_runs_experiments_filter(mocker):
-    mocker.patch.object(
-        ExperimentClient, "_post", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
-    )
-    response_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ListExperimentRunsResponseSchema"
-    )
-    request_schema_mock = mocker.patch(
-        "faculty.clients.experiment.QueryRunsSchema"
-    )
-    dump_mock = request_schema_mock.return_value.dump
+
+def test_experiment_client_list_runs_defaults(mocker):
+    mocker.patch.object(ExperimentClient, "query_runs")
 
     client = ExperimentClient(mocker.Mock())
-    list_result = client.list_runs(PROJECT_ID, experiment_ids=[123, 456])
-    assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
+    response = client.list_runs(PROJECT_ID)
 
-    response_schema_mock.assert_called_once_with()
-    ExperimentClient._post.assert_called_once_with(
-        "/project/{}/run/query".format(PROJECT_ID),
-        response_schema_mock.return_value,
-        json=dump_mock.return_value,
-    )
-
-
-def test_experiment_client_list_runs_page(mocker):
-    mocker.patch.object(
-        ExperimentClient, "_post", return_value=LIST_EXPERIMENT_RUNS_RESPONSE
-    )
-    response_schema_mock = mocker.patch(
-        "faculty.clients.experiment.ListExperimentRunsResponseSchema"
-    )
-    request_schema_mock = mocker.patch(
-        "faculty.clients.experiment.QueryRunsSchema"
-    )
-    dump_mock = request_schema_mock.return_value.dump
-
-    client = ExperimentClient(mocker.Mock())
-    list_result = client.list_runs(PROJECT_ID, start=20, limit=10)
-    assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
-
-    response_schema_mock.assert_called_once_with()
-    ExperimentClient._post.assert_called_once_with(
-        "/project/{}/run/query".format(PROJECT_ID),
-        response_schema_mock.return_value,
-        json=dump_mock.return_value,
-    )
-
-
-def test_experiment_client_list_runs_experiments_filter_empty(mocker):
-    client = ExperimentClient(mocker.Mock())
-    list_result = client.list_runs(PROJECT_ID, experiment_ids=[])
-
-    assert list_result == ListExperimentRunsResponse(
-        runs=[],
-        pagination=Pagination(start=0, size=0, previous=None, next=None),
+    assert response == ExperimentClient.query_runs.return_value
+    ExperimentClient.query_runs.assert_called_once_with(
+        PROJECT_ID, None, None, None, None
     )
 
 
@@ -1031,32 +987,26 @@ def test_experiment_client_query_runs(mocker):
     response_schema_mock = mocker.patch(
         "faculty.clients.experiment.ListExperimentRunsResponseSchema"
     )
-    request_schema_mock = mocker.patch(
-        "faculty.clients.experiment.QueryRunsSchema"
-    )
-    dump_mock = request_schema_mock.return_value.dump
+    request_dump_mock = mocker.patch.object(RunQuerySchema, "dump")
 
-    test_filter = SingleFilter(
-        SingleFilterBy.EXPERIMENT_ID, None, SingleFilterOperator.EQUAL_TO, "2"
-    )
-    test_sort = [Sort(SortBy.METRIC, "metric_key", SortOrder.ASC)]
+    filter = mocker.Mock()
+    sort = mocker.Mock()
 
     client = ExperimentClient(mocker.Mock())
     list_result = client.query_runs(
-        PROJECT_ID, filter=test_filter, sort=test_sort, start=20, limit=10
+        PROJECT_ID, filter, sort, start=20, limit=10
     )
 
     assert list_result == LIST_EXPERIMENT_RUNS_RESPONSE
 
-    request_schema_mock.assert_called_once_with()
-    dump_mock.assert_called_once_with(
-        QueryRuns(test_filter, test_sort, Page(20, 10))
+    request_dump_mock.assert_called_once_with(
+        RunQuery(filter, sort, Page(20, 10))
     )
     response_schema_mock.assert_called_once_with()
     ExperimentClient._post.assert_called_once_with(
         "/project/{}/run/query".format(PROJECT_ID),
         response_schema_mock.return_value,
-        json=dump_mock.return_value,
+        json=request_dump_mock.return_value,
     )
 
 
@@ -1279,41 +1229,28 @@ def test_delete_runs(mocker):
     mocker.patch.object(
         ExperimentClient, "_post", return_value=DELETE_EXPERIMENT_RUNS_RESPONSE
     )
-    schema_mock = mocker.patch(
+    response_schema_mock = mocker.patch(
         "faculty.clients.experiment.DeleteExperimentRunsResponseSchema"
     )
+    filter_dump_mock = mocker.patch.object(FilterSchema, "dump")
     run_ids = [uuid4(), uuid4()]
 
     client = ExperimentClient(mocker.Mock())
-    assert (
-        client.delete_runs(PROJECT_ID, run_ids)
-        == DELETE_EXPERIMENT_RUNS_RESPONSE
+    response = client.delete_runs(PROJECT_ID, run_ids)
+
+    assert response == DELETE_EXPERIMENT_RUNS_RESPONSE
+    expected_filter = CompoundFilter(
+        LogicalOperator.OR,
+        [
+            RunIdFilter(ComparisonOperator.EQUAL_TO, run_ids[0]),
+            RunIdFilter(ComparisonOperator.EQUAL_TO, run_ids[1]),
+        ],
     )
-
-    expected_payload = {
-        "filter": CompoundFilter(
-            CompoundFilterOperator.OR,
-            [
-                SingleFilter(
-                    SingleFilterBy.RUN_ID,
-                    None,
-                    SingleFilterOperator.EQUAL_TO,
-                    run_ids[0],
-                ),
-                SingleFilter(
-                    SingleFilterBy.RUN_ID,
-                    None,
-                    SingleFilterOperator.EQUAL_TO,
-                    run_ids[1],
-                ),
-            ],
-        )
-    }
-
+    filter_dump_mock.assert_called_once_with(expected_filter)
     ExperimentClient._post.assert_called_once_with(
         "/project/{}/run/delete/query".format(PROJECT_ID),
-        schema_mock.return_value,
-        json=expected_payload,
+        response_schema_mock.return_value,
+        json={"filter": filter_dump_mock.return_value},
     )
 
 
@@ -1334,13 +1271,15 @@ def test_delete_runs_no_run_ids(mocker):
 
 
 def test_delete_runs_empty_list(mocker):
-    client = ExperimentClient(mocker.Mock())
+    mocker.patch.object(ExperimentClient, "_post")
 
-    assert client.delete_runs(
-        PROJECT_ID, run_ids=[]
-    ) == DeleteExperimentRunsResponse(
+    client = ExperimentClient(mocker.Mock())
+    response = client.delete_runs(PROJECT_ID, run_ids=[])
+
+    assert response == DeleteExperimentRunsResponse(
         deleted_run_ids=[], conflicted_run_ids=[]
     )
+    ExperimentClient._post.assert_not_called()
 
 
 def test_restore_runs(mocker):
@@ -1349,41 +1288,28 @@ def test_restore_runs(mocker):
         "_post",
         return_value=RESTORE_EXPERIMENT_RUNS_RESPONSE,
     )
-    schema_mock = mocker.patch(
+    response_schema_mock = mocker.patch(
         "faculty.clients.experiment.RestoreExperimentRunsResponseSchema"
     )
+    filter_dump_mock = mocker.patch.object(FilterSchema, "dump")
     run_ids = [uuid4(), uuid4()]
 
     client = ExperimentClient(mocker.Mock())
-    assert (
-        client.restore_runs(PROJECT_ID, run_ids)
-        == RESTORE_EXPERIMENT_RUNS_RESPONSE
+    response = client.restore_runs(PROJECT_ID, run_ids)
+
+    assert response == RESTORE_EXPERIMENT_RUNS_RESPONSE
+    expected_filter = CompoundFilter(
+        LogicalOperator.OR,
+        [
+            RunIdFilter(ComparisonOperator.EQUAL_TO, run_ids[0]),
+            RunIdFilter(ComparisonOperator.EQUAL_TO, run_ids[1]),
+        ],
     )
-
-    expected_payload = {
-        "filter": CompoundFilter(
-            CompoundFilterOperator.OR,
-            [
-                SingleFilter(
-                    SingleFilterBy.RUN_ID,
-                    None,
-                    SingleFilterOperator.EQUAL_TO,
-                    run_ids[0],
-                ),
-                SingleFilter(
-                    SingleFilterBy.RUN_ID,
-                    None,
-                    SingleFilterOperator.EQUAL_TO,
-                    run_ids[1],
-                ),
-            ],
-        )
-    }
-
+    filter_dump_mock.assert_called_once_with(expected_filter)
     ExperimentClient._post.assert_called_once_with(
         "/project/{}/run/restore/query".format(PROJECT_ID),
-        schema_mock.return_value,
-        json=expected_payload,
+        response_schema_mock.return_value,
+        json={"filter": filter_dump_mock.return_value},
     )
 
 
@@ -1404,10 +1330,12 @@ def test_restore_runs_no_run_ids(mocker):
 
 
 def test_restore_runs_empty_list(mocker):
-    client = ExperimentClient(mocker.Mock())
+    mocker.patch.object(ExperimentClient, "_post")
 
-    assert client.restore_runs(
-        PROJECT_ID, run_ids=[]
-    ) == RestoreExperimentRunsResponse(
+    client = ExperimentClient(mocker.Mock())
+    response = client.restore_runs(PROJECT_ID, run_ids=[])
+
+    assert response == RestoreExperimentRunsResponse(
         restored_run_ids=[], conflicted_run_ids=[]
     )
+    ExperimentClient._post.assert_not_called()
