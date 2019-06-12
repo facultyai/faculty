@@ -38,6 +38,33 @@ from faculty.clients.experiment.models import (
 )
 
 
+class _OptionalField(fields.Field):
+    """Wrap another field, passing through Nones."""
+
+    def __init__(self, nested, *args, **kwargs):
+        self.nested = nested
+        super().__init__(*args, **kwargs)
+
+    def _deserialize(self, value, *args, **kwargs):
+        if value is None:
+            return None
+        else:
+            return self.nested._deserialize(value, *args, **kwargs)
+
+    def _serialize(self, value, *args, **kwargs):
+        if value is None:
+            return None
+        else:
+            return self.nested._serialize(value, *args, **kwargs)
+
+
+class _OneOfSchemaWithoutType(OneOfSchema):
+    def dump(self, *args, **kwargs):
+        data = super(_OneOfSchemaWithoutType, self).dump(*args, **kwargs)
+        # Remove the type field added by marshmallow-oneofschema
+        return {k: v for k, v in data.items() if k != "type"}
+
+
 class PageSchema(BaseSchema):
     start = fields.Integer(required=True)
     limit = fields.Integer(required=True)
@@ -45,6 +72,17 @@ class PageSchema(BaseSchema):
     @post_load
     def make_page(self, data):
         return Page(**data)
+
+
+class PaginationSchema(BaseSchema):
+    start = fields.Integer(required=True)
+    size = fields.Integer(required=True)
+    previous = fields.Nested(PageSchema, missing=None)
+    next = fields.Nested(PageSchema, missing=None)
+
+    @post_load
+    def make_pagination(self, data):
+        return Pagination(**data)
 
 
 class MetricSchema(BaseSchema):
@@ -114,6 +152,9 @@ class ExperimentRunSchema(BaseSchema):
         return ExperimentRun(**data)
 
 
+# Schemas for payloads sent to API:
+
+
 class ExperimentRunDataSchema(BaseSchema):
     metrics = fields.List(fields.Nested(MetricSchema))
     params = fields.List(fields.Nested(ParamSchema))
@@ -123,17 +164,6 @@ class ExperimentRunDataSchema(BaseSchema):
 class ExperimentRunInfoSchema(BaseSchema):
     status = EnumField(ExperimentRunStatus, by_value=True, required=True)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
-
-
-class PaginationSchema(BaseSchema):
-    start = fields.Integer(required=True)
-    size = fields.Integer(required=True)
-    previous = fields.Nested(PageSchema, missing=None)
-    next = fields.Nested(PageSchema, missing=None)
-
-    @post_load
-    def make_pagination(self, data):
-        return Pagination(**data)
 
 
 class ListExperimentRunsResponseSchema(BaseSchema):
@@ -151,6 +181,187 @@ class CreateRunSchema(BaseSchema):
     started_at = fields.DateTime(data_key="startedAt")
     artifact_location = fields.String(data_key="artifactLocation")
     tags = fields.Nested(TagSchema, many=True, required=True)
+
+
+class _ParamFilterValueField(fields.Field):
+    """Field that passes through strings or numbers."""
+
+    default_error_messages = {
+        "unsupported_type": "Param values must be of type str, int or float."
+    }
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if isinstance(value, str):
+            field = fields.String()
+        elif isinstance(value, int) or isinstance(value, float):
+            field = fields.Number()
+        else:
+            self.fail("unsupported_type")
+        return field._serialize(value, attr, obj, **kwargs)
+
+
+class _FilterValueField(fields.Field):
+    def __init__(self, other_field_type, *args, **kwargs):
+        self.other_field_type = other_field_type
+        super(_FilterValueField, self).__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if obj.operator == ComparisonOperator.DEFINED:
+            field_cls = fields.Boolean
+        else:
+            field_cls = self.other_field_type
+        return field_cls()._serialize(value, attr, obj, **kwargs)
+
+
+def _validate_discrete(operator):
+    if operator not in {
+        ComparisonOperator.DEFINED,
+        ComparisonOperator.EQUAL_TO,
+        ComparisonOperator.NOT_EQUAL_TO,
+    }:
+        raise ValidationError({"operator": "Not a discrete operator."})
+
+
+class _ProjectIdFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = _FilterValueField(fields.UUID)
+    by = fields.Constant("projectId", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class _ExperimentIdFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = _FilterValueField(fields.Integer)
+    by = fields.Constant("experimentId", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class _RunIdFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = _FilterValueField(fields.UUID)
+    by = fields.Constant("runId", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class _DeletedAtFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = _FilterValueField(fields.DateTime)
+    by = fields.Constant("deletedAt", dump_only=True)
+
+
+class _TagFilterSchema(BaseSchema):
+    key = fields.String()
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = _FilterValueField(fields.String)
+    by = fields.Constant("tag", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class _ParamFilterSchema(BaseSchema):
+    key = fields.String()
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = _FilterValueField(_ParamFilterValueField)
+    by = fields.Constant("param", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        if isinstance(obj.value, str):
+            _validate_discrete(obj.operator)
+        return obj
+
+
+class _MetricFilterSchema(BaseSchema):
+    key = fields.String()
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = _FilterValueField(fields.Float)
+    by = fields.Constant("metric", dump_only=True)
+
+
+class _CompoundFilterSchema(BaseSchema):
+    operator = EnumField(LogicalOperator, by_value=True)
+    conditions = fields.List(fields.Nested("FilterSchema"))
+
+
+class FilterSchema(_OneOfSchemaWithoutType):
+    type_schemas = {
+        "ProjectIdFilter": _ProjectIdFilterSchema,
+        "ExperimentIdFilter": _ExperimentIdFilterSchema,
+        "RunIdFilter": _RunIdFilterSchema,
+        "DeletedAtFilter": _DeletedAtFilterSchema,
+        "TagFilter": _TagFilterSchema,
+        "ParamFilter": _ParamFilterSchema,
+        "MetricFilter": _MetricFilterSchema,
+        "CompoundFilter": _CompoundFilterSchema,
+    }
+
+
+class _StartedAtSortSchema(BaseSchema):
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("startedAt", dump_only=True)
+
+
+class _RunNumberSortSchema(BaseSchema):
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("runNumber", dump_only=True)
+
+
+class _DurationSortSchema(BaseSchema):
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("duration", dump_only=True)
+
+
+class _TagSortSchema(BaseSchema):
+    key = fields.String()
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("tag", dump_only=True)
+
+
+class _ParamSortSchema(BaseSchema):
+    key = fields.String()
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("param", dump_only=True)
+
+
+class _MetricSortSchema(BaseSchema):
+    key = fields.String()
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("metric", dump_only=True)
+
+
+class SortSchema(_OneOfSchemaWithoutType):
+    type_schemas = {
+        "StartedAtSort": _StartedAtSortSchema,
+        "RunNumberSort": _RunNumberSortSchema,
+        "DurationSort": _DurationSortSchema,
+        "TagSort": _TagSortSchema,
+        "ParamSort": _ParamSortSchema,
+        "MetricSort": _MetricSortSchema,
+    }
+
+
+class RunQuerySchema(BaseSchema):
+    filter = _OptionalField(fields.Nested(FilterSchema))
+    sort = fields.List(fields.Nested(SortSchema))
+    page = fields.Nested(PageSchema, missing=None)
+
+
+# Schemas for responses returned from API:
 
 
 class DeleteExperimentRunsResponseSchema(BaseSchema):
@@ -179,212 +390,7 @@ class RestoreExperimentRunsResponseSchema(BaseSchema):
         return RestoreExperimentRunsResponse(**data)
 
 
-class ParamFilterValueField(fields.Field):
-    """Field that passes through strings or numbers."""
-
-    default_error_messages = {
-        "unsupported_type": "Param values must be of type str, int or float."
-    }
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        if isinstance(value, str):
-            field = fields.String()
-        elif isinstance(value, int) or isinstance(value, float):
-            field = fields.Number()
-        else:
-            self.fail("unsupported_type")
-        return field._serialize(value, attr, obj, **kwargs)
-
-
-class OptionalField(fields.Field):
-    """Wrap another field, passing through Nones."""
-
-    def __init__(self, nested, *args, **kwargs):
-        self.nested = nested
-        super().__init__(*args, **kwargs)
-
-    def _deserialize(self, value, *args, **kwargs):
-        if value is None:
-            return None
-        else:
-            return self.nested._deserialize(value, *args, **kwargs)
-
-    def _serialize(self, value, *args, **kwargs):
-        if value is None:
-            return None
-        else:
-            return self.nested._serialize(value, *args, **kwargs)
-
-
-class FilterValueField(fields.Field):
-    def __init__(self, other_field_type, *args, **kwargs):
-        self.other_field_type = other_field_type
-        super(FilterValueField, self).__init__(*args, **kwargs)
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        if obj.operator == ComparisonOperator.DEFINED:
-            field_cls = fields.Boolean
-        else:
-            field_cls = self.other_field_type
-        return field_cls()._serialize(value, attr, obj, **kwargs)
-
-
-def _validate_discrete(operator):
-    if operator not in {
-        ComparisonOperator.DEFINED,
-        ComparisonOperator.EQUAL_TO,
-        ComparisonOperator.NOT_EQUAL_TO,
-    }:
-        raise ValidationError({"operator": "Not a discrete operator."})
-
-
-class ProjectIdFilterSchema(BaseSchema):
-    operator = EnumField(ComparisonOperator, by_value=True)
-    value = FilterValueField(fields.UUID)
-    by = fields.Constant("projectId", dump_only=True)
-
-    @pre_dump
-    def check_operator(self, obj):
-        _validate_discrete(obj.operator)
-        return obj
-
-
-class ExperimentIdFilterSchema(BaseSchema):
-    operator = EnumField(ComparisonOperator, by_value=True)
-    value = FilterValueField(fields.Integer)
-    by = fields.Constant("experimentId", dump_only=True)
-
-    @pre_dump
-    def check_operator(self, obj):
-        _validate_discrete(obj.operator)
-        return obj
-
-
-class RunIdFilterSchema(BaseSchema):
-    operator = EnumField(ComparisonOperator, by_value=True)
-    value = FilterValueField(fields.UUID)
-    by = fields.Constant("runId", dump_only=True)
-
-    @pre_dump
-    def check_operator(self, obj):
-        _validate_discrete(obj.operator)
-        return obj
-
-
-class DeletedAtFilterSchema(BaseSchema):
-    operator = EnumField(ComparisonOperator, by_value=True)
-    value = FilterValueField(fields.DateTime)
-    by = fields.Constant("deletedAt", dump_only=True)
-
-
-class TagFilterSchema(BaseSchema):
-    key = fields.String()
-    operator = EnumField(ComparisonOperator, by_value=True)
-    value = FilterValueField(fields.String)
-    by = fields.Constant("tag", dump_only=True)
-
-    @pre_dump
-    def check_operator(self, obj):
-        _validate_discrete(obj.operator)
-        return obj
-
-
-class ParamFilterSchema(BaseSchema):
-    key = fields.String()
-    operator = EnumField(ComparisonOperator, by_value=True)
-    value = FilterValueField(ParamFilterValueField)
-    by = fields.Constant("param", dump_only=True)
-
-    @pre_dump
-    def check_operator(self, obj):
-        if isinstance(obj.value, str):
-            _validate_discrete(obj.operator)
-        return obj
-
-
-class MetricFilterSchema(BaseSchema):
-    key = fields.String()
-    operator = EnumField(ComparisonOperator, by_value=True)
-    value = FilterValueField(fields.Float)
-    by = fields.Constant("metric", dump_only=True)
-
-
-class CompoundFilterSchema(BaseSchema):
-    operator = EnumField(LogicalOperator, by_value=True)
-    conditions = fields.List(fields.Nested("FilterSchema"))
-
-
-class OneOfSchemaWithoutType(OneOfSchema):
-    def dump(self, *args, **kwargs):
-        data = super(OneOfSchemaWithoutType, self).dump(*args, **kwargs)
-        # Remove the type field added by marshmallow-oneofschema
-        return {k: v for k, v in data.items() if k != "type"}
-
-
-class FilterSchema(OneOfSchemaWithoutType):
-    type_schemas = {
-        "ProjectIdFilter": ProjectIdFilterSchema,
-        "ExperimentIdFilter": ExperimentIdFilterSchema,
-        "RunIdFilter": RunIdFilterSchema,
-        "DeletedAtFilter": DeletedAtFilterSchema,
-        "TagFilter": TagFilterSchema,
-        "ParamFilter": ParamFilterSchema,
-        "MetricFilter": MetricFilterSchema,
-        "CompoundFilter": CompoundFilterSchema,
-    }
-
-
-class StartedAtSortSchema(BaseSchema):
-    order = EnumField(SortOrder, by_value=True)
-    by = fields.Constant("startedAt", dump_only=True)
-
-
-class RunNumberSortSchema(BaseSchema):
-    order = EnumField(SortOrder, by_value=True)
-    by = fields.Constant("runNumber", dump_only=True)
-
-
-class DurationSortSchema(BaseSchema):
-    order = EnumField(SortOrder, by_value=True)
-    by = fields.Constant("duration", dump_only=True)
-
-
-class TagSortSchema(BaseSchema):
-    key = fields.String()
-    order = EnumField(SortOrder, by_value=True)
-    by = fields.Constant("tag", dump_only=True)
-
-
-class ParamSortSchema(BaseSchema):
-    key = fields.String()
-    order = EnumField(SortOrder, by_value=True)
-    by = fields.Constant("param", dump_only=True)
-
-
-class MetricSortSchema(BaseSchema):
-    key = fields.String()
-    order = EnumField(SortOrder, by_value=True)
-    by = fields.Constant("metric", dump_only=True)
-
-
-class SortSchema(OneOfSchemaWithoutType):
-    type_schemas = {
-        "StartedAtSort": StartedAtSortSchema,
-        "RunNumberSort": RunNumberSortSchema,
-        "DurationSort": DurationSortSchema,
-        "TagSort": TagSortSchema,
-        "ParamSort": ParamSortSchema,
-        "MetricSort": MetricSortSchema,
-    }
-
-
-class RunQuerySchema(BaseSchema):
-    filter = OptionalField(fields.Nested(FilterSchema))
-    sort = fields.List(fields.Nested(SortSchema))
-    page = fields.Nested(PageSchema, missing=None)
-
-
-class MetricDataPointSchema(BaseSchema):
+class _MetricDataPointSchema(BaseSchema):
     """Deserialise a data point from the metric history endpoint.
 
     This schema is written with the expectation that it is not used alongside
@@ -405,7 +411,7 @@ class MetricHistorySchema(BaseSchema):
     original_size = fields.Integer(data_key="originalSize", required=True)
     subsampled = fields.Boolean(required=True)
     key = fields.String(required=True)
-    history = fields.Nested(MetricDataPointSchema, many=True, required=True)
+    history = fields.Nested(_MetricDataPointSchema, many=True, required=True)
 
     @post_load
     def make_history(self, data):
