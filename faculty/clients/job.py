@@ -39,6 +39,7 @@ class SubrunState(Enum):
     ENVIRONMENT_APPLICATION_FAILED = "environment-application-failed"
     ERROR = "error"
     CANCELLED = "cancelled"
+    TIMED_OUT = "timed-out"
 
 
 class RunState(Enum):
