@@ -557,7 +557,8 @@ def test_restore_runs(mocker):
         ExperimentClient, "_post", return_value=restore_runs_response
     )
     response_schema_mock = mocker.patch(
-        "faculty.clients.experiment._client.RestoreExperimentRunsResponseSchema"
+        "faculty.clients.experiment._client."
+        "RestoreExperimentRunsResponseSchema"
     )
     filter_schema_mock = mocker.patch(
         "faculty.clients.experiment._client.FilterSchema"
@@ -589,7 +590,8 @@ def test_restore_runs(mocker):
 def test_restore_runs_no_run_ids(mocker):
     mocker.patch.object(ExperimentClient, "_post")
     schema_mock = mocker.patch(
-        "faculty.clients.experiment._client.RestoreExperimentRunsResponseSchema"
+        "faculty.clients.experiment._client."
+        "RestoreExperimentRunsResponseSchema"
     )
 
     client = ExperimentClient(mocker.Mock())
