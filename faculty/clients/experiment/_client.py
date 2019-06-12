@@ -15,7 +15,7 @@
 
 from faculty.clients.base import BaseClient, Conflict
 
-from faculty.clients.experiment.models import (
+from faculty.clients.experiment._models import (
     ComparisonOperator,
     CompoundFilter,
     DeleteExperimentRunsResponse,
@@ -31,7 +31,7 @@ from faculty.clients.experiment.models import (
     RunIdFilter,
     RunQuery,
 )
-from faculty.clients.experiment.schemas import (
+from faculty.clients.experiment._schemas import (
     CreateRunSchema,
     DeleteExperimentRunsResponseSchema,
     ExperimentRunDataSchema,

@@ -18,13 +18,13 @@ from uuid import uuid4
 import pytest
 
 from faculty.clients.base import Conflict
-from faculty.clients.experiment.client import (
+from faculty.clients.experiment._client import (
     ExperimentClient,
     ExperimentDeleted,
     ExperimentNameConflict,
     ParamConflict,
 )
-from faculty.clients.experiment.models import (
+from faculty.clients.experiment._models import (
     ComparisonOperator,
     CompoundFilter,
     DeletedAtFilter,
@@ -50,7 +50,7 @@ def test_experiment_client_create(mocker, description, artifact_location):
     experiment = mocker.Mock()
     mocker.patch.object(ExperimentClient, "_post", return_value=experiment)
     schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.ExperimentSchema"
+        "faculty.clients.experiment._client.ExperimentSchema"
     )
 
     client = ExperimentClient(mocker.Mock())
@@ -87,7 +87,7 @@ def test_experiment_client_get(mocker):
     experiment = mocker.Mock()
     mocker.patch.object(ExperimentClient, "_get", return_value=experiment)
     schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.ExperimentSchema"
+        "faculty.clients.experiment._client.ExperimentSchema"
     )
 
     client = ExperimentClient(mocker.Mock())
@@ -105,7 +105,7 @@ def test_experiment_client_list(mocker):
     experiment = mocker.Mock()
     mocker.patch.object(ExperimentClient, "_get", return_value=[experiment])
     schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.ExperimentSchema"
+        "faculty.clients.experiment._client.ExperimentSchema"
     )
 
     client = ExperimentClient(mocker.Mock())
@@ -123,7 +123,7 @@ def test_experiment_client_list_lifecycle_filter(mocker):
     experiment = mocker.Mock()
     mocker.patch.object(ExperimentClient, "_get", return_value=[experiment])
     schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.ExperimentSchema"
+        "faculty.clients.experiment._client.ExperimentSchema"
     )
 
     client = ExperimentClient(mocker.Mock())
@@ -194,11 +194,11 @@ def test_experiment_create_run(mocker):
     run = mocker.Mock()
     mocker.patch.object(ExperimentClient, "_post", return_value=run)
     request_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.CreateRunSchema"
+        "faculty.clients.experiment._client.CreateRunSchema"
     )
     dump_mock = request_schema_mock.return_value.dump
     response_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.ExperimentRunSchema"
+        "faculty.clients.experiment._client.ExperimentRunSchema"
     )
     run_name = mocker.Mock()
     started_at = mocker.Mock()
@@ -258,7 +258,7 @@ def test_experiment_client_get_run(mocker):
     run = mocker.Mock()
     mocker.patch.object(ExperimentClient, "_get", return_value=run)
     schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.ExperimentRunSchema"
+        "faculty.clients.experiment._client.ExperimentRunSchema"
     )
 
     client = ExperimentClient(mocker.Mock())
@@ -319,10 +319,10 @@ def test_experiment_client_query_runs(mocker):
     list_response = mocker.Mock()
     mocker.patch.object(ExperimentClient, "_post", return_value=list_response)
     response_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.ListExperimentRunsResponseSchema"
+        "faculty.clients.experiment._client.ListExperimentRunsResponseSchema"
     )
     request_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.RunQuerySchema"
+        "faculty.clients.experiment._client.RunQuerySchema"
     )
     request_dump_mock = request_schema_mock.return_value.dump
 
@@ -350,7 +350,7 @@ def test_experiment_client_query_runs(mocker):
 def test_log_run_data(mocker):
     mocker.patch.object(ExperimentClient, "_patch_raw")
     run_data_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.ExperimentRunDataSchema"
+        "faculty.clients.experiment._client.ExperimentRunDataSchema"
     )
     run_data_dump_mock = run_data_schema_mock.return_value.dump
 
@@ -420,10 +420,10 @@ def test_update_run_info(mocker):
     run = mocker.Mock()
     mocker.patch.object(ExperimentClient, "_patch", return_value=run)
     run_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.ExperimentRunSchema"
+        "faculty.clients.experiment._client.ExperimentRunSchema"
     )
     run_info_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.ExperimentRunInfoSchema"
+        "faculty.clients.experiment._client.ExperimentRunInfoSchema"
     )
     run_info_dump_mock = run_info_schema_mock.return_value.dump
 
@@ -456,7 +456,7 @@ def test_get_metric_history(mocker):
 
     mocker.patch.object(ExperimentClient, "_get", return_value=metric_history)
     metric_history_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.MetricHistorySchema"
+        "faculty.clients.experiment._client.MetricHistorySchema"
     )
 
     client = ExperimentClient(mocker.Mock())
@@ -495,10 +495,10 @@ def test_delete_runs(mocker):
         ExperimentClient, "_post", return_value=delete_runs_response
     )
     response_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.DeleteExperimentRunsResponseSchema"
+        "faculty.clients.experiment._client.DeleteExperimentRunsResponseSchema"
     )
     filter_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.FilterSchema"
+        "faculty.clients.experiment._client.FilterSchema"
     )
     filter_dump_mock = filter_schema_mock.return_value.dump
 
@@ -527,7 +527,7 @@ def test_delete_runs(mocker):
 def test_delete_runs_no_run_ids(mocker):
     mocker.patch.object(ExperimentClient, "_post")
     schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.DeleteExperimentRunsResponseSchema"
+        "faculty.clients.experiment._client.DeleteExperimentRunsResponseSchema"
     )
 
     client = ExperimentClient(mocker.Mock())
@@ -557,10 +557,10 @@ def test_restore_runs(mocker):
         ExperimentClient, "_post", return_value=restore_runs_response
     )
     response_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.RestoreExperimentRunsResponseSchema"
+        "faculty.clients.experiment._client.RestoreExperimentRunsResponseSchema"
     )
     filter_schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.FilterSchema"
+        "faculty.clients.experiment._client.FilterSchema"
     )
     filter_dump_mock = filter_schema_mock.return_value.dump
 
@@ -589,7 +589,7 @@ def test_restore_runs(mocker):
 def test_restore_runs_no_run_ids(mocker):
     mocker.patch.object(ExperimentClient, "_post")
     schema_mock = mocker.patch(
-        "faculty.clients.experiment.client.RestoreExperimentRunsResponseSchema"
+        "faculty.clients.experiment._client.RestoreExperimentRunsResponseSchema"
     )
 
     client = ExperimentClient(mocker.Mock())

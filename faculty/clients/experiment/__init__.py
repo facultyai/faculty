@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from faculty.clients.experiment.models import (  # noqa: F401
+from faculty.clients.experiment._models import (  # noqa: F401
     ComparisonOperator,
     CompoundFilter,
     DeletedAtFilter,
@@ -38,7 +38,7 @@ from faculty.clients.experiment.models import (  # noqa: F401
     TagFilter,
     TagSort,
 )
-from faculty.clients.experiment.client import (  # noqa: F401
+from faculty.clients.experiment._client import (  # noqa: F401
     ExperimentClient,
     ExperimentDeleted,
     ExperimentNameConflict,

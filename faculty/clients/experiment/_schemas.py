@@ -18,7 +18,7 @@ from marshmallow_enum import EnumField
 from marshmallow_oneofschema import OneOfSchema
 
 from faculty.clients.base import BaseSchema
-from faculty.clients.experiment.models import (
+from faculty.clients.experiment._models import (
     ComparisonOperator,
     DeleteExperimentRunsResponse,
     Experiment,

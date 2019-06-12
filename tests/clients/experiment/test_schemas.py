@@ -20,7 +20,7 @@ import pytest
 from marshmallow import ValidationError
 from pytz import UTC
 
-from faculty.clients.experiment.models import (
+from faculty.clients.experiment._models import (
     ComparisonOperator,
     CompoundFilter,
     DeleteExperimentRunsResponse,
@@ -53,7 +53,7 @@ from faculty.clients.experiment.models import (
     TagFilter,
     TagSort,
 )
-from faculty.clients.experiment.schemas import (
+from faculty.clients.experiment._schemas import (
     CreateRunSchema,
     DeleteExperimentRunsResponseSchema,
     ExperimentRunDataSchema,
