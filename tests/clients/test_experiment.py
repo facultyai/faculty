@@ -624,7 +624,7 @@ def test_filter_schema_nested():
 @pytest.mark.parametrize(
     "order, expected_order", [(SortOrder.ASC, "asc"), (SortOrder.DESC, "desc")]
 )
-def test_sort_schema_no_tag(sort_type, by, order, expected_order):
+def test_sort_schema_no_key(sort_type, by, order, expected_order):
     sort = sort_type(order)
     data = SortSchema().dump(sort)
     assert data == {"by": by, "order": expected_order}
@@ -637,7 +637,7 @@ def test_sort_schema_no_tag(sort_type, by, order, expected_order):
 @pytest.mark.parametrize(
     "order, expected_order", [(SortOrder.ASC, "asc"), (SortOrder.DESC, "desc")]
 )
-def test_sort_schema_with_tag(sort_type, by, order, expected_order):
+def test_sort_schema_with_key(sort_type, by, order, expected_order):
     sort = sort_type("sort-key", order)
     data = SortSchema().dump(sort)
     assert data == {"by": by, "key": "sort-key", "order": expected_order}
