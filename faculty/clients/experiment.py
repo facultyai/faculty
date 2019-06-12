@@ -15,8 +15,9 @@
 from collections import namedtuple
 from enum import Enum
 
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, pre_dump, ValidationError
 from marshmallow_enum import EnumField
+from marshmallow_oneofschema import OneOfSchema
 
 from faculty.clients.base import BaseClient, BaseSchema, Conflict
 
@@ -100,38 +101,8 @@ RestoreExperimentRunsResponse = namedtuple(
     "RestoreExperimentRunsResponse", ["restored_run_ids", "conflicted_run_ids"]
 )
 
-_SingleFilter = namedtuple("_SingleFilter", ["by", "key", "operator", "value"])
 
-
-class SingleFilter(_SingleFilter):
-    def __new__(cls, by, key, operator, value):
-        if isinstance(by, SingleFilterBy) and by.needs_key() and key is None:
-            raise ValueError(
-                "key must not be none for filter type {}".format(by)
-            )
-        elif (
-            isinstance(by, SingleFilterBy)
-            and not by.needs_key()
-            and key is not None
-        ):
-            raise ValueError("key must be none for filter type {}".format(by))
-        elif (
-            by == SingleFilterBy.PARAM
-            and operator.is_numeric()
-            and not (isinstance(value, float) or isinstance(value, int))
-        ):
-            raise ValueError(
-                (
-                    "invalid type {}. Value has to be either an int or a float"
-                ).format(type(value))
-            )
-        return super(SingleFilter, cls).__new__(cls, by, key, operator, value)
-
-
-CompoundFilter = namedtuple("CompoundFilter", ["operator", "conditions"])
-
-
-class SingleFilterOperator(Enum):
+class ComparisonOperator(Enum):
     DEFINED = "defined"
     EQUAL_TO = "eq"
     NOT_EQUAL_TO = "ne"
@@ -140,61 +111,28 @@ class SingleFilterOperator(Enum):
     GREATER_THAN = "gt"
     GREATER_THAN_OR_EQUAL_TO = "ge"
 
-    def is_numeric(self):
-        return self in {
-            SingleFilterOperator.LESS_THAN,
-            SingleFilterOperator.LESS_THAN_OR_EQUAL_TO,
-            SingleFilterOperator.GREATER_THAN,
-            SingleFilterOperator.GREATER_THAN_OR_EQUAL_TO,
-        }
 
-
-class SingleFilterBy(Enum):
-    PROJECT_ID = "projectId"
-    EXPERIMENT_ID = "experimentId"
-    RUN_ID = "runId"
-    DELETED_AT = "deletedAt"
-    TAG = "tag"
-    PARAM = "param"
-    METRIC = "metric"
-
-    def needs_key(self):
-        return self in {
-            SingleFilterBy.TAG,
-            SingleFilterBy.PARAM,
-            SingleFilterBy.METRIC,
-        }
-
-
-class CompoundFilterOperator(Enum):
+class LogicalOperator(Enum):
     AND = "and"
     OR = "or"
 
 
-_Sort = namedtuple("_Sort", ["by", "key", "order"])
+ProjectIdFilter = namedtuple("ProjectIdFilter", ["operator", "value"])
+ExperimentIdFilter = namedtuple("ExperimentIdFilter", ["operator", "value"])
+RunIdFilter = namedtuple("RunIdFilter", ["operator", "value"])
+DeletedAtFilter = namedtuple("DeletedAtFilter", ["operator", "value"])
+TagFilter = namedtuple("TagFilter", ["key", "operator", "value"])
+ParamFilter = namedtuple("ParamFilter", ["key", "operator", "value"])
+MetricFilter = namedtuple("MetricFilter", ["key", "operator", "value"])
 
+CompoundFilter = namedtuple("CompoundFilter", ["operator", "conditions"])
 
-class Sort(_Sort):
-    def __new__(cls, by, key, order):
-        if by.needs_key() and key is None:
-            raise ValueError(
-                "key must not be none for sort type {}".format(by)
-            )
-        elif not by.needs_key() and key is not None:
-            raise ValueError("key must be none for sort type {}".format(by))
-        return super(Sort, cls).__new__(cls, by, key, order)
-
-
-class SortBy(Enum):
-    STARTED_AT = "startedAt"
-    RUN_NUMBER = "runNumber"
-    DURATION = "duration"
-    TAG = "tag"
-    PARAM = "param"
-    METRIC = "metric"
-
-    def needs_key(self):
-        return self in {SortBy.TAG, SortBy.PARAM, SortBy.METRIC}
+StartedAtSort = namedtuple("StartedAtSort", ["order"])
+RunNumberSort = namedtuple("RunNumberSort", ["order"])
+DurationSort = namedtuple("DurationSort", ["order"])
+TagSort = namedtuple("TagSort", ["key", "order"])
+ParamSort = namedtuple("ParamSort", ["key", "order"])
+MetricSort = namedtuple("MetricSort", ["key", "order"])
 
 
 class SortOrder(Enum):
@@ -202,7 +140,7 @@ class SortOrder(Enum):
     DESC = "desc"
 
 
-QueryRuns = namedtuple("QueryRuns", ["filter", "sort", "page"])
+RunQuery = namedtuple("RunQuery", ["filter", "sort", "page"])
 
 
 class PageSchema(BaseSchema):
@@ -375,42 +313,12 @@ class ParamFilterValueField(fields.Field):
         return field._serialize(value, attr, obj, **kwargs)
 
 
-class SingleFilterValueField(fields.Field):
-    """
-    Field that serialises/deserialises a run filter.
-    """
-
-    default_error_messages = {
-        "invalid_filter_operator": "Invalid filter operator."
-    }
-
-    FILTER_BY_FIELD_MAPPING = {
-        SingleFilterBy.PROJECT_ID: fields.UUID,
-        SingleFilterBy.RUN_ID: fields.UUID,
-        SingleFilterBy.EXPERIMENT_ID: fields.Integer,
-        SingleFilterBy.DELETED_AT: fields.DateTime,
-        SingleFilterBy.TAG: fields.String,
-        SingleFilterBy.PARAM: ParamFilterValueField,
-        SingleFilterBy.METRIC: fields.Number,
-    }
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        if obj.operator == SingleFilterOperator.DEFINED:
-            field_cls = fields.Boolean
-        else:
-            try:
-                field_cls = self.FILTER_BY_FIELD_MAPPING[obj.by]
-            except KeyError:
-                self.fail("invalid_filter_operator")
-        return field_cls()._serialize(value, attr, obj, **kwargs)
-
-
 class OptionalField(fields.Field):
     """Wrap another field, passing through Nones."""
 
     def __init__(self, nested, *args, **kwargs):
         self.nested = nested
-        super().__init__(*args, **kwargs)
+        super(OptionalField, self).__init__(*args, **kwargs)
 
     def _deserialize(self, value, *args, **kwargs):
         if value is None:
@@ -425,44 +333,170 @@ class OptionalField(fields.Field):
             return self.nested._serialize(value, *args, **kwargs)
 
 
-class FilterField(fields.Field):
-    """
-    Field that serialises/deserialises a run filter.
-    """
-
-    default_error_messages = {
-        "invalid_filter_type": "Unsupported filter type."
-    }
+class FilterValueField(fields.Field):
+    def __init__(self, other_field_type, *args, **kwargs):
+        self.other_field_type = other_field_type
+        super(FilterValueField, self).__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj, **kwargs):
-        if isinstance(value, SingleFilter):
-            return SingleFilterSchema().dump(value)
-        elif isinstance(value, CompoundFilter):
-            return CompoundFilterSchema().dump(value)
+        if obj.operator == ComparisonOperator.DEFINED:
+            field_cls = fields.Boolean
         else:
-            self.fail("invalid_filter_type")
+            field_cls = self.other_field_type
+        return field_cls()._serialize(value, attr, obj, **kwargs)
 
 
-class SingleFilterSchema(BaseSchema):
-    by = EnumField(SingleFilterBy, by_value=True, required=True)
+def _validate_discrete(operator):
+    if operator not in {
+        ComparisonOperator.DEFINED,
+        ComparisonOperator.EQUAL_TO,
+        ComparisonOperator.NOT_EQUAL_TO,
+    }:
+        raise ValidationError({"operator": "Not a discrete operator."})
+
+
+class ProjectIdFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.UUID)
+    by = fields.Constant("projectId", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class ExperimentIdFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.Integer)
+    by = fields.Constant("experimentId", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class RunIdFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.UUID)
+    by = fields.Constant("runId", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class DeletedAtFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.DateTime)
+    by = fields.Constant("deletedAt", dump_only=True)
+
+
+class TagFilterSchema(BaseSchema):
     key = fields.String()
-    operator = EnumField(SingleFilterOperator, by_value=True, required=True)
-    value = SingleFilterValueField(required=True)
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.String)
+    by = fields.Constant("tag", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class ParamFilterSchema(BaseSchema):
+    key = fields.String()
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(ParamFilterValueField)
+    by = fields.Constant("param", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        if isinstance(obj.value, str):
+            _validate_discrete(obj.operator)
+        return obj
+
+
+class MetricFilterSchema(BaseSchema):
+    key = fields.String()
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.Float)
+    by = fields.Constant("metric", dump_only=True)
 
 
 class CompoundFilterSchema(BaseSchema):
-    operator = EnumField(CompoundFilterOperator, by_value=True, required=True)
-    conditions = fields.List(FilterField())
+    operator = EnumField(LogicalOperator, by_value=True)
+    conditions = fields.List(fields.Nested("FilterSchema"))
 
 
-class SortSchema(BaseSchema):
-    by = EnumField(SortBy, by_value=True, required=True)
+class OneOfSchemaWithoutType(OneOfSchema):
+    def dump(self, *args, **kwargs):
+        data = super(OneOfSchemaWithoutType, self).dump(*args, **kwargs)
+        # Remove the type field added by marshmallow-oneofschema
+        return {k: v for k, v in data.items() if k != "type"}
+
+
+class FilterSchema(OneOfSchemaWithoutType):
+    type_schemas = {
+        "ProjectIdFilter": ProjectIdFilterSchema,
+        "ExperimentIdFilter": ExperimentIdFilterSchema,
+        "RunIdFilter": RunIdFilterSchema,
+        "DeletedAtFilter": DeletedAtFilterSchema,
+        "TagFilter": TagFilterSchema,
+        "ParamFilter": ParamFilterSchema,
+        "MetricFilter": MetricFilterSchema,
+        "CompoundFilter": CompoundFilterSchema,
+    }
+
+
+class StartedAtSortSchema(BaseSchema):
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("startedAt", dump_only=True)
+
+
+class RunNumberSortSchema(BaseSchema):
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("runNumber", dump_only=True)
+
+
+class DurationSortSchema(BaseSchema):
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("duration", dump_only=True)
+
+
+class TagSortSchema(BaseSchema):
     key = fields.String()
-    order = EnumField(SortOrder, by_value=True, required=True)
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("tag", dump_only=True)
 
 
-class QueryRunsSchema(BaseSchema):
-    filter = OptionalField(FilterField())
+class ParamSortSchema(BaseSchema):
+    key = fields.String()
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("param", dump_only=True)
+
+
+class MetricSortSchema(BaseSchema):
+    key = fields.String()
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("metric", dump_only=True)
+
+
+class SortSchema(OneOfSchemaWithoutType):
+    type_schemas = {
+        "StartedAtSort": StartedAtSortSchema,
+        "RunNumberSort": RunNumberSortSchema,
+        "DurationSort": DurationSortSchema,
+        "TagSort": TagSortSchema,
+        "ParamSort": ParamSortSchema,
+        "MetricSort": MetricSortSchema,
+    }
+
+
+class RunQuerySchema(BaseSchema):
+    filter = OptionalField(fields.Nested(FilterSchema))
     sort = fields.List(fields.Nested(SortSchema))
     page = fields.Nested(PageSchema, missing=None)
 
@@ -766,29 +800,21 @@ class ExperimentClient(BaseClient):
                     ),
                 )
             experiment_id_filters = [
-                SingleFilter(
-                    SingleFilterBy.EXPERIMENT_ID,
-                    None,
-                    SingleFilterOperator.EQUAL_TO,
-                    experiment_id,
-                )
+                ExperimentIdFilter(ComparisonOperator.EQUAL_TO, experiment_id)
                 for experiment_id in experiment_ids
             ]
             experiment_ids_filter = CompoundFilter(
-                CompoundFilterOperator.OR, experiment_id_filters
+                LogicalOperator.OR, experiment_id_filters
             )
         if lifecycle_stage is not None:
-            lifecycle_filter = SingleFilter(
-                SingleFilterBy.DELETED_AT,
-                None,
-                SingleFilterOperator.DEFINED,
+            lifecycle_filter = DeletedAtFilter(
+                ComparisonOperator.DEFINED,
                 lifecycle_stage == LifecycleStage.DELETED,
             )
 
         if experiment_ids_filter is not None and lifecycle_filter is not None:
             filter = CompoundFilter(
-                CompoundFilterOperator.AND,
-                [experiment_ids_filter, lifecycle_filter],
+                LogicalOperator.AND, [experiment_ids_filter, lifecycle_filter]
             )
         elif experiment_ids_filter is not None:
             filter = experiment_ids_filter
@@ -837,7 +863,7 @@ class ExperimentClient(BaseClient):
         page = None
         if start is not None and limit is not None:
             page = Page(start, limit)
-        payload = QueryRunsSchema().dump(QueryRuns(filter, sort, page))
+        payload = RunQuerySchema().dump(RunQuery(filter, sort, page))
         return self._post(
             endpoint, ListExperimentRunsResponseSchema(), json=payload
         )
@@ -956,18 +982,11 @@ class ExperimentClient(BaseClient):
             )
         else:
             run_id_filters = [
-                SingleFilter(
-                    SingleFilterBy.RUN_ID,
-                    None,
-                    SingleFilterOperator.EQUAL_TO,
-                    run_id,
-                )
+                RunIdFilter(ComparisonOperator.EQUAL_TO, run_id)
                 for run_id in run_ids
             ]
-            run_ids_filter = CompoundFilter(
-                CompoundFilterOperator.OR, run_id_filters
-            )
-            payload = {"filter": run_ids_filter}
+            filter = CompoundFilter(LogicalOperator.OR, run_id_filters)
+            payload = {"filter": FilterSchema().dump(filter)}
 
         return self._post(
             endpoint, DeleteExperimentRunsResponseSchema(), json=payload
@@ -1001,18 +1020,11 @@ class ExperimentClient(BaseClient):
             )
         else:
             run_id_filters = [
-                SingleFilter(
-                    SingleFilterBy.RUN_ID,
-                    None,
-                    SingleFilterOperator.EQUAL_TO,
-                    run_id,
-                )
+                RunIdFilter(ComparisonOperator.EQUAL_TO, run_id)
                 for run_id in run_ids
             ]
-            run_ids_filter = CompoundFilter(
-                CompoundFilterOperator.OR, run_id_filters
-            )
-            payload = {"filter": run_ids_filter}
+            filter = CompoundFilter(LogicalOperator.OR, run_id_filters)
+            payload = {"filter": FilterSchema().dump(filter)}
 
         return self._post(
             endpoint, RestoreExperimentRunsResponseSchema(), json=payload
