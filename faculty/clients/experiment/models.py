@@ -17,6 +17,11 @@ from collections import namedtuple
 from enum import Enum
 
 
+class LifecycleStage(Enum):
+    ACTIVE = "active"
+    DELETED = "deleted"
+
+
 class ExperimentRunStatus(Enum):
     RUNNING = "running"
     FINISHED = "finished"
@@ -24,6 +29,13 @@ class ExperimentRunStatus(Enum):
     SCHEDULED = "scheduled"
     KILLED = "killed"
 
+
+Page = namedtuple("Page", ["start", "limit"])
+Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
+
+Metric = namedtuple("Metric", ["key", "value", "timestamp", "step"])
+Param = namedtuple("Param", ["key", "value"])
+Tag = namedtuple("Tag", ["key", "value"])
 
 Experiment = namedtuple(
     "Experiment",
@@ -59,28 +71,6 @@ ExperimentRun = namedtuple(
 )
 
 
-class LifecycleStage(Enum):
-    ACTIVE = "active"
-    DELETED = "deleted"
-
-
-Metric = namedtuple("Metric", ["key", "value", "timestamp", "step"])
-Param = namedtuple("Param", ["key", "value"])
-Tag = namedtuple("Tag", ["key", "value"])
-
-Page = namedtuple("Page", ["start", "limit"])
-Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
-ListExperimentRunsResponse = namedtuple(
-    "ListExperimentRunsResponse", ["runs", "pagination"]
-)
-DeleteExperimentRunsResponse = namedtuple(
-    "DeleteExperimentRunsResponse", ["deleted_run_ids", "conflicted_run_ids"]
-)
-RestoreExperimentRunsResponse = namedtuple(
-    "RestoreExperimentRunsResponse", ["restored_run_ids", "conflicted_run_ids"]
-)
-
-
 class ComparisonOperator(Enum):
     DEFINED = "defined"
     EQUAL_TO = "eq"
@@ -91,11 +81,6 @@ class ComparisonOperator(Enum):
     GREATER_THAN_OR_EQUAL_TO = "ge"
 
 
-class LogicalOperator(Enum):
-    AND = "and"
-    OR = "or"
-
-
 ProjectIdFilter = namedtuple("ProjectIdFilter", ["operator", "value"])
 ExperimentIdFilter = namedtuple("ExperimentIdFilter", ["operator", "value"])
 RunIdFilter = namedtuple("RunIdFilter", ["operator", "value"])
@@ -104,7 +89,19 @@ TagFilter = namedtuple("TagFilter", ["key", "operator", "value"])
 ParamFilter = namedtuple("ParamFilter", ["key", "operator", "value"])
 MetricFilter = namedtuple("MetricFilter", ["key", "operator", "value"])
 
+
+class LogicalOperator(Enum):
+    AND = "and"
+    OR = "or"
+
+
 CompoundFilter = namedtuple("CompoundFilter", ["operator", "conditions"])
+
+
+class SortOrder(Enum):
+    ASC = "asc"
+    DESC = "desc"
+
 
 StartedAtSort = namedtuple("StartedAtSort", ["order"])
 RunNumberSort = namedtuple("RunNumberSort", ["order"])
@@ -113,15 +110,19 @@ TagSort = namedtuple("TagSort", ["key", "order"])
 ParamSort = namedtuple("ParamSort", ["key", "order"])
 MetricSort = namedtuple("MetricSort", ["key", "order"])
 
-
-class SortOrder(Enum):
-    ASC = "asc"
-    DESC = "desc"
-
-
 RunQuery = namedtuple("RunQuery", ["filter", "sort", "page"])
-MetricDataPoint = namedtuple("Metric", ["value", "timestamp", "step"])
 
+MetricDataPoint = namedtuple("Metric", ["value", "timestamp", "step"])
 MetricHistory = namedtuple(
     "MetricHistory", ["original_size", "subsampled", "key", "history"]
+)
+
+ListExperimentRunsResponse = namedtuple(
+    "ListExperimentRunsResponse", ["runs", "pagination"]
+)
+DeleteExperimentRunsResponse = namedtuple(
+    "DeleteExperimentRunsResponse", ["deleted_run_ids", "conflicted_run_ids"]
+)
+RestoreExperimentRunsResponse = namedtuple(
+    "RestoreExperimentRunsResponse", ["restored_run_ids", "conflicted_run_ids"]
 )

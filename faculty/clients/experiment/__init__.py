@@ -13,6 +13,31 @@
 # limitations under the License.
 
 
+from faculty.clients.experiment.models import (  # noqa: F401
+    ComparisonOperator,
+    CompoundFilter,
+    DeletedAtFilter,
+    DurationSort,
+    Experiment,
+    ExperimentIdFilter,
+    ExperimentRun,
+    ExperimentRunStatus,
+    LifecycleStage,
+    LogicalOperator,
+    Metric,
+    MetricFilter,
+    MetricSort,
+    Param,
+    ParamFilter,
+    ParamSort,
+    ProjectIdFilter,
+    RunIdFilter,
+    RunNumberSort,
+    StartedAtSort,
+    Tag,
+    TagFilter,
+    TagSort,
+)
 from faculty.clients.experiment.client import (  # noqa: F401
     ExperimentClient,
     ExperimentDeleted,
