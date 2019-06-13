@@ -16,6 +16,7 @@
 import os
 from uuid import uuid4
 
+import pytest
 import attr
 
 from faculty.context import PlatformContext, get_context
@@ -36,6 +37,9 @@ CONTEXT = PlatformContext(
     job_run_number=6,
     job_subrun_id=uuid4(),
     job_subrun_number=2,
+)
+ALL_NONE_CONTEXT = PlatformContext(
+    **{attribute.name: None for attribute in attr.fields(PlatformContext)}
 )
 
 MOCK_ENVIRON = {
@@ -64,7 +68,10 @@ def test_get_context(mocker):
 def test_get_context_defaults(mocker):
     """Check that context fields default to None when not available."""
     mocker.patch.dict(os.environ, {})
-    expected_context = PlatformContext(
-        **{attribute.name: None for attribute in attr.fields(PlatformContext)}
-    )
-    assert get_context() == expected_context
+    assert get_context() == ALL_NONE_CONTEXT
+
+
+def test_get_context_malformatted(mocker):
+    mocker.patch.dict(os.environ, {"FACULTY_PROJECT_ID": "invalid-uuid"})
+    with pytest.warns(UserWarning, match="badly formatted"):
+        assert get_context() == ALL_NONE_CONTEXT

@@ -14,6 +14,7 @@
 
 
 import os
+import warnings
 from uuid import UUID
 
 from attr import attrs, attrib
@@ -45,7 +46,15 @@ class PlatformContext(object):
 def _get_environ_as_type(key, cls):
     try:
         return cls(os.environ[key])
-    except (KeyError, ValueError):
+    except KeyError:
+        # Not in environment
+        return None
+    except ValueError:
+        # Badly formatted
+        template = (
+            "Error interpreting badly formatted environment varaible {}={}"
+        )
+        warnings.warn(template.format(key, os.environ[key]))
         return None
 
 
