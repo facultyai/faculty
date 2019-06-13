@@ -43,7 +43,7 @@ class _OptionalField(fields.Field):
 
     def __init__(self, nested, *args, **kwargs):
         self.nested = nested
-        super().__init__(*args, **kwargs)
+        super(_OptionalField, self).__init__(*args, **kwargs)
 
     def _deserialize(self, value, *args, **kwargs):
         if value is None:
