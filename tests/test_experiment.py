@@ -5,24 +5,24 @@ import pytest
 from pytz import UTC
 
 from faculty.clients.experiment import (
+    ComparisonOperator,
+    ExperimentIdFilter,
     Experiment,
     ExperimentRun,
     ExperimentRunStatus,
-    ListExperimentRunsResponse,
     Metric,
-    Page,
-    Pagination,
+    MetricSort,
     Param,
-    SingleFilter,
-    SingleFilterBy,
-    SingleFilterOperator,
-    Sort,
-    SortBy,
     SortOrder,
     Tag,
 )
+from faculty.clients.experiment._models import (
+    ListExperimentRunsResponse,
+    Page,
+    Pagination,
+)
 
-from faculty.experiments import (
+from faculty.experiment import (
     ExperimentRun as FacultyExperimentRun,
     ExperimentRunQueryResult,
 )
@@ -43,7 +43,7 @@ TAG = Tag(key="tag-key", value="tag-value")
 PARAM = Param(key="param-key", value="param-value")
 METRIC_KEY = "metric-key"
 METRIC_TIMESTAMP = datetime(2018, 3, 12, 16, 20, 22, 122000, tzinfo=UTC)
-METRIC = Metric(key=METRIC_KEY, value=123, timestamp=METRIC_TIMESTAMP)
+METRIC = Metric(key=METRIC_KEY, step=1, value=123, timestamp=METRIC_TIMESTAMP)
 
 EXPERIMENT = Experiment(
     id=EXPERIMENT_ID,
@@ -55,11 +55,9 @@ EXPERIMENT = Experiment(
     deleted_at=DELETED_AT,
 )
 
-FILTER = SingleFilter(
-    SingleFilterBy.EXPERIMENT_ID, None, SingleFilterOperator.EQUAL_TO, "2"
-)
+FILTER = ExperimentIdFilter(ComparisonOperator.EQUAL_TO, 2)
 
-SORT = [Sort(SortBy.METRIC, "metric_key", SortOrder.ASC)]
+SORT = [MetricSort("metric-key", SortOrder.ASC)]
 
 EXPERIMENT_RUN = ExperimentRun(
     id=EXPERIMENT_RUN_ID,

@@ -38,6 +38,7 @@ from faculty.clients.experiment._models import (  # noqa: F401
     RestoreExperimentRunsResponse,
     RunIdFilter,
     RunNumberSort,
+    SortOrder,
     StartedAtSort,
     Tag,
     TagFilter,
