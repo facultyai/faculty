@@ -15,8 +15,9 @@
 from collections import namedtuple
 from enum import Enum
 
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, pre_dump, ValidationError
 from marshmallow_enum import EnumField
+from marshmallow_oneofschema import OneOfSchema
 
 from faculty.clients.base import BaseClient, BaseSchema, Conflict
 
@@ -99,6 +100,57 @@ DeleteExperimentRunsResponse = namedtuple(
 RestoreExperimentRunsResponse = namedtuple(
     "RestoreExperimentRunsResponse", ["restored_run_ids", "conflicted_run_ids"]
 )
+
+
+class ComparisonOperator(Enum):
+    DEFINED = "defined"
+    EQUAL_TO = "eq"
+    NOT_EQUAL_TO = "ne"
+    LESS_THAN = "lt"
+    LESS_THAN_OR_EQUAL_TO = "le"
+    GREATER_THAN = "gt"
+    GREATER_THAN_OR_EQUAL_TO = "ge"
+
+
+class LogicalOperator(Enum):
+    AND = "and"
+    OR = "or"
+
+
+ProjectIdFilter = namedtuple("ProjectIdFilter", ["operator", "value"])
+ExperimentIdFilter = namedtuple("ExperimentIdFilter", ["operator", "value"])
+RunIdFilter = namedtuple("RunIdFilter", ["operator", "value"])
+DeletedAtFilter = namedtuple("DeletedAtFilter", ["operator", "value"])
+TagFilter = namedtuple("TagFilter", ["key", "operator", "value"])
+ParamFilter = namedtuple("ParamFilter", ["key", "operator", "value"])
+MetricFilter = namedtuple("MetricFilter", ["key", "operator", "value"])
+
+CompoundFilter = namedtuple("CompoundFilter", ["operator", "conditions"])
+
+StartedAtSort = namedtuple("StartedAtSort", ["order"])
+RunNumberSort = namedtuple("RunNumberSort", ["order"])
+DurationSort = namedtuple("DurationSort", ["order"])
+TagSort = namedtuple("TagSort", ["key", "order"])
+ParamSort = namedtuple("ParamSort", ["key", "order"])
+MetricSort = namedtuple("MetricSort", ["key", "order"])
+
+
+class SortOrder(Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+RunQuery = namedtuple("RunQuery", ["filter", "sort", "page"])
+
+
+class PageSchema(BaseSchema):
+    start = fields.Integer(required=True)
+    limit = fields.Integer(required=True)
+
+    @post_load
+    def make_page(self, data):
+        return Page(**data)
+
 
 MetricDataPoint = namedtuple("Metric", ["value", "timestamp", "step"])
 
@@ -190,15 +242,6 @@ class ExperimentRunInfoSchema(BaseSchema):
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
 
 
-class PageSchema(BaseSchema):
-    start = fields.Integer(required=True)
-    limit = fields.Integer(required=True)
-
-    @post_load
-    def make_page(self, data):
-        return Page(**data)
-
-
 class PaginationSchema(BaseSchema):
     start = fields.Integer(required=True)
     size = fields.Integer(required=True)
@@ -251,6 +294,211 @@ class RestoreExperimentRunsResponseSchema(BaseSchema):
     @post_load
     def make_restore_runs_response(self, data):
         return RestoreExperimentRunsResponse(**data)
+
+
+class ParamFilterValueField(fields.Field):
+    """Field that passes through strings or numbers."""
+
+    default_error_messages = {
+        "unsupported_type": "Param values must be of type str, int or float."
+    }
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if isinstance(value, str):
+            field = fields.String()
+        elif isinstance(value, int) or isinstance(value, float):
+            field = fields.Number()
+        else:
+            self.fail("unsupported_type")
+        return field._serialize(value, attr, obj, **kwargs)
+
+
+class OptionalField(fields.Field):
+    """Wrap another field, passing through Nones."""
+
+    def __init__(self, nested, *args, **kwargs):
+        self.nested = nested
+        super(OptionalField, self).__init__(*args, **kwargs)
+
+    def _deserialize(self, value, *args, **kwargs):
+        if value is None:
+            return None
+        else:
+            return self.nested._deserialize(value, *args, **kwargs)
+
+    def _serialize(self, value, *args, **kwargs):
+        if value is None:
+            return None
+        else:
+            return self.nested._serialize(value, *args, **kwargs)
+
+
+class FilterValueField(fields.Field):
+    def __init__(self, other_field_type, *args, **kwargs):
+        self.other_field_type = other_field_type
+        super(FilterValueField, self).__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if obj.operator == ComparisonOperator.DEFINED:
+            field_cls = fields.Boolean
+        else:
+            field_cls = self.other_field_type
+        return field_cls()._serialize(value, attr, obj, **kwargs)
+
+
+def _validate_discrete(operator):
+    if operator not in {
+        ComparisonOperator.DEFINED,
+        ComparisonOperator.EQUAL_TO,
+        ComparisonOperator.NOT_EQUAL_TO,
+    }:
+        raise ValidationError({"operator": "Not a discrete operator."})
+
+
+class ProjectIdFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.UUID)
+    by = fields.Constant("projectId", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class ExperimentIdFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.Integer)
+    by = fields.Constant("experimentId", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class RunIdFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.UUID)
+    by = fields.Constant("runId", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class DeletedAtFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.DateTime)
+    by = fields.Constant("deletedAt", dump_only=True)
+
+
+class TagFilterSchema(BaseSchema):
+    key = fields.String()
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.String)
+    by = fields.Constant("tag", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class ParamFilterSchema(BaseSchema):
+    key = fields.String()
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(ParamFilterValueField)
+    by = fields.Constant("param", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        if isinstance(obj.value, str):
+            _validate_discrete(obj.operator)
+        return obj
+
+
+class MetricFilterSchema(BaseSchema):
+    key = fields.String()
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = FilterValueField(fields.Float)
+    by = fields.Constant("metric", dump_only=True)
+
+
+class CompoundFilterSchema(BaseSchema):
+    operator = EnumField(LogicalOperator, by_value=True)
+    conditions = fields.List(fields.Nested("FilterSchema"))
+
+
+class OneOfSchemaWithoutType(OneOfSchema):
+    def dump(self, *args, **kwargs):
+        data = super(OneOfSchemaWithoutType, self).dump(*args, **kwargs)
+        # Remove the type field added by marshmallow-oneofschema
+        return {k: v for k, v in data.items() if k != "type"}
+
+
+class FilterSchema(OneOfSchemaWithoutType):
+    type_schemas = {
+        "ProjectIdFilter": ProjectIdFilterSchema,
+        "ExperimentIdFilter": ExperimentIdFilterSchema,
+        "RunIdFilter": RunIdFilterSchema,
+        "DeletedAtFilter": DeletedAtFilterSchema,
+        "TagFilter": TagFilterSchema,
+        "ParamFilter": ParamFilterSchema,
+        "MetricFilter": MetricFilterSchema,
+        "CompoundFilter": CompoundFilterSchema,
+    }
+
+
+class StartedAtSortSchema(BaseSchema):
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("startedAt", dump_only=True)
+
+
+class RunNumberSortSchema(BaseSchema):
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("runNumber", dump_only=True)
+
+
+class DurationSortSchema(BaseSchema):
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("duration", dump_only=True)
+
+
+class TagSortSchema(BaseSchema):
+    key = fields.String()
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("tag", dump_only=True)
+
+
+class ParamSortSchema(BaseSchema):
+    key = fields.String()
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("param", dump_only=True)
+
+
+class MetricSortSchema(BaseSchema):
+    key = fields.String()
+    order = EnumField(SortOrder, by_value=True)
+    by = fields.Constant("metric", dump_only=True)
+
+
+class SortSchema(OneOfSchemaWithoutType):
+    type_schemas = {
+        "StartedAtSort": StartedAtSortSchema,
+        "RunNumberSort": RunNumberSortSchema,
+        "DurationSort": DurationSortSchema,
+        "TagSort": TagSortSchema,
+        "ParamSort": ParamSortSchema,
+        "MetricSort": MetricSortSchema,
+    }
+
+
+class RunQuerySchema(BaseSchema):
+    filter = OptionalField(fields.Nested(FilterSchema))
+    sort = fields.List(fields.Nested(SortSchema))
+    page = fields.Nested(PageSchema, missing=None)
 
 
 class MetricDataPointSchema(BaseSchema):
@@ -526,6 +774,9 @@ class ExperimentClient(BaseClient):
             To filter runs of experiments with the given IDs only. If an empty
             list is passed, a result with an empty list of runs is returned.
             By default, runs from all experiments are returned.
+        lifecycle_stage: LifecycleStage, optional
+            To filter runs of experiments in a specific lifecycle stage only.
+            By default, runs in any stage are returned.
         start : int, optional
             The (zero-indexed) starting point of runs to retrieve.
         limit : int, optional
@@ -535,10 +786,11 @@ class ExperimentClient(BaseClient):
         -------
         ListExperimentRunsResponse
         """
-        if lifecycle_stage is not None:
-            raise NotImplementedError("lifecycle_stage is not supported.")
 
-        query_params = []
+        experiment_ids_filter = None
+        lifecycle_filter = None
+        filter = None
+
         if experiment_ids is not None:
             if len(experiment_ids) == 0:
                 return ListExperimentRunsResponse(
@@ -547,17 +799,73 @@ class ExperimentClient(BaseClient):
                         start=0, size=0, previous=None, next=None
                     ),
                 )
-            for experiment_id in experiment_ids:
-                query_params.append(("experimentId", experiment_id))
+            experiment_id_filters = [
+                ExperimentIdFilter(ComparisonOperator.EQUAL_TO, experiment_id)
+                for experiment_id in experiment_ids
+            ]
+            experiment_ids_filter = CompoundFilter(
+                LogicalOperator.OR, experiment_id_filters
+            )
+        if lifecycle_stage is not None:
+            lifecycle_filter = DeletedAtFilter(
+                ComparisonOperator.DEFINED,
+                lifecycle_stage == LifecycleStage.DELETED,
+            )
 
-        if start is not None:
-            query_params.append(("start", start))
-        if limit is not None:
-            query_params.append(("limit", limit))
+        if experiment_ids_filter is not None and lifecycle_filter is not None:
+            filter = CompoundFilter(
+                LogicalOperator.AND, [experiment_ids_filter, lifecycle_filter]
+            )
+        elif experiment_ids_filter is not None:
+            filter = experiment_ids_filter
+        elif lifecycle_filter is not None:
+            filter = lifecycle_filter
 
-        endpoint = "/project/{}/run".format(project_id)
-        return self._get(
-            endpoint, ListExperimentRunsResponseSchema(), params=query_params
+        return self.query_runs(project_id, filter, None, start, limit)
+
+    def query_runs(
+        self, project_id, filter=None, sort=None, start=None, limit=None
+    ):
+        """Query experiment runs.
+
+        This method returns pages of runs. If less than the full number of runs
+        for the job is returned, the ``next`` page of the returned response
+        object will not be ``None``:
+
+        >>> response = client.query_runs(project_id)
+        >>> response.pagination.next
+        Page(start=10, limit=10)
+
+        Get all experiment runs by making successive calls to ``query_runs``,
+        passing the ``start`` and ``limit`` of the ``next`` page each time
+        until ``next`` is returned as ``None``.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        filter: SingleFilter or CompoundFilter, optional
+            To filter runs of experiments with the given filter. By default,
+            runs from all experiments are returned.
+        sort: List[Sort], optional
+            Runs are order using the conditions in sort. The relative
+            importance of each condition gradually decreases in order.
+            By default, experiment runs are sorted by their startedAt value.
+        start : int, optional
+            The (zero-indexed) starting point of runs to retrieve.
+        limit : int, optional
+            The maximum number of runs to retrieve.
+
+        Returns
+        -------
+        ListExperimentRunsResponse
+        """
+        endpoint = "/project/{}/run/query".format(project_id)
+        page = None
+        if start is not None and limit is not None:
+            page = Page(start, limit)
+        payload = RunQuerySchema().dump(RunQuery(filter, sort, page))
+        return self._post(
+            endpoint, ListExperimentRunsResponseSchema(), json=payload
         )
 
     def log_run_data(
@@ -673,15 +981,12 @@ class ExperimentClient(BaseClient):
                 deleted_run_ids=[], conflicted_run_ids=[]
             )
         else:
-            payload = {
-                "filter": {
-                    "operator": "or",
-                    "conditions": [
-                        {"by": "runId", "operator": "eq", "value": str(run_id)}
-                        for run_id in run_ids
-                    ],
-                }
-            }
+            run_id_filters = [
+                RunIdFilter(ComparisonOperator.EQUAL_TO, run_id)
+                for run_id in run_ids
+            ]
+            filter = CompoundFilter(LogicalOperator.OR, run_id_filters)
+            payload = {"filter": FilterSchema().dump(filter)}
 
         return self._post(
             endpoint, DeleteExperimentRunsResponseSchema(), json=payload
@@ -714,15 +1019,12 @@ class ExperimentClient(BaseClient):
                 restored_run_ids=[], conflicted_run_ids=[]
             )
         else:
-            payload = {
-                "filter": {
-                    "operator": "or",
-                    "conditions": [
-                        {"by": "runId", "operator": "eq", "value": str(run_id)}
-                        for run_id in run_ids
-                    ],
-                }
-            }
+            run_id_filters = [
+                RunIdFilter(ComparisonOperator.EQUAL_TO, run_id)
+                for run_id in run_ids
+            ]
+            filter = CompoundFilter(LogicalOperator.OR, run_id_filters)
+            payload = {"filter": FilterSchema().dump(filter)}
 
         return self._post(
             endpoint, RestoreExperimentRunsResponseSchema(), json=payload
