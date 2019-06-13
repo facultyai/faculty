@@ -13,6 +13,9 @@ matrix:
     - name: Check flake8 on Python 3
       python: 3.7
       env: TOXENV=flake8
+    - name: Check license headers
+      python: 3.7
+      env: TOXENV=license
     - python: 2.7
       env: TOXENV=py27
     - python: 3.4
