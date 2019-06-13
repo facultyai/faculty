@@ -1,8 +1,8 @@
-import os
 from attr import attrs, attrib
 import pandas
 
 import faculty  # TODO: Avoid possible circular imports
+from faculty import resolvers
 
 
 class QueryResult(object):
@@ -50,9 +50,8 @@ class ExperimentRun(object):
         return cls(**client_object._asdict())
 
     @classmethod
-    def query(cls, project_id=None, filter=None, sort=None):
-        if project_id is None:
-            project_id = os.environ["FACULTY_PROJECT_ID"]
+    def query(cls, project=None, filter=None, sort=None):
+        project_id = resolvers.resolve_project_id(project)
 
         def get_runs():
             client = faculty.client("experiment")
