@@ -23,6 +23,7 @@ from faculty.clients.experiment._models import (  # noqa: F401
     ExperimentRun,
     ExperimentRunStatus,
     LifecycleStage,
+    ListExperimentRunsResponse,
     LogicalOperator,
     Metric,
     MetricFilter,
