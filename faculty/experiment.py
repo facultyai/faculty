@@ -16,8 +16,9 @@
 from attr import attrs, attrib
 import pandas
 
-import faculty  # TODO: Avoid possible circular imports
-from faculty import resolvers
+from faculty.session import get_session
+from faculty.resolvers import resolve_project_id
+from faculty.clients.experiment import ExperimentClient
 
 
 class QueryResult(object):
@@ -65,11 +66,13 @@ class ExperimentRun(object):
         return cls(**client_object._asdict())
 
     @classmethod
-    def query(cls, project=None, filter=None, sort=None):
-        project_id = resolvers.resolve_project_id(project)
+    def query(cls, project=None, filter=None, sort=None, **session_config):
 
-        def get_runs():
-            client = faculty.client("experiment")
+        session = get_session(**session_config)
+        project_id = resolve_project_id(session, project)
+
+        def _get_runs():
+            client = ExperimentClient(session)
 
             response = client.query_runs(project_id, filter, sort)
             # return map(cls._from_client_model, response.runs)
@@ -85,7 +88,4 @@ class ExperimentRun(object):
                 )
                 yield from map(cls._from_client_model, response.runs)
 
-        # Open question:
-        # Should we evalutate the entire set of runs before returning the
-        # result, or is it ok to have them lazily evaluated
-        return ExperimentRunQueryResult(get_runs())
+        return ExperimentRunQueryResult(list(_get_runs()))

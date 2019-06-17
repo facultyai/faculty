@@ -16,7 +16,6 @@
 from uuid import UUID
 
 from faculty.context import get_context
-from faculty.session import get_session
 from faculty.clients import AccountClient, ProjectClient
 
 
@@ -32,10 +31,11 @@ def _make_uuid(value):
         return UUID(value)
 
 
-def _project_from_name(name):
-    session = get_session()
+def _project_from_name(session, name):
+
     user_id = AccountClient(session).authenticated_user_id()
     projects = ProjectClient(session).list_accessible_by_user(user_id)
+
     matches = [project for project in projects if project.name == name]
     if len(matches) == 1:
         return matches[0]
@@ -45,7 +45,7 @@ def _project_from_name(name):
         raise ValueError("Multiple projects of name {} found".format(name))
 
 
-def resolve_project_id(project=None):
+def resolve_project_id(session, project=None):
     if project is None:
         context = get_context()
         if context.project_id is None:
