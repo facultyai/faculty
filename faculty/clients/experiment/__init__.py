@@ -33,6 +33,7 @@ from faculty.clients.experiment._models import (  # noqa: F401
     ParamFilter,
     ParamSort,
     ProjectIdFilter,
+    RestoreExperimentRunsResponse,
     RunIdFilter,
     RunNumberSort,
     StartedAtSort,
