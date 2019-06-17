@@ -17,6 +17,7 @@ from faculty.clients.experiment._models import (  # noqa: F401
     ComparisonOperator,
     CompoundFilter,
     DeletedAtFilter,
+    DeleteExperimentRunsResponse,
     DurationSort,
     Experiment,
     ExperimentIdFilter,
