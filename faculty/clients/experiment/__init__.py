@@ -29,6 +29,7 @@ from faculty.clients.experiment._models import (  # noqa: F401
     Metric,
     MetricFilter,
     MetricSort,
+    Pagination,
     Param,
     ParamFilter,
     ParamSort,
