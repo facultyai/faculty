@@ -15,6 +15,8 @@
 
 from uuid import UUID
 
+from cachetools.func import lru_cache
+
 from faculty.context import get_context
 from faculty.clients import AccountClient, ProjectClient
 
@@ -45,13 +47,14 @@ def _project_from_name(session, name):
         raise ValueError("Multiple projects of name {} found".format(name))
 
 
+@lru_cache()
 def resolve_project_id(session, project=None):
     if project is None:
         context = get_context()
         if context.project_id is None:
             raise ValueError(
-                "Must pass a project when none can be determined from the "
-                "runtime context"
+                "Must pass a project name or ID when none can be determined "
+                "from the runtime context"
             )
         else:
             return context.project_id
@@ -59,4 +62,4 @@ def resolve_project_id(session, project=None):
         try:
             return _make_uuid(project)
         except ValueError:
-            return _project_from_name(project).id
+            return _project_from_name(session, project).id

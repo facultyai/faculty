@@ -31,6 +31,7 @@ setup(
         "pytz",
         "six",
         "enum34; python_version<'3.4'",
+        "cachetools",
         # Install marshmallow with 'reco' (recommended) extras to ensure a
         # compatible version of python-dateutil is available
         "attrs",

@@ -17,7 +17,7 @@ from attr import attrs, attrib
 import pandas
 
 from faculty.session import get_session
-from faculty.resolvers import resolve_project_id
+from faculty._util.resolvers import resolve_project_id
 from faculty.clients.experiment import ExperimentClient
 
 
