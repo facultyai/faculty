@@ -16,6 +16,8 @@
 from collections import namedtuple
 from enum import Enum
 
+from attr import attrs, attrib
+
 
 class LifecycleStage(Enum):
     ACTIVE = "active"
@@ -81,13 +83,73 @@ class ComparisonOperator(Enum):
     GREATER_THAN_OR_EQUAL_TO = "ge"
 
 
-ProjectIdFilter = namedtuple("ProjectIdFilter", ["operator", "value"])
-ExperimentIdFilter = namedtuple("ExperimentIdFilter", ["operator", "value"])
-RunIdFilter = namedtuple("RunIdFilter", ["operator", "value"])
-DeletedAtFilter = namedtuple("DeletedAtFilter", ["operator", "value"])
-TagFilter = namedtuple("TagFilter", ["key", "operator", "value"])
-ParamFilter = namedtuple("ParamFilter", ["key", "operator", "value"])
-MetricFilter = namedtuple("MetricFilter", ["key", "operator", "value"])
+def _matching_compound(filter, operator):
+    return isinstance(filter, CompoundFilter) and filter.operator == operator
+
+
+def _combine_filters(first, second, op):
+    if _matching_compound(first, op) and _matching_compound(second, op):
+        conditions = first.conditions + second.conditions
+    elif _matching_compound(first, op):
+        conditions = first.conditions + [second]
+    elif _matching_compound(second, op):
+        conditions = [first] + second.conditions
+    else:
+        conditions = [first, second]
+    return CompoundFilter(op, conditions)
+
+
+class BaseFilter(object):
+    def __and__(self, other):
+        return _combine_filters(self, other, LogicalOperator.AND)
+
+    def __or__(self, other):
+        return _combine_filters(self, other, LogicalOperator.OR)
+
+
+@attrs
+class ProjectIdFilter(BaseFilter):
+    operator = attrib()
+    value = attrib()
+
+
+@attrs
+class ExperimentIdFilter(BaseFilter):
+    operator = attrib()
+    value = attrib()
+
+
+@attrs
+class RunIdFilter(BaseFilter):
+    operator = attrib()
+    value = attrib()
+
+
+@attrs
+class DeletedAtFilter(BaseFilter):
+    operator = attrib()
+    value = attrib()
+
+
+@attrs
+class TagFilter(BaseFilter):
+    key = attrib()
+    operator = attrib()
+    value = attrib()
+
+
+@attrs
+class ParamFilter(BaseFilter):
+    key = attrib()
+    operator = attrib()
+    value = attrib()
+
+
+@attrs
+class MetricFilter(BaseFilter):
+    key = attrib()
+    operator = attrib()
+    value = attrib()
 
 
 class LogicalOperator(Enum):
@@ -95,7 +157,10 @@ class LogicalOperator(Enum):
     OR = "or"
 
 
-CompoundFilter = namedtuple("CompoundFilter", ["operator", "conditions"])
+@attrs
+class CompoundFilter(BaseFilter):
+    operator = attrib()
+    conditions = attrib()
 
 
 class SortOrder(Enum):
