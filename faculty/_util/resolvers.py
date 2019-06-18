@@ -34,6 +34,12 @@ def _make_uuid(value):
 
 
 def _project_from_name(session, name):
+    """Provided a project name, find a matching project ID.
+
+    This method searches all the projects accessible to the active user for a
+    matching project. If not exactly one project matches, a ValueError is
+    raised.
+    """
 
     user_id = AccountClient(session).authenticated_user_id()
     projects = ProjectClient(session).list_accessible_by_user(user_id)
@@ -49,6 +55,34 @@ def _project_from_name(session, name):
 
 @lru_cache()
 def resolve_project_id(session, project=None):
+    """Resolve the ID of a project based on ID, name or the current context.
+
+    This helper encapsulates logic for determining a project in three
+    situations:
+
+    * If ``None`` is passed as the project, or if no project is passed, the
+      project will be inferred from the runtime context (i.e. environment
+      variables), and so will correspond to the 'current project' when run
+      inside Faculty platform.
+    * If a ``uuid.UUID`` or a string containing a valid UUID is passed, this
+      will be assumed to be the ID of the project and will be returned.
+    * If any other string is passed, the Faculty platform will be queried for
+      projects matching that name. If exactly one of that name is accessible to
+      the user, its ID will be returned, otherwise a ``ValueError`` will be
+      raised.
+
+    Parameters
+    ----------
+    session : faculty.session.Session
+    project : str, uuid.UUID or None
+        Information to use to determine the active project.
+
+    Returns
+    -------
+    uuid.UUID
+        The ID of the project
+    """
+
     if project is None:
         context = get_context()
         if context.project_id is None:
