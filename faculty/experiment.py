@@ -109,7 +109,8 @@ class ExperimentRun(object):
             client = ExperimentClient(session)
 
             response = client.query_runs(project_id, filter, sort)
-            yield from map(cls._from_client_model, response.runs)
+            for run in response.runs:
+                yield cls._from_client_model(run)
 
             while response.pagination.next is not None:
                 response = client.query_runs(
@@ -119,7 +120,8 @@ class ExperimentRun(object):
                     start=response.pagination.next.start,
                     limit=response.pagination.next.limit,
                 )
-                yield from map(cls._from_client_model, response.runs)
+                for run in response.runs:
+                    yield cls._from_client_model(run)
 
         return ExperimentRunList(_get_runs())
 
