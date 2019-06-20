@@ -52,7 +52,7 @@ def _get_environ_as_type(key, cls):
     except ValueError:
         # Badly formatted
         template = (
-            "Error interpreting badly formatted environment varaible {}={}"
+            "Error interpreting badly formatted environment variable {}={}"
         )
         warnings.warn(template.format(key, os.environ[key]))
         return None
