@@ -17,6 +17,7 @@ from datetime import datetime
 from uuid import uuid4
 import operator
 
+import pandas
 import pytest
 from pytz import UTC
 import mock
@@ -216,8 +217,12 @@ def test_experiment_run_list_as_dataframe(mocker):
     assert (runs_df.run_id == [run_0.id, run_1.id]).all()
     assert (runs_df.run_number == [3, 4]).all()
     assert (runs_df.status == ["finished", "running"]).all()
-    assert (runs_df.started_at == [DATETIMES[0], DATETIMES[2]]).all()
-    assert (runs_df.ended_at == [DATETIMES[1], DATETIMES[3]]).all()
+    assert (
+        runs_df.started_at == pandas.Series([DATETIMES[0], DATETIMES[2]])
+    ).all()
+    assert (
+        runs_df.ended_at == pandas.Series([DATETIMES[1], DATETIMES[3]])
+    ).all()
     assert (runs_df.params.classic == ["foo", "bar"]).all()
     assert (runs_df.params.monty == ["spam", "eggs"]).all()
     assert (runs_df.metrics.accuracy == [0.87, 0.91]).all()
