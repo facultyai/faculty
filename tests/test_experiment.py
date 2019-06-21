@@ -224,6 +224,56 @@ def test_experiment_run_list_as_dataframe(mocker):
     assert (runs_df.metrics.f1_score == [0.76, 0.72]).all()
 
 
+def test_experiment_run_list_as_dataframe_no_params(mocker):
+    run = mocker.Mock(
+        experiment_id=1,
+        id=uuid4(),
+        run_number=3,
+        status=ExperimentRunStatus.FINISHED,
+        started_at=DATETIMES[0],
+        ended_at=DATETIMES[1],
+        params=[],
+        metrics=[mocker.Mock(key="accuracy", value=0.91)],
+    )
+
+    runs_df = ExperimentRunList([run]).as_dataframe()
+
+    assert list(runs_df.columns) == [
+        ("experiment_id", ""),
+        ("run_id", ""),
+        ("run_number", ""),
+        ("status", ""),
+        ("started_at", ""),
+        ("ended_at", ""),
+        ("metrics", "accuracy"),
+    ]
+
+
+def test_experiment_run_list_as_dataframe_no_metrics(mocker):
+    run = mocker.Mock(
+        experiment_id=1,
+        id=uuid4(),
+        run_number=3,
+        status=ExperimentRunStatus.FINISHED,
+        started_at=DATETIMES[0],
+        ended_at=DATETIMES[1],
+        params=[mocker.Mock(key="classic", value="bar")],
+        metrics=[],
+    )
+
+    runs_df = ExperimentRunList([run]).as_dataframe()
+
+    assert list(runs_df.columns) == [
+        ("experiment_id", ""),
+        ("run_id", ""),
+        ("run_number", ""),
+        ("status", ""),
+        ("started_at", ""),
+        ("ended_at", ""),
+        ("params", "classic"),
+    ]
+
+
 FILTER_BY_NO_KEY_CASES = [
     (FilterBy.experiment_id, ExperimentIdFilter),
     (FilterBy.run_id, RunIdFilter),

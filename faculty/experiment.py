@@ -167,18 +167,19 @@ class ExperimentRunList(list):
         df.columns = pandas.MultiIndex.from_tuples(df.columns)
 
         # Reorder columns and return
-        return df[
-            [
-                "experiment_id",
-                "run_id",
-                "run_number",
-                "status",
-                "started_at",
-                "ended_at",
-                "params",
-                "metrics",
-            ]
+        column_order = [
+            "experiment_id",
+            "run_id",
+            "run_number",
+            "status",
+            "started_at",
+            "ended_at",
         ]
+        if "params" in df.columns:
+            column_order.append("params")
+        if "metrics" in df.columns:
+            column_order.append("metrics")
+        return df[column_order]
 
 
 class _FilterBuilder(object):
