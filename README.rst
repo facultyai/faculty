@@ -8,5 +8,5 @@ A Python library for interacting with `the Faculty platform <https://faculty.ai/
 
 This project is licensed under the Apache License, Version 2.0, except for the
 vendored `marshmallow-oneofschema <https://github.com/marshmallow-code/marshmallow-oneofschema>`_,
-which is licensed under the MIT license (see faculty/_oneofschema.py for
+which is licensed under the MIT license (see ``faculty/_oneofschema.py`` for
 copyright and license detail).
