@@ -3,11 +3,13 @@ from marshmallow import Schema, ValidationError
 
 class OneOfSchema(Schema):
     """
-    This is a special kind of schema that actually multiplexes other schemas
-    based on object type. When serializing values, it uses get_obj_type() method
-    to get object type name. Then it uses `type_schemas` name-to-Schema mapping
-    to get schema for that particular object type, serializes object using that
-    schema and adds an extra "type" field with name of object type.
+
+    This is a special kind of schema that actually multiplexes other
+    schemas based on object type. When serializing values, it uses
+    get_obj_type() method to get object type name. Then it uses
+    `type_schemas` name-to-Schema mapping to get schema for that
+    particular object type, serializes object using that schema and
+    adds an extra "type" field with name of object type.
     Deserialization is reverse.
 
     Example:
@@ -51,8 +53,8 @@ class OneOfSchema(Schema):
         MyUberSchema().dump([Foo(foo='hello'), Bar(bar=123)], many=True).data
         # => [{'type': 'foo', 'foo': 'hello'}, {'type': 'bar', 'bar': 123}]
 
-    You can control type field name added to serialized object representation by
-    setting `type_field` class property.
+    You can control type field name added to serialized object representation
+    by setting `type_field` class property.
     """
 
     type_field = "type"
@@ -93,14 +95,19 @@ class OneOfSchema(Schema):
         if not obj_type:
             return (
                 None,
-                {"_schema": "Unknown object class: %s" % obj.__class__.__name__},
+                {
+                    "_schema": "Unknown object class: %s"
+                    % obj.__class__.__name__
+                },
             )
 
         type_schema = self.type_schemas.get(obj_type)
         if not type_schema:
             return None, {"_schema": "Unsupported object type: %s" % obj_type}
 
-        schema = type_schema if isinstance(type_schema, Schema) else type_schema()
+        schema = (
+            type_schema if isinstance(type_schema, Schema) else type_schema()
+        )
 
         schema.context.update(getattr(self, "context", {}))
 
@@ -163,13 +170,17 @@ class OneOfSchema(Schema):
             type_schema = self.type_schemas.get(data_type)
         except TypeError:
             # data_type could be unhashable
-            raise ValidationError({self.type_field: ["Invalid value: %s" % data_type]})
+            raise ValidationError(
+                {self.type_field: ["Invalid value: %s" % data_type]}
+            )
         if not type_schema:
             raise ValidationError(
                 {self.type_field: ["Unsupported value: %s" % data_type]}
             )
 
-        schema = type_schema if isinstance(type_schema, Schema) else type_schema()
+        schema = (
+            type_schema if isinstance(type_schema, Schema) else type_schema()
+        )
 
         schema.context.update(getattr(self, "context", {}))
 
