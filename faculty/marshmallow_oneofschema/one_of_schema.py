@@ -63,7 +63,7 @@ class OneOfSchema(Schema):
         """Returns name of object schema"""
         return obj.__class__.__name__
 
-    def dump(self, obj, *, many=None, **kwargs):
+    def dump(self, obj, many=None, **kwargs):
         errors = {}
         result_data = []
         result_errors = {}
@@ -88,7 +88,7 @@ class OneOfSchema(Schema):
             exc = ValidationError(errors, data=obj, valid_data=result)
             raise exc
 
-    def _dump(self, obj, *, update_fields=True, **kwargs):
+    def _dump(self, obj, update_fields=True, **kwargs):
         obj_type = self.get_obj_type(obj)
         if not obj_type:
             return (
@@ -109,7 +109,7 @@ class OneOfSchema(Schema):
             result[self.type_field] = obj_type
         return result
 
-    def load(self, data, *, many=None, partial=None, unknown=None):
+    def load(self, data, many=None, partial=None, unknown=None):
         errors = {}
         result_data = []
         result_errors = {}
@@ -143,7 +143,7 @@ class OneOfSchema(Schema):
             exc = ValidationError(errors, data=data, valid_data=result)
             raise exc
 
-    def _load(self, data, *, partial=None, unknown=None):
+    def _load(self, data, partial=None, unknown=None):
         if not isinstance(data, dict):
             raise ValidationError({"_schema": "Invalid data type: %s" % data})
 
@@ -175,7 +175,7 @@ class OneOfSchema(Schema):
 
         return schema.load(data, many=False, partial=partial, unknown=unknown)
 
-    def validate(self, data, *, many=None, partial=None):
+    def validate(self, data, many=None, partial=None):
         try:
             self.load(data, many=many, partial=partial)
         except ValidationError as ve:
