@@ -15,8 +15,8 @@
 
 from marshmallow import fields, post_load, pre_dump, ValidationError
 from marshmallow_enum import EnumField
-from marshmallow_oneofschema import OneOfSchema
 
+from faculty._oneofschema import OneOfSchema
 from faculty.clients.base import BaseSchema
 from faculty.clients.experiment._models import (
     ComparisonOperator,

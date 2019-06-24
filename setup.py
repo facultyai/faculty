@@ -36,7 +36,6 @@ setup(
         "attrs",
         "marshmallow[reco]==3.0.0rc3",
         "marshmallow_enum",
-        "marshmallow-oneofschema==2.0.0b2",
         "boto3",
         "botocore",
     ],
