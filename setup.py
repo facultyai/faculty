@@ -34,7 +34,7 @@ setup(
         # Install marshmallow with 'reco' (recommended) extras to ensure a
         # compatible version of python-dateutil is available
         "attrs",
-        "marshmallow[reco]==3.0.0rc3",
+        "marshmallow[reco]==3.0.0rc5",
         "marshmallow_enum",
         "boto3",
         "botocore",
