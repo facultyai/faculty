@@ -86,8 +86,8 @@ CONDA = Conda(channels=["conda-forge"], packages=[PYTHON_PACKAGE])
 PYTHON_ENVIRONMENT_BODY = {"pip": PIP_BODY, "conda": CONDA_BODY}
 PYTHON_ENVIRONMENT = PythonEnvironment(conda=CONDA, pip=PIP)
 
-APT_PACKAGE_BODY = {"name": "cuda"}
-APT_PACKAGE = AptPackage(name="cuda")
+APT_PACKAGE_BODY = {"name": "cuda", "version": "latest"}
+APT_PACKAGE = AptPackage(name="cuda", version="latest")
 
 APT_BODY = {"packages": [APT_PACKAGE_BODY]}
 APT = Apt(packages=[APT_PACKAGE])
