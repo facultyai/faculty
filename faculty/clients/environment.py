@@ -16,6 +16,7 @@
 import re
 from collections import namedtuple
 from enum import Enum
+import warnings
 
 from marshmallow import (
     ValidationError,
@@ -91,8 +92,13 @@ class PythonVersionSchema(BaseSchema):
 
 
 class VersionSchema(PythonVersionSchema):
-    # TODO: deprecation warning
-    pass
+    def __init__(self, *args, **kwargs):
+        template = (
+            "The class VersionSchema is deprecated. "
+            "Please migrate by using PythonVersionSchema."
+        )
+        warnings.warn(template)
+        super(VersionSchema, self).__init__(*args, **kwargs)
 
 
 class AptVersionSchema(BaseSchema):
@@ -133,8 +139,13 @@ class PythonVersionField(fields.Field):
 
 
 class VersionField(PythonVersionField):
-    # TODO: deprecation warning
-    pass
+    def __init__(self, *args, **kwargs):
+        template = (
+            "The class VersionField is deprecated. "
+            "Please migrate by using PythonVersionField."
+        )
+        warnings.warn(template)
+        super(VersionSchema, self).__init__(*args, **kwargs)
 
 
 class AptVersionField(fields.Field):
