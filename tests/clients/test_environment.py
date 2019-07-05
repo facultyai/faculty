@@ -47,7 +47,7 @@ from faculty.clients.environment import (
     Specification,
     SpecificationSchema,
     Version,
-    VersionSchema,
+    PythonVersionSchema,
 )
 
 VERSION_BODY = {"constraint": "==", "identifier": "1.0.0"}
@@ -188,23 +188,23 @@ ENVIRONMENT_CREATE_UPDATE_NO_DESCRIPTION = EnvironmentCreateUpdate(
 
 
 def test_version_schema_load():
-    data = VersionSchema().load(VERSION_BODY)
+    data = PythonVersionSchema().load(VERSION_BODY)
     assert data == VERSION
 
 
 def test_version_schema_dump():
-    data = VersionSchema().dump(VERSION)
+    data = PythonVersionSchema().dump(VERSION)
     assert data == VERSION_BODY
 
 
 def test_version_schema_load_invalid():
     with pytest.raises(ValidationError):
-        VersionSchema().load(INVALID_VERSION_BODY)
+        PythonVersionSchema().load(INVALID_VERSION_BODY)
 
 
 def test_version_schema_dump_invalid():
     with pytest.raises(ValidationError):
-        VersionSchema().dump(INVALID_VERSION)
+        PythonVersionSchema().dump(INVALID_VERSION)
 
 
 @pytest.mark.parametrize(
