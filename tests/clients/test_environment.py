@@ -24,6 +24,7 @@ from faculty.clients.environment import (
     AptPackage,
     AptPackageSchema,
     AptSchema,
+    AptVersionSchema,
     Conda,
     CondaSchema,
     Constraint,
@@ -56,9 +57,13 @@ VERSION = Version(constraint=Constraint.EQUAL, identifier="1.0.0")
 VERSION_BODY_LATEST = "latest"
 VERSION_LATEST = "latest"
 
-INVALID_VERSION_BODY = {"constraint": "==", "identifier": "invalid-identifier"}
-INVALID_VERSION = Version(
+INVALID_PYTHON_VERSION_BODY = {"constraint": "==", "identifier": "invalid-identifier"}
+INVALID_PYTHON_VERSION = Version(
     constraint=Constraint.EQUAL, identifier="invalid-identifier"
+)
+INVALID_APT_VERSION_BODY = {"constraint": "==", "identifier": "    "}
+INVALID_APT_VERSION = Version(
+    constraint=Constraint.EQUAL, identifier="    "
 )
 
 PYTHON_PACKAGE_BODY = {"name": "tensorflow", "version": VERSION_BODY}
@@ -187,25 +192,44 @@ ENVIRONMENT_CREATE_UPDATE_NO_DESCRIPTION = EnvironmentCreateUpdate(
 )
 
 
-def test_version_schema_load():
+def test_python_version_schema_load():
     data = PythonVersionSchema().load(VERSION_BODY)
     assert data == VERSION
 
 
-def test_version_schema_dump():
+def test_python_version_schema_dump():
     data = PythonVersionSchema().dump(VERSION)
     assert data == VERSION_BODY
 
 
-def test_version_schema_load_invalid():
+def test_python_version_schema_load_invalid():
     with pytest.raises(ValidationError):
-        PythonVersionSchema().load(INVALID_VERSION_BODY)
+        PythonVersionSchema().load(INVALID_PYTHON_VERSION_BODY)
 
 
-def test_version_schema_dump_invalid():
+def test_python_version_schema_dump_invalid():
     with pytest.raises(ValidationError):
-        PythonVersionSchema().dump(INVALID_VERSION)
+        PythonVersionSchema().dump(INVALID_PYTHON_VERSION)
 
+
+def test_apt_version_schema_load():
+    data = AptVersionSchema().load(VERSION_BODY)
+    assert data == VERSION
+
+
+def test_apt_version_schema_dump():
+    data = AptVersionSchema().dump(VERSION)
+    assert data == VERSION_BODY
+
+
+def test_apt_version_schema_load_invalid():
+    with pytest.raises(ValidationError):
+        AptVersionSchema().load(INVALID_APT_VERSION_BODY)
+
+
+def test_apt_version_schema_dump_invalid():
+    with pytest.raises(ValidationError):
+        AptVersionSchema().dump(INVALID_APT_VERSION)
 
 @pytest.mark.parametrize(
     "body, expected",
