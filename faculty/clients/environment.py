@@ -67,9 +67,7 @@ PYTHON_VERSION_REGEX = re.compile(
     r"^(?:\d+\!)?\d+(?:\.\d+)*(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?$"
 )
 
-APT_VERSION_REGEX = re.compile(
-    r"^[a-zA-Z0-9\\.\\+-:~]+$"
-)
+APT_VERSION_REGEX = re.compile(r"^[a-zA-Z0-9\\.\\+-:~]+$")
 
 
 class PythonVersionSchema(BaseSchema):

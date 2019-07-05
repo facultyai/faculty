@@ -57,14 +57,15 @@ VERSION = Version(constraint=Constraint.EQUAL, identifier="1.0.0")
 VERSION_BODY_LATEST = "latest"
 VERSION_LATEST = "latest"
 
-INVALID_PYTHON_VERSION_BODY = {"constraint": "==", "identifier": "invalid-identifier"}
+INVALID_PYTHON_VERSION_BODY = {
+    "constraint": "==",
+    "identifier": "invalid-identifier",
+}
 INVALID_PYTHON_VERSION = Version(
     constraint=Constraint.EQUAL, identifier="invalid-identifier"
 )
 INVALID_APT_VERSION_BODY = {"constraint": "==", "identifier": "    "}
-INVALID_APT_VERSION = Version(
-    constraint=Constraint.EQUAL, identifier="    "
-)
+INVALID_APT_VERSION = Version(constraint=Constraint.EQUAL, identifier="    ")
 
 PYTHON_PACKAGE_BODY = {"name": "tensorflow", "version": VERSION_BODY}
 PYTHON_PACKAGE = PythonPackage(name="tensorflow", version=VERSION)
@@ -230,6 +231,7 @@ def test_apt_version_schema_load_invalid():
 def test_apt_version_schema_dump_invalid():
     with pytest.raises(ValidationError):
         AptVersionSchema().dump(INVALID_APT_VERSION)
+
 
 @pytest.mark.parametrize(
     "body, expected",
