@@ -24,6 +24,7 @@ from faculty.clients.environment import (
     AptPackage,
     AptPackageSchema,
     AptSchema,
+    AptVersionSchema,
     Conda,
     CondaSchema,
     Constraint,
@@ -47,7 +48,7 @@ from faculty.clients.environment import (
     Specification,
     SpecificationSchema,
     Version,
-    VersionSchema,
+    PythonVersionSchema,
 )
 
 VERSION_BODY = {"constraint": "==", "identifier": "1.0.0"}
@@ -56,10 +57,15 @@ VERSION = Version(constraint=Constraint.EQUAL, identifier="1.0.0")
 VERSION_BODY_LATEST = "latest"
 VERSION_LATEST = "latest"
 
-INVALID_VERSION_BODY = {"constraint": "==", "identifier": "invalid-identifier"}
-INVALID_VERSION = Version(
+INVALID_PYTHON_VERSION_BODY = {
+    "constraint": "==",
+    "identifier": "invalid-identifier",
+}
+INVALID_PYTHON_VERSION = Version(
     constraint=Constraint.EQUAL, identifier="invalid-identifier"
 )
+INVALID_APT_VERSION_BODY = {"constraint": "==", "identifier": "    "}
+INVALID_APT_VERSION = Version(constraint=Constraint.EQUAL, identifier="    ")
 
 PYTHON_PACKAGE_BODY = {"name": "tensorflow", "version": VERSION_BODY}
 PYTHON_PACKAGE = PythonPackage(name="tensorflow", version=VERSION)
@@ -86,8 +92,8 @@ CONDA = Conda(channels=["conda-forge"], packages=[PYTHON_PACKAGE])
 PYTHON_ENVIRONMENT_BODY = {"pip": PIP_BODY, "conda": CONDA_BODY}
 PYTHON_ENVIRONMENT = PythonEnvironment(conda=CONDA, pip=PIP)
 
-APT_PACKAGE_BODY = {"name": "cuda"}
-APT_PACKAGE = AptPackage(name="cuda")
+APT_PACKAGE_BODY = {"name": "cuda", "version": "latest"}
+APT_PACKAGE = AptPackage(name="cuda", version="latest")
 
 APT_BODY = {"packages": [APT_PACKAGE_BODY]}
 APT = Apt(packages=[APT_PACKAGE])
@@ -187,24 +193,44 @@ ENVIRONMENT_CREATE_UPDATE_NO_DESCRIPTION = EnvironmentCreateUpdate(
 )
 
 
-def test_version_schema_load():
-    data = VersionSchema().load(VERSION_BODY)
+def test_python_version_schema_load():
+    data = PythonVersionSchema().load(VERSION_BODY)
     assert data == VERSION
 
 
-def test_version_schema_dump():
-    data = VersionSchema().dump(VERSION)
+def test_python_version_schema_dump():
+    data = PythonVersionSchema().dump(VERSION)
     assert data == VERSION_BODY
 
 
-def test_version_schema_load_invalid():
+def test_python_version_schema_load_invalid():
     with pytest.raises(ValidationError):
-        VersionSchema().load(INVALID_VERSION_BODY)
+        PythonVersionSchema().load(INVALID_PYTHON_VERSION_BODY)
 
 
-def test_version_schema_dump_invalid():
+def test_python_version_schema_dump_invalid():
     with pytest.raises(ValidationError):
-        VersionSchema().dump(INVALID_VERSION)
+        PythonVersionSchema().dump(INVALID_PYTHON_VERSION)
+
+
+def test_apt_version_schema_load():
+    data = AptVersionSchema().load(VERSION_BODY)
+    assert data == VERSION
+
+
+def test_apt_version_schema_dump():
+    data = AptVersionSchema().dump(VERSION)
+    assert data == VERSION_BODY
+
+
+def test_apt_version_schema_load_invalid():
+    with pytest.raises(ValidationError):
+        AptVersionSchema().load(INVALID_APT_VERSION_BODY)
+
+
+def test_apt_version_schema_dump_invalid():
+    with pytest.raises(ValidationError):
+        AptVersionSchema().dump(INVALID_APT_VERSION)
 
 
 @pytest.mark.parametrize(

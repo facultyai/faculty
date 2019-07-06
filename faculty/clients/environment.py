@@ -40,7 +40,7 @@ Pip = namedtuple("Pip", ["extra_index_urls", "packages"])
 Conda = namedtuple("Conda", ["channels", "packages"])
 PythonEnvironment = namedtuple("PythonEnvironment", ["pip", "conda"])
 Apt = namedtuple("Apt", ["packages"])
-AptPackage = namedtuple("AptPackage", ["name"])
+AptPackage = namedtuple("AptPackage", ["name", "version"])
 Script = namedtuple("Script", ["script"])
 PythonSpecification = namedtuple("PythonSpecification", ["python2", "python3"])
 Specification = namedtuple("Specification", ["apt", "bash", "python"])
@@ -62,18 +62,20 @@ EnvironmentCreateUpdate = namedtuple(
     "EnvironmentCreateUpdate", ["name", "description", "specification"]
 )
 
-VERSION_REGEX = re.compile(
+PYTHON_VERSION_REGEX = re.compile(
     r"^(?:\d+\!)?\d+(?:\.\d+)*(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?$"
 )
 
+APT_VERSION_REGEX = re.compile(r"^[a-zA-Z0-9\\.\\+-:~]+$")
 
-class VersionSchema(BaseSchema):
+
+class PythonVersionSchema(BaseSchema):
     constraint = EnumField(Constraint, by_value=True, required=True)
     identifier = fields.String(required=True)
 
     @validates("identifier")
     def validate_version_format(self, data):
-        if not VERSION_REGEX.match(data):
+        if not PYTHON_VERSION_REGEX.match(data):
             raise ValidationError("Invalid version format")
 
     @post_load
@@ -86,7 +88,26 @@ class VersionSchema(BaseSchema):
         return data
 
 
-class VersionField(fields.Field):
+class AptVersionSchema(BaseSchema):
+    constraint = EnumField(Constraint, by_value=True, required=True)
+    identifier = fields.String(required=True)
+
+    @validates("identifier")
+    def validate_version_format(self, data):
+        if not APT_VERSION_REGEX.match(data):
+            raise ValidationError("Invalid version format")
+
+    @post_load
+    def make_version(self, data):
+        return Version(**data)
+
+    @post_dump
+    def dump_version(self, data):
+        self.validate_version_format(data["identifier"])
+        return data
+
+
+class PythonVersionField(fields.Field):
     """
     Field that serialises/deserialises a Python package version.
     """
@@ -95,18 +116,36 @@ class VersionField(fields.Field):
         if value == "latest":
             return "latest"
         else:
-            return VersionSchema().load(value)
+            return PythonVersionSchema().load(value)
 
     def _serialize(self, value, attr, obj, **kwargs):
         if value == "latest":
             return "latest"
         else:
-            return VersionSchema().dump(value)
+            return PythonVersionSchema().dump(value)
+
+
+class AptVersionField(fields.Field):
+    """
+    Field that serialises/deserialises an apt package version.
+    """
+
+    def _deserialize(self, value, attr, obj, **kwargs):
+        if value == "latest":
+            return "latest"
+        else:
+            return AptVersionSchema().load(value)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        if value == "latest":
+            return "latest"
+        else:
+            return AptVersionSchema().dump(value)
 
 
 class PythonPackageSchema(BaseSchema):
     name = fields.String(required=True)
-    version = VersionField(required=True)
+    version = PythonVersionField(required=True)
 
     @post_load
     def make_python_package(self, data):
@@ -157,6 +196,7 @@ class PythonSpecificationSchema(BaseSchema):
 
 class AptPackageSchema(BaseSchema):
     name = fields.String(required=True)
+    version = AptVersionField(required=True)
 
     @post_load
     def make_apt_package(self, data):
