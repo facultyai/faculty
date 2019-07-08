@@ -24,6 +24,7 @@ Object = namedtuple("Object", ["path", "size", "etag", "last_modified_at"])
 ListObjectsResponse = namedtuple(
     "ListObjectsResponse", ["objects", "next_page_token"]
 )
+PresignDownloadResponse = namedtuple("PresignDownloadResponse", ["url"])
 
 
 class ObjectSchema(BaseSchema):
@@ -48,6 +49,14 @@ class ListObjectsResponseSchema(BaseSchema):
         return ListObjectsResponse(**data)
 
 
+class PresignDownloadResponseSchema(BaseSchema):
+    url = fields.String(required=True)
+
+    @post_load
+    def make_presign_download_response(self, data):
+        return PresignDownloadResponse(**data)
+
+
 class ObjectClient(BaseClient):
 
     SERVICE_NAME = "hoard"
@@ -60,3 +69,15 @@ class ObjectClient(BaseClient):
         if page_token is not None:
             params["pageToken"] = page_token
         return self._get(endpoint, ListObjectsResponseSchema(), params=params)
+
+    def presign_download(
+        self, project_id, path, response_content_disposition=None
+    ):
+        endpoint = "/project/{}/presign/download".format(project_id)
+        body = {"path": path}
+        if response_content_disposition is not None:
+            body["responseContentDisposition"] = response_content_disposition
+        response = self._post(
+            endpoint, PresignDownloadResponseSchema(), json=body
+        )
+        return response.url

@@ -26,6 +26,8 @@ from faculty.clients.object import (
     Object,
     ObjectClient,
     ObjectSchema,
+    PresignDownloadResponse,
+    PresignDownloadResponseSchema,
 )
 
 
@@ -60,6 +62,9 @@ LIST_OBJECTS_RESPONSE_WITHOUT_PAGE_TOKEN = ListObjectsResponse(
 )
 LIST_OBJECTS_RESPONSE_WITHOUT_PAGE_TOKEN_BODY = {"objects": [OBJECT_BODY]}
 
+PRESIGN_DOWNLOAD_RESPONSE = PresignDownloadResponse(url="http://example.com")
+PRESIGN_DOWNLOAD_RESPONSE_BODY = {"url": PRESIGN_DOWNLOAD_RESPONSE.url}
+
 
 def test_object_schema():
     data = ObjectSchema().load(OBJECT_BODY)
@@ -89,6 +94,16 @@ def test_list_objects_response_schema(body, expected):
 def test_list_objects_response_schema_invalid():
     with pytest.raises(ValidationError):
         ListObjectsResponseSchema().load({})
+
+
+def test_presign_download_response_schema():
+    data = PresignDownloadResponseSchema().load(PRESIGN_DOWNLOAD_RESPONSE_BODY)
+    assert data == PRESIGN_DOWNLOAD_RESPONSE
+
+
+def test_presign_download_response_schema_invalid():
+    with pytest.raises(ValidationError):
+        PresignDownloadResponseSchema().load({})
 
 
 def test_object_client_list(mocker):
@@ -129,4 +144,53 @@ def test_object_client_list_defaults(mocker):
         "/project/{}/object-list/".format(PROJECT_ID),
         schema_mock.return_value,
         params={},
+    )
+
+
+def test_object_client_presign_download(mocker):
+    mocker.patch.object(
+        ObjectClient, "_post", return_value=PRESIGN_DOWNLOAD_RESPONSE
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.object.PresignDownloadResponseSchema"
+    )
+
+    client = ObjectClient(mocker.Mock())
+    returned = client.presign_download(
+        PROJECT_ID,
+        "/path",
+        response_content_disposition="attachement; filename=other",
+    )
+
+    assert returned == PRESIGN_DOWNLOAD_RESPONSE.url
+
+    schema_mock.assert_called_once_with()
+    ObjectClient._post.assert_called_once_with(
+        "/project/{}/presign/download".format(PROJECT_ID),
+        schema_mock.return_value,
+        json={
+            "path": "/path",
+            "responseContentDisposition": "attachement; filename=other",
+        },
+    )
+
+
+def test_object_client_presign_download_defaults(mocker):
+    mocker.patch.object(
+        ObjectClient, "_post", return_value=PRESIGN_DOWNLOAD_RESPONSE
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.object.PresignDownloadResponseSchema"
+    )
+
+    client = ObjectClient(mocker.Mock())
+    returned = client.presign_download(PROJECT_ID, "/path")
+
+    assert returned == PRESIGN_DOWNLOAD_RESPONSE.url
+
+    schema_mock.assert_called_once_with()
+    ObjectClient._post.assert_called_once_with(
+        "/project/{}/presign/download".format(PROJECT_ID),
+        schema_mock.return_value,
+        json={"path": "/path"},
     )
