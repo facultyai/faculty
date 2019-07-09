@@ -31,7 +31,7 @@ Object = namedtuple("Object", ["path", "size", "etag", "last_modified_at"])
 ListObjectsResponse = namedtuple(
     "ListObjectsResponse", ["objects", "next_page_token"]
 )
-PresignDownloadResponse = namedtuple("PresignDownloadResponse", ["url"])
+SimplePresignResponse = namedtuple("SimplePresignResponse", ["url"])
 PresignUploadResponse = namedtuple(
     "PresignUploadResponse", ["provider", "upload_id", "url"]
 )
@@ -59,12 +59,12 @@ class ListObjectsResponseSchema(BaseSchema):
         return ListObjectsResponse(**data)
 
 
-class PresignDownloadResponseSchema(BaseSchema):
+class SimplePresignResponseSchema(BaseSchema):
     url = fields.String(required=True)
 
     @post_load
-    def make_presign_download_response(self, data):
-        return PresignDownloadResponse(**data)
+    def make_simple_presign_response(self, data):
+        return SimplePresignResponse(**data)
 
 
 class PresignUploadResponseSchema(BaseSchema):
@@ -102,7 +102,7 @@ class ObjectClient(BaseClient):
         if response_content_disposition is not None:
             body["responseContentDisposition"] = response_content_disposition
         response = self._post(
-            endpoint, PresignDownloadResponseSchema(), json=body
+            endpoint, SimplePresignResponseSchema(), json=body
         )
         return response.url
 
@@ -110,3 +110,11 @@ class ObjectClient(BaseClient):
         endpoint = "/project/{}/presign/upload".format(project_id)
         body = {"path": path}
         return self._post(endpoint, PresignUploadResponseSchema(), json=body)
+
+    def presign_upload_part(self, project_id, path, upload_id, part_number):
+        endpoint = "/project/{}/presign/upload/part".format(project_id)
+        body = {"path": path, "uploadId": upload_id, "partNumber": part_number}
+        response = self._post(
+            endpoint, SimplePresignResponseSchema(), json=body
+        )
+        return response.url
