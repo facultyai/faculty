@@ -14,10 +14,17 @@
 
 
 from collections import namedtuple
+from enum import Enum
 
 from marshmallow import fields, post_load
+from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseSchema, BaseClient
+
+
+class CloudStorageProvider(Enum):
+    S3 = "S3"
+    GCS = "GCS"
 
 
 Object = namedtuple("Object", ["path", "size", "etag", "last_modified_at"])
@@ -25,6 +32,9 @@ ListObjectsResponse = namedtuple(
     "ListObjectsResponse", ["objects", "next_page_token"]
 )
 PresignDownloadResponse = namedtuple("PresignDownloadResponse", ["url"])
+PresignUploadResponse = namedtuple(
+    "PresignUploadResponse", ["provider", "upload_id", "url"]
+)
 
 
 class ObjectSchema(BaseSchema):
@@ -57,6 +67,16 @@ class PresignDownloadResponseSchema(BaseSchema):
         return PresignDownloadResponse(**data)
 
 
+class PresignUploadResponseSchema(BaseSchema):
+    provider = EnumField(CloudStorageProvider, by_value=True, required=True)
+    upload_id = fields.String(data_key="uploadId", missing=None)
+    url = fields.String(missing=None)
+
+    @post_load
+    def make_presign_upload_response(self, data):
+        return PresignUploadResponse(**data)
+
+
 class ObjectClient(BaseClient):
 
     SERVICE_NAME = "hoard"
@@ -85,3 +105,8 @@ class ObjectClient(BaseClient):
             endpoint, PresignDownloadResponseSchema(), json=body
         )
         return response.url
+
+    def presign_upload(self, project_id, path):
+        endpoint = "/project/{}/presign/upload".format(project_id)
+        body = {"path": path}
+        return self._post(endpoint, PresignUploadResponseSchema(), json=body)

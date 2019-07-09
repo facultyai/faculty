@@ -21,6 +21,7 @@ from marshmallow import ValidationError
 from pytz import UTC
 
 from faculty.clients.object import (
+    CloudStorageProvider,
     ListObjectsResponse,
     ListObjectsResponseSchema,
     Object,
@@ -28,6 +29,8 @@ from faculty.clients.object import (
     ObjectSchema,
     PresignDownloadResponse,
     PresignDownloadResponseSchema,
+    PresignUploadResponse,
+    PresignUploadResponseSchema,
 )
 
 
@@ -64,6 +67,24 @@ LIST_OBJECTS_RESPONSE_WITHOUT_PAGE_TOKEN_BODY = {"objects": [OBJECT_BODY]}
 
 PRESIGN_DOWNLOAD_RESPONSE = PresignDownloadResponse(url="http://example.com")
 PRESIGN_DOWNLOAD_RESPONSE_BODY = {"url": PRESIGN_DOWNLOAD_RESPONSE.url}
+
+PRESIGN_UPLOAD_RESPONSE_S3 = PresignUploadResponse(
+    provider=CloudStorageProvider.S3, upload_id="upload-id", url=None
+)
+PRESIGN_UPLOAD_RESPONSE_S3_BODY = {
+    "provider": "S3",
+    "uploadId": PRESIGN_UPLOAD_RESPONSE_S3.upload_id,
+}
+
+PRESIGN_UPLOAD_RESPONSE_GCS = PresignUploadResponse(
+    provider=CloudStorageProvider.GCS,
+    upload_id=None,
+    url="https://example.com",
+)
+PRESIGN_UPLOAD_RESPONSE_GCS_BODY = {
+    "provider": "GCS",
+    "url": PRESIGN_UPLOAD_RESPONSE_GCS.url,
+}
 
 
 def test_object_schema():
@@ -104,6 +125,24 @@ def test_presign_download_response_schema():
 def test_presign_download_response_schema_invalid():
     with pytest.raises(ValidationError):
         PresignDownloadResponseSchema().load({})
+
+
+@pytest.mark.parametrize(
+    "body, expected",
+    [
+        (PRESIGN_UPLOAD_RESPONSE_S3_BODY, PRESIGN_UPLOAD_RESPONSE_S3),
+        (PRESIGN_UPLOAD_RESPONSE_GCS_BODY, PRESIGN_UPLOAD_RESPONSE_GCS),
+    ],
+    ids=["S3", "GCS"],
+)
+def test_presign_upload_response_schema(body, expected):
+    data = PresignUploadResponseSchema().load(body)
+    assert data == expected
+
+
+def test_presign_upload_response_schema_invalid():
+    with pytest.raises(ValidationError):
+        PresignUploadResponseSchema().load({})
 
 
 @pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path"])
@@ -206,6 +245,27 @@ def test_object_client_presign_download_defaults(mocker):
     schema_mock.assert_called_once_with()
     ObjectClient._post.assert_called_once_with(
         "/project/{}/presign/download".format(PROJECT_ID),
+        schema_mock.return_value,
+        json={"path": "/path"},
+    )
+
+
+def test_object_client_presign_upload(mocker):
+    mocker.patch.object(
+        ObjectClient, "_post", return_value=PRESIGN_UPLOAD_RESPONSE_S3
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.object.PresignUploadResponseSchema"
+    )
+
+    client = ObjectClient(mocker.Mock())
+    returned = client.presign_upload(PROJECT_ID, "/path")
+
+    assert returned == PRESIGN_UPLOAD_RESPONSE_S3
+
+    schema_mock.assert_called_once_with()
+    ObjectClient._post.assert_called_once_with(
+        "/project/{}/presign/upload".format(PROJECT_ID),
         schema_mock.return_value,
         json={"path": "/path"},
     )
