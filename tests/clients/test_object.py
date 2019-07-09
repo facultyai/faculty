@@ -106,20 +106,23 @@ def test_presign_download_response_schema_invalid():
         PresignDownloadResponseSchema().load({})
 
 
-def test_object_client_get(mocker):
+@pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path"])
+def test_object_client_get(mocker, path):
     mocker.patch.object(ObjectClient, "_get", return_value=OBJECT)
     schema_mock = mocker.patch("faculty.clients.object.ObjectSchema")
 
     client = ObjectClient(mocker.Mock())
-    assert client.get(PROJECT_ID, "/path") == OBJECT
+    assert client.get(PROJECT_ID, path) == OBJECT
 
     schema_mock.assert_called_once_with()
     ObjectClient._get.assert_called_once_with(
-        "/project/{}/object/path".format(PROJECT_ID), schema_mock.return_value
+        "/project/{}/object/test/path".format(PROJECT_ID),
+        schema_mock.return_value,
     )
 
 
-def test_object_client_list(mocker):
+@pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path"])
+def test_object_client_list(mocker, path):
     mocker.patch.object(
         ObjectClient, "_get", return_value=LIST_OBJECTS_RESPONSE
     )
@@ -128,14 +131,13 @@ def test_object_client_list(mocker):
     )
 
     client = ObjectClient(mocker.Mock())
-    assert (
-        client.list(PROJECT_ID, "/path", page_token="token")
-        == LIST_OBJECTS_RESPONSE
-    )
+
+    response = client.list(PROJECT_ID, path, page_token="token")
+    assert response == LIST_OBJECTS_RESPONSE
 
     schema_mock.assert_called_once_with()
     ObjectClient._get.assert_called_once_with(
-        "/project/{}/object-list/path".format(PROJECT_ID),
+        "/project/{}/object-list/test/path".format(PROJECT_ID),
         schema_mock.return_value,
         params={"pageToken": "token"},
     )
