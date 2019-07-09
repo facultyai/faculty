@@ -22,15 +22,18 @@ from pytz import UTC
 
 from faculty.clients.object import (
     CloudStorageProvider,
+    CompleteMultipartUploadSchema,
+    CompletedUploadPart,
+    CompletedUploadPartSchema,
     ListObjectsResponse,
     ListObjectsResponseSchema,
     Object,
     ObjectClient,
     ObjectSchema,
-    SimplePresignResponse,
-    SimplePresignResponseSchema,
     PresignUploadResponse,
     PresignUploadResponseSchema,
+    SimplePresignResponse,
+    SimplePresignResponseSchema,
 )
 
 
@@ -86,6 +89,23 @@ PRESIGN_UPLOAD_RESPONSE_GCS_BODY = {
     "url": PRESIGN_UPLOAD_RESPONSE_GCS.url,
 }
 
+COMPLETED_UPLOAD_PART = CompletedUploadPart(123, "etag-123")
+COMPLETED_UPLOAD_PART_BODY = {
+    "partNumber": COMPLETED_UPLOAD_PART.part_number,
+    "etag": COMPLETED_UPLOAD_PART.etag,
+}
+
+COMPLETED_MULTIPART_UPLOAD = {
+    "path": "/path",
+    "upload_id": "upload-id",
+    "parts": [COMPLETED_UPLOAD_PART],
+}
+COMPLETED_MULTIPART_UPLOAD_BODY = {
+    "path": COMPLETED_MULTIPART_UPLOAD["path"],
+    "uploadId": COMPLETED_MULTIPART_UPLOAD["upload_id"],
+    "parts": [COMPLETED_UPLOAD_PART_BODY],
+}
+
 
 def test_object_schema():
     data = ObjectSchema().load(OBJECT_BODY)
@@ -137,6 +157,16 @@ def test_presign_upload_response_schema(body, expected):
 def test_schema_invalid_body(schema):
     with pytest.raises(ValidationError):
         schema().load({})
+
+
+def test_completed_upload_part_schema_dump():
+    data = CompletedUploadPartSchema().dump(COMPLETED_UPLOAD_PART)
+    assert data == COMPLETED_UPLOAD_PART_BODY
+
+
+def test_complete_multipart_upload_schema_dump():
+    data = CompleteMultipartUploadSchema().dump(COMPLETED_MULTIPART_UPLOAD)
+    assert data == COMPLETED_MULTIPART_UPLOAD_BODY
 
 
 @pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path"])
@@ -285,4 +315,30 @@ def test_object_client_presign_upload_part(mocker):
         "/project/{}/presign/upload/part".format(PROJECT_ID),
         schema_mock.return_value,
         json={"path": "/path", "uploadId": "upload-id", "partNumber": 2},
+    )
+
+
+def test_object_client_complete_multipart_upload(mocker):
+    mocker.patch.object(ObjectClient, "_put_raw")
+    payload_schema_mock = mocker.patch(
+        "faculty.clients.object.CompleteMultipartUploadSchema"
+    )
+
+    client = ObjectClient(mocker.Mock())
+    client.complete_multipart_upload(
+        PROJECT_ID, "/path", "upload-id", [COMPLETED_UPLOAD_PART]
+    )
+
+    payload_schema_mock.assert_called_once_with()
+    dump_mock = payload_schema_mock.return_value.dump
+    dump_mock.assert_called_once_with(
+        {
+            "path": "/path",
+            "upload_id": "upload-id",
+            "parts": [COMPLETED_UPLOAD_PART],
+        }
+    )
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/presign/upload/complete".format(PROJECT_ID),
+        json=dump_mock.return_value,
     )

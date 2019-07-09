@@ -35,6 +35,9 @@ SimplePresignResponse = namedtuple("SimplePresignResponse", ["url"])
 PresignUploadResponse = namedtuple(
     "PresignUploadResponse", ["provider", "upload_id", "url"]
 )
+CompletedUploadPart = namedtuple(
+    "CompletedUploadPart", ["part_number", "etag"]
+)
 
 
 class ObjectSchema(BaseSchema):
@@ -75,6 +78,17 @@ class PresignUploadResponseSchema(BaseSchema):
     @post_load
     def make_presign_upload_response(self, data):
         return PresignUploadResponse(**data)
+
+
+class CompletedUploadPartSchema(BaseSchema):
+    part_number = fields.Integer(data_key="partNumber")
+    etag = fields.String()
+
+
+class CompleteMultipartUploadSchema(BaseSchema):
+    path = fields.String()
+    upload_id = fields.String(data_key="uploadId")
+    parts = fields.List(fields.Nested(CompletedUploadPartSchema))
 
 
 class ObjectClient(BaseClient):
@@ -118,3 +132,13 @@ class ObjectClient(BaseClient):
             endpoint, SimplePresignResponseSchema(), json=body
         )
         return response.url
+
+    def complete_multipart_upload(
+        self, project_id, path, upload_id, completed_parts
+    ):
+        endpoint = "/project/{}/presign/upload/complete".format(project_id)
+        schema = CompleteMultipartUploadSchema()
+        body = schema.dump(
+            {"path": path, "upload_id": upload_id, "parts": completed_parts}
+        )
+        self._put_raw(endpoint, json=body)
