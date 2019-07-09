@@ -92,11 +92,6 @@ def test_object_schema():
     assert data == OBJECT
 
 
-def test_object_schema_invalid():
-    with pytest.raises(ValidationError):
-        ObjectSchema().load({})
-
-
 @pytest.mark.parametrize(
     "body, expected",
     [
@@ -112,21 +107,6 @@ def test_list_objects_response_schema(body, expected):
     assert data == expected
 
 
-def test_list_objects_response_schema_invalid():
-    with pytest.raises(ValidationError):
-        ListObjectsResponseSchema().load({})
-
-
-def test_presign_download_response_schema():
-    data = PresignDownloadResponseSchema().load(PRESIGN_DOWNLOAD_RESPONSE_BODY)
-    assert data == PRESIGN_DOWNLOAD_RESPONSE
-
-
-def test_presign_download_response_schema_invalid():
-    with pytest.raises(ValidationError):
-        PresignDownloadResponseSchema().load({})
-
-
 @pytest.mark.parametrize(
     "body, expected",
     [
@@ -140,9 +120,18 @@ def test_presign_upload_response_schema(body, expected):
     assert data == expected
 
 
-def test_presign_upload_response_schema_invalid():
+@pytest.mark.parametrize(
+    "schema",
+    [
+        ObjectSchema,
+        ListObjectsResponseSchema,
+        PresignDownloadResponseSchema,
+        PresignUploadResponseSchema,
+    ],
+)
+def test_schema_invalid_body(schema):
     with pytest.raises(ValidationError):
-        PresignUploadResponseSchema().load({})
+        schema().load({})
 
 
 @pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path"])
