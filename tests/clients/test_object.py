@@ -106,6 +106,19 @@ def test_presign_download_response_schema_invalid():
         PresignDownloadResponseSchema().load({})
 
 
+def test_object_client_get(mocker):
+    mocker.patch.object(ObjectClient, "_get", return_value=OBJECT)
+    schema_mock = mocker.patch("faculty.clients.object.ObjectSchema")
+
+    client = ObjectClient(mocker.Mock())
+    assert client.get(PROJECT_ID, "/path") == OBJECT
+
+    schema_mock.assert_called_once_with()
+    ObjectClient._get.assert_called_once_with(
+        "/project/{}/object/path".format(PROJECT_ID), schema_mock.return_value
+    )
+
+
 def test_object_client_list(mocker):
     mocker.patch.object(
         ObjectClient, "_get", return_value=LIST_OBJECTS_RESPONSE

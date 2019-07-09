@@ -61,6 +61,10 @@ class ObjectClient(BaseClient):
 
     SERVICE_NAME = "hoard"
 
+    def get(self, project_id, path):
+        endpoint = "/project/{}/object/{}".format(project_id, path.lstrip("/"))
+        return self._get(endpoint, ObjectSchema())
+
     def list(self, project_id, prefix="/", page_token=None):
         endpoint = "/project/{}/object-list/{}".format(
             project_id, prefix.lstrip("/")
