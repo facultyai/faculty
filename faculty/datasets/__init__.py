@@ -562,7 +562,6 @@ def open(project_path, mode="r", temp_dir=None, **kwargs):
     local_path = os.path.join(tmpdir, os.path.basename(project_path))
 
     try:
-        local_path = os.path.join(tmpdir, os.path.basename(project_path))
         get(project_path, local_path)
         with io.open(local_path, mode, **kwargs) as file_object:
             yield file_object
