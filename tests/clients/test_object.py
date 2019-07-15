@@ -35,7 +35,7 @@ from faculty.clients.object import (
     PresignUploadResponseSchema,
     SimplePresignResponse,
     SimplePresignResponseSchema,
-    SourcePathNotFound,
+    PathNotFound,
 )
 
 
@@ -269,8 +269,31 @@ def test_object_client_copy_single_source_not_found(mocker):
     mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
 
     client = ObjectClient(mocker.Mock())
-    with pytest.raises(SourcePathNotFound, match="'source' cannot be found"):
+    with pytest.raises(PathNotFound, match="'source' cannot be found"):
         client.copy(PROJECT_ID, "source", "destination")
+
+
+def test_object_client_delete(mocker):
+    path = "test-path"
+    mocker.patch.object(ObjectClient, "_delete_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.delete(PROJECT_ID, path)
+
+    ObjectClient._delete_raw.assert_called_once_with(
+        "/project/{}/object/{}".format(PROJECT_ID, path), params={}
+    )
+
+
+def test_object_client_delete_path_not_found(mocker):
+    path = "test-path"
+    error_code = "object_not_found"
+    exception = NotFound(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ObjectClient, "_delete_raw", side_effect=exception)
+
+    client = ObjectClient(mocker.Mock())
+    with pytest.raises(PathNotFound, match="'test-path' cannot be found"):
+        client.delete(PROJECT_ID, path)
 
 
 def test_object_client_presign_download(mocker):

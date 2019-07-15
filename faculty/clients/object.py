@@ -22,11 +22,11 @@ from marshmallow_enum import EnumField
 from faculty.clients.base import BaseSchema, BaseClient, NotFound
 
 
-class SourcePathNotFound(Exception):
+class PathNotFound(Exception):
     def __init__(self, source_path):
-        tpl = "Source path provided '{}' cannot be found"
+        tpl = "Path provided '{}' cannot be found"
         message = tpl.format(source_path)
-        super(SourcePathNotFound, self).__init__(message)
+        super(PathNotFound, self).__init__(message)
 
 
 class CloudStorageProvider(Enum):
@@ -170,7 +170,7 @@ class ObjectClient(BaseClient):
 
         Raises
         ------
-        SourcePathNotFound
+        PathNotFound
             When the source path does not exist or is not found
         """
         endpoint = "/project/{}/object/{}".format(
@@ -183,7 +183,37 @@ class ObjectClient(BaseClient):
             self._put_raw(endpoint, params=params)
         except NotFound as err:
             if err.error_code == "source_path_not_found":
-                raise SourcePathNotFound(source)
+                raise PathNotFound(source)
+            else:
+                raise
+
+    def delete(self, project_id, path, recursive=None):
+        """Delete objects in the store.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        path : str
+            Delete object(s) from this path
+        recursive : bool, optional
+            If present allows to delete whole paths with all its content,
+            like a recursive delete in a filesystem. By default the endpoint
+            is not recursive.
+
+        Raises
+        ------
+        PathNotFound
+            When the path does not exist or is not found
+        """
+        endpoint = "/project/{}/object/{}".format(project_id, path.lstrip("/"))
+        params = {}
+        if recursive is not None:
+            params["recursive"] = 1 if recursive else 0
+        try:
+            self._delete_raw(endpoint, params=params)
+        except NotFound as err:
+            if err.error_code == "object_not_found":
+                raise PathNotFound(path)
             else:
                 raise
 
