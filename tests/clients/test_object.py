@@ -20,6 +20,7 @@ import pytest
 from marshmallow import ValidationError
 from pytz import UTC
 
+from faculty.clients.base import NotFound
 from faculty.clients.object import (
     CloudStorageProvider,
     CompleteMultipartUploadSchema,
@@ -34,6 +35,7 @@ from faculty.clients.object import (
     PresignUploadResponseSchema,
     SimplePresignResponse,
     SimplePresignResponseSchema,
+    SourcePathNotFound,
 )
 
 
@@ -223,6 +225,52 @@ def test_object_client_list_defaults(mocker):
         schema_mock.return_value,
         params={},
     )
+
+
+def test_object_client_copy_default(mocker):
+    mocker.patch.object(ObjectClient, "_put_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.copy(PROJECT_ID, "source", "destination")
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/object/{}".format(PROJECT_ID, "destination"),
+        params={"sourcePath": "source"},
+    )
+
+
+def test_object_client_copy_single(mocker):
+    mocker.patch.object(ObjectClient, "_put_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.copy(PROJECT_ID, "source", "destination", False)
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/object/{}".format(PROJECT_ID, "destination"),
+        params={"sourcePath": "source", "recursive": 0},
+    )
+
+
+def test_object_client_copy_multiple(mocker):
+    mocker.patch.object(ObjectClient, "_put_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.copy(PROJECT_ID, "source", "destination", recursive=True)
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/object/{}".format(PROJECT_ID, "destination"),
+        params={"sourcePath": "source", "recursive": 1},
+    )
+
+
+def test_object_client_copy_single_source_not_found(mocker):
+    error_code = "source_path_not_found"
+    exception = NotFound(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
+
+    client = ObjectClient(mocker.Mock())
+    with pytest.raises(SourcePathNotFound, match="'source' cannot be found"):
+        client.copy(PROJECT_ID, "source", "destination")
 
 
 def test_object_client_presign_download(mocker):

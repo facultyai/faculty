@@ -19,7 +19,14 @@ from enum import Enum
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseSchema, BaseClient
+from faculty.clients.base import BaseSchema, BaseClient, NotFound
+
+
+class SourcePathNotFound(Exception):
+    def __init__(self, source_path):
+        tpl = "Source path provided '{}' cannot be found"
+        message = tpl.format(source_path)
+        super(SourcePathNotFound, self).__init__(message)
 
 
 class CloudStorageProvider(Enum):
@@ -145,6 +152,40 @@ class ObjectClient(BaseClient):
         if page_token is not None:
             params["pageToken"] = page_token
         return self._get(endpoint, ListObjectsResponseSchema(), params=params)
+
+    def copy(self, project_id, source, destination, recursive=None):
+        """Copy objects in the store.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        source : str
+            Copy object(s) from this source path
+        destination : str
+            Copy to this destination path
+        recursive : bool, optional
+            If present allows to copy whole paths with all its content,
+            like a recursive copy in a filesystem. By default the endpoint
+            is not recursive.
+
+        Raises
+        ------
+        SourcePathNotFound
+            When the source path does not exist or is not found
+        """
+        endpoint = "/project/{}/object/{}".format(
+            project_id, destination.lstrip("/")
+        )
+        params = {"sourcePath": source}
+        if recursive is not None:
+            params["recursive"] = 1 if recursive else 0
+        try:
+            self._put_raw(endpoint, params=params)
+        except NotFound as err:
+            if err.error_code == "source_path_not_found":
+                raise SourcePathNotFound(source)
+            else:
+                raise
 
     def presign_download(
         self, project_id, path, response_content_disposition=None
