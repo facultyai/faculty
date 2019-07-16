@@ -272,7 +272,7 @@ class ObjectClient(BaseClient):
 
         1. Assign each chunk a part number, starting from 1
         2. Presign the chunk for upload with the ``presign_upload_part`` method
-        3. Upload the chunk by POSTing to the returned URL
+        3. Upload the chunk by PUTting to the returned URL
         4. Get the 'ETag' header from the response
 
         Once all chunks have been uploaded, make a final call to the
@@ -318,7 +318,7 @@ class ObjectClient(BaseClient):
         """
         endpoint = "/project/{}/presign/upload/part".format(project_id)
         body = {"path": path, "uploadId": upload_id, "partNumber": part_number}
-        response = self._post(
+        response = self._put(
             endpoint, SimplePresignResponseSchema(), json=body
         )
         return response.url

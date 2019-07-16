@@ -368,7 +368,7 @@ def test_object_client_presign_upload(mocker):
 
 def test_object_client_presign_upload_part(mocker):
     mocker.patch.object(
-        ObjectClient, "_post", return_value=SIMPLE_PRESIGN_RESPONSE
+        ObjectClient, "_put", return_value=SIMPLE_PRESIGN_RESPONSE
     )
     schema_mock = mocker.patch(
         "faculty.clients.object.SimplePresignResponseSchema"
@@ -382,7 +382,7 @@ def test_object_client_presign_upload_part(mocker):
     assert returned == SIMPLE_PRESIGN_RESPONSE.url
 
     schema_mock.assert_called_once_with()
-    ObjectClient._post.assert_called_once_with(
+    ObjectClient._put.assert_called_once_with(
         "/project/{}/presign/upload/part".format(PROJECT_ID),
         schema_mock.return_value,
         json={"path": "/path", "uploadId": "upload-id", "partNumber": 2},
