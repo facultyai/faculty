@@ -19,6 +19,7 @@ from faculty.clients.environment import EnvironmentClient
 from faculty.clients.experiment import ExperimentClient
 from faculty.clients.job import JobClient
 from faculty.clients.log import LogClient
+from faculty.clients.object import ObjectClient
 from faculty.clients.project import ProjectClient
 from faculty.clients.report import ReportClient
 from faculty.clients.secret import SecretClient
@@ -32,8 +33,9 @@ CLIENT_FOR_RESOURCE = {
     "cluster": ClusterClient,
     "environment": EnvironmentClient,
     "experiment": ExperimentClient,
-    "log": LogClient,
     "job": JobClient,
+    "log": LogClient,
+    "object": ObjectClient,
     "project": ProjectClient,
     "report": ReportClient,
     "secret": SecretClient,
