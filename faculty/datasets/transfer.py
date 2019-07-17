@@ -1,6 +1,7 @@
 import requests
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
+from faculty.datasets.session import DatasetsError
 
 
 MEGABYTE = 1024 * 1024
@@ -22,6 +23,16 @@ def download(object_client, project_id, datasets_path, local_path):
     url = object_client.presign_download(project_id, datasets_path)
 
     with requests.get(url, stream=True) as response:
+
+        if response.status_code == 404:
+            raise DatasetsError(
+                "No such object {} in project {}".format(
+                    datasets_path, project_id
+                )
+            )
+
+        response.raise_for_status()
+
         with open(local_path, "wb") as fp:
             for chunk in response.iter_content():
                 if chunk:  # Filter out keep-alive chunks
@@ -84,6 +95,7 @@ def _s3_upload(
         )
 
         upload_response = requests.put(chunk_url, data=chunk)
+        upload_response.raise_for_status()
 
         completed_parts.append(
             CompletedUploadPart(
