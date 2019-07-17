@@ -22,7 +22,10 @@ import io
 
 from botocore.client import ClientError
 
-from faculty.datasets import path, session
+from faculty.session import get_session
+from faculty.context import get_context
+from faculty.clients.object import ObjectClient
+from faculty.datasets import path, session, transfer
 from faculty.datasets.session import DatasetsError
 
 
@@ -51,7 +54,7 @@ def _bucket(project_id=None):
     return session.get().bucket(project_id)
 
 
-def ls(prefix="/", project_id=None, show_hidden=False, s3_client=None):
+def ls(prefix="/", project_id=None, show_hidden=False):
     """List contents of project datasets.
 
     Parameters
@@ -65,8 +68,6 @@ def ls(prefix="/", project_id=None, show_hidden=False, s3_client=None):
         your environment.
     show_hidden : bool, optional
         Include hidden files in the output. Defaults to False.
-    s3_client : botocore.client.S3, optional
-        Advanced - a specific boto client for AWS S3 to use.
 
     Returns
     -------
@@ -74,47 +75,31 @@ def ls(prefix="/", project_id=None, show_hidden=False, s3_client=None):
         The list of files from the project datasets.
     """
 
-    if s3_client is None:
-        s3_client = _s3_client(project_id)
+    project_id = project_id or get_context().project_id
 
-    bucket = _bucket(project_id)
-
-    # Use a paginator to enable listing projects with more than 1000 files
-    paginator = s3_client.get_paginator("list_objects_v2")
-    response_iterator = paginator.paginate(
-        Bucket=bucket,
-        Prefix=path.projectpath_to_bucketpath(prefix, project_id),
-    )
+    client = ObjectClient(get_session())
 
     paths = []
-    for part in response_iterator:
 
-        try:
-            objects = part["Contents"]
-        except KeyError:
-            continue
+    list_response = client.list(project_id, prefix)
+    paths += [obj.path for obj in list_response.objects]
 
-        for obj in objects:
-            project_path = path.bucketpath_to_projectpath(obj["Key"])
-
-            # Ignore the root of the project directory
-            if project_path != "/":
-                paths.append(project_path)
+    while list_response.next_page_token is not None:
+        list_response = client.list(project_id, prefix)
+        paths += [obj.path for obj in list_response.objects]
 
     if show_hidden:
         return paths
     else:
         non_hidden_paths = [
-            path_
-            for path_ in paths
-            if not any(element.startswith(".") for element in path_.split("/"))
+            path
+            for path in paths
+            if not any(element.startswith(".") for element in path.split("/"))
         ]
         return non_hidden_paths
 
 
-def glob(
-    pattern, prefix="/", project_id=None, show_hidden=False, s3_client=None
-):
+def glob(pattern, prefix="/", project_id=None, show_hidden=False):
     """List contents of project datasets that match a glob pattern.
 
     Parameters
@@ -130,26 +115,19 @@ def glob(
         your environment.
     show_hidden : bool, optional
         Include hidden files in the output. Defaults to False.
-    s3_client : botocore.client.S3, optional
-        Advanced - a specific boto client for AWS S3 to use.
 
     Returns
     -------
     list
         The list of files from the project that match the glob pattern.
     """
-
     contents = ls(
-        prefix=prefix,
-        project_id=project_id,
-        show_hidden=show_hidden,
-        s3_client=s3_client,
+        prefix=prefix, project_id=project_id, show_hidden=show_hidden
     )
-
     return fnmatch.filter(contents, pattern)
 
 
-def _isdir(project_path, project_id=None, s3_client=None):
+def _isdir(project_path, project_id=None):
     """Determine if a path in a project's datasets is a directory.
 
     Parameters
@@ -160,26 +138,19 @@ def _isdir(project_path, project_id=None, s3_client=None):
         The project to list files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
-    s3_client : botocore.client.S3, optional
-        Advanced - a specific boto client for AWS S3 to use.
 
     Returns
     -------
     bool
     """
-    # 'Directories' in the S3 bucket always end in a '/'
+    # 'Directories' always end in a '/' in S3
     if not project_path.endswith("/"):
         project_path += "/"
-    matches = ls(
-        project_path,
-        project_id=project_id,
-        show_hidden=True,
-        s3_client=s3_client,
-    )
+    matches = ls(project_path, project_id=project_id, show_hidden=True)
     return len(matches) >= 1
 
 
-def _isfile(project_path, project_id=None, s3_client=None):
+def _isfile(project_path, project_id=None):
     """Determine if a path in a project's datasets is a file.
 
     Parameters
@@ -190,21 +161,14 @@ def _isfile(project_path, project_id=None, s3_client=None):
         The project to list files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
-    s3_client : botocore.client.S3, optional
-        Advanced - a specific boto client for AWS S3 to use.
 
     Returns
     -------
     bool
     """
-    if _isdir(project_path, project_id, s3_client):
+    if _isdir(project_path, project_id):
         return False
-    matches = ls(
-        project_path,
-        project_id=project_id,
-        show_hidden=True,
-        s3_client=s3_client,
-    )
+    matches = ls(project_path, project_id=project_id, show_hidden=True)
     rationalised_path = path.rationalise_projectpath(project_path)
     return any(match == rationalised_path for match in matches)
 
@@ -215,9 +179,7 @@ def _create_parent_directories(project_path, project_id, s3_client):
 
     # Make sure empty objects exist for directories
     # List once for speed
-    all_objects = set(
-        ls("/", project_id=project_id, show_hidden=True, s3_client=s3_client)
-    )
+    all_objects = set(ls("/", project_id=project_id, show_hidden=True))
 
     for dirname in path.project_parent_directories(project_path):
 
@@ -233,20 +195,9 @@ def _create_parent_directories(project_path, project_id, s3_client):
             s3_client.put_object(Bucket=bucket, Key=bucket_path)
 
 
-def _put_file(local_path, project_path, project_id, s3_client):
-
-    bucket = _bucket(project_id)
-    bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
-
-    if bucket_path.endswith("/"):
-        msg = (
-            "the destination path {} indicates a directory but the "
-            "source path {} is a normal file - please provide a full "
-            "destination path"
-        ).format(repr(project_path), repr(local_path))
-        raise DatasetsError(msg)
-
-    s3_client.upload_file(local_path, bucket, bucket_path)
+def _put_file(local_path, project_path, project_id):
+    client = ObjectClient(get_session())
+    transfer.upload(client, project_id, project_path, local_path)
 
 
 def _put_directory(local_path, project_path, project_id, s3_client):
@@ -274,7 +225,7 @@ def _put_recursive(local_path, project_path, project_id, s3_client):
     if os.path.isdir(local_path):
         _put_directory(local_path, project_path, project_id, s3_client)
     else:
-        _put_file(local_path, project_path, project_id, s3_client)
+        _put_file(local_path, project_path, project_id)
 
 
 def put(local_path, project_path, project_id=None):
@@ -292,6 +243,7 @@ def put(local_path, project_path, project_id=None):
         your environment.
     """
 
+    project_id = project_id or get_context().project_id
     if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
 
@@ -301,7 +253,7 @@ def put(local_path, project_path, project_id=None):
     _put_recursive(local_path, project_path, project_id, s3_client)
 
 
-def _get_file(project_path, local_path, project_id, s3_client):
+def _get_file(project_path, local_path, project_id):
 
     if local_path.endswith("/"):
         msg = (
@@ -311,17 +263,8 @@ def _get_file(project_path, local_path, project_id, s3_client):
         ).format(repr(project_path), repr(local_path))
         raise DatasetsError(msg)
 
-    bucket = _bucket(project_id)
-    bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
-
-    try:
-        s3_client.download_file(bucket, bucket_path, local_path)
-    except ClientError as err:
-        if "404" in err.args[0]:
-            msg = "no file {} in project".format(repr(project_path))
-            raise DatasetsError(msg)
-        else:
-            raise
+    client = ObjectClient(get_session())
+    transfer.download(client, project_id, project_path, local_path)
 
 
 def _get_directory(project_path, local_path, project_id, s3_client):
@@ -355,7 +298,7 @@ def _get_directory(project_path, local_path, project_id, s3_client):
             dirname = os.path.dirname(local_dest)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
-            _get_file(object_path, local_dest, project_id, s3_client)
+            _get_file(object_path, local_dest, project_id)
 
 
 def get(project_path, local_path, project_id=None):
@@ -381,7 +324,7 @@ def get(project_path, local_path, project_id=None):
     if _isdir(project_path, project_id, client):
         _get_directory(project_path, local_path, project_id, client)
     else:
-        _get_file(project_path, local_path, project_id, client)
+        _get_file(project_path, local_path, project_id)
 
 
 def mv(source_path, destination_path, project_id=None):
