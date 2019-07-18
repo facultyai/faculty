@@ -400,20 +400,16 @@ def test_job_client_list_runs_page(mocker):
 
 def test_job_client_update_metadata(mocker):
     mocker.patch.object(JobClient, "_put_raw")
+    schema_mock = mocker.patch("faculty.clients.job.JobMetadataSchema")
 
     client = JobClient(mocker.Mock())
-    client.test_job_client_update_metadata(PROJECT_ID, JOB_ID, "one", "two")
+    client.update_metadata(PROJECT_ID, JOB_ID, "one", "two")
 
     JobClient._put_raw.assert_called_once_with(
         "/project/{}/job/{}/meta".format(PROJECT_ID, JOB_ID),
+        schema_mock.return_value,
+        json={"name":"one", "description":"two"}
     )
-
-    last_call_args, last_call_kwargs = JobClient._post.call_args
-    assert last_call_args == (
-        "/project/{}/job/{}/run".format(PROJECT_ID, JOB_ID),
-    )
-    assert last_call_kwargs["json"]["name"] == "one"
-    assert last_call_kwargs["json"]["description"] == "two"
 
 
 @pytest.mark.parametrize(
