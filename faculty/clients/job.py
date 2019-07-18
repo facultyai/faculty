@@ -250,16 +250,6 @@ class JobClient(BaseClient):
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
 
-    def update_metadata(self, project_id, job_id, name, description):
-
-        endpoint = "/project/{}/job/{}/meta".format(project_id, job_id)
-        print(endpoint)
-        payload = {
-            "name": name,
-            "description": description
-        }
-        self._put_raw(endpoint, JobMetadataSchema(), json=payload)
-
     def create_run(self, project_id, job_id, parameter_value_sets=None):
         """Create a run for a job.
 
@@ -394,3 +384,25 @@ class JobClient(BaseClient):
             project_id, job_id, run_identifier, subrun_identifier
         )
         return self._get(endpoint, SubrunSchema())
+
+        def update_metadata(self, project_id, job_id, name, description):
+            """
+            Update the metadata of a job.
+
+            Parameters
+            ----------
+            project_id : uuid.UUID
+            job_id : uuid.UUID
+            name : st
+                The new name of the job.
+            description : str
+                The new description of the job            
+            """
+
+            endpoint = "/project/{}/job/{}/meta".format(project_id, job_id)
+            print(endpoint)
+            payload = {
+                "name": name,
+                "description": description
+            }
+            self._put_raw(endpoint, JobMetadataSchema(), json=payload)
