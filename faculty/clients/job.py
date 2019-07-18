@@ -264,7 +264,7 @@ class JobClient(BaseClient):
         ----------
         project_id : uuid.UUID
         job_id : uuid.UUID
-        name : st
+        name : str
             The new name of the job.
         description : str
             The new description of the job
