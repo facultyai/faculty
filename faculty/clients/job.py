@@ -21,6 +21,11 @@ from marshmallow_enum import EnumField
 from faculty.clients.base import BaseClient, BaseSchema
 
 
+class ParameterType(Enum):
+    TEXT = "text"
+    NUMBER = "number"
+
+
 class EnvironmentStepExecutionState(Enum):
     QUEUED = "queued"
     RUNNING = "running"
@@ -57,6 +62,25 @@ JobMetadata = namedtuple(
     ["name", "description", "author_id", "created_at", "last_updated_at"],
 )
 JobSummary = namedtuple("JobSummary", ["id", "metadata"])
+Job = namedtuple("Job", ["meta", "definition"])
+JobDefinition = namedtuple(
+    "JobDefinition",
+    [
+        "working_dir",
+        "command",
+        "image_type",
+        "conda_environment",
+        "environment_ids",
+        "instance_size_type",
+        "instance_size",
+        "max_runtime_seconds",
+    ],
+)
+JobCommand = namedtuple("JobCommand", ["name", "parameters"])
+JobParameter = namedtuple(
+    "JobParameter", ["name", "type", "default", "required"]
+)
+InstanceSize = namedtuple("InstanceSize", ["milli_cpus", "memory_mb"])
 EnvironmentStepExecution = namedtuple(
     "EnvironmentStepExecution",
     [
@@ -125,6 +149,72 @@ class JobSummarySchema(BaseSchema):
         return JobSummary(**data)
 
 
+class InstanceSizeSchema(BaseSchema):
+    milli_cpus = fields.Float(data_key="milliCpus", required=True)
+    memory_mb = fields.Float(data_key="memoryMb", required=True)
+
+    @post_load
+    def make_instance_size(self, data):
+        return InstanceSize(**data)
+
+
+# class JobParameterSchema(BaseSchema):
+#     name = fields.String(required=True)
+#     type = EnumField(ParameterType, by_value=True, required=True)
+#     default = fields.String(required=True)
+#     required = fields.Boolean(required=True)
+
+#     @post_load
+#     def make_job_parameter(self, data):
+#         return JobParameter(**data)
+
+
+class JobCommandSchema(BaseSchema):
+    name = fields.String(required=True)
+    parameters = fields.List(fields.String, requiered=True)
+    # parameter = fields.Nested(
+    #     JobParameterSchema, required=True
+    # )
+
+    @post_load
+    def make_job_command(self, data):
+        return JobCommand(**data)
+
+
+class JobDefinitionSchema(BaseSchema):
+    working_dir = fields.String(data_key="workingDir", required=True)
+    command = fields.Nested(JobCommandSchema, required=True)
+    image_type = fields.String(data_key="imageType", required=True)
+    conda_environment = fields.String(
+        data_key="condaEnvironment", required=False
+    )
+    environment_ids = fields.List(
+        fields.String(), data_key="environmentIds", required=True
+    )
+    instance_size_type = fields.String(
+        data_key="instanceSizeType", required=False
+    )
+    instance_size = fields.Nested(
+        InstanceSizeSchema, missing=None, required=False
+    )
+    max_runtime_seconds = fields.Integer(
+        data_key="maxRuntimeSeconds", required=True
+    )
+
+    @post_load
+    def make_job_definition(self, data):
+        return JobDefinition(**data)
+
+
+class JobSchema(BaseSchema):
+    meta = fields.Nested(JobMetadataSchema, required=True)
+    definition = fields.Nested(JobDefinitionSchema, required=True)
+
+    @post_load
+    def make_job(self, data):
+        return Job(**data)
+
+
 class EnvironmentStepExecutionSchema(BaseSchema):
     environment_id = fields.UUID(data_key="environmentId", required=True)
     environment_step_id = fields.UUID(
@@ -140,7 +230,7 @@ class EnvironmentStepExecutionSchema(BaseSchema):
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
 
     @post_load
-    def make_environment_step_execution_schema(self, data):
+    def make_environment_step_execution(self, data):
         return EnvironmentStepExecution(**data)
 
 
@@ -255,6 +345,21 @@ class JobClient(BaseClient):
         """
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
+
+    def get_job(self, project_id, job_id):
+        """Get a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        job_id : uuid.UUID
+
+        Returns
+        -------
+        Job
+        """
+        endpoint = "/project/{}/job/{}".format(project_id, job_id)
+        return self._get(endpoint, JobSchema())
 
     def update_metadata(self, project_id, job_id, name, description):
         """
