@@ -19,33 +19,17 @@ import pytest
 from dateutil.tz import UTC
 from marshmallow import ValidationError
 
-from faculty.clients.job import (
-    JobMetadata,
-    JobMetadataSchema,
-    JobSummary,
-    JobSummarySchema,
-    JobClient,
-    RunIdSchema,
-    Page,
-    PageSchema,
-    Pagination,
-    PaginationSchema,
-    RunSummary,
-    RunSummarySchema,
-    RunState,
-    SubrunSummary,
-    SubrunSummarySchema,
-    SubrunState,
-    Run,
-    RunSchema,
-    ListRunsResponse,
-    ListRunsResponseSchema,
-    EnvironmentStepExecution,
-    EnvironmentStepExecutionSchema,
-    EnvironmentStepExecutionState,
-    Subrun,
-    SubrunSchema,
-)
+from faculty.clients.job import (EnvironmentStepExecution,
+                                 EnvironmentStepExecutionSchema,
+                                 EnvironmentStepExecutionState, JobClient,
+                                 JobMetadata, JobMetadataSchema, JobSummary,
+                                 JobSummarySchema, ListRunsResponse,
+                                 ListRunsResponseSchema, Page, PageSchema,
+                                 Pagination, PaginationSchema, Run,
+                                 RunIdSchema, RunSchema, RunState, RunSummary,
+                                 RunSummarySchema, Subrun, SubrunSchema,
+                                 SubrunState, SubrunSummary,
+                                 SubrunSummarySchema)
 
 PROJECT_ID = uuid4()
 JOB_ID = uuid4()
@@ -412,6 +396,24 @@ def test_job_client_list_runs_page(mocker):
         schema_mock.return_value,
         params={"start": 20, "limit": 10},
     )
+
+
+def test_job_client_update_metadata(mocker):
+    mocker.patch.object(JobClient, "_put_raw")
+
+    client = JobClient(mocker.Mock())
+    client.test_job_client_update_metadata(PROJECT_ID, JOB_ID, "one", "two")
+
+    JobClient._put_raw.assert_called_once_with(
+        "/project/{}/job/{}/meta".format(PROJECT_ID, JOB_ID),
+    )
+
+    last_call_args, last_call_kwargs = JobClient._post.call_args
+    assert last_call_args == (
+        "/project/{}/job/{}/run".format(PROJECT_ID, JOB_ID),
+    )
+    assert last_call_kwargs["json"]["name"] == "one"
+    assert last_call_kwargs["json"]["description"] == "two"
 
 
 @pytest.mark.parametrize(
