@@ -18,7 +18,7 @@ from enum import Enum
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseSchema, BaseClient
+from faculty.clients.base import BaseClient, BaseSchema
 
 
 class EnvironmentStepExecutionState(Enum):
@@ -249,6 +249,16 @@ class JobClient(BaseClient):
         """
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
+
+    def update_metadata(self, project_id, job_id, name, description):
+
+        endpoint = "/project/{}/job/{}/meta".format(project_id, job_id)
+        print(endpoint)
+        payload = {
+            "name": name,
+            "description": description
+        }
+        self._put_raw(endpoint, JobMetadataSchema(), json=payload)
 
     def create_run(self, project_id, job_id, parameter_value_sets=None):
         """Create a run for a job.
