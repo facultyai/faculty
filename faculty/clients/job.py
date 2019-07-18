@@ -18,7 +18,7 @@ from enum import Enum
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseSchema, BaseClient
+from faculty.clients.base import BaseClient, BaseSchema
 
 
 class EnvironmentStepExecutionState(Enum):
@@ -52,7 +52,10 @@ class RunState(Enum):
     ERROR = "error"
 
 
-JobMetadata = namedtuple("JobMetadata", ["name", "description"])
+JobMetadata = namedtuple(
+    "JobMetadata",
+    ["name", "description", "author_id", "created_at", "last_updated_at"],
+)
 JobSummary = namedtuple("JobSummary", ["id", "metadata"])
 EnvironmentStepExecution = namedtuple(
     "EnvironmentStepExecution",
@@ -104,6 +107,9 @@ ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
 class JobMetadataSchema(BaseSchema):
     name = fields.String(required=True)
     description = fields.String(required=True)
+    author_id = fields.UUID(data_key="authorId", required=True)
+    created_at = fields.DateTime(data_key="createdAt", required=True)
+    last_updated_at = fields.DateTime(data_key="lastUpdatedAt", required=True)
 
     @post_load
     def make_job_metadata(self, data):
@@ -249,6 +255,24 @@ class JobClient(BaseClient):
         """
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
+
+    def update_metadata(self, project_id, job_id, name, description):
+        """
+        Update the metadata of a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        job_id : uuid.UUID
+        name : str
+            The new name of the job.
+        description : str
+            The new description of the job
+        """
+
+        endpoint = "/project/{}/job/{}/meta".format(project_id, job_id)
+        payload = {"name": name, "description": description}
+        self._put_raw(endpoint, json=payload)
 
     def create_run(self, project_id, job_id, parameter_value_sets=None):
         """Create a run for a job.
