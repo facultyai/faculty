@@ -48,12 +48,18 @@ from faculty.clients.job import (
 )
 
 PROJECT_ID = uuid4()
+USER_ID = uuid4()
 JOB_ID = uuid4()
 RUN_ID = uuid4()
 SUBRUN_ID = uuid4()
 ENVIRONMENT_ID = uuid4()
 ENVIRONMENT_STEP_ID = uuid4()
 
+
+CREATED_AT = datetime(2018, 3, 10, 11, 28, 9, 123000, tzinfo=UTC)
+CREATED_AT_STRING = "2018-03-10T11:28:09.123Z"
+LAST_UPDATED_AT = datetime(2018, 3, 10, 11, 30, 30, 341000, tzinfo=UTC)
+LAST_UPDATED_AT_STRING = "2018-03-10T11:30:30.341Z"
 SUBMITTED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 SUBMITTED_AT_STRING = "2018-03-10T11:32:06.247Z"
 STARTED_AT = datetime(2018, 3, 10, 11, 32, 30, 172000, tzinfo=UTC)
@@ -61,10 +67,13 @@ STARTED_AT_STRING = "2018-03-10T11:32:30.172Z"
 ENDED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
 ENDED_AT_STRING = "2018-03-10T11:37:42.482Z"
 
-JOB_METADATA = JobMetadata(name="job name", description="job description")
+JOB_METADATA = JobMetadata(name="job name", description="job description", author_id=USER_ID, created_at=CREATED_AT, last_updated_at=LAST_UPDATED_AT_STRING)
 JOB_METADATA_BODY = {
     "name": JOB_METADATA.name,
     "description": JOB_METADATA.description,
+    "author_id": str(USER_ID),
+    "created_at": CREATED_AT_STRING,
+    "last_updated_at": LAST_UPDATED_AT_STRING,
 }
 
 JOB_SUMMARY = JobSummary(id=JOB_ID, metadata=JOB_METADATA)
