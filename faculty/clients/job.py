@@ -52,7 +52,10 @@ class RunState(Enum):
     ERROR = "error"
 
 
-JobMetadata = namedtuple("JobMetadata", ["name", "description", "author_id", "created_at", "last_updated_at"])
+JobMetadata = namedtuple(
+    "JobMetadata",
+    ["name", "description", "author_id", "created_at", "last_updated_at"],
+)
 JobSummary = namedtuple("JobSummary", ["id", "metadata"])
 EnvironmentStepExecution = namedtuple(
     "EnvironmentStepExecution",
@@ -107,7 +110,6 @@ class JobMetadataSchema(BaseSchema):
     author_id = fields.UUID(data_key="authorId", required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     last_updated_at = fields.DateTime(data_key="lastUpdatedAt", required=True)
-
 
     @post_load
     def make_job_metadata(self, data):

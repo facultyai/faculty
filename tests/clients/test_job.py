@@ -67,13 +67,19 @@ STARTED_AT_STRING = "2018-03-10T11:32:30.172Z"
 ENDED_AT = datetime(2018, 3, 10, 11, 37, 42, 482000, tzinfo=UTC)
 ENDED_AT_STRING = "2018-03-10T11:37:42.482Z"
 
-JOB_METADATA = JobMetadata(name="job name", description="job description", author_id=USER_ID, created_at=CREATED_AT, last_updated_at=LAST_UPDATED_AT_STRING)
+JOB_METADATA = JobMetadata(
+    name="job name",
+    description="job description",
+    author_id=USER_ID,
+    created_at=CREATED_AT,
+    last_updated_at=LAST_UPDATED_AT,
+)
 JOB_METADATA_BODY = {
     "name": JOB_METADATA.name,
     "description": JOB_METADATA.description,
-    "author_id": str(USER_ID),
-    "created_at": CREATED_AT_STRING,
-    "last_updated_at": LAST_UPDATED_AT_STRING,
+    "authorId": str(USER_ID),
+    "createdAt": CREATED_AT_STRING,
+    "lastUpdatedAt": LAST_UPDATED_AT_STRING,
 }
 
 JOB_SUMMARY = JobSummary(id=JOB_ID, metadata=JOB_METADATA)
