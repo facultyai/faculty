@@ -19,17 +19,33 @@ import pytest
 from dateutil.tz import UTC
 from marshmallow import ValidationError
 
-from faculty.clients.job import (EnvironmentStepExecution,
-                                 EnvironmentStepExecutionSchema,
-                                 EnvironmentStepExecutionState, JobClient,
-                                 JobMetadata, JobMetadataSchema, JobSummary,
-                                 JobSummarySchema, ListRunsResponse,
-                                 ListRunsResponseSchema, Page, PageSchema,
-                                 Pagination, PaginationSchema, Run,
-                                 RunIdSchema, RunSchema, RunState, RunSummary,
-                                 RunSummarySchema, Subrun, SubrunSchema,
-                                 SubrunState, SubrunSummary,
-                                 SubrunSummarySchema)
+from faculty.clients.job import (
+    EnvironmentStepExecution,
+    EnvironmentStepExecutionSchema,
+    EnvironmentStepExecutionState,
+    JobClient,
+    JobMetadata,
+    JobMetadataSchema,
+    JobSummary,
+    JobSummarySchema,
+    ListRunsResponse,
+    ListRunsResponseSchema,
+    Page,
+    PageSchema,
+    Pagination,
+    PaginationSchema,
+    Run,
+    RunIdSchema,
+    RunSchema,
+    RunState,
+    RunSummary,
+    RunSummarySchema,
+    Subrun,
+    SubrunSchema,
+    SubrunState,
+    SubrunSummary,
+    SubrunSummarySchema,
+)
 
 PROJECT_ID = uuid4()
 JOB_ID = uuid4()
@@ -400,15 +416,13 @@ def test_job_client_list_runs_page(mocker):
 
 def test_job_client_update_metadata(mocker):
     mocker.patch.object(JobClient, "_put_raw")
-    schema_mock = mocker.patch("faculty.clients.job.JobMetadataSchema")
 
     client = JobClient(mocker.Mock())
-    client.update_metadata(PROJECT_ID, JOB_ID, "one", "two")
+    client.update_metadata(PROJECT_ID, JOB_ID, "A name", "A desc")
 
     JobClient._put_raw.assert_called_once_with(
         "/project/{}/job/{}/meta".format(PROJECT_ID, JOB_ID),
-        schema_mock.return_value,
-        json={"name":"one", "description":"two"}
+        json={"name": "A name", "description": "A desc"},
     )
 
 

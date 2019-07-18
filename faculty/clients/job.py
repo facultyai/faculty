@@ -401,4 +401,4 @@ class JobClient(BaseClient):
 
         endpoint = "/project/{}/job/{}/meta".format(project_id, job_id)
         payload = {"name": name, "description": description}
-        self._put_raw(endpoint, JobMetadataSchema(), json=payload)
+        self._put_raw(endpoint, json=payload)
