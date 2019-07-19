@@ -111,7 +111,7 @@ JOB_PARAMETERS_BODY = {
     "name": JOB_PARAMETERS.name,
     "type": "text",
     "default": JOB_PARAMETERS.default,
-    "required": str(True),
+    "required": True,
 }
 JOB_COMMAND = JobCommand(name="command name", parameters=[JOB_PARAMETERS])
 JOB_COMMAND_BODY = {
