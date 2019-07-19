@@ -69,7 +69,7 @@ JobMetadata = namedtuple(
 JobSummary = namedtuple("JobSummary", ["id", "metadata"])
 InstanceSize = namedtuple("InstanceSize", ["milli_cpus", "memory_mb"])
 JobParameter = namedtuple(
-    "JobParameter", ["name", "param_type", "default", "required"]
+    "JobParameter", ["name", "type", "default", "required"]
 )
 JobCommand = namedtuple("JobCommand", ["name", "parameters"])
 JobDefinition = namedtuple(
@@ -85,7 +85,7 @@ JobDefinition = namedtuple(
         "max_runtime_seconds",
     ],
 )
-Job = namedtuple("Job", ["meta", "definition"])
+Job = namedtuple("Job", ["job_id", "meta", "definition"])
 
 EnvironmentStepExecution = namedtuple(
     "EnvironmentStepExecution",
@@ -156,8 +156,8 @@ class JobSummarySchema(BaseSchema):
 
 
 class InstanceSizeSchema(BaseSchema):
-    milli_cpus = fields.Float(data_key="milliCpus", required=True)
-    memory_mb = fields.Float(data_key="memoryMb", required=True)
+    milli_cpus = fields.Integer(data_key="milliCpus", required=True)
+    memory_mb = fields.Integer(data_key="memoryMb", required=True)
 
     @post_load
     def make_instance_size(self, data):
@@ -166,7 +166,7 @@ class InstanceSizeSchema(BaseSchema):
 
 class JobParameterSchema(BaseSchema):
     name = fields.String(required=True)
-    param_type = EnumField(
+    type = EnumField(
         ParameterType, data_key="type", by_value=True, required=True
     )
     default = fields.String(required=True)
@@ -179,9 +179,7 @@ class JobParameterSchema(BaseSchema):
 
 class JobCommandSchema(BaseSchema):
     name = fields.String(required=True)
-    parameters = fields.List(
-        fields.Nested(JobParameterSchema, required=True), required=True
-    )
+    parameters = fields.List(fields.Nested(JobParameterSchema), required=True)
 
     @post_load
     def make_job_command(self, data):
@@ -195,7 +193,7 @@ class JobDefinitionSchema(BaseSchema):
         ImageType, by_value=True, data_key="imageType", required=True
     )
     conda_environment = fields.String(
-        data_key="condaEnvironment", missing=None, required=False
+        data_key="condaEnvironment", missing=None
     )
     environment_ids = fields.List(
         fields.String(), data_key="environmentIds", required=True
@@ -216,6 +214,7 @@ class JobDefinitionSchema(BaseSchema):
 
 
 class JobSchema(BaseSchema):
+    job_id = fields.UUID(data_key="jobId", required=True)
     meta = fields.Nested(JobMetadataSchema, required=True)
     definition = fields.Nested(JobDefinitionSchema, required=True)
 
