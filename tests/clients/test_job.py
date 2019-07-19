@@ -124,7 +124,7 @@ JOB_DEFINITION = JobDefinition(
     image_type="image type",
     conda_environment="Python3",
     environment_ids=[str(ENVIRONMENT_ID)],
-    instance_size_type="instance size type",
+    instance_size_type="m4.xlarge",
     instance_size=INSTANCE_SIZE,
     max_runtime_seconds=MAX_RUNTIME_SECONDS,
 )
