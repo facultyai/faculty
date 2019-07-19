@@ -60,7 +60,7 @@ from faculty.clients.job import (
     SubrunSummarySchema,
 )
 
-MILLI_CPUS = 0.1
+MILLI_CPUS = 1000
 MEMORY_MB = 4096
 MAX_RUNTIME_SECONDS = 1000
 
