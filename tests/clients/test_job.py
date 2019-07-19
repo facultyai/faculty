@@ -121,7 +121,7 @@ JOB_COMMAND_BODY = {
     "parameters": [JOB_PARAMETERS_BODY],
 }
 JOB_DEFINITION = JobDefinition(
-    working_dir="working dir",
+    working_dir="/project/subdir/",
     command=JOB_COMMAND,
     image_type=ImageType.PYTHON,
     conda_environment="conda environment",
