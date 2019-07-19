@@ -23,6 +23,7 @@ from faculty.clients.job import (
     EnvironmentStepExecution,
     EnvironmentStepExecutionSchema,
     EnvironmentStepExecutionState,
+    ImageType,
     InstanceSize,
     InstanceSizeSchema,
     Job,
@@ -31,6 +32,7 @@ from faculty.clients.job import (
     JobCommandSchema,
     JobDefinition,
     JobDefinitionSchema,
+    JobIdSchema,
     JobMetadata,
     JobMetadataSchema,
     JobParameter,
@@ -121,7 +123,7 @@ JOB_COMMAND_BODY = {
 JOB_DEFINITION = JobDefinition(
     working_dir="working dir",
     command=JOB_COMMAND,
-    image_type="image type",
+    image_type=ImageType.PYTHON,
     conda_environment="conda environment",
     environment_ids=[str(ENVIRONMENT_ID)],
     instance_size_type="instance size type",
@@ -290,6 +292,11 @@ def test_job_schema():
     assert data == JOB
 
 
+def test_job_id_schema():
+    data = JobIdSchema().load({"jobId": str(JOB_ID)})
+    assert data == str(JOB_ID)
+
+
 def test_environment_step_execution_schema():
     data = EnvironmentStepExecutionSchema().load(
         ENVIRONMENT_STEP_EXECUTION_BODY
@@ -429,7 +436,26 @@ def test_job_client_list(mocker):
     )
 
 
-def test_get_job(mocker):
+def test_job_client_create_job(mocker):
+    mocker.patch.object(JobClient, "_post", return_value=str(JOB_ID))
+    schema_mock = mocker.patch("faculty.clients.job.JobIdSchema")
+
+    client = JobClient(mocker.Mock())
+    assert client.create_job(
+        PROJECT_ID,
+        {"meta": JOB_METADATA_BODY, "definition": JOB_DEFINITION_BODY},
+    ) == str(JOB_ID)
+
+    schema_mock.assert_called_once_with()
+
+    last_call_args, last_call_kwargs = JobClient._post.call_args
+    assert last_call_args == (
+        "/project/{}/job".format(PROJECT_ID),
+        schema_mock.return_value,
+    )
+
+
+def test_job_client_get_job(mocker):
     mocker.patch.object(JobClient, "_get", return_value=JOB)
     schema_mock = mocker.patch("faculty.clients.job.JobSchema")
 

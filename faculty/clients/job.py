@@ -26,6 +26,11 @@ class ParameterType(Enum):
     NUMBER = "number"
 
 
+class ImageType(Enum):
+    PYTHON = "python"
+    R = "r"
+
+
 class EnvironmentStepExecutionState(Enum):
     QUEUED = "queued"
     RUNNING = "running"
@@ -186,7 +191,9 @@ class JobCommandSchema(BaseSchema):
 class JobDefinitionSchema(BaseSchema):
     working_dir = fields.String(data_key="workingDir", required=True)
     command = fields.Nested(JobCommandSchema, required=True)
-    image_type = fields.String(data_key="imageType", required=True)
+    image_type = EnumField(
+        ImageType, by_value=True, data_key="imageType", required=True
+    )
     conda_environment = fields.String(
         data_key="condaEnvironment", missing=None, required=False
     )
@@ -215,6 +222,14 @@ class JobSchema(BaseSchema):
     @post_load
     def make_job(self, data):
         return Job(**data)
+
+
+class JobIdSchema(BaseSchema):
+    jobId = fields.String(required=True)
+
+    @post_load
+    def make_job_id(self, data):
+        return data["jobId"]
 
 
 class EnvironmentStepExecutionSchema(BaseSchema):
@@ -348,6 +363,30 @@ class JobClient(BaseClient):
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
 
+    def create_job(self, project_id, job_parameters):
+        """Create a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        paramjob_parameters : Dict[dict]
+            A dictionnary containing the metadata and definitionof the job to
+            be created.
+
+        Returns
+        -------
+        string
+            The ID of the created job.
+        """
+
+        endpoint = "/project/{}/job".format(project_id)
+        payload = {
+            "meta": job_parameters["meta"],
+            "definition": job_parameters["definition"],
+        }
+
+        return self._post(endpoint, JobIdSchema(), json=payload)
+
     def get_job(self, project_id, job_id):
         """Get a job.
 
@@ -364,8 +403,7 @@ class JobClient(BaseClient):
         return self._get(endpoint, JobSchema())
 
     def update_metadata(self, project_id, job_id, name, description):
-        """
-        Update the metadata of a job.
+        """Update the metadata of a job.
 
         Parameters
         ----------
