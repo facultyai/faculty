@@ -124,7 +124,7 @@ JOB_DEFINITION = JobDefinition(
     working_dir="/project/subdir/",
     command=JOB_COMMAND,
     image_type=ImageType.PYTHON,
-    conda_environment="conda environment",
+    conda_environment="Python3",
     environment_ids=[str(ENVIRONMENT_ID)],
     instance_size_type="instance size type",
     instance_size=INSTANCE_SIZE,
@@ -133,7 +133,7 @@ JOB_DEFINITION = JobDefinition(
 JOB_DEFINITION_BODY = {
     "workingDir": JOB_DEFINITION.working_dir,
     "command": JOB_COMMAND_BODY,
-    "imageType": JOB_DEFINITION.image_type,
+    "imageType": JOB_DEFINITION.image_type.value,
     "condaEnvironment": JOB_DEFINITION.conda_environment,
     "environmentIds": [str(ENVIRONMENT_ID)],
     "instanceSizeType": JOB_DEFINITION.instance_size_type,
