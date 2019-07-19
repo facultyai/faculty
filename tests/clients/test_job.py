@@ -23,6 +23,7 @@ from faculty.clients.job import (
     EnvironmentStepExecution,
     EnvironmentStepExecutionSchema,
     EnvironmentStepExecutionState,
+    ImageType,
     InstanceSize,
     InstanceSizeSchema,
     Job,
@@ -101,32 +102,30 @@ JOB_SUMMARY = JobSummary(id=JOB_ID, metadata=JOB_METADATA)
 JOB_SUMMARY_BODY = {"jobId": str(JOB_ID), "meta": JOB_METADATA_BODY}
 INSTANCE_SIZE = InstanceSize(milli_cpus=MILLI_CPUS, memory_mb=MEMORY_MB)
 INSTANCE_SIZE_BODY = {"milliCpus": MILLI_CPUS, "memoryMb": MEMORY_MB}
-JOB_PARAMETERS = JobParameter(
+JOB_PARAMETER = JobParameter(
     name="job name",
     type=ParameterType.TEXT,
     default="default parameter value",
     required=True,
 )
-JOB_PARAMETERS_BODY = {
-    "name": JOB_PARAMETERS.name,
+JOB_PARAMETER_BODY = {
+    "name": JOB_PARAMETER.name,
     "type": "text",
-    "default": JOB_PARAMETERS.default,
+    "default": JOB_PARAMETER.default,
     "required": True,
 }
-JOB_COMMAND = JobCommand(
-    name="python myscript.py", parameters=[JOB_PARAMETERS]
-)
+JOB_COMMAND = JobCommand(name="python myscript.py", parameters=[JOB_PARAMETER])
 JOB_COMMAND_BODY = {
     "name": JOB_COMMAND.name,
-    "parameters": [JOB_PARAMETERS_BODY],
+    "parameters": [JOB_PARAMETER_BODY],
 }
 JOB_DEFINITION = JobDefinition(
     working_dir="/project/subdir/",
     command=JOB_COMMAND,
-    image_type="image type",
+    image_type=ImageType.PYTHON,
     conda_environment="Python3",
     environment_ids=[str(ENVIRONMENT_ID)],
-    instance_size_type="m4.xlarge",
+    instance_size_type="custom",
     instance_size=INSTANCE_SIZE,
     max_runtime_seconds=MAX_RUNTIME_SECONDS,
 )
@@ -140,6 +139,8 @@ JOB_DEFINITION_BODY = {
     "instanceSize": INSTANCE_SIZE_BODY,
     "maxRuntimeSeconds": str(MAX_RUNTIME_SECONDS),
 }
+JOB_DEFINITION_BODY_INVALID = JOB_DEFINITION_BODY.copy()
+JOB_DEFINITION_BODY_INVALID["instanceSizeType"] = "m4.xlarge"
 JOB = Job(job_id=JOB_ID, meta=JOB_METADATA, definition=JOB_DEFINITION)
 JOB_BODY = {
     "jobId": str(JOB_ID),
@@ -277,8 +278,8 @@ def test_instance_size_schema():
 
 
 def test_job_parameter_schema():
-    data = JobParameterSchema().load(JOB_PARAMETERS_BODY)
-    assert data == JOB_PARAMETERS
+    data = JobParameterSchema().load(JOB_PARAMETER_BODY)
+    assert data == JOB_PARAMETER
 
 
 def test_job_command_schema():
@@ -289,6 +290,11 @@ def test_job_command_schema():
 def test_job_definition_schema():
     data = JobDefinitionSchema().load(JOB_DEFINITION_BODY)
     assert data == JOB_DEFINITION
+
+
+def validate_job_definition_schema():
+    with pytest.raises(ValidationError):
+        JobDefinitionSchema.load(JOB_DEFINITION_BODY_INVALID)
 
 
 def test_job_schema():
@@ -406,6 +412,11 @@ def test_list_runs_response_schema():
     [
         JobMetadataSchema,
         JobSummarySchema,
+        InstanceSizeSchema,
+        JobParameterSchema,
+        JobCommandSchema,
+        JobDefinitionSchema,
+        JobSchema,
         EnvironmentStepExecutionSchema,
         SubrunSummarySchema,
         SubrunSchema,
@@ -435,12 +446,12 @@ def test_job_client_list(mocker):
     )
 
 
-def test_get_job(mocker):
+def test_job_get(mocker):
     mocker.patch.object(JobClient, "_get", return_value=JOB)
     schema_mock = mocker.patch("faculty.clients.job.JobSchema")
 
     client = JobClient(mocker.Mock())
-    assert client.get_job(PROJECT_ID, JOB_ID) == JOB
+    assert client.get(PROJECT_ID, JOB_ID) == JOB
 
     schema_mock.assert_called_once_with()
     JobClient._get.assert_called_once_with(

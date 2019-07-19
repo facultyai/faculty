@@ -15,10 +15,15 @@
 from collections import namedtuple
 from enum import Enum
 
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, validates_schema, ValidationError
 from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseClient, BaseSchema
+
+
+class ImageType(Enum):
+    PYTHON = "python"
+    R = "r"
 
 
 class ParameterType(Enum):
@@ -184,7 +189,9 @@ class JobCommandSchema(BaseSchema):
 class JobDefinitionSchema(BaseSchema):
     working_dir = fields.String(data_key="workingDir", required=True)
     command = fields.Nested(JobCommandSchema, required=True)
-    image_type = fields.String(data_key="imageType", required=True)
+    image_type = EnumField(
+        ImageType, by_value=True, data_key="imageType", required=True
+    )
     conda_environment = fields.String(
         data_key="condaEnvironment", missing=None
     )
@@ -194,12 +201,27 @@ class JobDefinitionSchema(BaseSchema):
     instance_size_type = fields.String(
         data_key="instanceSizeType", required=True
     )
-    instance_size = fields.Nested(
-        InstanceSizeSchema, data_key="instanceSize", required=False
-    )
+    instance_size = fields.Nested(InstanceSizeSchema, data_key="instanceSize")
     max_runtime_seconds = fields.Integer(
         data_key="maxRuntimeSeconds", required=True
     )
+
+    @validates_schema
+    def validate_instance_size(self, data):
+        if (
+            data["instance_size_type"] == "custom"
+            and data["instance_size"] is None
+        ):
+            raise ValidationError(
+                "need to specify instance size for custom instances"
+            )
+        elif (
+            data["instance_size_type"] != "custom"
+            and data["instance_size"] is not None
+        ):
+            raise ValidationError(
+                "instance_size can only be specified if instance_size_type is 'custom' "
+            )
 
     @post_load
     def make_job_definition(self, data):
@@ -347,7 +369,7 @@ class JobClient(BaseClient):
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
 
-    def get_job(self, project_id, job_id):
+    def get(self, project_id, job_id):
         """Get a job.
 
         Parameters
