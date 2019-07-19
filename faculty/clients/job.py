@@ -62,7 +62,11 @@ JobMetadata = namedtuple(
     ["name", "description", "author_id", "created_at", "last_updated_at"],
 )
 JobSummary = namedtuple("JobSummary", ["id", "metadata"])
-Job = namedtuple("Job", ["meta", "definition"])
+InstanceSize = namedtuple("InstanceSize", ["milli_cpus", "memory_mb"])
+JobParameter = namedtuple(
+    "JobParameter", ["name", "param_type", "default", "required"]
+)
+JobCommand = namedtuple("JobCommand", ["name", "parameters"])
 JobDefinition = namedtuple(
     "JobDefinition",
     [
@@ -76,11 +80,8 @@ JobDefinition = namedtuple(
         "max_runtime_seconds",
     ],
 )
-JobCommand = namedtuple("JobCommand", ["name", "parameters"])
-JobParameter = namedtuple(
-    "JobParameter", ["name", "type", "default", "required"]
-)
-InstanceSize = namedtuple("InstanceSize", ["milli_cpus", "memory_mb"])
+Job = namedtuple("Job", ["meta", "definition"])
+
 EnvironmentStepExecution = namedtuple(
     "EnvironmentStepExecution",
     [
@@ -158,23 +159,24 @@ class InstanceSizeSchema(BaseSchema):
         return InstanceSize(**data)
 
 
-# class JobParameterSchema(BaseSchema):
-#     name = fields.String(required=True)
-#     type = EnumField(ParameterType, by_value=True, required=True)
-#     default = fields.String(required=True)
-#     required = fields.Boolean(required=True)
+class JobParameterSchema(BaseSchema):
+    name = fields.String(required=True)
+    param_type = EnumField(
+        ParameterType, data_key="type", by_value=True, required=True
+    )
+    default = fields.String(required=True)
+    required = fields.Boolean(required=True)
 
-#     @post_load
-#     def make_job_parameter(self, data):
-#         return JobParameter(**data)
+    @post_load
+    def make_job_parameter(self, data):
+        return JobParameter(**data)
 
 
 class JobCommandSchema(BaseSchema):
     name = fields.String(required=True)
-    parameters = fields.List(fields.String, requiered=True)
-    # parameter = fields.Nested(
-    #     JobParameterSchema, required=True
-    # )
+    parameters = fields.List(
+        fields.Nested(JobParameterSchema, required=True), required=True
+    )
 
     @post_load
     def make_job_command(self, data):
@@ -186,16 +188,16 @@ class JobDefinitionSchema(BaseSchema):
     command = fields.Nested(JobCommandSchema, required=True)
     image_type = fields.String(data_key="imageType", required=True)
     conda_environment = fields.String(
-        data_key="condaEnvironment", required=False
+        data_key="condaEnvironment", missing=None, required=False
     )
     environment_ids = fields.List(
         fields.String(), data_key="environmentIds", required=True
     )
     instance_size_type = fields.String(
-        data_key="instanceSizeType", required=False
+        data_key="instanceSizeType", required=True
     )
     instance_size = fields.Nested(
-        InstanceSizeSchema, missing=None, required=False
+        InstanceSizeSchema, data_key="instanceSize", required=False
     )
     max_runtime_seconds = fields.Integer(
         data_key="maxRuntimeSeconds", required=True

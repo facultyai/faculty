@@ -23,9 +23,19 @@ from faculty.clients.job import (
     EnvironmentStepExecution,
     EnvironmentStepExecutionSchema,
     EnvironmentStepExecutionState,
+    InstanceSize,
+    InstanceSizeSchema,
+    Job,
     JobClient,
+    JobCommand,
+    JobCommandSchema,
+    JobDefinition,
+    JobDefinitionSchema,
     JobMetadata,
     JobMetadataSchema,
+    JobParameter,
+    JobParameterSchema,
+    JobSchema,
     JobSummary,
     JobSummarySchema,
     ListRunsResponse,
@@ -34,6 +44,7 @@ from faculty.clients.job import (
     PageSchema,
     Pagination,
     PaginationSchema,
+    ParameterType,
     Run,
     RunIdSchema,
     RunSchema,
@@ -46,6 +57,10 @@ from faculty.clients.job import (
     SubrunSummary,
     SubrunSummarySchema,
 )
+
+MILLI_CPUS = 0.1
+MEMORY_MB = 4096
+MAX_RUNTIME_SECONDS = 1000
 
 PROJECT_ID = uuid4()
 USER_ID = uuid4()
@@ -84,7 +99,47 @@ JOB_METADATA_BODY = {
 
 JOB_SUMMARY = JobSummary(id=JOB_ID, metadata=JOB_METADATA)
 JOB_SUMMARY_BODY = {"jobId": str(JOB_ID), "meta": JOB_METADATA_BODY}
-
+INSTANCE_SIZE = InstanceSize(milli_cpus=MILLI_CPUS, memory_mb=MEMORY_MB)
+INSTANCE_SIZE_BODY = {"milliCpus": str(MILLI_CPUS), "memoryMb": str(MEMORY_MB)}
+JOB_PARAMETERS = JobParameter(
+    name="job name",
+    param_type=ParameterType.TEXT,
+    default="default parameter",
+    required=True,
+)
+JOB_PARAMETERS_BODY = {
+    "name": JOB_PARAMETERS.name,
+    "type": "text",
+    "default": JOB_PARAMETERS.default,
+    "required": str(True),
+}
+JOB_COMMAND = JobCommand(name="command name", parameters=[JOB_PARAMETERS])
+JOB_COMMAND_BODY = {
+    "name": JOB_COMMAND.name,
+    "parameters": [JOB_PARAMETERS_BODY],
+}
+JOB_DEFINITION = JobDefinition(
+    working_dir="working dir",
+    command=JOB_COMMAND,
+    image_type="image type",
+    conda_environment="conda environment",
+    environment_ids=[str(ENVIRONMENT_ID)],
+    instance_size_type="instance size type",
+    instance_size=INSTANCE_SIZE,
+    max_runtime_seconds=MAX_RUNTIME_SECONDS,
+)
+JOB_DEFINITION_BODY = {
+    "workingDir": JOB_DEFINITION.working_dir,
+    "command": JOB_COMMAND_BODY,
+    "imageType": JOB_DEFINITION.image_type,
+    "condaEnvironment": JOB_DEFINITION.conda_environment,
+    "environmentIds": [str(ENVIRONMENT_ID)],
+    "instanceSizeType": JOB_DEFINITION.instance_size_type,
+    "instanceSize": INSTANCE_SIZE_BODY,
+    "maxRuntimeSeconds": str(MAX_RUNTIME_SECONDS),
+}
+JOB = Job(meta=JOB_METADATA, definition=JOB_DEFINITION)
+JOB_BODY = {"meta": JOB_METADATA_BODY, "definition": JOB_DEFINITION_BODY}
 ENVIRONMENT_STEP_EXECUTION = EnvironmentStepExecution(
     environment_id=ENVIRONMENT_ID,
     environment_step_id=ENVIRONMENT_STEP_ID,
@@ -208,6 +263,31 @@ def test_job_metadata_schema():
 def test_job_summary_schema():
     data = JobSummarySchema().load(JOB_SUMMARY_BODY)
     assert data == JOB_SUMMARY
+
+
+def test_instance_size_schema():
+    data = InstanceSizeSchema().load(INSTANCE_SIZE_BODY)
+    assert data == INSTANCE_SIZE
+
+
+def test_job_parameter_schema():
+    data = JobParameterSchema().load(JOB_PARAMETERS_BODY)
+    assert data == JOB_PARAMETERS
+
+
+def test_job_command_schema():
+    data = JobCommandSchema().load(JOB_COMMAND_BODY)
+    assert data == JOB_COMMAND
+
+
+def test_job_definition_schema():
+    data = JobDefinitionSchema().load(JOB_DEFINITION_BODY)
+    assert data == JOB_DEFINITION
+
+
+def test_job_schema():
+    data = JobSchema().load(JOB_BODY)
+    assert data == JOB
 
 
 def test_environment_step_execution_schema():
@@ -349,6 +429,32 @@ def test_job_client_list(mocker):
     )
 
 
+def test_get_job(mocker):
+    mocker.patch.object(JobClient, "_get", return_value=JOB)
+    schema_mock = mocker.patch("faculty.clients.job.JobSchema")
+
+    client = JobClient(mocker.Mock())
+    assert client.get_job(PROJECT_ID, JOB_ID) == JOB
+
+    schema_mock.assert_called_once_with()
+    JobClient._get.assert_called_once_with(
+        "/project/{}/job/{}".format(PROJECT_ID, JOB_ID),
+        schema_mock.return_value,
+    )
+
+
+def test_job_client_update_metadata(mocker):
+    mocker.patch.object(JobClient, "_put_raw")
+
+    client = JobClient(mocker.Mock())
+    client.update_metadata(PROJECT_ID, JOB_ID, "A name", "A desc")
+
+    JobClient._put_raw.assert_called_once_with(
+        "/project/{}/job/{}/meta".format(PROJECT_ID, JOB_ID),
+        json={"name": "A name", "description": "A desc"},
+    )
+
+
 def test_job_client_create_run(mocker):
     mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
     schema_mock = mocker.patch("faculty.clients.job.RunIdSchema")
@@ -426,18 +532,6 @@ def test_job_client_list_runs_page(mocker):
         "/project/{}/job/{}/run".format(PROJECT_ID, JOB_ID),
         schema_mock.return_value,
         params={"start": 20, "limit": 10},
-    )
-
-
-def test_job_client_update_metadata(mocker):
-    mocker.patch.object(JobClient, "_put_raw")
-
-    client = JobClient(mocker.Mock())
-    client.update_metadata(PROJECT_ID, JOB_ID, "A name", "A desc")
-
-    JobClient._put_raw.assert_called_once_with(
-        "/project/{}/job/{}/meta".format(PROJECT_ID, JOB_ID),
-        json={"name": "A name", "description": "A desc"},
     )
 
 
