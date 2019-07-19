@@ -106,7 +106,7 @@ INSTANCE_SIZE_BODY = {"milliCpus": str(MILLI_CPUS), "memoryMb": str(MEMORY_MB)}
 JOB_PARAMETERS = JobParameter(
     name="job name",
     param_type=ParameterType.TEXT,
-    default="default parameter",
+    default="default parameter value",
     required=True,
 )
 JOB_PARAMETERS_BODY = {
