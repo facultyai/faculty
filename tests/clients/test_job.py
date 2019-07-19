@@ -58,7 +58,7 @@ from faculty.clients.job import (
     SubrunSummarySchema,
 )
 
-MILLI_CPUS = 0.1
+MILLI_CPUS = 1000
 MEMORY_MB = 4096
 MAX_RUNTIME_SECONDS = 1000
 
@@ -100,10 +100,10 @@ JOB_METADATA_BODY = {
 JOB_SUMMARY = JobSummary(id=JOB_ID, metadata=JOB_METADATA)
 JOB_SUMMARY_BODY = {"jobId": str(JOB_ID), "meta": JOB_METADATA_BODY}
 INSTANCE_SIZE = InstanceSize(milli_cpus=MILLI_CPUS, memory_mb=MEMORY_MB)
-INSTANCE_SIZE_BODY = {"milliCpus": str(MILLI_CPUS), "memoryMb": str(MEMORY_MB)}
+INSTANCE_SIZE_BODY = {"milliCpus": MILLI_CPUS, "memoryMb": MEMORY_MB}
 JOB_PARAMETERS = JobParameter(
     name="job name",
-    param_type=ParameterType.TEXT,
+    type=ParameterType.TEXT,
     default="default parameter value",
     required=True,
 )
@@ -113,7 +113,9 @@ JOB_PARAMETERS_BODY = {
     "default": JOB_PARAMETERS.default,
     "required": True,
 }
-JOB_COMMAND = JobCommand(name="python myscript.py", parameters=[JOB_PARAMETERS])
+JOB_COMMAND = JobCommand(
+    name="python myscript.py", parameters=[JOB_PARAMETERS]
+)
 JOB_COMMAND_BODY = {
     "name": JOB_COMMAND.name,
     "parameters": [JOB_PARAMETERS_BODY],
@@ -138,8 +140,12 @@ JOB_DEFINITION_BODY = {
     "instanceSize": INSTANCE_SIZE_BODY,
     "maxRuntimeSeconds": str(MAX_RUNTIME_SECONDS),
 }
-JOB = Job(meta=JOB_METADATA, definition=JOB_DEFINITION)
-JOB_BODY = {"meta": JOB_METADATA_BODY, "definition": JOB_DEFINITION_BODY}
+JOB = Job(job_id=JOB_ID, meta=JOB_METADATA, definition=JOB_DEFINITION)
+JOB_BODY = {
+    "jobId": str(JOB_ID),
+    "meta": JOB_METADATA_BODY,
+    "definition": JOB_DEFINITION_BODY,
+}
 ENVIRONMENT_STEP_EXECUTION = EnvironmentStepExecution(
     environment_id=ENVIRONMENT_ID,
     environment_step_id=ENVIRONMENT_STEP_ID,
