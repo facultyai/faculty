@@ -115,7 +115,7 @@ JOB_PARAMETERS_BODY = {
     "default": JOB_PARAMETERS.default,
     "required": True,
 }
-JOB_COMMAND = JobCommand(name="command name", parameters=[JOB_PARAMETERS])
+JOB_COMMAND = JobCommand(name="python myscript.py", parameters=[JOB_PARAMETERS])
 JOB_COMMAND_BODY = {
     "name": JOB_COMMAND.name,
     "parameters": [JOB_PARAMETERS_BODY],
