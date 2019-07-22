@@ -173,8 +173,6 @@ def _isfile(project_path, project_id=None):
 
 def _create_parent_directories(project_path, project_id, s3_client):
 
-    bucket = _bucket(project_id)
-
     # Make sure empty objects exist for directories
     # List once for speed
     all_objects = set(ls("/", project_id=project_id, show_hidden=True))
@@ -188,9 +186,9 @@ def _create_parent_directories(project_path, project_id, s3_client):
         # We're doing this manually instead of using _isdir as _isdir will
         # return true if '/somedir/myfile' exists, even if '/somedir/' does not
         if dirname not in all_objects:
-            bucket_path = path.projectpath_to_bucketpath(dirname, project_id)
             # Directories on S3 are empty objects with trailing '/' on the key
-            s3_client.put_object(Bucket=bucket, Key=bucket_path)
+            client = ObjectClient(get_session())
+            client.create_directory(project_id, dirname)
 
 
 def _put_file(local_path, project_path, project_id):
@@ -199,14 +197,8 @@ def _put_file(local_path, project_path, project_id):
 
 
 def _put_directory(local_path, project_path, project_id, s3_client):
-
-    bucket = _bucket(project_id)
-    bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
-
-    # Directories on S3 are empty objects with trailing '/' on the key
-    if not bucket_path.endswith("/"):
-        bucket_path += "/"
-    s3_client.put_object(Bucket=bucket, Key=bucket_path)
+    client = ObjectClient(get_session())
+    client.create_directory(project_id, project_path)
 
     # Recursively put the contents of the directory
     for entry in os.listdir(local_path):
