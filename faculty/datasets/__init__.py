@@ -20,8 +20,6 @@ import contextlib
 import tempfile
 import io
 
-from botocore.client import ClientError
-
 from faculty.session import get_session
 from faculty.context import get_context
 from faculty.clients.object import ObjectClient
