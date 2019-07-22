@@ -21,11 +21,6 @@ from marshmallow_enum import EnumField
 from faculty.clients.base import BaseClient, BaseSchema
 
 
-class ImageType(Enum):
-    PYTHON = "python"
-    R = "r"
-
-
 class ParameterType(Enum):
     TEXT = "text"
     NUMBER = "number"
@@ -388,7 +383,7 @@ class JobClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
-        paramjob_parameters : Dict[dict]
+        job_parameters : Dict[dict]
             A dictionnary containing the metadata and definitionof the job to
             be created.
 
