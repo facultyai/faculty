@@ -153,6 +153,26 @@ class ObjectClient(BaseClient):
             params["pageToken"] = page_token
         return self._get(endpoint, ListObjectsResponseSchema(), params=params)
 
+    def create_directory(self, project_id, path):
+        """Copy objects in the store.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        path : str
+            Create empty object at this source path as a placeholder
+            for a directory
+
+        Raises
+        ------
+        PathNotFound
+            When the source path does not exist or is not found
+        """
+        endpoint = "/project/{}/directory/{}".format(
+            project_id, path.lstrip("/")
+        )
+        return self._put_raw(endpoint)
+
     def copy(self, project_id, source, destination, recursive=None):
         """Copy objects in the store.
 

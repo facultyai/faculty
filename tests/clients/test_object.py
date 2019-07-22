@@ -227,6 +227,17 @@ def test_object_client_list_defaults(mocker):
     )
 
 
+def test_object_client_create_directory_default(mocker):
+    mocker.patch.object(ObjectClient, "_put_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.create_directory(PROJECT_ID, "test-path")
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/directory/{}".format(PROJECT_ID, "test-path")
+    )
+
+
 def test_object_client_copy_default(mocker):
     mocker.patch.object(ObjectClient, "_put_raw")
 
