@@ -220,7 +220,7 @@ class JobDefinitionSchema(BaseSchema):
             and data["instance_size"] is not None
         ):
             raise ValidationError(
-                "instance_size can only be specified if instance_size_type is 'custom' "
+                "instance_size must be None for non-custom instances "
             )
 
     @post_load
