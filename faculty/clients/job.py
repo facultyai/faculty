@@ -166,9 +166,7 @@ class InstanceSizeSchema(BaseSchema):
 
 class JobParameterSchema(BaseSchema):
     name = fields.String(required=True)
-    type = EnumField(
-        ParameterType, data_key="type", by_value=True, required=True
-    )
+    type = EnumField(ParameterType, by_value=True, required=True)
     default = fields.String(required=True)
     required = fields.Boolean(required=True)
 
@@ -208,17 +206,13 @@ class JobDefinitionSchema(BaseSchema):
 
     @validates_schema
     def validate_instance_size(self, data):
-        if (
-            data["instance_size_type"] == "custom"
-            and data["instance_size"] is None
-        ):
+        custom_type = data["instance_size_type"] == "custom"
+        instance_size_set = data["instance_size"] is not None
+        if custom_type and not instance_size_set:
             raise ValidationError(
                 "need to specify instance size for custom instances"
             )
-        elif (
-            data["instance_size_type"] != "custom"
-            and data["instance_size"] is not None
-        ):
+        elif not custom_type and instance_size_set:
             raise ValidationError(
                 "instance_size must be None for non-custom instances "
             )

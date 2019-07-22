@@ -293,9 +293,9 @@ def test_job_definition_schema():
     assert data == JOB_DEFINITION
 
 
-def validate_job_definition_schema():
+def test_validate_job_definition_schema():
     with pytest.raises(ValidationError):
-        JobDefinitionSchema.load(JOB_DEFINITION_BODY_INVALID)
+        JobDefinitionSchema().load(JOB_DEFINITION_BODY_INVALID)
 
 
 def test_job_schema():
@@ -471,7 +471,7 @@ def test_job_client_create_job(mocker):
     )
 
 
-def test_job_get(mocker):
+def test_job_client_get(mocker):
     mocker.patch.object(JobClient, "_get", return_value=JOB)
     schema_mock = mocker.patch("faculty.clients.job.JobSchema")
 
