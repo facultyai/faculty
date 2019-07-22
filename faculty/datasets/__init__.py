@@ -483,7 +483,7 @@ def etag(project_path, project_id=None, object_client=None):
 
 
 @contextlib.contextmanager
-def open(project_path, mode="r", temp_dir=None, **kwargs):
+def open(project_path, mode="r", temp_dir=None, project_id=None, **kwargs):
     """Open a file from a project's datasets for reading.
 
     This downloads the file into a temporary directory before opening it, so if
@@ -501,6 +501,10 @@ def open(project_path, mode="r", temp_dir=None, **kwargs):
         saved into temporarily. Note that on SherlockML servers, the default
         temporary directory can break with large files, so if your file is
         upwards of 2GB, it is recommended to specify temp_dir='/project'.
+    project_id : str, optional
+        The project to get files from. You need to have access to this project
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
+        your environment.
     """
 
     if _isdir(project_path):
@@ -513,7 +517,7 @@ def open(project_path, mode="r", temp_dir=None, **kwargs):
     local_path = os.path.join(tmpdir, os.path.basename(project_path))
 
     try:
-        get(project_path, local_path)
+        get(project_path, local_path, project_id=project_id)
         with io.open(local_path, mode, **kwargs) as file_object:
             yield file_object
     finally:
