@@ -7,7 +7,7 @@ from faculty.datasets.session import DatasetsError
 MEGABYTE = 1024 * 1024
 
 
-def download(object_client, project_id, datasets_path, local_path):
+def download_file(object_client, project_id, datasets_path, local_path):
     """Download a file from the object store.
 
     Parameters
@@ -39,7 +39,7 @@ def download(object_client, project_id, datasets_path, local_path):
                     fp.write(chunk)
 
 
-def upload(object_client, project_id, datasets_path, local_path):
+def upload_file(object_client, project_id, datasets_path, local_path):
     """Upload a file to the object store.
 
     Parameters
