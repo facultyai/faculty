@@ -95,7 +95,7 @@ def download_file(object_client, project_id, datasets_path, local_path):
 
     # Initiate the download to allow any failures to happen before opening the
     # file
-    stream = download(object_client, project_id, datasets_path)
+    stream = download_stream(object_client, project_id, datasets_path)
 
     with open(local_path, "wb") as fp:
         for chunk in stream:
