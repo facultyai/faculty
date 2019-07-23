@@ -19,7 +19,8 @@ from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets.session import DatasetsError
 
 
-MEGABYTE = 1024 * 1024
+KILOBYTE = 1024
+MEGABYTE = 1024 * KILOBYTE
 
 
 def download(object_client, project_id, datasets_path):
@@ -74,7 +75,7 @@ def download_stream(object_client, project_id, datasets_path):
 
         response.raise_for_status()
 
-        for chunk in response.iter_content():
+        for chunk in response.iter_content(chunk_size=KILOBYTE):
             if chunk:  # Filter out keep-alive chunks
                 yield chunk
 
