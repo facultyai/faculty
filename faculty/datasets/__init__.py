@@ -52,7 +52,7 @@ def _bucket(project_id=None):
     return session.get().bucket(project_id)
 
 
-def ls(prefix="/", project_id=None, show_hidden=False):
+def ls(prefix="/", project_id=None, show_hidden=False, client=None):
     """List contents of project datasets.
 
     Parameters
@@ -75,7 +75,7 @@ def ls(prefix="/", project_id=None, show_hidden=False):
 
     project_id = project_id or get_context().project_id
 
-    client = ObjectClient(get_session())
+    client = client or ObjectClient(get_session())
 
     paths = []
 
@@ -83,7 +83,9 @@ def ls(prefix="/", project_id=None, show_hidden=False):
     paths += [obj.path for obj in list_response.objects]
 
     while list_response.next_page_token is not None:
-        list_response = client.list(project_id, prefix)
+        list_response = client.list(
+            project_id, prefix, list_response.next_page_token
+        )
         paths += [obj.path for obj in list_response.objects]
 
     if show_hidden:
@@ -125,7 +127,7 @@ def glob(pattern, prefix="/", project_id=None, show_hidden=False):
     return fnmatch.filter(contents, pattern)
 
 
-def _isdir(project_path, project_id=None):
+def _isdir(project_path, project_id=None, client=None):
     """Determine if a path in a project's datasets is a directory.
 
     Parameters
@@ -144,11 +146,13 @@ def _isdir(project_path, project_id=None):
     # 'Directories' always end in a '/' in S3
     if not project_path.endswith("/"):
         project_path += "/"
-    matches = ls(project_path, project_id=project_id, show_hidden=True)
+    matches = ls(
+        project_path, project_id=project_id, show_hidden=True, client=client
+    )
     return len(matches) >= 1
 
 
-def _isfile(project_path, project_id=None):
+def _isfile(project_path, project_id=None, client=None):
     """Determine if a path in a project's datasets is a file.
 
     Parameters
@@ -166,7 +170,9 @@ def _isfile(project_path, project_id=None):
     """
     if _isdir(project_path, project_id):
         return False
-    matches = ls(project_path, project_id=project_id, show_hidden=True)
+    matches = ls(
+        project_path, project_id=project_id, show_hidden=True, client=client
+    )
     rationalised_path = path.rationalise_projectpath(project_path)
     return any(match == rationalised_path for match in matches)
 
@@ -243,7 +249,7 @@ def put(local_path, project_path, project_id=None):
     _put_recursive(local_path, project_path, project_id, s3_client)
 
 
-def _get_file(project_path, local_path, project_id):
+def _get_file(project_path, local_path, project_id, client):
 
     if local_path.endswith("/"):
         msg = (
@@ -253,11 +259,10 @@ def _get_file(project_path, local_path, project_id):
         ).format(repr(project_path), repr(local_path))
         raise DatasetsError(msg)
 
-    client = ObjectClient(get_session())
     transfer.download(client, project_id, project_path, local_path)
 
 
-def _get_directory(project_path, local_path, project_id, s3_client):
+def _get_directory(project_path, local_path, project_id, client):
 
     # Firstly, make sure that the location to write to locally exists
     containing_dir = os.path.dirname(local_path)
@@ -268,10 +273,7 @@ def _get_directory(project_path, local_path, project_id, s3_client):
         raise IOError(msg)
 
     paths_to_get = ls(
-        project_path,
-        project_id=project_id,
-        show_hidden=True,
-        s3_client=s3_client,
+        project_path, project_id=project_id, show_hidden=True, client=client
     )
     for object_path in paths_to_get:
 
@@ -306,15 +308,16 @@ def get(project_path, local_path, project_id=None):
         your environment.
     """
 
+    project_id = project_id or get_context().project_id
+    client = ObjectClient(get_session())
+
     if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
-
-    client = _s3_client(project_id)
 
     if _isdir(project_path, project_id, client):
         _get_directory(project_path, local_path, project_id, client)
     else:
-        _get_file(project_path, local_path, project_id)
+        _get_file(project_path, local_path, project_id, client)
 
 
 def mv(source_path, destination_path, project_id=None):

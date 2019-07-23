@@ -13,363 +13,215 @@
 # limitations under the License.
 
 
-import fnmatch
-import os
-import posixpath
-import pytest
+# import fnmatch
+# import os
+# import posixpath
+# import pytest
+# import mock
 
 from faculty import datasets
 
-from tests.datasets.fixtures import (
-    read_remote_object,
-    temporary_directory,
-    TEST_DIRECTORY,
-    TEST_FILE_NAME,
-    TEST_TREE,
-    TEST_TREE_NO_HIDDEN_FILES,
-    VALID_ROOT_PATHS,
-    VALID_DIRECTORIES,
-    VALID_FILES,
-    INVALID_PATHS,
-    TEST_FILE_CONTENT,
-    TEST_NON_EXISTENT,
-    EMPTY_DIRECTORY,
-)
+# from tests.datasets.fixtures import (
+#     read_remote_object,
+#     temporary_directory,
+#     TEST_DIRECTORY,
+#     TEST_FILE_NAME,
+#     TEST_TREE,
+#     TEST_TREE_NO_HIDDEN_FILES,
+#     VALID_ROOT_PATHS,
+#     VALID_DIRECTORIES,
+#     VALID_FILES,
+#     INVALID_PATHS,
+#     TEST_FILE_CONTENT,
+#     TEST_NON_EXISTENT,
+#     EMPTY_DIRECTORY,
+# )
 
 
-pytestmark = pytest.mark.usefixtures("project_directory")
+# pytestmark = pytest.mark.usefixtures("project_directory")
 
 
-@pytest.mark.parametrize(
-    "path, show_hidden, expected",
-    [(path, True, TEST_TREE) for path in VALID_ROOT_PATHS]
-    + [(path, False, TEST_TREE_NO_HIDDEN_FILES) for path in VALID_ROOT_PATHS],
-)
-def test_ls_root(remote_tree, path, show_hidden, expected):
-    assert set(datasets.ls(path, show_hidden=show_hidden)) == {
-        "/" + path for path in expected
-    }
+def test_datasets_ls_all_files(mocker):
+    session = mocker.Mock()
+    get_session_mock = mocker.patch(
+        "faculty.datasets.get_session", return_value=session
+    )
+
+    project_id = mocker.Mock()
+
+    client = mocker.Mock()
+    mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+
+    list_response = mocker.Mock()
+    mock_object = mocker.Mock()
+    mock_object.path = "test-path"
+    list_response.objects = [mock_object]
+    list_response.next_page_token = None
+    client.list.return_value = list_response
+
+    objects = datasets.ls("test-prefix", project_id, show_hidden=True)
+    assert objects == ["test-path"]
+    get_session_mock.assert_called_once()
+    client.list.assert_called_once_with(project_id, "test-prefix")
 
 
-@pytest.mark.parametrize(
-    "prefix, show_hidden, expected",
-    [(directory, True, TEST_TREE) for directory in VALID_DIRECTORIES]
-    + [
-        (directory, False, TEST_TREE_NO_HIDDEN_FILES)
-        for directory in VALID_DIRECTORIES
-    ],
-)
-def test_ls_subdirectory(remote_tree, prefix, show_hidden, expected):
-    if prefix.startswith("./"):
-        prefix = prefix[2:]
-    prefix = prefix.lstrip("/")
-    matches = ["/" + path for path in expected if path.startswith(prefix)]
-    assert set(datasets.ls(prefix, show_hidden=show_hidden)) == set(matches)
+def test_datasets_ls_non_hidden_files(mocker):
+    session = mocker.Mock()
+    get_session_mock = mocker.patch(
+        "faculty.datasets.get_session", return_value=session
+    )
+
+    project_id = mocker.Mock()
+
+    client = mocker.Mock()
+    mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+
+    list_response = mocker.Mock()
+    mock_object = mocker.Mock()
+    mock_object.path = ".test-hidden-path"
+    list_response.objects = [mock_object]
+    list_response.next_page_token = None
+    client.list.return_value = list_response
+
+    objects = datasets.ls("test-prefix", project_id)
+    assert objects == []
+    get_session_mock.assert_called_once()
+    client.list.assert_called_once_with(project_id, "test-prefix")
 
 
-@pytest.mark.parametrize(
-    "pattern, prefix, show_hidden, expected",
-    [("*dir2*", directory, True, TEST_TREE) for directory in VALID_DIRECTORIES]
-    + [
-        ("*file1", directory, False, TEST_TREE_NO_HIDDEN_FILES)
-        for directory in VALID_DIRECTORIES
-    ],
-)
-def test_glob(pattern, remote_tree, prefix, show_hidden, expected):
-    if prefix.startswith("./"):
-        prefix = prefix[2:]
-    prefix = prefix.lstrip("/")
-    matches = [
-        "/" + path
-        for path in expected
-        if path.startswith(prefix) and fnmatch.fnmatch(path, pattern)
-    ]
-    assert set(datasets.glob(pattern, prefix, show_hidden=show_hidden)) == set(
-        matches
+def test_datasets_ls_with_continuation(mocker):
+    session = mocker.Mock()
+    get_session_mock = mocker.patch(
+        "faculty.datasets.get_session", return_value=session
+    )
+
+    project_id = mocker.Mock()
+
+    client = mocker.Mock()
+    mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+
+    list_response1 = mocker.Mock()
+    mock_object1 = mocker.Mock()
+    mock_object1.path = ".test-hidden-path"
+    list_response1.objects = [mock_object1]
+    list_response1.next_page_token = mocker.Mock()
+
+    list_response2 = mocker.Mock()
+    mock_object2 = mocker.Mock()
+    mock_object2.path = "test-path"
+    list_response2.objects = [mock_object2]
+    list_response2.next_page_token = None
+
+    client.list.side_effect = [list_response1, list_response2]
+
+    objects = datasets.ls("test-prefix", project_id)
+    assert objects == ["test-path"]
+    get_session_mock.assert_called_once()
+    client.list.assert_has_calls(
+        [
+            mocker.call(project_id, "test-prefix"),
+            mocker.call(
+                project_id, "test-prefix", list_response1.next_page_token
+            ),
+        ]
     )
 
 
-@pytest.mark.parametrize(
-    "path, result",
-    [(path, True) for path in VALID_DIRECTORIES]
-    + [(path, False) for path in VALID_FILES + INVALID_PATHS],
-)
-def test_isdir(remote_tree, path, result):
-    assert datasets._isdir(path) is result
-
-
-@pytest.mark.parametrize(
-    "path, result",
-    [(path, True) for path in VALID_FILES]
-    + [(path, False) for path in VALID_DIRECTORIES + INVALID_PATHS],
-)
-def test_isfile(remote_tree, path, result):
-    assert datasets._isfile(path) is result
-
-
-@pytest.mark.parametrize(
-    "destination",
-    [TEST_FILE_NAME, "/" + TEST_FILE_NAME, "./" + TEST_FILE_NAME],
-)
-def test_put_file(local_file, destination):
-    datasets.put(local_file, destination)
-    content = read_remote_object(TEST_FILE_NAME)
-    assert content == TEST_FILE_CONTENT
-
-
-def test_put_file_nonexistent_directory(local_file):
-    datasets.put(local_file, "/path/to/newdir/test_file")
-    for path in ["/path/", "/path/to/", "/path/to/newdir/"]:
-        content = read_remote_object(path)
-        assert content == b""
-    content = read_remote_object("/path/to/newdir/test_file")
-    assert content == TEST_FILE_CONTENT
-
-
-@pytest.mark.parametrize(
-    "destination",
-    [
-        "",
-        "./",
-        "/",
-        TEST_DIRECTORY + "/",
-        "./" + TEST_DIRECTORY + "/",
-        "/" + TEST_DIRECTORY + "/",
-    ],
-)
-def test_put_file_in_directory(local_file, destination):
-    with pytest.raises(datasets.DatasetsError):
-        datasets.put(local_file, destination)
-
-
-@pytest.mark.parametrize(
-    "destination, resolved_destination",
-    [
-        ("", ""),
-        ("./", ""),
-        ("/", ""),
-        (TEST_DIRECTORY, TEST_DIRECTORY),
-        ("./" + TEST_DIRECTORY, TEST_DIRECTORY),
-        ("/" + TEST_DIRECTORY, TEST_DIRECTORY),
-        (TEST_DIRECTORY + "/", TEST_DIRECTORY),
-        ("./" + TEST_DIRECTORY + "/", TEST_DIRECTORY),
-        ("/" + TEST_DIRECTORY + "/", TEST_DIRECTORY),
-    ],
-)
-def test_put_tree(local_tree, destination, resolved_destination):
-    datasets.put(local_tree, destination)
-    for filename in TEST_TREE:
-        path = posixpath.join(resolved_destination, filename)
-        content = read_remote_object(path)
-        if filename.endswith("/"):
-            assert content == b""
-        else:
-            assert content == TEST_FILE_CONTENT
-
-
-def test_get_file(remote_file):
-    with temporary_directory() as dirname:
-        path = os.path.join(dirname, TEST_FILE_NAME)
-        datasets.get(remote_file, path)
-        with open(path, "rb") as f:
-            content = f.read()
-    assert content == TEST_FILE_CONTENT
-
-
-def test_get_file_in_directory(remote_file):
-    with temporary_directory() as dirname:
-        # Ensure dirname ends with exactly one '/'
-        dirname = dirname.rstrip("/") + "/"
-        with pytest.raises(datasets.DatasetsError):
-            datasets.get(remote_file, dirname)
-
-
-def test_get_file_bad_local_path(remote_file):
-    with temporary_directory() as dirname:
-        path = os.path.join(dirname, "directory/does/not/exist")
-        with pytest.raises(IOError):
-            datasets.get(remote_file, path)
-
-
-def _validate_local_tree(root, tree):
-    for path in tree:
-        full_path = os.path.join(root, path)
-        if full_path.endswith("/"):
-            assert os.path.isdir(full_path)
-        else:
-            with open(full_path, "rb") as f:
-                content = f.read()
-            assert content == TEST_FILE_CONTENT
-
-
-@pytest.mark.parametrize("path", VALID_ROOT_PATHS)
-def test_get_tree(remote_tree, path):
-    with temporary_directory() as dirname:
-        datasets.get(path, dirname)
-        _validate_local_tree(dirname, TEST_TREE)
-
-
-@pytest.mark.parametrize("path", VALID_ROOT_PATHS)
-def test_get_tree_in_directory(remote_tree, path):
-    with temporary_directory() as dirname:
-        # Ensure dirname ends with exactly one '/'
-        dirname = dirname.rstrip("/") + "/"
-        datasets.get(path, dirname)
-        _validate_local_tree(dirname, TEST_TREE)
-
-
-@pytest.mark.parametrize("path", VALID_DIRECTORIES)
-def test_get_subtree(remote_tree, path):
-    prefix = path.strip("/") + "/"
-    subtree = [
-        tree_path[len(prefix) :]
-        for tree_path in TEST_TREE
-        if tree_path.startswith(prefix)
-    ]
-    with temporary_directory() as dirname:
-        datasets.get(path, dirname)
-        _validate_local_tree(dirname, subtree)
-
-
-@pytest.mark.parametrize("path", VALID_DIRECTORIES)
-def test_get_subtree_in_directory(remote_tree, path):
-    prefix = path.strip("/") + "/"
-    subtree = [
-        tree_path[len(prefix) :]
-        for tree_path in TEST_TREE
-        if tree_path.startswith(prefix)
-    ]
-    with temporary_directory() as dirname:
-        # Ensure dirname ends with exactly one '/'
-        dirname = dirname.rstrip("/") + "/"
-        datasets.get(path, dirname)
-        _validate_local_tree(dirname, subtree)
-
-
-@pytest.mark.parametrize("path", VALID_DIRECTORIES)
-def test_get_tree_bad_local_path(remote_tree, path):
-    with temporary_directory() as dirname:
-        local_path = os.path.join(dirname, "directory/does/not/exist/")
-        with pytest.raises(IOError):
-            datasets.get(path, local_path)
-
-
-def test_get_non_existent():
-    with temporary_directory() as dirname:
-        with pytest.raises(datasets.DatasetsError):
-            datasets.get(
-                TEST_NON_EXISTENT, os.path.join(dirname, TEST_NON_EXISTENT)
-            )
-
-
-@pytest.mark.parametrize("destination", ["new_file"])
-def test_mv(remote_file, destination):
-    datasets.mv(remote_file, destination)
-    content = read_remote_object(destination)
-    assert "/" + destination in datasets.ls()
-    assert "/" + remote_file not in datasets.ls()
-    assert content == TEST_FILE_CONTENT
-
-
-@pytest.mark.parametrize("remote_dir, destination", [("/input/", "/output/")])
-def test_mv_directory_source(remote_dir, destination):
-    with pytest.raises(datasets.DatasetsError):
-        datasets.mv(remote_dir, destination)
-
-
-@pytest.mark.parametrize("destination", ["/output/"])
-def test_mv_directory_destination(remote_file, destination):
-    with pytest.raises(datasets.DatasetsError):
-        datasets.mv(remote_file, destination)
-
-
-@pytest.mark.parametrize("destination", ["new_file"])
-def test_cp(remote_file, destination):
-    datasets.cp(remote_file, destination)
-    destination_content = read_remote_object(destination)
-    source_content = read_remote_object(remote_file)
-    assert "/" + destination in datasets.ls()
-    assert destination_content == source_content
-
-
-@pytest.mark.parametrize(
-    "remote_dir, destination",
-    [("/input/no-such-file", "/output/new-file"), ("/input/", "/output/")],
-)
-def test_cp_directory_source(remote_dir, destination):
-    with pytest.raises(datasets.DatasetsError):
-        datasets.cp(remote_dir, destination)
-
-
-@pytest.mark.parametrize("destination", ["/output/"])
-def test_cp_directory_destination(remote_file, destination):
-    with pytest.raises(datasets.DatasetsError):
-        datasets.cp(remote_file, destination)
-
-
-def test_rm(remote_file):
-    assert "/" + remote_file in datasets.ls()
-    datasets.rm(remote_file)
-    assert "/" + remote_file not in datasets.ls()
-
-
-@pytest.mark.parametrize("remote_dir", ["/input/", "/input/no-such-file"])
-def test_rm_directory_source(remote_dir):
-    with pytest.raises(datasets.DatasetsError):
-        datasets.rm(remote_dir)
-
-
-def test_rmdir(remote_tree):
-    assert "/" + EMPTY_DIRECTORY in datasets.ls()
-    datasets.rmdir(EMPTY_DIRECTORY)
-    assert "/" + EMPTY_DIRECTORY not in datasets.ls()
-
-
-def test_rmdir_missing():
-    with pytest.raises(datasets.DatasetsError):
-        datasets.rmdir("missing/directory")
-
-
-def test_rmdir_filetype(remote_tree):
-    with pytest.raises(datasets.DatasetsError):
-        datasets.rmdir(VALID_FILES[0])
-
-
-def test_rmdir_nonempty(remote_tree):
-    with pytest.raises(datasets.DatasetsError):
-        datasets.rmdir("input/")
-
-
-def test_etag(remote_file):
-    etag = datasets.etag(remote_file)
-    assert isinstance(etag, str)
-    assert len(etag) > 0
-
-
-def test_etag_change(remote_file, local_file_changed):
-    initial_etag = datasets.etag(remote_file)
-    datasets.put(local_file_changed, remote_file)
-    final_etag = datasets.etag(remote_file)
-    assert final_etag != initial_etag
-
-
-def test_open_read(remote_file):
-    with datasets.open(remote_file, "rb") as fp:
-        assert fp.read() == TEST_FILE_CONTENT
-
-
-def test_open_defaultmode(remote_file):
-    with datasets.open(remote_file) as fp:
-        assert fp.read() == TEST_FILE_CONTENT.decode("utf-8")
-
-
-def test_open_missing():
-    with pytest.raises(datasets.DatasetsError):
-        with datasets.open("missing/file", "r"):
-            pass
-
-
-def test_open_directory(remote_tree):
-    with pytest.raises(datasets.DatasetsError):
-        with datasets.open("/input", "r"):
-            pass
+def test_datasets_get_file(mocker):
+    session = mocker.Mock()
+    get_session_mock = mocker.patch(
+        "faculty.datasets.get_session", return_value=session
+    )
+
+    project_id = mocker.Mock()
+
+    client = mocker.Mock()
+    mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+
+    list_response = mocker.Mock()
+    list_response.objects = []
+    list_response.next_page_token = None
+    client.list.return_value = list_response
+
+    download_result = mocker.Mock()
+    download_mock = mocker.patch(
+        "faculty.datasets.transfer.download", return_value=download_result
+    )
+
+    datasets.get("project-path", "local-path", project_id)
+    get_session_mock.assert_called_once()
+    client.list.assert_called_once_with(project_id, "project-path/")
+    download_mock.assert_called_once_with(
+        client, project_id, "project-path", "local-path"
+    )
+
+
+def test_datasets_get_empty_directory(mocker):
+    pass
+    # dirname = "local-path/"
+    # os_path_dirname_mock = mocker.patch(
+    #     "faculty.datasets.os.path.dirname", return_value=dirname
+    # )
+    # isdir = True
+    # os_path_isdir_mock = mocker.patch(
+    #     "faculty.datasets.os.path.isdir", return_value=isdir
+    # )
+    # local_dest = "local-path/test-path"
+    # os_path_join_mock = mocker.patch(
+    #     "faculty.datasets.os.path.join", return_value=isdir
+    # )
+
+    # relative_path = mocker.Mock()
+    # get_session_mock = mocker.patch(
+    #     "faculty.datasets.path.project_relative_path",
+    #     return_value=relative_path,
+    # )
+
+    # session = mocker.Mock()
+    # get_session_mock = mocker.patch(
+    #     "faculty.datasets.get_session", return_value=session
+    # )
+
+    # project_id = mocker.Mock()
+
+    # client = mocker.Mock()
+    # mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+
+    # list_response1 = mocker.Mock()
+    # mock_object1 = mocker.Mock()
+    # mock_object1.path = "test-dir/"
+    # list_response1.objects = [mock_object1]
+    # list_response1.next_page_token = mocker.Mock()
+
+    # list_response2 = mocker.Mock()
+    # mock_object2 = mocker.Mock()
+    # mock_object2.path = "test-path"
+    # list_response2.objects = [mock_object2]
+    # list_response2.next_page_token = None
+
+    # client.list.side_effect = [list_response1, list_response2]
+
+    # download_result = mocker.Mock()
+    # download_mock = mocker.patch(
+    #     "faculty.datasets.transfer.download", return_value=download_result
+    # )
+
+    # datasets.get("project-path", "local-path", project_id)
+    # # os_path_dirname_mock.assert_called_once_with("local-path/")
+    # # os_path_isdir_mock.assert_called_once_with("local-path/")
+    # get_session_mock.assert_called_once()
+    # client.list.assert_called_once_with(project_id, "project-path/")
+    # download_mock.assert_called_once_with(
+    #     client, project_id, "project-path", "local-path/")
+
+
+def test_datasets_get_directory(mocker):
+    pass
+
+
+def test_datasets_get_local_path_nonexistent(mocker):
+    pass
+
+
+def test_datasets_get_mismatch_with_destination(mocker):
+    pass
