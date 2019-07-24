@@ -31,16 +31,20 @@ class PathNotFound(Exception):
 
 class SourceIsADirectory(Exception):
     def __init__(self, source_path):
-        tpl = "Source provided '{}' is a directory and must be copied "
-        "recursively"
+        tpl = (
+            "Source provided '{}' is a directory and must be "
+            "copied recursively"
+        )
         message = tpl.format(source_path)
         super(SourceIsADirectory, self).__init__(message)
 
 
 class TargetIsADirectory(Exception):
     def __init__(self, source_path):
-        tpl = "Target provided '{}' is a directory and must be deleted "
-        "recursively"
+        tpl = (
+            "Target provided '{}' is a directory and must be "
+            "deleted recursively"
+        )
         message = tpl.format(source_path)
         super(TargetIsADirectory, self).__init__(message)
 
