@@ -19,7 +19,13 @@ from enum import Enum
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BadRequest, BaseSchema, BaseClient, NotFound
+from faculty.clients.base import (
+    BadRequest,
+    BaseSchema,
+    BaseClient,
+    Conflict,
+    NotFound,
+)
 
 
 class PathNotFound(Exception):
@@ -47,6 +53,13 @@ class TargetIsADirectory(Exception):
         )
         message = tpl.format(source_path)
         super(TargetIsADirectory, self).__init__(message)
+
+
+class PathAlreadyExists(Exception):
+    def __init__(self, source_path):
+        tpl = "Path provided '{}' already exists"
+        message = tpl.format(source_path)
+        super(PathAlreadyExists, self).__init__(message)
 
 
 class CloudStorageProvider(Enum):
@@ -185,13 +198,19 @@ class ObjectClient(BaseClient):
 
         Raises
         ------
-        PathNotFound
-            When the source path does not exist or is not found
+        PathAlreadyExists
+            when the path that we want to create as a directory already exists
         """
         endpoint = "/project/{}/directory/{}".format(
             project_id, path.lstrip("/")
         )
-        return self._put_raw(endpoint)
+        try:
+            self._put_raw(endpoint)
+        except Conflict as err:
+            if err.error_code == "object_already_exists":
+                raise PathAlreadyExists(path)
+            else:
+                raise
 
     def copy(self, project_id, source, destination, recursive=None):
         """Copy objects in the store.

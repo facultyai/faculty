@@ -142,7 +142,7 @@ def test_datasets_get_file(mocker):
 
     download_result = mocker.Mock()
     download_mock = mocker.patch(
-        "faculty.datasets.transfer.download", return_value=download_result
+        "faculty.datasets.transfer.download_file", return_value=download_result
     )
 
     datasets.get("project-path", "local-path", project_id)

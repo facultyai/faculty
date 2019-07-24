@@ -20,7 +20,7 @@ import pytest
 from marshmallow import ValidationError
 from pytz import UTC
 
-from faculty.clients.base import BadRequest, NotFound
+from faculty.clients.base import BadRequest, Conflict, NotFound
 from faculty.clients.object import (
     CloudStorageProvider,
     CompleteMultipartUploadSchema,
@@ -31,6 +31,7 @@ from faculty.clients.object import (
     Object,
     ObjectClient,
     ObjectSchema,
+    PathAlreadyExists,
     PathNotFound,
     PresignUploadResponse,
     PresignUploadResponseSchema,
@@ -238,6 +239,16 @@ def test_object_client_create_directory_default(mocker):
     ObjectClient._put_raw.assert_called_once_with(
         "/project/{}/directory/{}".format(PROJECT_ID, "test-path")
     )
+
+
+def test_object_client_create_directory_already_exists(mocker):
+    error_code = "object_already_exists"
+    exception = Conflict(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
+
+    client = ObjectClient(mocker.Mock())
+    with pytest.raises(PathAlreadyExists, match="'path' already exists"):
+        client.create_directory(PROJECT_ID, "path")
 
 
 def test_object_client_copy_default(mocker):

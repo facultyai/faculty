@@ -153,7 +153,7 @@ def _isfile(project_path, project_id=None, client=None):
     return any(match == rationalised_path for match in matches)
 
 
-def _create_parent_directories(project_path, project_id, s3_client):
+def _create_parent_directories(project_path, project_id, client):
 
     # Make sure empty objects exist for directories
     # List once for speed
@@ -169,17 +169,14 @@ def _create_parent_directories(project_path, project_id, s3_client):
         # return true if '/somedir/myfile' exists, even if '/somedir/' does not
         if dirname not in all_objects:
             # Directories on S3 are empty objects with trailing '/' on the key
-            client = ObjectClient(get_session())
             client.create_directory(project_id, dirname)
 
 
-def _put_file(local_path, project_path, project_id):
-    client = ObjectClient(get_session())
+def _put_file(local_path, project_path, project_id, client):
     transfer.upload_file(client, project_id, project_path, local_path)
 
 
-def _put_directory(local_path, project_path, project_id, s3_client):
-    client = ObjectClient(get_session())
+def _put_directory(local_path, project_path, project_id, client):
     client.create_directory(project_id, project_path)
 
     # Recursively put the contents of the directory
@@ -188,19 +185,19 @@ def _put_directory(local_path, project_path, project_id, s3_client):
             os.path.join(local_path, entry),
             posixpath.join(project_path, entry),
             project_id,
-            s3_client,
+            client,
         )
 
 
-def _put_recursive(local_path, project_path, project_id, s3_client):
+def _put_recursive(local_path, project_path, project_id, client):
     """Puts a file/directory without checking that parent directory exists."""
     if os.path.isdir(local_path):
-        _put_directory(local_path, project_path, project_id, s3_client)
+        _put_directory(local_path, project_path, project_id, client)
     else:
         _put_file(local_path, project_path, project_id)
 
 
-def put(local_path, project_path, project_id=None):
+def put(local_path, project_path, project_id=None, client=None):
     """Copy from the local filesystem to a project's datasets.
 
     Parameters
@@ -216,13 +213,13 @@ def put(local_path, project_path, project_id=None):
     """
 
     project_id = project_id or get_context().project_id
+    client = ObjectClient(get_session())
+
     if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
 
-    s3_client = _s3_client(project_id)
-
-    _create_parent_directories(project_path, project_id, s3_client)
-    _put_recursive(local_path, project_path, project_id, s3_client)
+    _create_parent_directories(project_path, project_id, client)
+    _put_recursive(local_path, project_path, project_id, client)
 
 
 def _get_file(project_path, local_path, project_id, client):
