@@ -336,9 +336,17 @@ def test_datasets_put_directory(mocker):
     pass
 
 
-def test_datasets_cp_file(mocker):
+def test_datasets_cp_path(mocker):
     pass
 
 
-def test_datasets_cp_directory(mocker):
+def test_datasets_rm_path(mocker):
+    pass
+
+
+def test_datasets_rmdir_path(mocker):
+    pass
+
+
+def test_datasets_etag(mocker):
     pass

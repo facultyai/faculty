@@ -341,7 +341,9 @@ def mv(source_path, destination_path, project_id=None):
     rm(source_path, project_id, s3_client)
 
 
-def cp(source_path, destination_path, project_id=None, s3_client=None):
+def cp(
+    source_path, destination_path, project_id=None, recursive=None, client=None
+):
     """Copy a file within a project's datasets.
 
     Parameters
@@ -354,32 +356,17 @@ def cp(source_path, destination_path, project_id=None, s3_client=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
-    s3_client : botocore.client.S3, optional
-        Advanced - a specific boto client for AWS S3 to use.
+    recursive :
+    client :
     """
 
-    if s3_client is None:
-        s3_client = _s3_client(project_id)
+    project_id = project_id or get_context().project_id
+    client = ObjectClient(get_session())
 
-    if not _isfile(source_path, project_id, s3_client):
-        raise DatasetsError("source_path must be a file")
-
-    if destination_path.endswith("/"):
-        raise DatasetsError("destination_path must be a file path")
-
-    bucket = _bucket(project_id)
-    source_bucket_path = path.projectpath_to_bucketpath(
-        source_path, project_id
-    )
-    destination_bucket_path = path.projectpath_to_bucketpath(
-        destination_path, project_id
-    )
-
-    copy_source = {"Bucket": bucket, "Key": source_bucket_path}
-    s3_client.copy(copy_source, bucket, destination_bucket_path)
+    client.copy(project_id, source_path, destination_path, recursive=recursive)
 
 
-def rm(project_path, project_id=None, s3_client=None):
+def rm(project_path, project_id=None, recursive=None, client=None):
     """Remove a file from the project directory.
 
     Parameters
@@ -390,23 +377,17 @@ def rm(project_path, project_id=None, s3_client=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
-    s3_client : botocore.client.S3, optional
-        Advanced - a specific boto client for AWS S3 to use.
+    recursive :
+    client :
     """
 
-    if s3_client is None:
-        s3_client = _s3_client(project_id)
+    project_id = project_id or get_context().project_id
+    client = ObjectClient(get_session())
 
-    if not _isfile(project_path, project_id, s3_client):
-        raise DatasetsError("not a file")
-
-    bucket = _bucket(project_id)
-    bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
-
-    s3_client.delete_object(Bucket=bucket, Key=bucket_path)
+    client.delete(project_id, project_path, recursive=recursive)
 
 
-def rmdir(project_path, project_id=None):
+def rmdir(project_path, project_id=None, client=None):
     """Remove a directory from the project datasets.
 
     Parameters
@@ -417,30 +398,13 @@ def rmdir(project_path, project_id=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
+    client :
     """
 
-    s3_client = _s3_client(project_id)
-
-    if not _isdir(project_path, project_id, s3_client):
-        raise DatasetsError("not a directory")
-
-    contents = ls(
-        project_path, project_id, show_hidden=True, s3_client=s3_client
-    )
-    if not len(contents) == 1:
-        raise DatasetsError("directory is not empty")
-
-    # Directory paths must end with '/'
-    if not project_path.endswith("/"):
-        project_path += "/"
-
-    bucket = _bucket(project_id)
-    bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
-
-    s3_client.delete_object(Bucket=bucket, Key=bucket_path)
+    rm(project_path, project_id=project_id, recursive=True, client=client)
 
 
-def etag(project_path, project_id=None):
+def etag(project_path, project_id=None, client=None):
     """Get a unique identifier for the current version of a file.
 
     Parameters
@@ -451,20 +415,19 @@ def etag(project_path, project_id=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
+    client :
 
     Returns
     -------
     str
     """
 
-    client = _s3_client(project_id)
+    project_id = project_id or get_context().project_id
+    client = ObjectClient(get_session())
 
-    bucket = _bucket(project_id)
-    bucket_path = path.projectpath_to_bucketpath(project_path, project_id)
+    object = client.get(project_id, project_path)
 
-    s3_object = client.get_object(Bucket=bucket, Key=bucket_path)
-
-    return s3_object["ETag"].strip('"')
+    return object.etag.strip('"')
 
 
 @contextlib.contextmanager
