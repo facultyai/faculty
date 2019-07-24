@@ -49,20 +49,20 @@ def test_datasets_ls_all_files(mocker):
 
     project_id = mocker.Mock()
 
-    client = mocker.Mock()
-    mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+    object_client = mocker.Mock()
+    mocker.patch("faculty.datasets.ObjectClient", return_value=object_client)
 
     list_response = mocker.Mock()
     mock_object = mocker.Mock()
     mock_object.path = "test-path"
     list_response.objects = [mock_object]
     list_response.next_page_token = None
-    client.list.return_value = list_response
+    object_client.list.return_value = list_response
 
     objects = datasets.ls("test-prefix", project_id, show_hidden=True)
     assert objects == ["test-path"]
     get_session_mock.assert_called_once()
-    client.list.assert_called_once_with(project_id, "test-prefix")
+    object_client.list.assert_called_once_with(project_id, "test-prefix")
 
 
 def test_datasets_ls_non_hidden_files(mocker):
@@ -73,20 +73,20 @@ def test_datasets_ls_non_hidden_files(mocker):
 
     project_id = mocker.Mock()
 
-    client = mocker.Mock()
-    mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+    object_client = mocker.Mock()
+    mocker.patch("faculty.datasets.ObjectClient", return_value=object_client)
 
     list_response = mocker.Mock()
     mock_object = mocker.Mock()
     mock_object.path = ".test-hidden-path"
     list_response.objects = [mock_object]
     list_response.next_page_token = None
-    client.list.return_value = list_response
+    object_client.list.return_value = list_response
 
     objects = datasets.ls("test-prefix", project_id)
     assert objects == []
     get_session_mock.assert_called_once()
-    client.list.assert_called_once_with(project_id, "test-prefix")
+    object_client.list.assert_called_once_with(project_id, "test-prefix")
 
 
 def test_datasets_ls_with_continuation(mocker):
@@ -97,8 +97,8 @@ def test_datasets_ls_with_continuation(mocker):
 
     project_id = mocker.Mock()
 
-    client = mocker.Mock()
-    mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+    object_client = mocker.Mock()
+    mocker.patch("faculty.datasets.ObjectClient", return_value=object_client)
 
     list_response1 = mocker.Mock()
     mock_object1 = mocker.Mock()
@@ -112,12 +112,12 @@ def test_datasets_ls_with_continuation(mocker):
     list_response2.objects = [mock_object2]
     list_response2.next_page_token = None
 
-    client.list.side_effect = [list_response1, list_response2]
+    object_client.list.side_effect = [list_response1, list_response2]
 
     objects = datasets.ls("test-prefix", project_id)
     assert objects == ["test-path"]
     get_session_mock.assert_called_once()
-    client.list.assert_has_calls(
+    object_client.list.assert_has_calls(
         [
             mocker.call(project_id, "test-prefix"),
             mocker.call(
@@ -135,8 +135,8 @@ def test_datasets_get_file(mocker):
 
     project_id = mocker.Mock()
 
-    client = mocker.Mock()
-    mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+    object_client = mocker.Mock()
+    mocker.patch("faculty.datasets.ObjectClient", return_value=object_client)
 
     ls_mock = mocker.patch("faculty.datasets.ls", return_value=[])
 
@@ -148,10 +148,13 @@ def test_datasets_get_file(mocker):
     datasets.get("project-path", "local-path", project_id)
     get_session_mock.assert_called_once()
     ls_mock.assert_called_once_with(
-        "project-path/", project_id=project_id, show_hidden=True, client=client
+        "project-path/",
+        project_id=project_id,
+        show_hidden=True,
+        object_client=object_client,
     )
     download_mock.assert_called_once_with(
-        client, project_id, "project-path", "local-path"
+        object_client, project_id, "project-path", "local-path"
     )
 
 
@@ -188,8 +191,8 @@ def test_datasets_get_empty_directory(mocker):
 
     project_id = mocker.Mock()
 
-    client = mocker.Mock()
-    mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+    object_client = mocker.Mock()
+    mocker.patch("faculty.datasets.ObjectClient", return_value=object_client)
 
     ls_mock = mocker.patch(
         "faculty.datasets.ls", return_value=["project-path/"]
@@ -212,13 +215,13 @@ def test_datasets_get_empty_directory(mocker):
                 "project-path/",
                 project_id=project_id,
                 show_hidden=True,
-                client=client,
+                object_client=object_client,
             ),
             mocker.call(
                 "project-path",
                 project_id=project_id,
                 show_hidden=True,
-                client=client,
+                object_client=object_client,
             ),
         ]
     )
@@ -259,8 +262,8 @@ def test_datasets_get_directory(mocker):
 
     project_id = mocker.Mock()
 
-    client = mocker.Mock()
-    mocker.patch("faculty.datasets.ObjectClient", return_value=client)
+    object_client = mocker.Mock()
+    mocker.patch("faculty.datasets.ObjectClient", return_value=object_client)
 
     ls_mock = mocker.patch(
         "faculty.datasets.ls",
@@ -301,13 +304,13 @@ def test_datasets_get_directory(mocker):
                 "project-path/",
                 project_id=project_id,
                 show_hidden=True,
-                client=client,
+                object_client=object_client,
             ),
             mocker.call(
                 "project-path",
                 project_id=project_id,
                 show_hidden=True,
-                client=client,
+                object_client=object_client,
             ),
         ]
     )

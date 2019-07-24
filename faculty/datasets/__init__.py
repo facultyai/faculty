@@ -31,7 +31,7 @@ from faculty.datasets.session import DatasetsError
 SherlockMLDatasetsError = DatasetsError
 
 
-def ls(prefix="/", project_id=None, show_hidden=False, client=None):
+def ls(prefix="/", project_id=None, show_hidden=False, object_client=None):
     """List contents of project datasets.
 
     Parameters
@@ -53,13 +53,13 @@ def ls(prefix="/", project_id=None, show_hidden=False, client=None):
     """
 
     project_id = project_id or get_context().project_id
-    client = client or ObjectClient(get_session())
+    object_client = object_client or ObjectClient(get_session())
 
-    list_response = client.list(project_id, prefix)
+    list_response = object_client.list(project_id, prefix)
     paths = [obj.path for obj in list_response.objects]
 
     while list_response.next_page_token is not None:
-        list_response = client.list(
+        list_response = object_client.list(
             project_id, prefix, list_response.next_page_token
         )
         paths += [obj.path for obj in list_response.objects]
@@ -103,7 +103,7 @@ def glob(pattern, prefix="/", project_id=None, show_hidden=False):
     return fnmatch.filter(contents, pattern)
 
 
-def _isdir(project_path, project_id=None, client=None):
+def _isdir(project_path, project_id=None, object_client=None):
     """Determine if a path in a project's datasets is a directory.
 
     Parameters
@@ -123,12 +123,15 @@ def _isdir(project_path, project_id=None, client=None):
     if not project_path.endswith("/"):
         project_path += "/"
     matches = ls(
-        project_path, project_id=project_id, show_hidden=True, client=client
+        project_path,
+        project_id=project_id,
+        show_hidden=True,
+        object_client=object_client,
     )
     return len(matches) >= 1
 
 
-def _isfile(project_path, project_id=None, client=None):
+def _isfile(project_path, project_id=None, object_client=None):
     """Determine if a path in a project's datasets is a file.
 
     Parameters
@@ -147,13 +150,16 @@ def _isfile(project_path, project_id=None, client=None):
     if _isdir(project_path, project_id):
         return False
     matches = ls(
-        project_path, project_id=project_id, show_hidden=True, client=client
+        project_path,
+        project_id=project_id,
+        show_hidden=True,
+        object_client=object_client,
     )
     rationalised_path = path.rationalise_projectpath(project_path)
     return any(match == rationalised_path for match in matches)
 
 
-def _create_parent_directories(project_path, project_id, client):
+def _create_parent_directories(project_path, project_id, object_client):
 
     # Make sure empty objects exist for directories
     # List once for speed
@@ -169,15 +175,15 @@ def _create_parent_directories(project_path, project_id, client):
         # return true if '/somedir/myfile' exists, even if '/somedir/' does not
         if dirname not in all_objects:
             # Directories on S3 are empty objects with trailing '/' on the key
-            client.create_directory(project_id, dirname)
+            object_client.create_directory(project_id, dirname)
 
 
-def _put_file(local_path, project_path, project_id, client):
-    transfer.upload_file(client, project_id, project_path, local_path)
+def _put_file(local_path, project_path, project_id, object_client):
+    transfer.upload_file(object_client, project_id, project_path, local_path)
 
 
-def _put_directory(local_path, project_path, project_id, client):
-    client.create_directory(project_id, project_path)
+def _put_directory(local_path, project_path, project_id, object_client):
+    object_client.create_directory(project_id, project_path)
 
     # Recursively put the contents of the directory
     for entry in os.listdir(local_path):
@@ -185,19 +191,19 @@ def _put_directory(local_path, project_path, project_id, client):
             os.path.join(local_path, entry),
             posixpath.join(project_path, entry),
             project_id,
-            client,
+            object_client,
         )
 
 
-def _put_recursive(local_path, project_path, project_id, client):
+def _put_recursive(local_path, project_path, project_id, object_client):
     """Puts a file/directory without checking that parent directory exists."""
     if os.path.isdir(local_path):
-        _put_directory(local_path, project_path, project_id, client)
+        _put_directory(local_path, project_path, project_id, object_client)
     else:
         _put_file(local_path, project_path, project_id)
 
 
-def put(local_path, project_path, project_id=None, client=None):
+def put(local_path, project_path, project_id=None, object_client=None):
     """Copy from the local filesystem to a project's datasets.
 
     Parameters
@@ -213,16 +219,16 @@ def put(local_path, project_path, project_id=None, client=None):
     """
 
     project_id = project_id or get_context().project_id
-    client = ObjectClient(get_session())
+    object_client = ObjectClient(get_session())
 
     if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
 
-    _create_parent_directories(project_path, project_id, client)
-    _put_recursive(local_path, project_path, project_id, client)
+    _create_parent_directories(project_path, project_id, object_client)
+    _put_recursive(local_path, project_path, project_id, object_client)
 
 
-def _get_file(project_path, local_path, project_id, client):
+def _get_file(project_path, local_path, project_id, object_client):
 
     if local_path.endswith("/"):
         msg = (
@@ -232,10 +238,10 @@ def _get_file(project_path, local_path, project_id, client):
         ).format(repr(project_path), repr(local_path))
         raise DatasetsError(msg)
 
-    transfer.download_file(client, project_id, project_path, local_path)
+    transfer.download_file(object_client, project_id, project_path, local_path)
 
 
-def _get_directory(project_path, local_path, project_id, client):
+def _get_directory(project_path, local_path, project_id, object_client):
 
     # Firstly, make sure that the location to write to locally exists
     containing_dir = os.path.dirname(local_path)
@@ -246,7 +252,10 @@ def _get_directory(project_path, local_path, project_id, client):
         raise IOError(msg)
 
     paths_to_get = ls(
-        project_path, project_id=project_id, show_hidden=True, client=client
+        project_path,
+        project_id=project_id,
+        show_hidden=True,
+        object_client=object_client,
     )
     for object_path in paths_to_get:
 
@@ -282,18 +291,18 @@ def get(project_path, local_path, project_id=None):
     """
 
     project_id = project_id or get_context().project_id
-    client = ObjectClient(get_session())
+    object_client = ObjectClient(get_session())
 
     if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
 
-    if _isdir(project_path, project_id, client):
-        _get_directory(project_path, local_path, project_id, client)
+    if _isdir(project_path, project_id, object_client):
+        _get_directory(project_path, local_path, project_id, object_client)
     else:
-        _get_file(project_path, local_path, project_id, client)
+        _get_file(project_path, local_path, project_id, object_client)
 
 
-def mv(source_path, destination_path, project_id=None, client=None):
+def mv(source_path, destination_path, project_id=None, object_client=None):
     """Move a file within a project's datasets.
 
     Parameters
@@ -309,14 +318,18 @@ def mv(source_path, destination_path, project_id=None, client=None):
     """
 
     project_id = project_id or get_context().project_id
-    client = ObjectClient(get_session())
+    object_client = ObjectClient(get_session())
 
-    cp(source_path, destination_path, project_id, client)
-    rm(source_path, project_id, client)
+    cp(source_path, destination_path, project_id, object_client)
+    rm(source_path, project_id, object_client)
 
 
 def cp(
-    source_path, destination_path, project_id=None, recursive=None, client=None
+    source_path,
+    destination_path,
+    project_id=None,
+    recursive=None,
+    object_client=None,
 ):
     """Copy a file within a project's datasets.
 
@@ -331,16 +344,18 @@ def cp(
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     recursive :
-    client :
+    object_client :
     """
 
     project_id = project_id or get_context().project_id
-    client = ObjectClient(get_session())
+    object_client = ObjectClient(get_session())
 
-    client.copy(project_id, source_path, destination_path, recursive=recursive)
+    object_client.copy(
+        project_id, source_path, destination_path, recursive=recursive
+    )
 
 
-def rm(project_path, project_id=None, recursive=None, client=None):
+def rm(project_path, project_id=None, recursive=None, object_client=None):
     """Remove a file from the project directory.
 
     Parameters
@@ -352,16 +367,16 @@ def rm(project_path, project_id=None, recursive=None, client=None):
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     recursive :
-    client :
+    object_client :
     """
 
     project_id = project_id or get_context().project_id
-    client = ObjectClient(get_session())
+    object_client = ObjectClient(get_session())
 
-    client.delete(project_id, project_path, recursive=recursive)
+    object_client.delete(project_id, project_path, recursive=recursive)
 
 
-def rmdir(project_path, project_id=None, client=None):
+def rmdir(project_path, project_id=None, object_client=None):
     """Remove a directory from the project datasets.
 
     Parameters
@@ -372,13 +387,18 @@ def rmdir(project_path, project_id=None, client=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
-    client :
+    object_client :
     """
 
-    rm(project_path, project_id=project_id, recursive=True, client=client)
+    rm(
+        project_path,
+        project_id=project_id,
+        recursive=True,
+        object_client=object_client,
+    )
 
 
-def etag(project_path, project_id=None, client=None):
+def etag(project_path, project_id=None, object_client=None):
     """Get a unique identifier for the current version of a file.
 
     Parameters
@@ -389,7 +409,7 @@ def etag(project_path, project_id=None, client=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
-    client :
+    object_client :
 
     Returns
     -------
@@ -397,9 +417,9 @@ def etag(project_path, project_id=None, client=None):
     """
 
     project_id = project_id or get_context().project_id
-    client = ObjectClient(get_session())
+    object_client = ObjectClient(get_session())
 
-    object = client.get(project_id, project_path)
+    object = object_client.get(project_id, project_path)
 
     return object.etag.strip('"')
 
