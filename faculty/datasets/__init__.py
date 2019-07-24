@@ -175,7 +175,7 @@ def _create_parent_directories(project_path, project_id, s3_client):
 
 def _put_file(local_path, project_path, project_id):
     client = ObjectClient(get_session())
-    transfer.upload(client, project_id, project_path, local_path)
+    transfer.upload_file(client, project_id, project_path, local_path)
 
 
 def _put_directory(local_path, project_path, project_id, s3_client):
@@ -235,7 +235,7 @@ def _get_file(project_path, local_path, project_id, client):
         ).format(repr(project_path), repr(local_path))
         raise DatasetsError(msg)
 
-    transfer.download(client, project_id, project_path, local_path)
+    transfer.download_file(client, project_id, project_path, local_path)
 
 
 def _get_directory(project_path, local_path, project_id, client):
