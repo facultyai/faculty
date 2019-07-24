@@ -123,9 +123,10 @@ def test_datasets_get_file(mocker, mock_client):
 
     ls_mock = mocker.patch("faculty.datasets.ls", return_value=[])
 
-    download_result = mocker.Mock()
+    download_result_mock = mocker.Mock()
     download_mock = mocker.patch(
-        "faculty.datasets.transfer.download_file", return_value=download_result
+        "faculty.datasets.transfer.download_file",
+        return_value=download_result_mock,
     )
 
     datasets.get("project-path", "local-path", project_id)
@@ -145,9 +146,8 @@ def test_datasets_get_empty_directory(mocker, mock_client):
     os_path_dirname_mock = mocker.patch(
         "faculty.datasets.os.path.dirname", return_value=dirname
     )
-    isdir = True
     os_path_isdir_mock = mocker.patch(
-        "faculty.datasets.os.path.isdir", return_value=isdir
+        "faculty.datasets.os.path.isdir", return_value=True
     )
     local_dest = "local-path/test-path"
     os_path_join_mock = mocker.patch(
@@ -205,9 +205,8 @@ def test_datasets_get_directory(mocker, mock_client):
     os_path_dirname_mock = mocker.patch(
         "faculty.datasets.os.path.dirname", return_value=dirname
     )
-    isdir = True
     os_path_isdir_mock = mocker.patch(
-        "faculty.datasets.os.path.isdir", return_value=isdir
+        "faculty.datasets.os.path.isdir", return_value=True
     )
     local_dests = ["local-path/project-path", "local-path/project-path/file"]
     os_path_join_mock = mocker.patch(
@@ -283,16 +282,40 @@ def test_datasets_get_directory(mocker, mock_client):
     )
 
 
-def test_datasets_get_local_path_nonexistent(mocker):
-    pass
+def test_datasets_put_file(mocker, mock_client):
+    object_client, project_id = mock_client
 
+    os_path_isdir_mock = mocker.patch(
+        "faculty.datasets.os.path.isdir", return_value=False
+    )
 
-def test_datasets_get_mismatch_with_destination(mocker):
-    pass
+    ls_mock = mocker.patch("faculty.datasets.ls", return_value=[])
 
+    dirname_mock = mocker.Mock()
+    mocker.patch(
+        "faculty.datasets.path.project_parent_directories",
+        return_value=[dirname_mock],
+    )
 
-def test_datasets_put_file(mocker):
-    pass
+    object_client.create_directory.return_value = None
+    upload_result_mock = mocker.Mock()
+    upload_mock = mocker.patch(
+        "faculty.datasets.transfer.upload_file",
+        return_value=upload_result_mock,
+    )
+
+    datasets.put("local-path", "project-path", project_id)
+
+    os_path_isdir_mock.assert_called_once_with("local-path")
+    ls_mock.assert_called_once_with(
+        "/", project_id=project_id, show_hidden=True
+    )
+    object_client.create_directory.assert_called_once_with(
+        project_id, dirname_mock
+    )
+    upload_mock.assert_called_once_with(
+        object_client, project_id, "project-path", "local-path"
+    )
 
 
 def test_datasets_put_empty_directory(mocker):

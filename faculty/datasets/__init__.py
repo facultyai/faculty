@@ -200,7 +200,7 @@ def _put_recursive(local_path, project_path, project_id, object_client):
     if os.path.isdir(local_path):
         _put_directory(local_path, project_path, project_id, object_client)
     else:
-        _put_file(local_path, project_path, project_id)
+        _put_file(local_path, project_path, project_id, object_client)
 
 
 def put(local_path, project_path, project_id=None, object_client=None):
