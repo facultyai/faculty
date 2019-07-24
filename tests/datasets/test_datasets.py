@@ -322,3 +322,23 @@ def test_datasets_get_local_path_nonexistent(mocker):
 
 def test_datasets_get_mismatch_with_destination(mocker):
     pass
+
+
+def test_datasets_put_file(mocker):
+    pass
+
+
+def test_datasets_put_empty_directory(mocker):
+    pass
+
+
+def test_datasets_put_directory(mocker):
+    pass
+
+
+def test_datasets_cp_file(mocker):
+    pass
+
+
+def test_datasets_cp_directory(mocker):
+    pass

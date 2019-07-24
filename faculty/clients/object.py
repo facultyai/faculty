@@ -19,7 +19,7 @@ from enum import Enum
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseSchema, BaseClient, NotFound
+from faculty.clients.base import BadRequest, BaseSchema, BaseClient, NotFound
 
 
 class PathNotFound(Exception):
@@ -27,6 +27,22 @@ class PathNotFound(Exception):
         tpl = "Path provided '{}' cannot be found"
         message = tpl.format(source_path)
         super(PathNotFound, self).__init__(message)
+
+
+class SourceIsADirectory(Exception):
+    def __init__(self, source_path):
+        tpl = "Source provided '{}' is a directory and must be copied "
+        "recursively"
+        message = tpl.format(source_path)
+        super(SourceIsADirectory, self).__init__(message)
+
+
+class TargetIsADirectory(Exception):
+    def __init__(self, source_path):
+        tpl = "Target provided '{}' is a directory and must be deleted "
+        "recursively"
+        message = tpl.format(source_path)
+        super(TargetIsADirectory, self).__init__(message)
 
 
 class CloudStorageProvider(Enum):
@@ -192,6 +208,9 @@ class ObjectClient(BaseClient):
         ------
         PathNotFound
             When the source path does not exist or is not found
+        SourceIsADirectory
+            When the source path to copy is a directory but recursive is None
+            or false
         """
         endpoint = "/project/{}/object/{}".format(
             project_id, destination.lstrip("/")
@@ -204,6 +223,11 @@ class ObjectClient(BaseClient):
         except NotFound as err:
             if err.error_code == "source_path_not_found":
                 raise PathNotFound(source)
+            else:
+                raise
+        except BadRequest as err:
+            if err.error_code == "source_is_a_directory":
+                raise SourceIsADirectory(source)
             else:
                 raise
 
@@ -224,6 +248,9 @@ class ObjectClient(BaseClient):
         ------
         PathNotFound
             When the path does not exist or is not found
+        TargetIsADirectory
+            When the target to delete is a directory but recursive is None or
+            false
         """
         endpoint = "/project/{}/object/{}".format(project_id, path.lstrip("/"))
         params = {}
@@ -234,6 +261,11 @@ class ObjectClient(BaseClient):
         except NotFound as err:
             if err.error_code == "object_not_found":
                 raise PathNotFound(path)
+            else:
+                raise
+        except BadRequest as err:
+            if err.error_code == "target_is_a_directory":
+                raise TargetIsADirectory(path)
             else:
                 raise
 

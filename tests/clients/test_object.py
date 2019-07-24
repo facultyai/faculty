@@ -20,7 +20,7 @@ import pytest
 from marshmallow import ValidationError
 from pytz import UTC
 
-from faculty.clients.base import NotFound
+from faculty.clients.base import BadRequest, NotFound
 from faculty.clients.object import (
     CloudStorageProvider,
     CompleteMultipartUploadSchema,
@@ -31,11 +31,13 @@ from faculty.clients.object import (
     Object,
     ObjectClient,
     ObjectSchema,
+    PathNotFound,
     PresignUploadResponse,
     PresignUploadResponseSchema,
     SimplePresignResponse,
     SimplePresignResponseSchema,
-    PathNotFound,
+    SourceIsADirectory,
+    TargetIsADirectory,
 )
 
 
@@ -274,13 +276,23 @@ def test_object_client_copy_multiple(mocker):
     )
 
 
-def test_object_client_copy_single_source_not_found(mocker):
+def test_object_client_copy_source_not_found(mocker):
     error_code = "source_path_not_found"
     exception = NotFound(mocker.Mock(), mocker.Mock(), error_code)
     mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
 
     client = ObjectClient(mocker.Mock())
     with pytest.raises(PathNotFound, match="'source' cannot be found"):
+        client.copy(PROJECT_ID, "source", "destination")
+
+
+def test_object_client_copy_source_is_a_directory(mocker):
+    error_code = "source_is_a_directory"
+    exception = BadRequest(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
+
+    client = ObjectClient(mocker.Mock())
+    with pytest.raises(SourceIsADirectory, match="'source' is a directory"):
         client.copy(PROJECT_ID, "source", "destination")
 
 
@@ -304,6 +316,17 @@ def test_object_client_delete_path_not_found(mocker):
 
     client = ObjectClient(mocker.Mock())
     with pytest.raises(PathNotFound, match="'test-path' cannot be found"):
+        client.delete(PROJECT_ID, path)
+
+
+def test_object_client_delete_target_is_a_directory(mocker):
+    path = "test-path"
+    error_code = "target_is_a_directory"
+    exception = BadRequest(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ObjectClient, "_delete_raw", side_effect=exception)
+
+    client = ObjectClient(mocker.Mock())
+    with pytest.raises(TargetIsADirectory, match="'test-path' is a directory"):
         client.delete(PROJECT_ID, path)
 
 
