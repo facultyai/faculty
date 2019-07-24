@@ -23,33 +23,12 @@ import io
 from faculty.session import get_session
 from faculty.context import get_context
 from faculty.clients.object import ObjectClient
-from faculty.datasets import path, session, transfer
+from faculty.datasets import path, transfer
 from faculty.datasets.session import DatasetsError
 
 
 # For backwards compatibility
 SherlockMLDatasetsError = DatasetsError
-
-
-def _s3_client(project_id=None):
-    """Generate a boto S3 client to access this project's datasets."""
-
-    # At present, calls to the interface of this module run this function once
-    # to generate an S3 client, then pass it around to avoid making many calls
-    # to the secret service. This could result in an invalid client in the
-    # middle of an operation, if we get unlucky and the AWS credentials expire
-    # at that moment.
-
-    # In the future, we may wish to make a wrapper class that manages the S3
-    # client and proxies calls to its methods. This wrapper would catch
-    # failures resulting from invalid AWS credentials and build a new client
-    # and retry the operation accordingly.
-
-    return session.get().s3_client(project_id)
-
-
-def _bucket(project_id=None):
-    return session.get().bucket(project_id)
 
 
 def ls(prefix="/", project_id=None, show_hidden=False, client=None):
@@ -74,13 +53,10 @@ def ls(prefix="/", project_id=None, show_hidden=False, client=None):
     """
 
     project_id = project_id or get_context().project_id
-
     client = client or ObjectClient(get_session())
 
-    paths = []
-
     list_response = client.list(project_id, prefix)
-    paths += [obj.path for obj in list_response.objects]
+    paths = [obj.path for obj in list_response.objects]
 
     while list_response.next_page_token is not None:
         list_response = client.list(
