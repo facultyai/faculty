@@ -348,5 +348,9 @@ def test_datasets_rmdir_path(mocker):
     pass
 
 
+def test_datasets_mv_path(mocker):
+    pass
+
+
 def test_datasets_etag(mocker):
     pass

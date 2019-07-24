@@ -296,7 +296,7 @@ def get(project_path, local_path, project_id=None):
         _get_file(project_path, local_path, project_id, client)
 
 
-def mv(source_path, destination_path, project_id=None):
+def mv(source_path, destination_path, project_id=None, client=None):
     """Move a file within a project's datasets.
 
     Parameters
@@ -311,10 +311,11 @@ def mv(source_path, destination_path, project_id=None):
         your environment.
     """
 
-    s3_client = _s3_client(project_id)
+    project_id = project_id or get_context().project_id
+    client = ObjectClient(get_session())
 
-    cp(source_path, destination_path, project_id, s3_client)
-    rm(source_path, project_id, s3_client)
+    cp(source_path, destination_path, project_id, client)
+    rm(source_path, project_id, client)
 
 
 def cp(
