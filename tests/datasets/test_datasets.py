@@ -56,7 +56,7 @@ def mock_client(mocker):
 
     yield [object_client, project_id]
 
-    get_session_mock.assert_called_once()
+    get_session_mock.assert_called_once_with()
 
 
 def test_datasets_ls_all_files(mocker, mock_client):
@@ -359,7 +359,12 @@ def test_datasets_put_directory(mocker, mock_client):
         project_id, "project-path"
     )
     os_listdir_mock.assert_called_once_with("local-path")
-    _put_file_mock.assert_called_once()
+    _put_file_mock.assert_called_once_with(
+        "local-path/test-file",
+        "project-path/test-file",
+        project_id,
+        object_client,
+    )
 
 
 def test_datasets_cp_path(mocker, mock_client):
