@@ -94,6 +94,33 @@ def test_datasets_ls_with_continuation(mocker, mock_client):
     )
 
 
+def test_datasets_glob_path(mocker):
+    project_id = mocker.Mock()
+
+    content_mock = mocker.Mock()
+    ls_mock = mocker.patch("faculty.datasets.ls", return_value=content_mock)
+    fnmatch_filter_mock = mocker.patch(
+        "fnmatch.filter", return_value=mocker.Mock()
+    )
+
+    pattern_mock = mocker.Mock()
+    datasets.glob(
+        pattern_mock,
+        prefix="project-path",
+        project_id=project_id,
+        show_hidden=True,
+        object_client=None,
+    )
+
+    ls_mock.assert_called_once_with(
+        prefix="project-path",
+        project_id=project_id,
+        show_hidden=True,
+        object_client=None,
+    )
+    fnmatch_filter_mock.assert_called_once_with(content_mock, pattern_mock)
+
+
 def test_datasets_get_file(mocker, mock_client):
     object_client, project_id = mock_client
 
