@@ -387,7 +387,10 @@ def cp(
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
-    recursive :
+    recursive : bool, optional
+        If present allows to copy whole paths with all its content,
+        like a recursive copy in a filesystem. By default the endpoint
+        is not recursive.
     object_client : faculty.clients.object.ObjectClient, optional
         Advanced - can be used to benefit from caching in chain interactions
         with datasets.
@@ -412,7 +415,10 @@ def rm(project_path, project_id=None, recursive=None, object_client=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
-    recursive :
+    recursive : bool, optional
+        If present allows to delete whole paths with all its content,
+        like a recursive delete in a filesystem. By default the endpoint
+        is not recursive.
     object_client : faculty.clients.object.ObjectClient, optional
         Advanced - can be used to benefit from caching in chain interactions
         with datasets.
