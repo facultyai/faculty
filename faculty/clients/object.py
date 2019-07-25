@@ -212,7 +212,7 @@ class ObjectClient(BaseClient):
             else:
                 raise
 
-    def copy(self, project_id, source, destination, recursive=None):
+    def copy(self, project_id, source, destination, recursive=False):
         """Copy objects in the store.
 
         Parameters
@@ -224,7 +224,7 @@ class ObjectClient(BaseClient):
             Copy to this destination path
         recursive : bool, optional
             If present allows to copy whole paths with all its content,
-            like a recursive copy in a filesystem. By default the endpoint
+            like a recursive copy in a filesystem. By default the action
             is not recursive.
 
         Raises
@@ -232,8 +232,7 @@ class ObjectClient(BaseClient):
         PathNotFound
             When the source path does not exist or is not found
         SourceIsADirectory
-            When the source path to copy is a directory but recursive is None
-            or false
+            When the source path to copy is a directory but recursive is false
         """
         endpoint = "/project/{}/object/{}".format(
             project_id, destination.lstrip("/")
@@ -254,7 +253,7 @@ class ObjectClient(BaseClient):
             else:
                 raise
 
-    def delete(self, project_id, path, recursive=None):
+    def delete(self, project_id, path, recursive=False):
         """Delete objects in the store.
 
         Parameters
@@ -264,7 +263,7 @@ class ObjectClient(BaseClient):
             Delete object(s) from this path
         recursive : bool, optional
             If present allows to delete whole paths with all its content,
-            like a recursive delete in a filesystem. By default the endpoint
+            like a recursive delete in a filesystem. By default the action
             is not recursive.
 
         Raises
@@ -272,8 +271,7 @@ class ObjectClient(BaseClient):
         PathNotFound
             When the path does not exist or is not found
         TargetIsADirectory
-            When the target to delete is a directory but recursive is None or
-            false
+            When the target to delete is a directory but recursive is false
         """
         endpoint = "/project/{}/object/{}".format(project_id, path.lstrip("/"))
         params = {}

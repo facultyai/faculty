@@ -372,7 +372,7 @@ def cp(
     source_path,
     destination_path,
     project_id=None,
-    recursive=None,
+    recursive=False,
     object_client=None,
 ):
     """Copy a file within a project's datasets.
@@ -389,7 +389,7 @@ def cp(
         your environment.
     recursive : bool, optional
         If present allows to copy whole paths with all its content,
-        like a recursive copy in a filesystem. By default the endpoint
+        like a recursive copy in a filesystem. By default the action
         is not recursive.
     object_client : faculty.clients.object.ObjectClient, optional
         Advanced - can be used to benefit from caching in chain interactions
@@ -404,7 +404,7 @@ def cp(
     )
 
 
-def rm(project_path, project_id=None, recursive=None, object_client=None):
+def rm(project_path, project_id=None, recursive=False, object_client=None):
     """Remove a file from the project directory.
 
     Parameters
@@ -417,7 +417,7 @@ def rm(project_path, project_id=None, recursive=None, object_client=None):
         your environment.
     recursive : bool, optional
         If present allows to delete whole paths with all its content,
-        like a recursive delete in a filesystem. By default the endpoint
+        like a recursive delete in a filesystem. By default the action
         is not recursive.
     object_client : faculty.clients.object.ObjectClient, optional
         Advanced - can be used to benefit from caching in chain interactions

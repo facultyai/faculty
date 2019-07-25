@@ -259,7 +259,7 @@ def test_object_client_copy_default(mocker):
 
     ObjectClient._put_raw.assert_called_once_with(
         "/project/{}/object/{}".format(PROJECT_ID, "destination"),
-        params={"sourcePath": "source"},
+        params={"sourcePath": "source", "recursive": 0},
     )
 
 
@@ -315,7 +315,8 @@ def test_object_client_delete(mocker):
     client.delete(PROJECT_ID, path)
 
     ObjectClient._delete_raw.assert_called_once_with(
-        "/project/{}/object/{}".format(PROJECT_ID, path), params={}
+        "/project/{}/object/{}".format(PROJECT_ID, path),
+        params={"recursive": 0},
     )
 
 
