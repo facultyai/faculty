@@ -24,7 +24,7 @@ from faculty.session import get_session
 from faculty.context import get_context
 from faculty.clients.object import ObjectClient
 from faculty.datasets import path, transfer
-from faculty.datasets.session import DatasetsError
+from faculty.datasets.path import DatasetsError
 
 
 # For backwards compatibility

@@ -14,7 +14,11 @@
 
 import posixpath
 
-from faculty.datasets import session
+from faculty.context import get_context
+
+
+class DatasetsError(Exception):
+    pass
 
 
 def rationalise_projectpath(path):
@@ -32,8 +36,7 @@ def rationalise_projectpath(path):
 
 def projectpath_to_bucketpath(project_path, project_id=None):
 
-    if project_id is None:
-        project_id = session.project_id_from_environment()
+    project_id = project_id or get_context().project_id
 
     # Project path will already start with '/' so just prepend the project ID
     bucket_path = project_id + rationalise_projectpath(project_path)
