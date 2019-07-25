@@ -180,7 +180,14 @@ def _create_parent_directories(project_path, project_id, object_client):
 
     # Make sure empty objects exist for directories
     # List once for speed
-    all_objects = set(ls("/", project_id=project_id, show_hidden=True))
+    all_objects = set(
+        ls(
+            "/",
+            project_id=project_id,
+            show_hidden=True,
+            object_client=object_client,
+        )
+    )
 
     for dirname in path.project_parent_directories(project_path):
 

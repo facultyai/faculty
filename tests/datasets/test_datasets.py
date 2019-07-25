@@ -308,7 +308,10 @@ def test_datasets_put_file_and_create_parent_directories(mocker, mock_client):
 
     os_path_isdir_mock.assert_called_once_with("local-path")
     ls_mock.assert_called_once_with(
-        "/", project_id=project_id, show_hidden=True
+        "/",
+        project_id=project_id,
+        show_hidden=True,
+        object_client=object_client,
     )
     project_parent_directories_mock.assert_called_once_with("project-path")
     object_client.create_directory.assert_called_once_with(
