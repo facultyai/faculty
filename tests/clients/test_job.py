@@ -140,8 +140,6 @@ JOB_DEFINITION_BODY = {
     "instanceSize": INSTANCE_SIZE_BODY,
     "maxRuntimeSeconds": str(MAX_RUNTIME_SECONDS),
 }
-JOB_DEFINITION_BODY_INVALID = JOB_DEFINITION_BODY.copy()
-JOB_DEFINITION_BODY_INVALID["instanceSizeType"] = "m4.xlarge"
 JOB = Job(id=JOB_ID, meta=JOB_METADATA, definition=JOB_DEFINITION)
 JOB_BODY = {
     "jobId": str(JOB_ID),
@@ -293,7 +291,30 @@ def test_job_definition_schema():
     assert data == JOB_DEFINITION
 
 
-def test_validate_job_definition_schema():
+@pytest.mark.parametrize(
+    "instance_size_type, instance_size",
+    [("m4.xlarge", INSTANCE_SIZE), ("custom", None)],
+)
+def test_job_definition_schema_invalid_instance_type(
+    instance_size_type, instance_size
+):
+    JOB_DEFINITION_BODY_INVALID = JOB_DEFINITION_BODY.copy()
+    JOB_DEFINITION_BODY_INVALID["instanceSizeType"] = instance_size_type
+    JOB_DEFINITION_BODY_INVALID["instanceSize"] = instance_size
+    with pytest.raises(ValidationError):
+        JobDefinitionSchema().load(JOB_DEFINITION_BODY_INVALID)
+
+
+@pytest.mark.parametrize(
+    "image_type, conda_environment",
+    [(ImageType.PYTHON, None), (ImageType.R, "Python3")],
+)
+def test_job_definition_schema_invalid_image_type(
+    image_type, conda_environment
+):
+    JOB_DEFINITION_BODY_INVALID = JOB_DEFINITION_BODY.copy()
+    JOB_DEFINITION_BODY_INVALID["imageType"] = image_type
+    JOB_DEFINITION_BODY_INVALID["condaEnvironment"] = conda_environment
     with pytest.raises(ValidationError):
         JobDefinitionSchema().load(JOB_DEFINITION_BODY_INVALID)
 
