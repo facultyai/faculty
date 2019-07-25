@@ -133,7 +133,7 @@ def _isdir(project_path, project_id=None, object_client=None):
     -------
     bool
     """
-    # 'Directories' always end in a '/' in S3
+    # 'Directories' always end in a '/'
     if not project_path.endswith("/"):
         project_path += "/"
     matches = ls(
@@ -198,7 +198,7 @@ def _create_parent_directories(project_path, project_id, object_client):
         # We're doing this manually instead of using _isdir as _isdir will
         # return true if '/somedir/myfile' exists, even if '/somedir/' does not
         if dirname not in all_objects:
-            # Directories on S3 are empty objects with trailing '/' on the key
+            # Directories are empty objects with trailing '/' on the key
             object_client.create_directory(project_id, dirname)
 
 
@@ -291,7 +291,7 @@ def _get_directory(project_path, local_path, project_id, object_client):
         )
 
         if object_path.endswith("/"):
-            # Objects with a trailing '/' on S3 indicate directories
+            # Objects with a trailing '/' indicate directories
             if not os.path.exists(local_dest):
                 os.makedirs(local_dest)
         else:
