@@ -36,39 +36,6 @@ def test_rationalise_projectpath(input_path, rationalised_path):
 
 
 @pytest.mark.parametrize(
-    "project_path, project_id, bucket_path",
-    [
-        ("", "id", "id/"),
-        ("./", "id", "id/"),
-        ("/", "id", "id/"),
-        ("path", "id", "id/path"),
-        ("./path", "id", "id/path"),
-        ("/path", "id", "id/path"),
-        ("path/", "id", "id/path/"),
-        ("./path/", "id", "id/path/"),
-        ("/path/", "id", "id/path/"),
-    ],
-)
-def test_projectpath_to_bucketpath(project_path, project_id, bucket_path):
-    result = path.projectpath_to_bucketpath(project_path, project_id)
-    assert result == bucket_path
-
-
-@pytest.mark.parametrize(
-    "bucket_path, project_path",
-    [
-        ("id/", "/"),
-        ("id/path", "/path"),
-        ("id/path/", "/path/"),
-        ("id/nested/path", "/nested/path"),
-    ],
-)
-def test_bucketpath_to_projectpath(bucket_path, project_path):
-    result = path.bucketpath_to_projectpath(bucket_path)
-    assert result == project_path
-
-
-@pytest.mark.parametrize(
     "project_path",
     [
         "input/path/to/somefile.csv",

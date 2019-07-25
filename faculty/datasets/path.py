@@ -14,8 +14,6 @@
 
 import posixpath
 
-from faculty.context import get_context
-
 
 class DatasetsError(Exception):
     pass
@@ -32,22 +30,6 @@ def rationalise_projectpath(path):
         normed += "/"
 
     return normed
-
-
-def projectpath_to_bucketpath(project_path, project_id=None):
-
-    project_id = project_id or get_context().project_id
-
-    # Project path will already start with '/' so just prepend the project ID
-    bucket_path = project_id + rationalise_projectpath(project_path)
-
-    return bucket_path
-
-
-def bucketpath_to_projectpath(path):
-    """Drop the project ID from the front of the path."""
-    parts = path.split("/")
-    return posixpath.join("/", *parts[1:])
 
 
 def project_relative_path(project_root, project_path):
