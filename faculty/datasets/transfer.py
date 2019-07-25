@@ -13,7 +13,9 @@
 # limitations under the License.
 
 
+import hashlib
 import requests
+from collections import namedtuple
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets.util import DatasetsError
@@ -21,6 +23,11 @@ from faculty.datasets.util import DatasetsError
 
 KILOBYTE = 1024
 MEGABYTE = 1024 * KILOBYTE
+UPLOAD_CHUCK_SIZE = 5 * MEGABYTE
+
+GCSStatusResponse = namedtuple(
+    "GCSStatusResponse", ["status_code", "resumption_byte_index"]
+)
 
 
 def download(object_client, project_id, datasets_path):
@@ -198,10 +205,73 @@ def _s3_upload(object_client, project_id, datasets_path, content, upload_id):
 
 
 def _gcs_upload(upload_url, content):
-    raise NotImplementedError("GCS upload is not implemented")
+
+    completed_parts = []
+
+    for i, chunk in enumerate(_rechunk_data(content)):
+
+        start_byte_index = 0
+
+        result = _send_gcs_post(upload_url, chunk, start_byte_index)
+
+        if result.status_code > 500:
+            _retry_request()
+
+        start_byte_index += len(chunk)
 
 
-def _file_chunk_iterator(local_path, chunk_size=5 * MEGABYTE):
+def _retry_request(upload_url, content):
+    max_retries = 5
+    retry = 0
+    gcs_response = _validate_gcp_request(upload_url, content)
+    while retry <= max_retries:
+        result = _send_gcs_post(upload_url, content, gcs_response.resumption_byte_index)
+        if result.status_code < 300:
+            continue
+        gcs_response = _validate_gcp_request(upload_url, content)
+        sleep(retry * 2)
+        retry += 1
+
+
+def _send_gcs_post(upload_url, content, start_byte_index):
+    if len(content) < UPLOAD_CHUCK_SIZE:
+        total_upload_size = start_byte_index + len(content)
+    else:
+        total_upload_size = "*"
+    return requests.put(
+        upload_url,
+        data=content[start_byte_index::],
+        headers={
+            "Content-Range":f"bytes {start_byte_index}-\
+                {start_byte_index+len(content)-1}/{total_upload_size}"
+        },
+    )
+
+
+def _validate_gcp_request(upload_url, content):
+    response = requests.put(upload_url, headers={"content-range": "bytes */*"})
+
+    # Response header example:
+    # {
+    #   'Range': 'bytes=0-82837503',
+    #   'X-Range-MD5': '871932daecb0582948040f473c199932'
+    # }
+    # The hash is actually for the lower-bound to the (upper bound +1)
+    # of Range.
+    upper_bound = int(response.headers["Range"].split("-")[1]) + 1
+
+    local_hash = hashlib.md5(content[0:upper_bound]).hexdigest()
+    if local_hash != response.headers["X-Range-MD5"]:
+        raise DatasetsError(
+            "Error while uploading to GCP. Local and returned hashes\
+            didn't match"
+        )
+    return GCSStatusResponse(
+        status_code=response.status_code, resumption_byte_index=upper_bound + 1
+    )
+
+
+def _file_chunk_iterator(local_path, chunk_size=UPLOAD_CHUCK_SIZE):
     with open(local_path, "rb") as fp:
         chunk = fp.read(chunk_size)
         while chunk:
@@ -209,7 +279,7 @@ def _file_chunk_iterator(local_path, chunk_size=5 * MEGABYTE):
             chunk = fp.read(chunk_size)
 
 
-def _rechunk_data(content, chunk_size=5 * MEGABYTE):
+def _rechunk_data(content, chunk_size=UPLOAD_CHUCK_SIZE):
 
     chunk = b""
 

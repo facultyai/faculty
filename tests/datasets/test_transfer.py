@@ -13,9 +13,11 @@
 # limitations under the License.
 
 
-from uuid import uuid4
+import hashlib
 import random
+import requests
 import string
+from uuid import uuid4
 
 import pytest
 
@@ -46,6 +48,16 @@ def mock_client_download(mocker, requests_mock):
     )
 
 
+@pytest.fixture
+def mock_client_upload(mocker, requests_mock):
+    object_client = mocker.Mock()
+    response_mock = mocker.Mock()
+    response_mock.provider.return_value = "GCS"
+    object_client.presign_upload.return_value = response_mock
+
+    yield object_client
+
+
 def test_download(mock_client_download):
     assert (
         transfer.download(mock_client_download, PROJECT_ID, TEST_PATH)
@@ -67,3 +79,24 @@ def test_download_file(mock_client_download, tmpdir):
         mock_client_download, PROJECT_ID, TEST_PATH, destination
     )
     assert destination.read(mode="rb") == TEST_CONTENT
+
+
+def test_gcs_upload(mock_client_upload, requests_mock):
+    requests_mock.put(TEST_URL, exc=requests.exceptions.ConnectTimeout)
+    requests_mock.put(
+        TEST_URL,
+        [
+            {
+                "headers": {
+                    "Range": f"bytes=0-{100}",
+                    "X-Range-MD5": hashlib.md5(
+                        TEST_CONTENT[0:101]
+                    ).hexdigest(),
+                },
+                "status_code": 308,
+            },
+            {"headers": {}, "status_code": 200},
+        ],
+    )
+
+    transfer.upload_file(mock_client_download, PROJECT_ID, TEST_PATH)
