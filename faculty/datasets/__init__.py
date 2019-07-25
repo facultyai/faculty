@@ -197,7 +197,6 @@ def _put_directory(local_path, project_path, project_id, object_client):
 
 def _put_recursive(local_path, project_path, project_id, object_client):
     """Puts a file/directory without checking that parent directory exists."""
-    print("HELLOOO")
     if os.path.isdir(local_path):
         _put_directory(local_path, project_path, project_id, object_client)
     else:
@@ -226,7 +225,6 @@ def put(local_path, project_path, project_id=None, object_client=None):
         local_path = os.fspath(local_path)
 
     _create_parent_directories(project_path, project_id, object_client)
-    print("HI")
     _put_recursive(local_path, project_path, project_id, object_client)
 
 
