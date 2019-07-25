@@ -278,7 +278,7 @@ def test_datasets_get_directory(mocker, mock_client):
         ]
     )
     _get_file_mock.assert_called_once_with(
-        "project-path/test-file", local_dests[1], project_id
+        "project-path/test-file", local_dests[1], project_id, object_client
     )
 
 

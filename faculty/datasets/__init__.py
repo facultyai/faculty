@@ -299,7 +299,7 @@ def _get_directory(project_path, local_path, project_id, object_client):
             dirname = os.path.dirname(local_dest)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
-            _get_file(object_path, local_dest, project_id)
+            _get_file(object_path, local_dest, project_id, object_client)
 
 
 def get(project_path, local_path, project_id=None, object_client=None):
