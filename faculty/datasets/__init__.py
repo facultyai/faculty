@@ -322,8 +322,19 @@ def mv(source_path, destination_path, project_id=None, object_client=None):
     project_id = project_id or get_context().project_id
     object_client = ObjectClient(get_session())
 
-    cp(source_path, destination_path, project_id, object_client)
-    rm(source_path, project_id, object_client)
+    cp(
+        source_path,
+        destination_path,
+        project_id=project_id,
+        recursive=True,
+        object_client=object_client,
+    )
+    rm(
+        source_path,
+        project_id=project_id,
+        recursive=True,
+        object_client=object_client,
+    )
 
 
 def cp(

@@ -359,21 +359,92 @@ def test_datasets_put_directory(mocker, mock_client):
     _put_file_mock.assert_called_once()
 
 
-def test_datasets_cp_path(mocker):
-    pass
+def test_datasets_cp_path(mocker, mock_client):
+    object_client, project_id = mock_client
+    object_client.copy.return_value = mocker.Mock()
+
+    datasets.cp(
+        "source-path",
+        "destination-path",
+        project_id=project_id,
+        recursive=True,
+        object_client=object_client,
+    )
+
+    object_client.copy.assert_called_once_with(
+        project_id, "source-path", "destination-path", recursive=True
+    )
 
 
-def test_datasets_rm_path(mocker):
-    pass
+def test_datasets_rm_path(mocker, mock_client):
+    object_client, project_id = mock_client
+    object_client.delete.return_value = mocker.Mock()
+
+    datasets.rm(
+        "project-path",
+        project_id=project_id,
+        recursive=True,
+        object_client=object_client,
+    )
+
+    object_client.delete.assert_called_once_with(
+        project_id, "project-path", recursive=True
+    )
 
 
 def test_datasets_rmdir_path(mocker):
-    pass
+    project_id = mocker.Mock()
+
+    rm_mock = mocker.patch("faculty.datasets.rm", return_value=mocker.Mock())
+
+    datasets.rmdir("project-path", project_id=project_id, object_client=None)
+
+    rm_mock.assert_called_once_with(
+        "project-path",
+        project_id=project_id,
+        recursive=True,
+        object_client=None,
+    )
 
 
-def test_datasets_mv_path(mocker):
-    pass
+def test_datasets_mv_path(mocker, mock_client):
+    object_client, project_id = mock_client
+
+    cp_mock = mocker.patch("faculty.datasets.cp", return_value=mocker.Mock())
+    rm_mock = mocker.patch("faculty.datasets.rm", return_value=mocker.Mock())
+
+    datasets.mv(
+        "source-path",
+        "destination-path",
+        project_id=project_id,
+        object_client=object_client,
+    )
+
+    cp_mock.assert_called_once_with(
+        "source-path",
+        "destination-path",
+        project_id=project_id,
+        recursive=True,
+        object_client=object_client,
+    )
+    rm_mock.assert_called_once_with(
+        "source-path",
+        project_id=project_id,
+        recursive=True,
+        object_client=object_client,
+    )
 
 
-def test_datasets_etag(mocker):
-    pass
+def test_datasets_etag(mocker, mock_client):
+    object_client, project_id = mock_client
+
+    object_mock = mocker.Mock()
+    object_mock.etag = "test-etag"
+    object_client.get.return_value = object_mock
+
+    etag = datasets.etag(
+        "project-path", project_id=project_id, object_client=object_client
+    )
+
+    assert etag == object_mock.etag
+    object_client.get.assert_called_once_with(project_id, "project-path")
