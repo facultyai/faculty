@@ -85,7 +85,7 @@ JobDefinition = namedtuple(
         "max_runtime_seconds",
     ],
 )
-Job = namedtuple("Job", ["job_id", "meta", "definition"])
+Job = namedtuple("Job", ["id", "meta", "definition"])
 
 EnvironmentStepExecution = namedtuple(
     "EnvironmentStepExecution",
@@ -205,6 +205,15 @@ class JobDefinitionSchema(BaseSchema):
     )
 
     @validates_schema
+    def validate_conda_environment(self, data):
+        image_is_r = data["image_type"] == "r"
+        conda_environment_set = data["conda_environment"] is not None
+        if image_is_r and conda_environment_set:
+            raise ValidationError(
+                "conda environment must only be set for python images"
+            )
+
+    @validates_schema
     def validate_instance_size(self, data):
         custom_type = data["instance_size_type"] == "custom"
         instance_size_set = data["instance_size"] is not None
@@ -223,7 +232,7 @@ class JobDefinitionSchema(BaseSchema):
 
 
 class JobSchema(BaseSchema):
-    job_id = fields.UUID(data_key="jobId", required=True)
+    id = fields.UUID(data_key="jobId", required=True)
     meta = fields.Nested(JobMetadataSchema, required=True)
     definition = fields.Nested(JobDefinitionSchema, required=True)
 

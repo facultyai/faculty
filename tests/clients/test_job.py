@@ -142,7 +142,7 @@ JOB_DEFINITION_BODY = {
 }
 JOB_DEFINITION_BODY_INVALID = JOB_DEFINITION_BODY.copy()
 JOB_DEFINITION_BODY_INVALID["instanceSizeType"] = "m4.xlarge"
-JOB = Job(job_id=JOB_ID, meta=JOB_METADATA, definition=JOB_DEFINITION)
+JOB = Job(id=JOB_ID, meta=JOB_METADATA, definition=JOB_DEFINITION)
 JOB_BODY = {
     "jobId": str(JOB_ID),
     "meta": JOB_METADATA_BODY,
@@ -422,6 +422,7 @@ def test_list_runs_response_schema():
         JobParameterSchema,
         JobCommandSchema,
         JobDefinitionSchema,
+        JobIdSchema,
         JobSchema,
         EnvironmentStepExecutionSchema,
         SubrunSummarySchema,
