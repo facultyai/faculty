@@ -13,33 +13,9 @@
 # limitations under the License.
 
 
-# import fnmatch
-# import os
-# import posixpath
 import pytest
 
-# import mock
-
 from faculty import datasets
-
-# from tests.datasets.fixtures import (
-#     read_remote_object,
-#     temporary_directory,
-#     TEST_DIRECTORY,
-#     TEST_FILE_NAME,
-#     TEST_TREE,
-#     TEST_TREE_NO_HIDDEN_FILES,
-#     VALID_ROOT_PATHS,
-#     VALID_DIRECTORIES,
-#     VALID_FILES,
-#     INVALID_PATHS,
-#     TEST_FILE_CONTENT,
-#     TEST_NON_EXISTENT,
-#     EMPTY_DIRECTORY,
-# )
-
-
-# pytestmark = pytest.mark.usefixtures("project_directory")
 
 
 @pytest.fixture
@@ -54,7 +30,7 @@ def mock_client(mocker):
     object_client = mocker.Mock()
     mocker.patch("faculty.datasets.ObjectClient", return_value=object_client)
 
-    yield [object_client, project_id]
+    yield object_client, project_id
 
     get_session_mock.assert_called_once_with()
 
