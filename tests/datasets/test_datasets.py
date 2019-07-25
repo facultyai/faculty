@@ -368,7 +368,6 @@ def test_datasets_cp_path(mocker, mock_client):
         "destination-path",
         project_id=project_id,
         recursive=True,
-        object_client=object_client,
     )
 
     object_client.copy.assert_called_once_with(
@@ -380,12 +379,7 @@ def test_datasets_rm_path(mocker, mock_client):
     object_client, project_id = mock_client
     object_client.delete.return_value = mocker.Mock()
 
-    datasets.rm(
-        "project-path",
-        project_id=project_id,
-        recursive=True,
-        object_client=object_client,
-    )
+    datasets.rm("project-path", project_id=project_id, recursive=True)
 
     object_client.delete.assert_called_once_with(
         project_id, "project-path", recursive=True
@@ -413,12 +407,7 @@ def test_datasets_mv_path(mocker, mock_client):
     cp_mock = mocker.patch("faculty.datasets.cp", return_value=mocker.Mock())
     rm_mock = mocker.patch("faculty.datasets.rm", return_value=mocker.Mock())
 
-    datasets.mv(
-        "source-path",
-        "destination-path",
-        project_id=project_id,
-        object_client=object_client,
-    )
+    datasets.mv("source-path", "destination-path", project_id=project_id)
 
     cp_mock.assert_called_once_with(
         "source-path",
@@ -442,9 +431,7 @@ def test_datasets_etag(mocker, mock_client):
     object_mock.etag = "test-etag"
     object_client.get.return_value = object_mock
 
-    etag = datasets.etag(
-        "project-path", project_id=project_id, object_client=object_client
-    )
+    etag = datasets.etag("project-path", project_id=project_id)
 
     assert etag == object_mock.etag
     object_client.get.assert_called_once_with(project_id, "project-path")

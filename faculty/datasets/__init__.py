@@ -45,6 +45,9 @@ def ls(prefix="/", project_id=None, show_hidden=False, object_client=None):
         your environment.
     show_hidden : bool, optional
         Include hidden files in the output. Defaults to False.
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
 
     Returns
     -------
@@ -75,7 +78,9 @@ def ls(prefix="/", project_id=None, show_hidden=False, object_client=None):
         return non_hidden_paths
 
 
-def glob(pattern, prefix="/", project_id=None, show_hidden=False):
+def glob(
+    pattern, prefix="/", project_id=None, show_hidden=False, object_client=None
+):
     """List contents of project datasets that match a glob pattern.
 
     Parameters
@@ -91,6 +96,9 @@ def glob(pattern, prefix="/", project_id=None, show_hidden=False):
         your environment.
     show_hidden : bool, optional
         Include hidden files in the output. Defaults to False.
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
 
     Returns
     -------
@@ -98,7 +106,10 @@ def glob(pattern, prefix="/", project_id=None, show_hidden=False):
         The list of files from the project that match the glob pattern.
     """
     contents = ls(
-        prefix=prefix, project_id=project_id, show_hidden=show_hidden
+        prefix=prefix,
+        project_id=project_id,
+        show_hidden=show_hidden,
+        object_client=object_client,
     )
     return fnmatch.filter(contents, pattern)
 
@@ -114,6 +125,9 @@ def _isdir(project_path, project_id=None, object_client=None):
         The project to list files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
 
     Returns
     -------
@@ -142,6 +156,9 @@ def _isfile(project_path, project_id=None, object_client=None):
         The project to list files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
 
     Returns
     -------
@@ -216,10 +233,13 @@ def put(local_path, project_path, project_id=None, object_client=None):
         The project to put files in. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
     """
 
     project_id = project_id or get_context().project_id
-    object_client = ObjectClient(get_session())
+    object_client = object_client or ObjectClient(get_session())
 
     if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
@@ -275,7 +295,7 @@ def _get_directory(project_path, local_path, project_id, object_client):
             _get_file(object_path, local_dest, project_id)
 
 
-def get(project_path, local_path, project_id=None):
+def get(project_path, local_path, project_id=None, object_client=None):
     """Copy from a project's datasets to the local filesystem.
 
     Parameters
@@ -288,10 +308,13 @@ def get(project_path, local_path, project_id=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
     """
 
     project_id = project_id or get_context().project_id
-    object_client = ObjectClient(get_session())
+    object_client = object_client or ObjectClient(get_session())
 
     if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
@@ -315,10 +338,13 @@ def mv(source_path, destination_path, project_id=None, object_client=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
     """
 
     project_id = project_id or get_context().project_id
-    object_client = ObjectClient(get_session())
+    object_client = object_client or ObjectClient(get_session())
 
     cp(
         source_path,
@@ -355,11 +381,13 @@ def cp(
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     recursive :
-    object_client :
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
     """
 
     project_id = project_id or get_context().project_id
-    object_client = ObjectClient(get_session())
+    object_client = object_client or ObjectClient(get_session())
 
     object_client.copy(
         project_id, source_path, destination_path, recursive=recursive
@@ -378,11 +406,13 @@ def rm(project_path, project_id=None, recursive=None, object_client=None):
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     recursive :
-    object_client :
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
     """
 
     project_id = project_id or get_context().project_id
-    object_client = ObjectClient(get_session())
+    object_client = object_client or ObjectClient(get_session())
 
     object_client.delete(project_id, project_path, recursive=recursive)
 
@@ -398,7 +428,9 @@ def rmdir(project_path, project_id=None, object_client=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
-    object_client :
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
     """
 
     rm(
@@ -420,7 +452,9 @@ def etag(project_path, project_id=None, object_client=None):
         The project to get files from. You need to have access to this project
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
-    object_client :
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
 
     Returns
     -------
@@ -428,7 +462,7 @@ def etag(project_path, project_id=None, object_client=None):
     """
 
     project_id = project_id or get_context().project_id
-    object_client = ObjectClient(get_session())
+    object_client = object_client or ObjectClient(get_session())
 
     object = object_client.get(project_id, project_path)
 
