@@ -187,7 +187,7 @@ class ObjectClient(BaseClient):
         return self._get(endpoint, ListObjectsResponseSchema(), params=params)
 
     def create_directory(self, project_id, path):
-        """Copy objects in the store.
+        """Create empty object as placeholder to a directory in the store.
 
         Parameters
         ----------
