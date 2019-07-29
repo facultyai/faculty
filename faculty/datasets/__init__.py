@@ -379,6 +379,7 @@ def cp(
     project_id = project_id or get_context().project_id
     object_client = object_client or ObjectClient(get_session())
 
+    _create_parent_directories(destination_path, project_id, object_client)
     object_client.copy(
         project_id, source_path, destination_path, recursive=recursive
     )

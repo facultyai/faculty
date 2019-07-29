@@ -341,6 +341,11 @@ def test_datasets_cp_path(mocker, mock_client):
     object_client, project_id = mock_client
     object_client.copy.return_value = mocker.Mock()
 
+    path_project_parent_directory = mocker.patch(
+        "faculty.datasets.path.project_parent_directory", return_value="/"
+    )
+    object_client.create_directory.return_value = mocker.Mock()
+
     datasets.cp(
         "source-path",
         "destination-path",
@@ -348,6 +353,10 @@ def test_datasets_cp_path(mocker, mock_client):
         recursive=True,
     )
 
+    path_project_parent_directory.assert_called_once_with("destination-path")
+    object_client.create_directory.assert_called_once_with(
+        project_id, "/", parents=True
+    )
     object_client.copy.assert_called_once_with(
         project_id, "source-path", "destination-path", recursive=True
     )
