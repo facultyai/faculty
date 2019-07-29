@@ -272,17 +272,10 @@ def test_datasets_get_directory(mocker, mock_client):
 def test_datasets_put_file_and_create_parent_directories(mocker, mock_client):
     object_client, project_id = mock_client
 
+    object_client.create_directory.return_value = mocker.Mock()
+
     os_path_isdir_mock = mocker.patch("os.path.isdir", return_value=False)
 
-    ls_mock = mocker.patch("faculty.datasets.ls", return_value=[])
-
-    dirname_mock = mocker.Mock()
-    project_parent_directories_mock = mocker.patch(
-        "faculty.datasets.path.project_parent_directories",
-        return_value=[dirname_mock],
-    )
-
-    object_client.create_directory.return_value = mocker.Mock()
     upload_result_mock = mocker.Mock()
     upload_mock = mocker.patch(
         "faculty.datasets.transfer.upload_file",
@@ -291,17 +284,10 @@ def test_datasets_put_file_and_create_parent_directories(mocker, mock_client):
 
     datasets.put("local-path", "project-path", project_id)
 
-    os_path_isdir_mock.assert_called_once_with("local-path")
-    ls_mock.assert_called_once_with(
-        "/",
-        project_id=project_id,
-        show_hidden=True,
-        object_client=object_client,
-    )
-    project_parent_directories_mock.assert_called_once_with("project-path")
     object_client.create_directory.assert_called_once_with(
-        project_id, dirname_mock
+        project_id, "project-path", parents=True
     )
+    os_path_isdir_mock.assert_called_once_with("local-path")
     upload_mock.assert_called_once_with(
         object_client, project_id, "project-path", "local-path"
     )
@@ -310,16 +296,11 @@ def test_datasets_put_file_and_create_parent_directories(mocker, mock_client):
 def test_datasets_put_directory(mocker, mock_client):
     object_client, project_id = mock_client
 
-    _create_parent_directories_mock = mocker.patch(
-        "faculty.datasets._create_parent_directories",
-        return_value=mocker.Mock(),
-    )
+    object_client.create_directory.return_value = mocker.Mock()
 
     os_path_isdir_mock = mocker.patch(
         "os.path.isdir", side_effect=[True, False]
     )
-
-    object_client.create_directory.return_value = mocker.Mock()
 
     entry_mock = "test-file"
     os_listdir_mock = mocker.patch("os.listdir", return_value=[entry_mock])
@@ -330,16 +311,14 @@ def test_datasets_put_directory(mocker, mock_client):
 
     datasets.put("local-path", "project-path", project_id)
 
-    # ---------
-
-    _create_parent_directories_mock.assert_called_once_with(
-        "project-path", project_id, object_client
+    object_client.create_directory.assert_has_calls(
+        [
+            mocker.call(project_id, "project-path", parents=True),
+            mocker.call(project_id, "project-path"),
+        ]
     )
     os_path_isdir_mock.assert_has_calls(
         [mocker.call("local-path"), mocker.call("local-path/test-file")]
-    )
-    object_client.create_directory.assert_called_once_with(
-        project_id, "project-path"
     )
     os_listdir_mock.assert_called_once_with("local-path")
     _put_file_mock.assert_called_once_with(

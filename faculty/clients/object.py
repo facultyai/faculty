@@ -207,7 +207,7 @@ class ObjectClient(BaseClient):
         endpoint = "/project/{}/directory/{}".format(
             project_id, path.lstrip("/")
         )
-        params = {"parents" : 1 if parents else 0}
+        params = {"parents": 1 if parents else 0}
         try:
             self._put_raw(endpoint, params=params)
         except Conflict as err:
