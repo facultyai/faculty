@@ -186,7 +186,7 @@ class ObjectClient(BaseClient):
             params["pageToken"] = page_token
         return self._get(endpoint, ListObjectsResponseSchema(), params=params)
 
-    def create_directory(self, project_id, path):
+    def create_directory(self, project_id, path, parents=False):
         """Create empty object as placeholder to a directory in the store.
 
         Parameters
@@ -195,6 +195,9 @@ class ObjectClient(BaseClient):
         path : str
             Create empty object at this source path as a placeholder
             for a directory
+        parents : bool, optional
+            Create also missing parent directories, with behaviour similar to
+            mkdir -p
 
         Raises
         ------
@@ -204,8 +207,9 @@ class ObjectClient(BaseClient):
         endpoint = "/project/{}/directory/{}".format(
             project_id, path.lstrip("/")
         )
+        params = {"parents" : 1 if parents else 0}
         try:
-            self._put_raw(endpoint)
+            self._put_raw(endpoint, params=params)
         except Conflict as err:
             if err.error_code == "object_already_exists":
                 raise PathAlreadyExists(path)

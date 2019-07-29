@@ -237,7 +237,8 @@ def test_object_client_create_directory_default(mocker):
     client.create_directory(PROJECT_ID, "test-path")
 
     ObjectClient._put_raw.assert_called_once_with(
-        "/project/{}/directory/{}".format(PROJECT_ID, "test-path")
+        "/project/{}/directory/{}".format(PROJECT_ID, "test-path"),
+        params={"parents": 0},
     )
 
 
@@ -247,8 +248,13 @@ def test_object_client_create_directory_already_exists(mocker):
     mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
 
     client = ObjectClient(mocker.Mock())
-    with pytest.raises(PathAlreadyExists, match="'path' already exists"):
-        client.create_directory(PROJECT_ID, "path")
+    with pytest.raises(PathAlreadyExists, match="'test-path' already exists"):
+        client.create_directory(PROJECT_ID, "test-path")
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/directory/{}".format(PROJECT_ID, "test-path"),
+        params={"parents": 0},
+    )
 
 
 def test_object_client_copy_default(mocker):
