@@ -17,7 +17,6 @@ import random
 import requests
 import string
 from uuid import uuid4
-from unittest.mock import patch
 
 import pytest
 import six
@@ -109,22 +108,22 @@ def test_download_file(mock_client_download, tmpdir):
     assert destination.read(mode="rb") == TEST_CONTENT
 
 
-@patch.object(transfer._rechunk_data, defaults_attribute_name, (4,))
 def test_chunking_and_labelling_data_of_exact_sizes(mocker):
+    mocker.patch.object(transfer._rechunk_data, defaults_attribute_name, (4,))
     content = [b"1111", b"2222", b"last"]
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
 
 
-@patch.object(transfer._rechunk_data, defaults_attribute_name, (12,))
 def test_chunking_and_labelling_of_smaller_sizes(mocker):
+    mocker.patch.object(transfer._rechunk_data, defaults_attribute_name, (12,))
     content = [b"1111", b"2222", b"last"]
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"11112222last", True)]
 
 
-@patch.object(transfer._rechunk_data, defaults_attribute_name, (4,))
 def test_chunking_and_labelling_of_greater_sizes(mocker):
+    mocker.patch.object(transfer._rechunk_data, defaults_attribute_name, (4,))
     content = [b"11112222last"]
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
@@ -153,14 +152,15 @@ def test_aws_upload(mock_client_upload_aws, requests_mock):
     )
 
 
-@patch.object(transfer._rechunk_data, defaults_attribute_name, (1000,))
-def test_aws_upload_chunks(mock_client_upload_aws, requests_mock):
+def test_aws_upload_chunks(mocker, mock_client_upload_aws, requests_mock):
+    mocker.patch.object(
+        transfer._rechunk_data, defaults_attribute_name, (1000,)
+    )
+
     def first_chunk_request_matcher(request):
-        print(request.text.encode("utf-8"))
         return TEST_CONTENT[0:1000] == request.text.encode("utf-8")
 
     def second_chunk_request_matcher(request):
-        print(request.text.encode("utf-8"))
         return TEST_CONTENT[1000::] == request.text.encode("utf-8")
 
     mock_client_upload_aws.presign_upload_part.side_effect = [
@@ -229,8 +229,11 @@ def test_gcs_upload_retry(mock_client_upload_gcs, requests_mock):
     )
 
 
-@patch.object(transfer._rechunk_data, defaults_attribute_name, (1000,))
-def test_gcs_upload_chunking(mock_client_upload_gcs, requests_mock):
+def test_gcs_upload_chunking(mocker, mock_client_upload_gcs, requests_mock):
+    mocker.patch.object(
+        transfer._rechunk_data, defaults_attribute_name, (1000,)
+    )
+
     requests_mock.put(
         TEST_URL,
         request_headers={
