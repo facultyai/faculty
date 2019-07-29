@@ -50,3 +50,21 @@ def test_project_parent_directories(project_path):
     correct = ["/", "/input/", "/input/path/", "/input/path/to/"]
     result = path.project_parent_directories(project_path)
     assert set(result) == set(correct)
+
+
+@pytest.mark.parametrize(
+    "project_path,expected_path",
+    [
+        ["input/path/to/dir/somefile.csv", "/input/path/to/dir"],
+        ["/input/path/to/dir/somefile.csv", "/input/path/to/dir"],
+        ["input/path/to/dir/test-dir/", "/input/path/to/dir"],
+        ["/input/path/to/dir/test-dir/", "/input/path/to/dir"],
+        ["test-dir/", "/"],
+        ["/test-dir/", "/"],
+        ["/", None],
+        ["", None],
+    ],
+)
+def test_project_parent_directory(project_path, expected_path):
+    result = path.project_parent_directory(project_path)
+    assert result == expected_path

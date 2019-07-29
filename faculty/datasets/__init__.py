@@ -176,6 +176,12 @@ def _isfile(project_path, project_id=None, object_client=None):
     return any(match == rationalised_path for match in matches)
 
 
+def _create_parent_directories(project_path, project_id, object_client):
+    parent_path = path.project_parent_directory(project_path)
+    if parent_path is not None:
+        object_client.create_directory(project_id, parent_path, parents=True)
+
+
 def _put_file(local_path, project_path, project_id, object_client):
     transfer.upload_file(object_client, project_id, project_path, local_path)
 
@@ -225,7 +231,7 @@ def put(local_path, project_path, project_id=None, object_client=None):
     if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
 
-    object_client.create_directory(project_id, project_path, parents=True)
+    _create_parent_directories(project_path, project_id, object_client)
     _put_recursive(local_path, project_path, project_id, object_client)
 
 

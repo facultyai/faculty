@@ -78,3 +78,30 @@ def project_parent_directories(project_path):
         directories.append("/".join(parts[:i_last]) + "/")
 
     return directories
+
+
+def project_parent_directory(project_path):
+    """Return project_path's parent directory
+    is a file.
+
+    Parameters
+    ----------
+    project_path : str
+        The object's path
+
+    Returns
+    -------
+    str
+        The paths of the parent directories
+    TODO: figure out how to mention that it may return None
+    """
+
+    # Ensure in assumed format - can now assume to be absolute
+    project_path = rationalise_projectpath(project_path)
+
+    # Stripping trailing slashes as if it's a directory we still just want to
+    # get its parent
+    if project_path == "/":
+        return None
+    else:
+        return posixpath.dirname(project_path.rstrip("/"))
