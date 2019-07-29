@@ -89,19 +89,21 @@ def test_download_file(mock_client_download, tmpdir):
 
 
 @patch.object(transfer._rechunk_data, defaults_attribute_name, (4,))
-def test_chunking_data_of_exact_sizes(mocker):
+def test_chunking_and_labelling_data_of_exact_sizes(mocker):
     content = [b"1111", b"2222", b"last"]
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
 
+
 @patch.object(transfer._rechunk_data, defaults_attribute_name, (12,))
-def test_chunking_data_of_smaller_sizes(mocker):
+def test_chunking_and_labelling_of_smaller_sizes(mocker):
     content = [b"1111", b"2222", b"last"]
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"11112222last", True)]
 
+
 @patch.object(transfer._rechunk_data, defaults_attribute_name, (4,))
-def test_chunking_data_of_greater_sizes(mocker):
+def test_chunking_and_labelling_of_greater_sizes(mocker):
     content = [b"11112222last"]
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
