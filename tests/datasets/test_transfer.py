@@ -18,6 +18,8 @@ import random
 import requests
 import string
 from uuid import uuid4
+from unittest.mock import patch
+
 
 import pytest
 
@@ -81,22 +83,30 @@ def test_download_file(mock_client_download, tmpdir):
     assert destination.read(mode="rb") == TEST_CONTENT
 
 
-def test_gcs_upload(mock_client_upload, requests_mock):
-    requests_mock.put(TEST_URL, exc=requests.exceptions.ConnectTimeout)
-    requests_mock.put(
-        TEST_URL,
-        [
-            {
-                "headers": {
-                    "Range": f"bytes=0-{100}",
-                    "X-Range-MD5": hashlib.md5(
-                        TEST_CONTENT[0:101]
-                    ).hexdigest(),
-                },
-                "status_code": 308,
-            },
-            {"headers": {}, "status_code": 200},
-        ],
-    )
+@patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
+@patch.object(transfer._rechunk_data, '__defaults__', (4,))
+def test_chunking_of_data(mocker):
+    content = [b"1111", b"2222", b"last"]
+    a = transfer._rechunk_and_label_as_last(content)
+    assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
 
-    transfer.upload_file(mock_client_download, PROJECT_ID, TEST_PATH)
+
+# def test_gcs_upload(mock_client_upload, requests_mock):
+#     requests_mock.put(TEST_URL, exc=requests.exceptions.ConnectTimeout)
+#     requests_mock.put(
+#         TEST_URL,
+#         [
+#             {
+#                 "headers": {
+#                     "Range": f"bytes=0-{100}",
+#                     "X-Range-MD5": hashlib.md5(
+#                         TEST_CONTENT[0:101]
+#                     ).hexdigest(),
+#                 },
+#                 "status_code": 308,
+#             },
+#             {"headers": {}, "status_code": 200},
+#         ],
+#     )
+
+#     transfer.upload_file(mock_client_download, PROJECT_ID, TEST_PATH)

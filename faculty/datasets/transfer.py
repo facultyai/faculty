@@ -16,6 +16,7 @@
 import hashlib
 import requests
 from collections import namedtuple
+from time import sleep
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets.util import DatasetsError
@@ -23,7 +24,7 @@ from faculty.datasets.util import DatasetsError
 
 KILOBYTE = 1024
 MEGABYTE = 1024 * KILOBYTE
-UPLOAD_CHUCK_SIZE = 5 * MEGABYTE
+UPLOAD_CHUNK_SIZE = 5 * MEGABYTE
 
 GCSStatusResponse = namedtuple(
     "GCSStatusResponse", ["status_code", "resumption_byte_index"]
@@ -182,7 +183,7 @@ def _s3_upload(object_client, project_id, datasets_path, content, upload_id):
 
     completed_parts = []
 
-    for i, chunk in enumerate(_rechunk_data(content)):
+    for i, (chunk, _) in enumerate(_rechunk_data(content)):
 
         part_number = i + 1
 
@@ -206,17 +207,16 @@ def _s3_upload(object_client, project_id, datasets_path, content, upload_id):
 
 def _gcs_upload(upload_url, content):
 
-    completed_parts = []
+    start_byte_index = 0
 
-    for i, chunk in enumerate(_rechunk_data(content)):
-
-        start_byte_index = 0
-
-        result = _send_gcs_post(upload_url, chunk, start_byte_index)
-
-        if result.status_code > 500:
-            _retry_request()
-
+    for i, (chunk, is_last) in enumerate(_rechunk_and_label_as_last(content)):
+        if is_last is False:
+            _stream_to_gcs(upload_url, chunk, start_byte_index)
+        else:
+            total_file_size = start_byte_index + len(content)
+            _stream_to_gcs(
+                upload_url, chunk, start_byte_index, total_file_size
+            )
         start_byte_index += len(chunk)
 
 
@@ -225,27 +225,30 @@ def _retry_request(upload_url, content):
     retry = 0
     gcs_response = _validate_gcp_request(upload_url, content)
     while retry <= max_retries:
-        result = _send_gcs_post(upload_url, content, gcs_response.resumption_byte_index)
+        result = _stream_to_gcs(
+            upload_url, content, gcs_response.resumption_byte_index
+        )
         if result.status_code < 300:
             continue
         gcs_response = _validate_gcp_request(upload_url, content)
         sleep(retry * 2)
         retry += 1
+    # Log me
 
 
-def _send_gcs_post(upload_url, content, start_byte_index):
-    if len(content) < UPLOAD_CHUCK_SIZE:
-        total_upload_size = start_byte_index + len(content)
-    else:
-        total_upload_size = "*"
-    return requests.put(
+def _stream_to_gcs(upload_url, content, start_byte_index, ending_index="*"):
+    result = requests.put(
         upload_url,
-        data=content[start_byte_index::],
+        data=content,
         headers={
-            "Content-Range":f"bytes {start_byte_index}-\
-                {start_byte_index+len(content)-1}/{total_upload_size}"
+            "Content-Length": f"{len(content)}",
+            "Content-Range": f"bytes {start_byte_index}-\
+                {start_byte_index+len(content)-1}/{ending_index}",
         },
     )
+
+    if result.status_code > 500:
+        _retry_request(upload_url, content)
 
 
 def _validate_gcp_request(upload_url, content):
@@ -263,15 +266,15 @@ def _validate_gcp_request(upload_url, content):
     local_hash = hashlib.md5(content[0:upper_bound]).hexdigest()
     if local_hash != response.headers["X-Range-MD5"]:
         raise DatasetsError(
-            "Error while uploading to GCP. Local and returned hashes\
-            didn't match"
+            "Error while uploading to GCP. Local and returned hashes "
+            "didn't match"
         )
     return GCSStatusResponse(
         status_code=response.status_code, resumption_byte_index=upper_bound + 1
     )
 
 
-def _file_chunk_iterator(local_path, chunk_size=UPLOAD_CHUCK_SIZE):
+def _file_chunk_iterator(local_path, chunk_size=UPLOAD_CHUNK_SIZE):
     with open(local_path, "rb") as fp:
         chunk = fp.read(chunk_size)
         while chunk:
@@ -279,21 +282,30 @@ def _file_chunk_iterator(local_path, chunk_size=UPLOAD_CHUCK_SIZE):
             chunk = fp.read(chunk_size)
 
 
-def _rechunk_data(content, chunk_size=UPLOAD_CHUCK_SIZE):
-
+def _rechunk_data(content, chunk_size=UPLOAD_CHUNK_SIZE):
     chunk = b""
-
     for original_chunk in content:
 
         while len(original_chunk) > 0:
-
             remaining = chunk_size - len(chunk)
             chunk += original_chunk[:remaining]
             original_chunk = original_chunk[remaining:]
-
             if len(chunk) >= chunk_size:
                 yield chunk
                 chunk = b""
 
     if len(chunk) > 0:
         yield chunk
+
+
+def _rechunk_and_label_as_last(content):
+    chunks = _rechunk_data(content)
+    current_chunk = next(chunks, b"")
+    while True:
+        try:
+            next_chunk = next(chunks)
+            yield (current_chunk, False)
+            current_chunk = next_chunk
+        except StopIteration:
+            yield (current_chunk, True)
+            break
