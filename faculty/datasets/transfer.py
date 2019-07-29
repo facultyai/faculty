@@ -259,9 +259,7 @@ def _get_resumption_byte_index(upload_url, content, start_index):
     # of Range.
     response = requests.put(
         upload_url,
-        headers={
-            "content-range": "bytes {0}-*/*".format(start_index)
-        },
+        headers={"content-range": "bytes {0}-*/*".format(start_index)},
     )
     upper_bound = int(response.headers["Range"].split("-")[1]) + 1
     return upper_bound

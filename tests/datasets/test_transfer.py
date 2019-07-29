@@ -251,4 +251,3 @@ def test_gcs_upload_chunking(mock_client_upload_gcs, requests_mock):
     transfer.upload(
         mock_client_upload_gcs, PROJECT_ID, TEST_PATH, TEST_CONTENT
     )
-
