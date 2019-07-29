@@ -213,7 +213,7 @@ def test_gcs_upload(mock_client_upload_gcs, requests_mock):
 def test_gcs_upload_retry(mock_client_upload_gcs, requests_mock):
     requests_mock.put(TEST_URL, exc=requests.exceptions.ConnectionError)
     requests_mock.put(
-        TEST_URL, headers={"Range": f"bytes=0-100"}, status_code=308
+        TEST_URL, headers={"Range": "bytes=0-100"}, status_code=308
     )
     requests_mock.put(
         TEST_URL,
