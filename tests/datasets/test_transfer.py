@@ -13,7 +13,6 @@
 # limitations under the License.
 
 
-import hashlib
 import random
 import requests
 import string
@@ -23,6 +22,7 @@ from unittest.mock import patch
 import pytest
 import six
 
+from faculty.clients.object import CloudStorageProvider
 from faculty.datasets import transfer
 
 
@@ -57,10 +57,12 @@ def mock_client_download(mocker, requests_mock):
 
 @pytest.fixture
 def mock_client_upload(mocker, requests_mock):
+    presigned_response_mock = mocker.Mock()
+    presigned_response_mock.provider = CloudStorageProvider.GCS
+    presigned_response_mock.url = TEST_URL
+
     object_client = mocker.Mock()
-    response_mock = mocker.Mock()
-    response_mock.provider.return_value = "GCS"
-    object_client.presign_upload.return_value = response_mock
+    object_client.presign_upload.return_value = presigned_response_mock
 
     yield object_client
 
@@ -108,22 +110,54 @@ def test_chunking_and_labelling_of_greater_sizes(mocker):
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
 
-# def test_gcs_upload(mock_client_upload, requests_mock):
-#     requests_mock.put(TEST_URL, exc=requests.exceptions.ConnectTimeout)
-#     requests_mock.put(
-#         TEST_URL,
-#         [
-#             {
-#                 "headers": {
-#                     "Range": f"bytes=0-{100}",
-#                     "X-Range-MD5": hashlib.md5(
-#                         TEST_CONTENT[0:101]
-#                     ).hexdigest(),
-#                 },
-#                 "status_code": 308,
-#             },
-#             {"headers": {}, "status_code": 200},
-#         ],
-#     )
 
-#     transfer.upload_file(mock_client_download, PROJECT_ID, TEST_PATH)
+def test_gcs_upload(mock_client_upload, requests_mock):
+    requests_mock.put(
+        TEST_URL,
+        request_headers={
+            "Content-Length": "2000",
+            "Content-Range": "bytes 0-1999/2000",
+        },
+        status_code=200,
+    )
+
+    transfer.upload(mock_client_upload, PROJECT_ID, TEST_PATH, TEST_CONTENT)
+
+
+def test_gcs_upload_retry(mock_client_upload, requests_mock):
+    requests_mock.put(TEST_URL, exc=requests.exceptions.ConnectionError)
+    requests_mock.put(
+        TEST_URL, headers={"Range": f"bytes=0-100"}, status_code=308
+    )
+    requests_mock.put(
+        TEST_URL,
+        request_headers={
+            "Content-Length": "1900",
+            "Content-Range": "bytes 99-1999/2000",
+        },
+        status_code=200,
+    )
+
+    transfer.upload(mock_client_upload, PROJECT_ID, TEST_PATH, TEST_CONTENT)
+
+
+@patch.object(transfer._rechunk_data, defaults_attribute_name, (1000,))
+def test_gcs_upload_chunking(mock_client_upload, requests_mock):
+    requests_mock.put(
+        TEST_URL,
+        request_headers={
+            "Content-Length": "1000",
+            "Content-Range": "bytes 0-999/*",
+        },
+        status_code=200,
+    )
+    requests_mock.put(
+        TEST_URL,
+        request_headers={
+            "Content-Length": "1000",
+            "Content-Range": "bytes 1000-1999/2000",
+        },
+        status_code=200,
+    )
+
+    transfer.upload(mock_client_upload, PROJECT_ID, TEST_PATH, TEST_CONTENT)

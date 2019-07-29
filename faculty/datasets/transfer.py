@@ -13,9 +13,7 @@
 # limitations under the License.
 
 
-import hashlib
 import requests
-from collections import namedtuple
 from time import sleep
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
@@ -25,10 +23,6 @@ from faculty.datasets.util import DatasetsError
 KILOBYTE = 1024
 MEGABYTE = 1024 * KILOBYTE
 UPLOAD_CHUNK_SIZE = 5 * MEGABYTE
-
-GCSStatusResponse = namedtuple(
-    "GCSStatusResponse", ["status_code", "resumption_byte_index"]
-)
 
 
 def download(object_client, project_id, datasets_path):
@@ -207,53 +201,55 @@ def _s3_upload(object_client, project_id, datasets_path, content, upload_id):
 
 def _gcs_upload(upload_url, content):
 
-    start_byte_index = 0
+    start_index = 0
 
     for i, (chunk, is_last) in enumerate(_rechunk_and_label_as_last(content)):
         if is_last is False:
-            _stream_to_gcs(upload_url, chunk, start_byte_index)
+            _upload_to_gcs_with_retry(upload_url, chunk, start_index)
         else:
-            total_file_size = start_byte_index + len(content)
-            _stream_to_gcs(
-                upload_url, chunk, start_byte_index, total_file_size
+            total_file_size = start_index + len(chunk)
+            _upload_to_gcs_with_retry(
+                upload_url, chunk, start_index, total_file_size
             )
-        start_byte_index += len(chunk)
+        start_index += len(chunk)
 
 
-def _retry_request(upload_url, content):
+def _upload_to_gcs_with_retry(
+    upload_url, content, start_index, total_size="*"
+):
     max_retries = 5
     retry = 0
-    gcs_response = _validate_gcp_request(upload_url, content)
     while retry <= max_retries:
-        result = _stream_to_gcs(
-            upload_url, content, gcs_response.resumption_byte_index
-        )
-        if result.status_code < 300:
-            continue
-        gcs_response = _validate_gcp_request(upload_url, content)
-        sleep(retry * 2)
-        retry += 1
-    # Log me
+        try:
+            result = _stream_to_gcs(
+                upload_url, content, start_index, total_size
+            )
+            result.raise_for_status()
+            break
+        except requests.RequestException:
+            start_index = _get_resumption_byte_index(
+                upload_url, content, start_index
+            )
+            sleep(1 + (retry * 2))
+            retry += 1
 
 
-def _stream_to_gcs(upload_url, content, start_byte_index, ending_index="*"):
+def _stream_to_gcs(upload_url, content, start_index, total_size):
+    end_index = start_index + len(content) - 1
     result = requests.put(
         upload_url,
         data=content,
         headers={
-            "Content-Length": f"{len(content)}",
-            "Content-Range": f"bytes {start_byte_index}-\
-                {start_byte_index+len(content)-1}/{ending_index}",
+            "Content-Length": "{0}".format(len(content)),
+            "Content-Range": "bytes {0}-{1}/{2}".format(
+                start_index, end_index, total_size
+            ),
         },
     )
-
-    if result.status_code > 500:
-        _retry_request(upload_url, content)
+    return result
 
 
-def _validate_gcp_request(upload_url, content):
-    response = requests.put(upload_url, headers={"content-range": "bytes */*"})
-
+def _get_resumption_byte_index(upload_url, content, start_index):
     # Response header example:
     # {
     #   'Range': 'bytes=0-82837503',
@@ -261,17 +257,14 @@ def _validate_gcp_request(upload_url, content):
     # }
     # The hash is actually for the lower-bound to the (upper bound +1)
     # of Range.
-    upper_bound = int(response.headers["Range"].split("-")[1]) + 1
-
-    local_hash = hashlib.md5(content[0:upper_bound]).hexdigest()
-    if local_hash != response.headers["X-Range-MD5"]:
-        raise DatasetsError(
-            "Error while uploading to GCP. Local and returned hashes "
-            "didn't match"
-        )
-    return GCSStatusResponse(
-        status_code=response.status_code, resumption_byte_index=upper_bound + 1
+    response = requests.put(
+        upload_url,
+        headers={
+            "content-range": "bytes {0}-*/*".format(start_index)
+        },
     )
+    upper_bound = int(response.headers["Range"].split("-")[1]) + 1
+    return upper_bound
 
 
 def _file_chunk_iterator(local_path, chunk_size=UPLOAD_CHUNK_SIZE):
