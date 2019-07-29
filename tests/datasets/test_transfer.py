@@ -20,8 +20,8 @@ import string
 from uuid import uuid4
 from unittest.mock import patch
 
-
 import pytest
+import six
 
 from faculty.datasets import transfer
 
@@ -34,6 +34,11 @@ TEST_URL = "https://example.com/presigned/url"
 TEST_CONTENT = "".join(
     random.choice(string.printable) for _ in range(2000)
 ).encode("utf8")
+
+if six.PY2:
+    defaults_attribute_name = "func_defaults"
+else:
+    defaults_attribute_name = "__defaults__"
 
 
 @pytest.fixture
@@ -83,13 +88,23 @@ def test_download_file(mock_client_download, tmpdir):
     assert destination.read(mode="rb") == TEST_CONTENT
 
 
-@patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
-@patch.object(transfer._rechunk_data, '__defaults__', (4,))
-def test_chunking_of_data(mocker):
+@patch.object(transfer._rechunk_data, defaults_attribute_name, (4,))
+def test_chunking_data_of_exact_sizes(mocker):
     content = [b"1111", b"2222", b"last"]
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
 
+@patch.object(transfer._rechunk_data, defaults_attribute_name, (12,))
+def test_chunking_data_of_smaller_sizes(mocker):
+    content = [b"1111", b"2222", b"last"]
+    a = transfer._rechunk_and_label_as_last(content)
+    assert list(a) == [(b"11112222last", True)]
+
+@patch.object(transfer._rechunk_data, defaults_attribute_name, (4,))
+def test_chunking_data_of_greater_sizes(mocker):
+    content = [b"11112222last"]
+    a = transfer._rechunk_and_label_as_last(content)
+    assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
 
 # def test_gcs_upload(mock_client_upload, requests_mock):
 #     requests_mock.put(TEST_URL, exc=requests.exceptions.ConnectTimeout)
