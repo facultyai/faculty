@@ -31,7 +31,7 @@ def download(object_client, project_id, datasets_path):
     object_client : faculty.clients.object.ObjectClient
     project_id : uuid.UUID
     datasets_path : str
-        The target path to upload to in the object store
+        The target path to download to in the object store
 
     Returns
     -------
@@ -54,7 +54,7 @@ def download_stream(object_client, project_id, datasets_path):
     object_client : faculty.clients.object.ObjectClient
     project_id : uuid.UUID
     datasets_path : str
-        The target path to upload to in the object store
+        The target path to download to in the object store
 
     Returns
     -------
@@ -88,9 +88,9 @@ def download_file(object_client, project_id, datasets_path, local_path):
     object_client : faculty.clients.object.ObjectClient
     project_id : uuid.UUID
     datasets_path : str
-        The target path to upload to in the object store
+        The target path to download to in the object store
     local_path : str
-        The local path of the object to upload
+        The local path of the object to download
     """
 
     # Initiate the download to allow any failures to happen before opening the
