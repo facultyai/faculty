@@ -177,7 +177,7 @@ def _s3_upload(object_client, project_id, datasets_path, content, upload_id):
 
     completed_parts = []
 
-    for i, (chunk, _) in enumerate(_rechunk_data(content)):
+    for i, chunk in enumerate(_rechunk_data(content)):
 
         part_number = i + 1
 

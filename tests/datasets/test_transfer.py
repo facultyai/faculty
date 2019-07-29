@@ -22,14 +22,21 @@ from unittest.mock import patch
 import pytest
 import six
 
-from faculty.clients.object import CloudStorageProvider
+from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets import transfer
 
 
 PROJECT_ID = uuid4()
 TEST_PATH = "/path/to/file"
 TEST_URL = "https://example.com/presigned/url"
+OTHER_URL = "https://example.com/other-presigned/url"
+TEST_AWS_UPLOAD_ID = 123
 
+TEST_ETAG = "5d24e152bcdfa5a0357f46471be3be6c"
+TEST_COMPLETED_PART = CompletedUploadPart(1, TEST_ETAG)
+
+OTHER_ETAG = "d084dd881a190aa5ffdf0ce21cff9509"
+OTHER_COMPLETED_PART = CompletedUploadPart(2, OTHER_ETAG)
 
 TEST_CONTENT = "".join(
     random.choice(string.printable) for _ in range(2000)
@@ -56,7 +63,19 @@ def mock_client_download(mocker, requests_mock):
 
 
 @pytest.fixture
-def mock_client_upload(mocker, requests_mock):
+def mock_client_upload_aws(mocker, requests_mock):
+    presigned_response_mock = mocker.Mock()
+    presigned_response_mock.provider = CloudStorageProvider.S3
+    presigned_response_mock.upload_id = TEST_AWS_UPLOAD_ID
+
+    object_client = mocker.Mock()
+    object_client.presign_upload.return_value = presigned_response_mock
+
+    yield object_client
+
+
+@pytest.fixture
+def mock_client_upload_gcs(mocker, requests_mock):
     presigned_response_mock = mocker.Mock()
     presigned_response_mock.provider = CloudStorageProvider.GCS
     presigned_response_mock.url = TEST_URL
@@ -111,7 +130,72 @@ def test_chunking_and_labelling_of_greater_sizes(mocker):
     assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
 
 
-def test_gcs_upload(mock_client_upload, requests_mock):
+def test_aws_upload(mock_client_upload_aws, requests_mock):
+    def chunk_request_matcher(request):
+        return TEST_CONTENT == request.text.encode("utf-8")
+
+    mock_client_upload_aws.presign_upload_part.return_value = TEST_URL
+
+    requests_mock.put(
+        TEST_URL,
+        additional_matcher=chunk_request_matcher,
+        headers={"ETag": TEST_ETAG},
+        status_code=200,
+    )
+
+    mock_client_upload_aws.presign_upload_part.return_value = TEST_URL
+
+    transfer.upload(
+        mock_client_upload_aws, PROJECT_ID, TEST_PATH, TEST_CONTENT
+    )
+    mock_client_upload_aws.complete_multipart_upload.assert_called_once_with(
+        PROJECT_ID, TEST_PATH, TEST_AWS_UPLOAD_ID, [TEST_COMPLETED_PART]
+    )
+
+
+@patch.object(transfer._rechunk_data, defaults_attribute_name, (1000,))
+def test_aws_upload_chunks(mock_client_upload_aws, requests_mock):
+    def first_chunk_request_matcher(request):
+        print(request.text.encode("utf-8"))
+        return TEST_CONTENT[0:1000] == request.text.encode("utf-8")
+
+    def second_chunk_request_matcher(request):
+        print(request.text.encode("utf-8"))
+        return TEST_CONTENT[1000::] == request.text.encode("utf-8")
+
+    mock_client_upload_aws.presign_upload_part.side_effect = [
+        TEST_URL,
+        OTHER_URL,
+    ]
+
+    requests_mock.put(
+        TEST_URL,
+        additional_matcher=first_chunk_request_matcher,
+        headers={"ETag": TEST_ETAG},
+        status_code=200,
+    )
+
+    requests_mock.put(
+        OTHER_URL,
+        additional_matcher=second_chunk_request_matcher,
+        headers={"ETag": OTHER_ETAG},
+        status_code=200,
+    )
+
+    mock_client_upload_aws.presign_upload_part.return_value = TEST_URL
+
+    transfer.upload(
+        mock_client_upload_aws, PROJECT_ID, TEST_PATH, TEST_CONTENT
+    )
+    mock_client_upload_aws.complete_multipart_upload.assert_called_once_with(
+        PROJECT_ID,
+        TEST_PATH,
+        TEST_AWS_UPLOAD_ID,
+        [TEST_COMPLETED_PART, OTHER_COMPLETED_PART],
+    )
+
+
+def test_gcs_upload(mock_client_upload_gcs, requests_mock):
     requests_mock.put(
         TEST_URL,
         request_headers={
@@ -121,10 +205,12 @@ def test_gcs_upload(mock_client_upload, requests_mock):
         status_code=200,
     )
 
-    transfer.upload(mock_client_upload, PROJECT_ID, TEST_PATH, TEST_CONTENT)
+    transfer.upload(
+        mock_client_upload_gcs, PROJECT_ID, TEST_PATH, TEST_CONTENT
+    )
 
 
-def test_gcs_upload_retry(mock_client_upload, requests_mock):
+def test_gcs_upload_retry(mock_client_upload_gcs, requests_mock):
     requests_mock.put(TEST_URL, exc=requests.exceptions.ConnectionError)
     requests_mock.put(
         TEST_URL, headers={"Range": f"bytes=0-100"}, status_code=308
@@ -138,11 +224,13 @@ def test_gcs_upload_retry(mock_client_upload, requests_mock):
         status_code=200,
     )
 
-    transfer.upload(mock_client_upload, PROJECT_ID, TEST_PATH, TEST_CONTENT)
+    transfer.upload(
+        mock_client_upload_gcs, PROJECT_ID, TEST_PATH, TEST_CONTENT
+    )
 
 
 @patch.object(transfer._rechunk_data, defaults_attribute_name, (1000,))
-def test_gcs_upload_chunking(mock_client_upload, requests_mock):
+def test_gcs_upload_chunking(mock_client_upload_gcs, requests_mock):
     requests_mock.put(
         TEST_URL,
         request_headers={
@@ -160,4 +248,7 @@ def test_gcs_upload_chunking(mock_client_upload, requests_mock):
         status_code=200,
     )
 
-    transfer.upload(mock_client_upload, PROJECT_ID, TEST_PATH, TEST_CONTENT)
+    transfer.upload(
+        mock_client_upload_gcs, PROJECT_ID, TEST_PATH, TEST_CONTENT
+    )
+
