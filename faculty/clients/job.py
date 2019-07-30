@@ -199,7 +199,9 @@ class JobDefinitionSchema(BaseSchema):
     instance_size_type = fields.String(
         data_key="instanceSizeType", required=True
     )
-    instance_size = fields.Nested(InstanceSizeSchema, data_key="instanceSize")
+    instance_size = fields.Nested(
+        InstanceSizeSchema, data_key="instanceSize", missing=None
+    )
     max_runtime_seconds = fields.Integer(
         data_key="maxRuntimeSeconds", required=True
     )

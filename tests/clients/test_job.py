@@ -129,6 +129,7 @@ JOB_DEFINITION = JobDefinition(
     instance_size=INSTANCE_SIZE,
     max_runtime_seconds=MAX_RUNTIME_SECONDS,
 )
+
 JOB_DEFINITION_BODY = {
     "workingDir": JOB_DEFINITION.working_dir,
     "command": JOB_COMMAND_BODY,
@@ -137,6 +138,25 @@ JOB_DEFINITION_BODY = {
     "environmentIds": [str(ENVIRONMENT_ID)],
     "instanceSizeType": JOB_DEFINITION.instance_size_type,
     "instanceSize": INSTANCE_SIZE_BODY,
+    "maxRuntimeSeconds": str(MAX_RUNTIME_SECONDS),
+}
+JOB_DEFINITION_ALTERNATIVE = JobDefinition(
+    working_dir="/project/subdir/",
+    command=JOB_COMMAND,
+    image_type=ImageType.PYTHON,
+    conda_environment="Python3",
+    environment_ids=[str(ENVIRONMENT_ID)],
+    instance_size_type="m4.xlarge",
+    instance_size=None,
+    max_runtime_seconds=MAX_RUNTIME_SECONDS,
+)
+JOB_DEFINITION_ALTERNATIVE_BODY = {
+    "workingDir": JOB_DEFINITION.working_dir,
+    "command": JOB_COMMAND_BODY,
+    "imageType": JOB_DEFINITION.image_type,
+    "condaEnvironment": JOB_DEFINITION.conda_environment,
+    "environmentIds": [str(ENVIRONMENT_ID)],
+    "instanceSizeType": JOB_DEFINITION_ALTERNATIVE.instance_size_type,
     "maxRuntimeSeconds": str(MAX_RUNTIME_SECONDS),
 }
 JOB = Job(id=JOB_ID, meta=JOB_METADATA, definition=JOB_DEFINITION)
@@ -285,14 +305,23 @@ def test_job_command_schema():
     assert data == JOB_COMMAND
 
 
-def test_job_definition_schema():
-    data = JobDefinitionSchema().load(JOB_DEFINITION_BODY)
-    assert data == JOB_DEFINITION
+@pytest.mark.parametrize(
+    "job_definition, job_definition_body",
+    [
+        (JOB_DEFINITION, JOB_DEFINITION_BODY),
+        (JOB_DEFINITION_ALTERNATIVE, JOB_DEFINITION_ALTERNATIVE_BODY),
+    ],
+)
+def test_job_definition_schema(job_definition, job_definition_body):
+    schema = job_definition
+    schema_body = job_definition_body
+    data = JobDefinitionSchema().load(schema_body)
+    assert data == schema
 
 
 @pytest.mark.parametrize(
     "instance_size_type, instance_size",
-    [("m4.xlarge", INSTANCE_SIZE), ("custom", None)],
+    [("m4.xlarge", INSTANCE_SIZE_BODY), ("custom", None)],
 )
 def test_job_definition_schema_invalid_instance_type(
     instance_size_type, instance_size
