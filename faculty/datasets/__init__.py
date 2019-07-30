@@ -368,7 +368,7 @@ def cp(
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     recursive : bool, optional
-        If present allows to copy whole paths with all its content,
+        If True, allows copying directories
         like a recursive copy in a filesystem. By default the action
         is not recursive.
     object_client : faculty.clients.object.ObjectClient, optional
