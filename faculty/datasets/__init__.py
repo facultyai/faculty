@@ -386,7 +386,7 @@ def cp(
 
 
 def rm(project_path, project_id=None, recursive=False, object_client=None):
-    """Remove a file from the project directory.
+    """Remove a file or directory from the project directory.
 
     Parameters
     ----------
