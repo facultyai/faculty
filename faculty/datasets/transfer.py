@@ -99,7 +99,7 @@ def download_file(object_client, project_id, datasets_path, local_path):
     # file
     stream = download_stream(object_client, project_id, datasets_path)
 
-    with open(local_path, "wb") as fp:
+    with open(str(local_path), "wb") as fp:
         for chunk in stream:
             fp.write(chunk)
 
@@ -290,7 +290,7 @@ def _rechunk_data(content, chunk_size=UPLOAD_CHUNK_SIZE):
 
 
 def _rechunk_and_label_as_last(content):
-    chunks = _rechunk_data(content)
+    chunks = _rechunk_data(content=content)
     current_chunk = next(chunks, b"")
     while True:
         try:
