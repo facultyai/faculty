@@ -265,23 +265,23 @@ def _get_resumption_byte_index(upload_url, content, start_index):
     return upper_bound
 
 
-def _file_chunk_iterator(local_path, chunk_size=UPLOAD_CHUNK_SIZE):
+def _file_chunk_iterator(local_path):
     with open(local_path, "rb") as fp:
-        chunk = fp.read(chunk_size)
+        chunk = fp.read(UPLOAD_CHUNK_SIZE)
         while chunk:
             yield chunk
-            chunk = fp.read(chunk_size)
+            chunk = fp.read(UPLOAD_CHUNK_SIZE)
 
 
-def _rechunk_data(content, chunk_size=UPLOAD_CHUNK_SIZE):
+def _rechunk_data(content):
     chunk = b""
     for original_chunk in content:
 
         while len(original_chunk) > 0:
-            remaining = chunk_size - len(chunk)
+            remaining = UPLOAD_CHUNK_SIZE - len(chunk)
             chunk += original_chunk[:remaining]
             original_chunk = original_chunk[remaining:]
-            if len(chunk) >= chunk_size:
+            if len(chunk) >= UPLOAD_CHUNK_SIZE:
                 yield chunk
                 chunk = b""
 

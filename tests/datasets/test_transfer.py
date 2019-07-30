@@ -19,7 +19,6 @@ import string
 from uuid import uuid4
 
 import pytest
-import six
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets import transfer
@@ -40,11 +39,6 @@ OTHER_COMPLETED_PART = CompletedUploadPart(2, OTHER_ETAG)
 TEST_CONTENT = "".join(
     random.choice(string.printable) for _ in range(2000)
 ).encode("utf8")
-
-if six.PY2:
-    defaults_attribute_name = "func_defaults"
-else:
-    defaults_attribute_name = "__defaults__"
 
 
 @pytest.fixture
@@ -109,21 +103,21 @@ def test_download_file(mock_client_download, tmpdir):
 
 
 def test_chunking_and_labelling_data_of_exact_sizes(mocker):
-    mocker.patch.object(transfer._rechunk_data, defaults_attribute_name, (4,))
+    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
     content = [b"1111", b"2222", b"last"]
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
 
 
 def test_chunking_and_labelling_of_smaller_sizes(mocker):
-    mocker.patch.object(transfer._rechunk_data, defaults_attribute_name, (12,))
+    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 12)
     content = [b"1111", b"2222", b"last"]
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"11112222last", True)]
 
 
 def test_chunking_and_labelling_of_greater_sizes(mocker):
-    mocker.patch.object(transfer._rechunk_data, defaults_attribute_name, (4,))
+    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
     content = [b"11112222last"]
     a = transfer._rechunk_and_label_as_last(content)
     assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
@@ -153,9 +147,7 @@ def test_aws_upload(mock_client_upload_aws, requests_mock):
 
 
 def test_aws_upload_chunks(mocker, mock_client_upload_aws, requests_mock):
-    mocker.patch.object(
-        transfer._rechunk_data, defaults_attribute_name, (1000,)
-    )
+    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 1000)
 
     def first_chunk_request_matcher(request):
         return TEST_CONTENT[0:1000] == request.text.encode("utf-8")
@@ -230,9 +222,7 @@ def test_gcs_upload_retry(mock_client_upload_gcs, requests_mock):
 
 
 def test_gcs_upload_chunking(mocker, mock_client_upload_gcs, requests_mock):
-    mocker.patch.object(
-        transfer._rechunk_data, defaults_attribute_name, (1000,)
-    )
+    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 1000)
 
     requests_mock.put(
         TEST_URL,
