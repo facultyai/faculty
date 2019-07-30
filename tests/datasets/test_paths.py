@@ -36,23 +36,6 @@ def test_rationalise_projectpath(input_path, rationalised_path):
 
 
 @pytest.mark.parametrize(
-    "project_path",
-    [
-        "input/path/to/somefile.csv",
-        "./input/path/to/somefile.csv",
-        "/input/path/to/somefile.csv",
-        "input/path/to/somedir/",
-        "./input/path/to/somedir/",
-        "/input/path/to/somedir/",
-    ],
-)
-def test_project_parent_directories(project_path):
-    correct = ["/", "/input/", "/input/path/", "/input/path/to/"]
-    result = path.project_parent_directories(project_path)
-    assert set(result) == set(correct)
-
-
-@pytest.mark.parametrize(
     "project_path,expected_path",
     [
         ["input/path/to/dir/somefile.csv", "/input/path/to/dir"],

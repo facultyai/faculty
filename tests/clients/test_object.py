@@ -242,6 +242,19 @@ def test_object_client_create_directory_default(mocker):
     )
 
 
+@pytest.mark.parametrize("parents,expected_parent", [(True, 1), (False, 0)])
+def test_object_client_create_directory(mocker, parents, expected_parent):
+    mocker.patch.object(ObjectClient, "_put_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.create_directory(PROJECT_ID, "test-path", parents=parents)
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/directory/{}".format(PROJECT_ID, "test-path"),
+        params={"parents": expected_parent},
+    )
+
+
 def test_object_client_create_directory_already_exists(mocker):
     error_code = "object_already_exists"
     exception = Conflict(mocker.Mock(), mocker.Mock(), error_code)
