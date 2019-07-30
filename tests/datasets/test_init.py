@@ -92,20 +92,22 @@ def test_datasets_ls_with_continuation(mocker, mock_client):
 
 
 def test_datasets_glob_path(mocker):
-    content_mock = mocker.Mock()
-    ls_mock = mocker.patch("faculty.datasets.ls", return_value=content_mock)
-    fnmatch_filter_mock = mocker.patch(
-        "fnmatch.filter", return_value=mocker.Mock()
-    )
+    content = [
+        "project-path/",
+        "project-path/this-path",
+        "project-path/other-path",
+    ]
+    ls_mock = mocker.patch("faculty.datasets.ls", return_value=content)
 
-    pattern_mock = mocker.Mock()
-    datasets.glob(
-        pattern_mock,
+    result = datasets.glob(
+        "*this*",
         prefix="project-path",
         project_id=PROJECT_ID,
         show_hidden=True,
         object_client=None,
     )
+
+    assert result == ["project-path/this-path"]
 
     ls_mock.assert_called_once_with(
         prefix="project-path",
@@ -113,7 +115,6 @@ def test_datasets_glob_path(mocker):
         show_hidden=True,
         object_client=None,
     )
-    fnmatch_filter_mock.assert_called_once_with(content_mock, pattern_mock)
 
 
 def test_datasets_get_file(mocker, mock_client):
