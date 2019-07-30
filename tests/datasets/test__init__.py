@@ -376,7 +376,7 @@ def test_datasets_rm_path(mocker, mock_client):
 def test_datasets_rmdir_path(mocker):
     project_id = mocker.Mock()
 
-    rm_mock = mocker.patch("faculty.datasets.rm", return_value=mocker.Mock())
+    rm_mock = mocker.patch("faculty.datasets.rm")
 
     datasets.rmdir("project-path", project_id=project_id, object_client=None)
 
