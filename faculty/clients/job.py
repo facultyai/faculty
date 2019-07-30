@@ -207,19 +207,11 @@ class JobDefinitionSchema(BaseSchema):
     @validates_schema
     def validate_conda_environment(self, data):
         image_is_r = data["image_type"] == ImageType.R
-        print("HERE")
-        print(data["image_type"])
-        if image_is_r:
-            print("IMAGE IS R")
         image_is_python = data["image_type"] == ImageType.PYTHON
-        if image_is_python:
-            print("IMAGE IS PYTHON")
         conda_environment_set = data["conda_environment"] is not None
-        if conda_environment_set:
-            print("CONDA ENVIRONMENT IS SET")
         if image_is_r and conda_environment_set:
             raise ValidationError(
-                "conda environment must only be set for python images"
+                "conda environment must only be set for Python images"
             )
         elif image_is_python and not conda_environment_set:
             raise ValidationError(
@@ -255,7 +247,7 @@ class JobSchema(BaseSchema):
 
 
 class JobIdSchema(BaseSchema):
-    jobId = fields.String(required=True)
+    jobId = fields.UUID(required=True)
 
     @post_load
     def make_job_id(self, data):

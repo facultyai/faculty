@@ -17,48 +17,23 @@ from uuid import uuid4
 
 import pytest
 from dateutil.tz import UTC
+from faculty.clients.job import (EnvironmentStepExecution,
+                                 EnvironmentStepExecutionSchema,
+                                 EnvironmentStepExecutionState, ImageType,
+                                 InstanceSize, InstanceSizeSchema, Job,
+                                 JobClient, JobCommand, JobCommandSchema,
+                                 JobDefinition, JobDefinitionSchema,
+                                 JobIdSchema, JobMetadata, JobMetadataSchema,
+                                 JobParameter, JobParameterSchema, JobSchema,
+                                 JobSummary, JobSummarySchema,
+                                 ListRunsResponse, ListRunsResponseSchema,
+                                 Page, PageSchema, Pagination,
+                                 PaginationSchema, ParameterType, Run,
+                                 RunIdSchema, RunSchema, RunState, RunSummary,
+                                 RunSummarySchema, Subrun, SubrunSchema,
+                                 SubrunState, SubrunSummary,
+                                 SubrunSummarySchema)
 from marshmallow import ValidationError
-
-from faculty.clients.job import (
-    EnvironmentStepExecution,
-    EnvironmentStepExecutionSchema,
-    EnvironmentStepExecutionState,
-    ImageType,
-    InstanceSize,
-    InstanceSizeSchema,
-    Job,
-    JobClient,
-    JobCommand,
-    JobCommandSchema,
-    JobDefinition,
-    JobDefinitionSchema,
-    JobIdSchema,
-    JobMetadata,
-    JobMetadataSchema,
-    JobParameter,
-    JobParameterSchema,
-    JobSchema,
-    JobSummary,
-    JobSummarySchema,
-    ListRunsResponse,
-    ListRunsResponseSchema,
-    Page,
-    PageSchema,
-    Pagination,
-    PaginationSchema,
-    ParameterType,
-    Run,
-    RunIdSchema,
-    RunSchema,
-    RunState,
-    RunSummary,
-    RunSummarySchema,
-    Subrun,
-    SubrunSchema,
-    SubrunState,
-    SubrunSummary,
-    SubrunSummarySchema,
-)
 
 MILLI_CPUS = 1000
 MEMORY_MB = 4096
@@ -298,11 +273,11 @@ def test_job_definition_schema():
 def test_job_definition_schema_invalid_instance_type(
     instance_size_type, instance_size
 ):
-    JOB_DEFINITION_BODY_INVALID = JOB_DEFINITION_BODY.copy()
-    JOB_DEFINITION_BODY_INVALID["instanceSizeType"] = instance_size_type
-    JOB_DEFINITION_BODY_INVALID["instanceSize"] = instance_size
+    invalid_body = JOB_DEFINITION_BODY.copy()
+    invalid_body["instanceSizeType"] = instance_size_type
+    invalid_body["instanceSize"] = instance_size
     with pytest.raises(ValidationError):
-        JobDefinitionSchema().load(JOB_DEFINITION_BODY_INVALID)
+        JobDefinitionSchema().load(invalid_body)
 
 
 @pytest.mark.parametrize(
@@ -312,11 +287,11 @@ def test_job_definition_schema_invalid_instance_type(
 def test_job_definition_schema_invalid_image_type(
     image_type, conda_environment
 ):
-    JOB_DEFINITION_BODY_INVALID = JOB_DEFINITION_BODY.copy()
-    JOB_DEFINITION_BODY_INVALID["imageType"] = image_type
-    JOB_DEFINITION_BODY_INVALID["condaEnvironment"] = conda_environment
+    invalid_body = JOB_DEFINITION_BODY.copy()
+    invalid_body["imageType"] = image_type
+    invalid_body["condaEnvironment"] = conda_environment
     with pytest.raises(ValidationError):
-        JobDefinitionSchema().load(JOB_DEFINITION_BODY_INVALID)
+        JobDefinitionSchema().load(invalid_body)
 
 
 def test_job_schema():
@@ -326,7 +301,7 @@ def test_job_schema():
 
 def test_job_id_schema():
     data = JobIdSchema().load({"jobId": str(JOB_ID)})
-    assert data == str(JOB_ID)
+    assert data == JOB_ID
 
 
 def test_environment_step_execution_schema():
