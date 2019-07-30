@@ -16,7 +16,7 @@
 import pytest
 
 from faculty import datasets
-from faculty.datasets.path import DatasetsError
+from faculty.datasets.util import DatasetsError
 
 
 @pytest.fixture
@@ -158,7 +158,7 @@ def test_datasets_get_empty_directory(mocker, mock_client):
 
     relative_path = mocker.Mock()
     project_relative_path_mock = mocker.patch(
-        "faculty.datasets.path.project_relative_path",
+        "faculty.datasets.util.project_relative_path",
         return_value=relative_path,
     )
 
@@ -211,7 +211,7 @@ def test_datasets_get_directory(mocker, mock_client):
     relative_path2 = mocker.Mock()
     relative_paths = [relative_path1, relative_path2]
     project_relative_path_mock = mocker.patch(
-        "faculty.datasets.path.project_relative_path",
+        "faculty.datasets.util.project_relative_path",
         side_effect=relative_paths,
     )
 

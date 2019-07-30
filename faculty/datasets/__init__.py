@@ -23,8 +23,8 @@ import io
 from faculty.session import get_session
 from faculty.context import get_context
 from faculty.clients.object import ObjectClient
-from faculty.datasets import path, transfer
-from faculty.datasets.path import DatasetsError
+from faculty.datasets import util, transfer
+from faculty.datasets.util import DatasetsError
 
 
 # For backwards compatibility
@@ -172,7 +172,7 @@ def _isfile(project_path, project_id=None, object_client=None):
         show_hidden=True,
         object_client=object_client,
     )
-    rationalised_path = path.rationalise_projectpath(project_path)
+    rationalised_path = util.rationalise_projectpath(project_path)
     return any(match == rationalised_path for match in matches)
 
 
@@ -266,7 +266,7 @@ def _get_directory(project_path, local_path, project_id, object_client):
     for object_path in paths_to_get:
 
         local_dest = os.path.join(
-            local_path, path.project_relative_path(project_path, object_path)
+            local_path, util.project_relative_path(project_path, object_path)
         )
 
         if object_path.endswith("/"):

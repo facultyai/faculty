@@ -14,7 +14,7 @@
 
 import pytest
 
-from faculty.datasets import path
+from faculty.datasets import util
 
 
 @pytest.mark.parametrize(
@@ -32,4 +32,4 @@ from faculty.datasets import path
     ],
 )
 def test_rationalise_projectpath(input_path, rationalised_path):
-    assert path.rationalise_projectpath(input_path) == rationalised_path
+    assert util.rationalise_projectpath(input_path) == rationalised_path

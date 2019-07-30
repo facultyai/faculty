@@ -16,7 +16,7 @@
 import requests
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
-from faculty.datasets.path import DatasetsError
+from faculty.datasets.util import DatasetsError
 
 
 KILOBYTE = 1024
