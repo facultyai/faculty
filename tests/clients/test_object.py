@@ -282,27 +282,18 @@ def test_object_client_copy_default(mocker):
     )
 
 
-def test_object_client_copy_single(mocker):
+@pytest.mark.parametrize(
+    "recursive,expected_recursive", [(True, 1), (False, 0)]
+)
+def test_object_client_copy(mocker, recursive, expected_recursive):
     mocker.patch.object(ObjectClient, "_put_raw")
 
     client = ObjectClient(mocker.Mock())
-    client.copy(PROJECT_ID, "source", "destination", False)
+    client.copy(PROJECT_ID, "source", "destination", recursive=recursive)
 
     ObjectClient._put_raw.assert_called_once_with(
         "/project/{}/object/{}".format(PROJECT_ID, "destination"),
-        params={"sourcePath": "source", "recursive": 0},
-    )
-
-
-def test_object_client_copy_multiple(mocker):
-    mocker.patch.object(ObjectClient, "_put_raw")
-
-    client = ObjectClient(mocker.Mock())
-    client.copy(PROJECT_ID, "source", "destination", recursive=True)
-
-    ObjectClient._put_raw.assert_called_once_with(
-        "/project/{}/object/{}".format(PROJECT_ID, "destination"),
-        params={"sourcePath": "source", "recursive": 1},
+        params={"sourcePath": "source", "recursive": expected_recursive},
     )
 
 
