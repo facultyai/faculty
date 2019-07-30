@@ -157,9 +157,8 @@ def test_datasets_get_empty_directory(mocker, mock_client):
     os_makedirs_mock = mocker.patch("os.makedirs", return_value=None)
 
     relative_path = mocker.Mock()
-    project_relative_path_mock = mocker.patch(
-        "faculty.datasets.util.project_relative_path",
-        return_value=relative_path,
+    get_relative_path_mock = mocker.patch(
+        "faculty.datasets.util.get_relative_path", return_value=relative_path
     )
 
     object_client, project_id = mock_client
@@ -172,7 +171,7 @@ def test_datasets_get_empty_directory(mocker, mock_client):
 
     os_path_dirname_mock.assert_called_once_with("local-path")
     os_path_isdir_mock.assert_called_once_with("local-path/")
-    project_relative_path_mock.assert_called_once_with(
+    get_relative_path_mock.assert_called_once_with(
         "project-path", "project-path/"
     )
     os_path_join_mock.assert_called_once_with("local-path", relative_path)
@@ -210,9 +209,8 @@ def test_datasets_get_directory(mocker, mock_client):
     relative_path1 = mocker.Mock()
     relative_path2 = mocker.Mock()
     relative_paths = [relative_path1, relative_path2]
-    project_relative_path_mock = mocker.patch(
-        "faculty.datasets.util.project_relative_path",
-        side_effect=relative_paths,
+    get_relative_path_mock = mocker.patch(
+        "faculty.datasets.util.get_relative_path", side_effect=relative_paths
     )
 
     object_client, project_id = mock_client
@@ -231,7 +229,7 @@ def test_datasets_get_directory(mocker, mock_client):
         [mocker.call("local-path"), mocker.call(local_dests[1])]
     )
     os_path_isdir_mock.assert_called_once_with("local-path/")
-    project_relative_path_mock.assert_has_calls(
+    get_relative_path_mock.assert_has_calls(
         [
             mocker.call("project-path", "project-path/"),
             mocker.call("project-path", "project-path/test-file"),

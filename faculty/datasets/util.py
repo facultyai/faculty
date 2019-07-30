@@ -19,7 +19,7 @@ class DatasetsError(Exception):
     pass
 
 
-def rationalise_projectpath(path):
+def rationalise_path(path):
 
     # All paths should be relative to root
     path = posixpath.join("/", path)
@@ -32,19 +32,16 @@ def rationalise_projectpath(path):
     return normed
 
 
-def project_relative_path(project_root, project_path):
+def get_relative_path(parent_directory, directory):
 
-    project_root = rationalise_projectpath(project_root)
-    project_path = rationalise_projectpath(project_path)
+    parent_directory = rationalise_path(parent_directory)
+    directory = rationalise_path(directory)
 
-    if not project_path.startswith(project_root):
+    if not directory.startswith(parent_directory):
         tpl = "{} is not a sub path of {}"
-        raise ValueError(tpl.format(project_path, project_root))
+        raise ValueError(tpl.format(directory, parent_directory))
 
     # Remove the root
-    relative_path = project_path[len(project_root) :]
-
-    # Get rid of any leading '/'es
-    relative_path = relative_path.lstrip("/")
+    relative_path = posixpath.relpath(directory, parent_directory)
 
     return relative_path

@@ -31,5 +31,5 @@ from faculty.datasets import util
         ("/path/", "/path/"),
     ],
 )
-def test_rationalise_projectpath(input_path, rationalised_path):
-    assert util.rationalise_projectpath(input_path) == rationalised_path
+def test_rationalise_path(input_path, rationalised_path):
+    assert util.rationalise_path(input_path) == rationalised_path

@@ -172,7 +172,7 @@ def _isfile(project_path, project_id=None, object_client=None):
         show_hidden=True,
         object_client=object_client,
     )
-    rationalised_path = util.rationalise_projectpath(project_path)
+    rationalised_path = util.rationalise_path(project_path)
     return any(match == rationalised_path for match in matches)
 
 
@@ -266,7 +266,7 @@ def _get_directory(project_path, local_path, project_id, object_client):
     for object_path in paths_to_get:
 
         local_dest = os.path.join(
-            local_path, util.project_relative_path(project_path, object_path)
+            local_path, util.get_relative_path(project_path, object_path)
         )
 
         if object_path.endswith("/"):
