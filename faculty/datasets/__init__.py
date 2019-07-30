@@ -355,7 +355,7 @@ def cp(
     recursive=False,
     object_client=None,
 ):
-    """Copy a file within a project's datasets.
+    """Copy a file or directory within a project's datasets.
 
     Parameters
     ----------
