@@ -17,6 +17,8 @@ from uuid import uuid4
 
 import pytest
 from dateutil.tz import UTC
+from marshmallow import ValidationError
+
 from faculty.clients.job import (
     EnvironmentStepExecution,
     EnvironmentStepExecutionSchema,
@@ -57,7 +59,6 @@ from faculty.clients.job import (
     SubrunSummary,
     SubrunSummarySchema,
 )
-from marshmallow import ValidationError
 
 MILLI_CPUS = 1000
 MEMORY_MB = 4096
