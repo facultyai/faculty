@@ -397,7 +397,7 @@ def rm(project_path, project_id=None, recursive=False, object_client=None):
         for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     recursive : bool, optional
-        If present allows to delete whole paths with all its content,
+        If True, allows deleting directories
         like a recursive delete in a filesystem. By default the action
         is not recursive.
     object_client : faculty.clients.object.ObjectClient, optional
