@@ -313,7 +313,7 @@ def get(project_path, local_path, project_id=None, object_client=None):
 
 
 def mv(source_path, destination_path, project_id=None, object_client=None):
-    """Move a file within a project's datasets.
+    """Move a file or directory within a project's datasets.
 
     Parameters
     ----------
