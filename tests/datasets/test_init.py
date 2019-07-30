@@ -40,27 +40,29 @@ def mock_client(mocker):
 
 def test_datasets_ls_all_files(mocker, mock_client):
     list_response = mocker.Mock()
-    mock_object = mocker.Mock()
-    mock_object.path = "test-path"
-    list_response.objects = [mock_object]
+    list_response.objects = [
+        mocker.Mock(path=".test-hidden"),
+        mocker.Mock(path="not-hidden"),
+    ]
     list_response.next_page_token = None
     mock_client.list.return_value = list_response
 
     objects = datasets.ls("test-prefix", PROJECT_ID, show_hidden=True)
-    assert objects == ["test-path"]
+    assert objects == [".test-hidden", "not-hidden"]
     mock_client.list.assert_called_once_with(PROJECT_ID, "test-prefix")
 
 
-def test_datasets_ls_non_hidden_files(mocker, mock_client):
+def test_datasets_ls_files_hide_hidden_files(mocker, mock_client):
     list_response = mocker.Mock()
-    mock_object = mocker.Mock()
-    mock_object.path = ".test-hidden-path"
-    list_response.objects = [mock_object]
+    list_response.objects = [
+        mocker.Mock(path=".test-hidden"),
+        mocker.Mock(path="not-hidden"),
+    ]
     list_response.next_page_token = None
     mock_client.list.return_value = list_response
 
     objects = datasets.ls("test-prefix", PROJECT_ID)
-    assert objects == []
+    assert objects == ["not-hidden"]
     mock_client.list.assert_called_once_with(PROJECT_ID, "test-prefix")
 
 
