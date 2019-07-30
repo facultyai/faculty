@@ -269,7 +269,7 @@ def test_datasets_get_directory(mocker, mock_client):
     )
 
 
-def test_datasets_put_file_and_create_parent_directories(mocker, mock_client):
+def test_datasets_put_file(mocker, mock_client):
     object_client, project_id = mock_client
 
     path_project_parent_directory = mocker.patch(
