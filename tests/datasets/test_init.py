@@ -93,7 +93,7 @@ def test_datasets_ls_with_continuation(mocker, mock_client):
     )
 
 
-def test_datasets_glob_path(mocker):
+def test_datasets_glob(mocker):
     content = [
         "project-path/",
         "project-path/this-path",
@@ -323,7 +323,7 @@ def test_datasets_put_directory(mocker, mock_client):
     )
 
 
-def test_datasets_cp_path(mocker, mock_client):
+def test_datasets_cp(mocker, mock_client):
     mock_client.copy.return_value = mocker.Mock()
 
     posixpath_dirname_mock = mocker.patch(
@@ -347,7 +347,7 @@ def test_datasets_cp_path(mocker, mock_client):
     )
 
 
-def test_datasets_rm_path(mocker, mock_client):
+def test_datasets_rm(mocker, mock_client):
     mock_client.delete.return_value = mocker.Mock()
 
     datasets.rm("project-path", project_id=PROJECT_ID, recursive=True)
@@ -357,7 +357,7 @@ def test_datasets_rm_path(mocker, mock_client):
     )
 
 
-def test_datasets_rmdir_path(mocker):
+def test_datasets_rmdir(mocker):
     ls_mock = mocker.patch("faculty.datasets.ls", return_value=[])
     rm_mock = mocker.patch("faculty.datasets.rm")
 
@@ -388,7 +388,7 @@ def test_datasets_rmdir_empty_directory_raises(mocker):
     )
 
 
-def test_datasets_mv_path(mocker, mock_client):
+def test_datasets_mv(mocker, mock_client):
     cp_mock = mocker.patch("faculty.datasets.cp")
     rm_mock = mocker.patch("faculty.datasets.rm")
 
