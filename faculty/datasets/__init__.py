@@ -463,7 +463,7 @@ def etag(project_path, project_id=None, object_client=None):
 
     object = object_client.get(project_id, project_path)
 
-    return object.etag.strip('"')
+    return object.etag
 
 
 @contextlib.contextmanager

@@ -326,7 +326,7 @@ def test_object_client_copy_source_is_a_directory(mocker):
         client.copy(PROJECT_ID, "source", "destination")
 
 
-def test_object_client_delete(mocker):
+def test_object_client_delete_default(mocker):
     path = "test-path"
     mocker.patch.object(ObjectClient, "_delete_raw")
 
@@ -336,6 +336,22 @@ def test_object_client_delete(mocker):
     ObjectClient._delete_raw.assert_called_once_with(
         "/project/{}/object/{}".format(PROJECT_ID, path),
         params={"recursive": 0},
+    )
+
+
+@pytest.mark.parametrize(
+    "recursive,expected_recursive", [(True, 1), (False, 0)]
+)
+def test_object_client_delete(mocker, recursive, expected_recursive):
+    path = "test-path"
+    mocker.patch.object(ObjectClient, "_delete_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.delete(PROJECT_ID, path, recursive=recursive)
+
+    ObjectClient._delete_raw.assert_called_once_with(
+        "/project/{}/object/{}".format(PROJECT_ID, path),
+        params={"recursive": expected_recursive},
     )
 
 
