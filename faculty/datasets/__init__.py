@@ -177,9 +177,8 @@ def _isfile(project_path, project_id=None, object_client=None):
 
 
 def _create_parent_directories(project_path, project_id, object_client):
-    parent_path = path.project_parent_directory(project_path)
-    if parent_path is not None:
-        object_client.create_directory(project_id, parent_path, parents=True)
+    parent_path = posixpath.dirname(project_path)
+    object_client.create_directory(project_id, parent_path, parents=True)
 
 
 def _put_file(local_path, project_path, project_id, object_client):

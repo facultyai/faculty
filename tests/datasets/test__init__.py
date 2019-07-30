@@ -273,8 +273,8 @@ def test_datasets_get_directory(mocker, mock_client):
 def test_datasets_put_file(mocker, mock_client):
     object_client, project_id = mock_client
 
-    path_project_parent_directory = mocker.patch(
-        "faculty.datasets.path.project_parent_directory", return_value="/"
+    posixpath_dirname_mock = mocker.patch(
+        "posixpath.dirname", return_value="/"
     )
     object_client.create_directory.return_value = mocker.Mock()
 
@@ -288,7 +288,7 @@ def test_datasets_put_file(mocker, mock_client):
 
     datasets.put("local-path", "project-path", project_id)
 
-    path_project_parent_directory.assert_called_once_with("project-path")
+    posixpath_dirname_mock.assert_called_once_with("project-path")
     object_client.create_directory.assert_called_once_with(
         project_id, "/", parents=True
     )
@@ -301,8 +301,8 @@ def test_datasets_put_file(mocker, mock_client):
 def test_datasets_put_directory(mocker, mock_client):
     object_client, project_id = mock_client
 
-    path_project_parent_directory = mocker.patch(
-        "faculty.datasets.path.project_parent_directory", return_value="/"
+    posixpath_dirname_mock = mocker.patch(
+        "posixpath.dirname", return_value="/"
     )
     object_client.create_directory.return_value = mocker.Mock()
 
@@ -319,7 +319,7 @@ def test_datasets_put_directory(mocker, mock_client):
 
     datasets.put("local-path", "project-path", project_id)
 
-    path_project_parent_directory.assert_called_once_with("project-path")
+    posixpath_dirname_mock.assert_called_once_with("project-path")
     object_client.create_directory.assert_has_calls(
         [
             mocker.call(project_id, "/", parents=True),
@@ -342,8 +342,8 @@ def test_datasets_cp_path(mocker, mock_client):
     object_client, project_id = mock_client
     object_client.copy.return_value = mocker.Mock()
 
-    path_project_parent_directory = mocker.patch(
-        "faculty.datasets.path.project_parent_directory", return_value="/"
+    posixpath_dirname_mock = mocker.patch(
+        "posixpath.dirname", return_value="/"
     )
     object_client.create_directory.return_value = mocker.Mock()
 
@@ -354,7 +354,7 @@ def test_datasets_cp_path(mocker, mock_client):
         recursive=True,
     )
 
-    path_project_parent_directory.assert_called_once_with("destination-path")
+    posixpath_dirname_mock.assert_called_once_with("destination-path")
     object_client.create_directory.assert_called_once_with(
         project_id, "/", parents=True
     )

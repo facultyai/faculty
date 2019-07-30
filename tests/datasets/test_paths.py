@@ -33,21 +33,3 @@ from faculty.datasets import path
 )
 def test_rationalise_projectpath(input_path, rationalised_path):
     assert path.rationalise_projectpath(input_path) == rationalised_path
-
-
-@pytest.mark.parametrize(
-    "project_path,expected_path",
-    [
-        ["input/path/to/dir/somefile.csv", "/input/path/to/dir"],
-        ["/input/path/to/dir/somefile.csv", "/input/path/to/dir"],
-        ["input/path/to/dir/test-dir/", "/input/path/to/dir"],
-        ["/input/path/to/dir/test-dir/", "/input/path/to/dir"],
-        ["test-dir/", "/"],
-        ["/test-dir/", "/"],
-        ["/", None],
-        ["", None],
-    ],
-)
-def test_project_parent_directory(project_path, expected_path):
-    result = path.project_parent_directory(project_path)
-    assert result == expected_path
