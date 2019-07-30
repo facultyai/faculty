@@ -412,7 +412,7 @@ def rm(project_path, project_id=None, recursive=False, object_client=None):
 
 
 def rmdir(project_path, project_id=None, object_client=None):
-    """Remove a directory from the project datasets.
+    """Remove an empty directory from the project datasets.
 
     Parameters
     ----------
@@ -427,12 +427,16 @@ def rmdir(project_path, project_id=None, object_client=None):
         with datasets.
     """
 
-    rm(
-        project_path,
+    contents = ls(
+        prefix=project_path,
         project_id=project_id,
-        recursive=True,
+        show_hidden=True,
         object_client=object_client,
     )
+    if len(contents) == 0:
+        rm(project_path, project_id=project_id, object_client=object_client)
+    else:
+        raise DatasetsError("Directory is not empty")
 
 
 def etag(project_path, project_id=None, object_client=None):

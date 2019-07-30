@@ -16,6 +16,7 @@
 import pytest
 
 from faculty import datasets
+from faculty.datasets.path import DatasetsError
 
 
 @pytest.fixture
@@ -376,14 +377,34 @@ def test_datasets_rm_path(mocker, mock_client):
 def test_datasets_rmdir_path(mocker):
     project_id = mocker.Mock()
 
+    ls_mock = mocker.patch("faculty.datasets.ls", return_value=[])
     rm_mock = mocker.patch("faculty.datasets.rm")
 
-    datasets.rmdir("project-path", project_id=project_id, object_client=None)
+    datasets.rmdir("project-path", project_id=project_id)
 
-    rm_mock.assert_called_once_with(
-        "project-path",
+    ls_mock.assert_called_once_with(
+        prefix="project-path",
         project_id=project_id,
-        recursive=True,
+        show_hidden=True,
+        object_client=None,
+    )
+    rm_mock.assert_called_once_with(
+        "project-path", project_id=project_id, object_client=None
+    )
+
+
+def test_datasets_rmdir_empty_directory_raises(mocker):
+    project_id = mocker.Mock()
+
+    ls_mock = mocker.patch("faculty.datasets.ls", return_value=[mocker.Mock()])
+
+    with pytest.raises(DatasetsError, match="Directory is not empty"):
+        datasets.rmdir("project-path", project_id=project_id)
+
+    ls_mock.assert_called_once_with(
+        prefix="project-path",
+        project_id=project_id,
+        show_hidden=True,
         object_client=None,
     )
 
