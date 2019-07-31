@@ -432,10 +432,23 @@ def rmdir(project_path, project_id=None, object_client=None):
         show_hidden=True,
         object_client=object_client,
     )
-    if len(contents) == 0:
-        rm(project_path, project_id=project_id, object_client=object_client)
+    if len(contents) == 1:
+        empty_directory = contents[0]
+        if empty_directory.endswith("/"):
+            rm(
+                empty_directory,
+                project_id=project_id,
+                object_client=object_client,
+                recursive=True,
+            )
+        else:
+            raise DatasetsError("'{}' Not a directory".format(project_path))
+    elif len(contents) == 0:
+        raise DatasetsError(
+            "'{}' No such file or directory".format(project_path)
+        )
     else:
-        raise DatasetsError("Directory is not empty")
+        raise DatasetsError("'{}' Directory is not empty".format(project_path))
 
 
 def etag(project_path, project_id=None, object_client=None):
