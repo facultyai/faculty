@@ -331,7 +331,7 @@ def test_object_client_delete_default(mocker):
 
 
 @pytest.mark.parametrize(
-    "recursive,expected_recursive", [(True, 1), (False, 0)]
+    "recursive, expected_recursive", [(True, 1), (False, 0)]
 )
 def test_object_client_delete(mocker, recursive, expected_recursive):
     path = "test-path"
