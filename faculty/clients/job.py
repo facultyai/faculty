@@ -394,7 +394,7 @@ class JobClient(BaseClient):
         ----------
         project_id : uuid.UUID
         job_parameters : Dict[dict]
-            A dictionnary containing the metadata and definitionof the job to
+            A dictionnary containing the metadata and definition of the job to
             be created.
 
         Returns
