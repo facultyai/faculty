@@ -356,7 +356,7 @@ def test_datasets_rmdir(mocker):
     )
 
 
-def test_datasets_rmdir_empty_directory_raises(mocker):
+def test_datasets_rmdir_nonempty_directory_raises(mocker):
     ls_mock = mocker.patch("faculty.datasets.ls", return_value=[mocker.Mock()])
 
     with pytest.raises(DatasetsError, match="Directory is not empty"):
