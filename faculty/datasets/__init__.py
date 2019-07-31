@@ -425,30 +425,32 @@ def rmdir(project_path, project_id=None, object_client=None):
         Advanced - can be used to benefit from caching in chain interactions
         with datasets.
     """
-
     contents = ls(
         prefix=project_path,
         project_id=project_id,
         show_hidden=True,
         object_client=object_client,
     )
-    if len(contents) == 0:
-        raise DatasetsError(
-            "'{}' No such file or directory".format(project_path)
-        )
-    if len(contents) > 1:
-        raise DatasetsError("'{}' Directory is not empty".format(project_path))
 
-    empty_directory = contents[0]
-    if empty_directory.endswith("/"):
+    # Only refer to the directory corresponding to this path
+    project_path_as_file = project_path.rstrip("/")
+    project_path_as_dir = project_path_as_file + "/"
+
+    if contents == [project_path_as_dir]:
         rm(
-            empty_directory,
+            project_path_as_dir,
             project_id=project_id,
             object_client=object_client,
             recursive=True,
         )
-    else:
+    elif contents == [project_path_as_file]:
         raise DatasetsError("'{}' Not a directory".format(project_path))
+    elif project_path_as_dir not in contents:
+        raise DatasetsError(
+            "'{}' No such file or directory".format(project_path)
+        )
+    else:
+        raise DatasetsError("'{}' Directory is not empty".format(project_path))
 
 
 def etag(project_path, project_id=None, object_client=None):
