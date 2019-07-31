@@ -283,7 +283,7 @@ def test_object_client_copy_default(mocker):
 
 
 @pytest.mark.parametrize(
-    "recursive,expected_recursive", [(True, 1), (False, 0)]
+    "recursive, expected_recursive", [(True, 1), (False, 0)]
 )
 def test_object_client_copy(mocker, recursive, expected_recursive):
     mocker.patch.object(ObjectClient, "_put_raw")
