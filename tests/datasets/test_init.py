@@ -71,7 +71,6 @@ def test_datasets_ls_with_continuation(mocker, mock_client):
     mock_object1 = mocker.Mock()
     mock_object1.path = ".test-hidden-path"
     list_response1.objects = [mock_object1]
-    list_response1.next_page_token = mocker.Mock()
 
     list_response2 = mocker.Mock()
     mock_object2 = mocker.Mock()
@@ -122,11 +121,7 @@ def test_datasets_glob(mocker):
 def test_datasets_get_file(mocker, mock_client):
     ls_mock = mocker.patch("faculty.datasets.ls", return_value=[])
 
-    download_result_mock = mocker.Mock()
-    download_mock = mocker.patch(
-        "faculty.datasets.transfer.download_file",
-        return_value=download_result_mock,
-    )
+    download_mock = mocker.patch("faculty.datasets.transfer.download_file")
 
     datasets.get("project-path", "local-path", PROJECT_ID)
     ls_mock.assert_called_once_with(
@@ -263,15 +258,10 @@ def test_datasets_put_file(mocker, mock_client):
     posixpath_dirname_mock = mocker.patch(
         "posixpath.dirname", return_value="/"
     )
-    mock_client.create_directory.return_value = mocker.Mock()
 
     os_path_isdir_mock = mocker.patch("os.path.isdir", return_value=False)
 
-    upload_result_mock = mocker.Mock()
-    upload_mock = mocker.patch(
-        "faculty.datasets.transfer.upload_file",
-        return_value=upload_result_mock,
-    )
+    upload_mock = mocker.patch("faculty.datasets.transfer.upload_file")
 
     datasets.put("local-path", "project-path", PROJECT_ID)
 
@@ -289,7 +279,6 @@ def test_datasets_put_directory(mocker, mock_client):
     posixpath_dirname_mock = mocker.patch(
         "posixpath.dirname", return_value="/"
     )
-    mock_client.create_directory.return_value = mocker.Mock()
 
     os_path_isdir_mock = mocker.patch(
         "os.path.isdir", side_effect=[True, False]
@@ -298,9 +287,7 @@ def test_datasets_put_directory(mocker, mock_client):
     entry_mock = "test-file"
     os_listdir_mock = mocker.patch("os.listdir", return_value=[entry_mock])
 
-    _put_file_mock = mocker.patch(
-        "faculty.datasets._put_file", return_value=mocker.Mock()
-    )
+    _put_file_mock = mocker.patch("faculty.datasets._put_file")
 
     datasets.put("local-path", "project-path", PROJECT_ID)
 
@@ -324,12 +311,9 @@ def test_datasets_put_directory(mocker, mock_client):
 
 
 def test_datasets_cp(mocker, mock_client):
-    mock_client.copy.return_value = mocker.Mock()
-
     posixpath_dirname_mock = mocker.patch(
         "posixpath.dirname", return_value="/"
     )
-    mock_client.create_directory.return_value = mocker.Mock()
 
     datasets.cp(
         "source-path",
@@ -348,8 +332,6 @@ def test_datasets_cp(mocker, mock_client):
 
 
 def test_datasets_rm(mocker, mock_client):
-    mock_client.delete.return_value = mocker.Mock()
-
     datasets.rm("project-path", project_id=PROJECT_ID, recursive=True)
 
     mock_client.delete.assert_called_once_with(
