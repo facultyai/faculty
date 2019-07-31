@@ -242,7 +242,7 @@ def test_object_client_create_directory_default(mocker):
     )
 
 
-@pytest.mark.parametrize("parents,expected_parent", [(True, 1), (False, 0)])
+@pytest.mark.parametrize("parents, expected_parent", [(True, 1), (False, 0)])
 def test_object_client_create_directory(mocker, parents, expected_parent):
     mocker.patch.object(ObjectClient, "_put_raw")
 
