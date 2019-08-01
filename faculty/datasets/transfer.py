@@ -14,7 +14,6 @@
 
 
 import requests
-from time import sleep
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets.util import DatasetsError
