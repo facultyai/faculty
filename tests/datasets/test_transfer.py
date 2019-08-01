@@ -55,7 +55,7 @@ def mock_client_download(mocker, requests_mock):
 
 
 @pytest.fixture
-def mock_client_upload_aws(mocker, requests_mock):
+def mock_client_upload_s3(mocker, requests_mock):
     presigned_response_mock = mocker.Mock()
     presigned_response_mock.provider = CloudStorageProvider.S3
     presigned_response_mock.upload_id = TEST_AWS_UPLOAD_ID
@@ -127,11 +127,11 @@ def test_chunking_and_labelling_of_greater_sizes(mocker):
     assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
 
 
-def test_aws_upload(mock_client_upload_aws, requests_mock):
+def test_s3_upload(mock_client_upload_s3, requests_mock):
     def chunk_request_matcher(request):
         return TEST_CONTENT == request.text.encode("utf-8")
 
-    mock_client_upload_aws.presign_upload_part.return_value = TEST_URL
+    mock_client_upload_s3.presign_upload_part.return_value = TEST_URL
 
     requests_mock.put(
         TEST_URL,
@@ -140,17 +140,15 @@ def test_aws_upload(mock_client_upload_aws, requests_mock):
         status_code=200,
     )
 
-    mock_client_upload_aws.presign_upload_part.return_value = TEST_URL
+    mock_client_upload_s3.presign_upload_part.return_value = TEST_URL
 
-    transfer.upload(
-        mock_client_upload_aws, PROJECT_ID, TEST_PATH, TEST_CONTENT
-    )
-    mock_client_upload_aws.complete_multipart_upload.assert_called_once_with(
+    transfer.upload(mock_client_upload_s3, PROJECT_ID, TEST_PATH, TEST_CONTENT)
+    mock_client_upload_s3.complete_multipart_upload.assert_called_once_with(
         PROJECT_ID, TEST_PATH, TEST_AWS_UPLOAD_ID, [TEST_COMPLETED_PART]
     )
 
 
-def test_aws_upload_chunks(mocker, mock_client_upload_aws, requests_mock):
+def test_s3_upload_chunks(mocker, mock_client_upload_s3, requests_mock):
     mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 1000)
 
     def first_chunk_request_matcher(request):
@@ -159,7 +157,7 @@ def test_aws_upload_chunks(mocker, mock_client_upload_aws, requests_mock):
     def second_chunk_request_matcher(request):
         return TEST_CONTENT[1000::] == request.text.encode("utf-8")
 
-    mock_client_upload_aws.presign_upload_part.side_effect = [
+    mock_client_upload_s3.presign_upload_part.side_effect = [
         TEST_URL,
         OTHER_URL,
     ]
@@ -178,16 +176,14 @@ def test_aws_upload_chunks(mocker, mock_client_upload_aws, requests_mock):
         status_code=200,
     )
 
-    mock_client_upload_aws.presign_upload_part.return_value = TEST_URL
+    mock_client_upload_s3.presign_upload_part.return_value = TEST_URL
 
-    transfer.upload(
-        mock_client_upload_aws, PROJECT_ID, TEST_PATH, TEST_CONTENT
-    )
+    transfer.upload(mock_client_upload_s3, PROJECT_ID, TEST_PATH, TEST_CONTENT)
 
     history = requests_mock.request_history
     assert len(history) == 2
 
-    mock_client_upload_aws.complete_multipart_upload.assert_called_once_with(
+    mock_client_upload_s3.complete_multipart_upload.assert_called_once_with(
         PROJECT_ID,
         TEST_PATH,
         TEST_AWS_UPLOAD_ID,
