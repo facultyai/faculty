@@ -387,7 +387,7 @@ class JobClient(BaseClient):
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
 
-    def create_job(self, project_id, job_parameters):
+    def create(self, project_id, job_parameters):
         """Create a job.
 
         Parameters
