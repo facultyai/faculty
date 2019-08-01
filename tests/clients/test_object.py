@@ -20,7 +20,7 @@ import pytest
 from marshmallow import ValidationError
 from pytz import UTC
 
-from faculty.clients.base import NotFound
+from faculty.clients.base import BadRequest, Conflict, NotFound
 from faculty.clients.object import (
     CloudStorageProvider,
     CompleteMultipartUploadSchema,
@@ -31,11 +31,14 @@ from faculty.clients.object import (
     Object,
     ObjectClient,
     ObjectSchema,
+    PathAlreadyExists,
+    PathNotFound,
     PresignUploadResponse,
     PresignUploadResponseSchema,
     SimplePresignResponse,
     SimplePresignResponseSchema,
-    PathNotFound,
+    SourceIsADirectory,
+    TargetIsADirectory,
 )
 
 
@@ -227,6 +230,46 @@ def test_object_client_list_defaults(mocker):
     )
 
 
+def test_object_client_create_directory_default(mocker):
+    mocker.patch.object(ObjectClient, "_put_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.create_directory(PROJECT_ID, "test-path")
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/directory/{}".format(PROJECT_ID, "test-path"),
+        params={"parents": 0},
+    )
+
+
+@pytest.mark.parametrize("parents, expected_parent", [(True, 1), (False, 0)])
+def test_object_client_create_directory(mocker, parents, expected_parent):
+    mocker.patch.object(ObjectClient, "_put_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.create_directory(PROJECT_ID, "test-path", parents=parents)
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/directory/{}".format(PROJECT_ID, "test-path"),
+        params={"parents": expected_parent},
+    )
+
+
+def test_object_client_create_directory_already_exists(mocker):
+    error_code = "object_already_exists"
+    exception = Conflict(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
+
+    client = ObjectClient(mocker.Mock())
+    with pytest.raises(PathAlreadyExists, match="'test-path' already exists"):
+        client.create_directory(PROJECT_ID, "test-path")
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/directory/{}".format(PROJECT_ID, "test-path"),
+        params={"parents": 0},
+    )
+
+
 def test_object_client_copy_default(mocker):
     mocker.patch.object(ObjectClient, "_put_raw")
 
@@ -235,35 +278,26 @@ def test_object_client_copy_default(mocker):
 
     ObjectClient._put_raw.assert_called_once_with(
         "/project/{}/object/{}".format(PROJECT_ID, "destination"),
-        params={"sourcePath": "source"},
-    )
-
-
-def test_object_client_copy_single(mocker):
-    mocker.patch.object(ObjectClient, "_put_raw")
-
-    client = ObjectClient(mocker.Mock())
-    client.copy(PROJECT_ID, "source", "destination", False)
-
-    ObjectClient._put_raw.assert_called_once_with(
-        "/project/{}/object/{}".format(PROJECT_ID, "destination"),
         params={"sourcePath": "source", "recursive": 0},
     )
 
 
-def test_object_client_copy_multiple(mocker):
+@pytest.mark.parametrize(
+    "recursive, expected_recursive", [(True, 1), (False, 0)]
+)
+def test_object_client_copy(mocker, recursive, expected_recursive):
     mocker.patch.object(ObjectClient, "_put_raw")
 
     client = ObjectClient(mocker.Mock())
-    client.copy(PROJECT_ID, "source", "destination", recursive=True)
+    client.copy(PROJECT_ID, "source", "destination", recursive=recursive)
 
     ObjectClient._put_raw.assert_called_once_with(
         "/project/{}/object/{}".format(PROJECT_ID, "destination"),
-        params={"sourcePath": "source", "recursive": 1},
+        params={"sourcePath": "source", "recursive": expected_recursive},
     )
 
 
-def test_object_client_copy_single_source_not_found(mocker):
+def test_object_client_copy_source_not_found(mocker):
     error_code = "source_path_not_found"
     exception = NotFound(mocker.Mock(), mocker.Mock(), error_code)
     mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
@@ -273,7 +307,17 @@ def test_object_client_copy_single_source_not_found(mocker):
         client.copy(PROJECT_ID, "source", "destination")
 
 
-def test_object_client_delete(mocker):
+def test_object_client_copy_source_is_a_directory(mocker):
+    error_code = "source_is_a_directory"
+    exception = BadRequest(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
+
+    client = ObjectClient(mocker.Mock())
+    with pytest.raises(SourceIsADirectory, match="'source' is a directory"):
+        client.copy(PROJECT_ID, "source", "destination")
+
+
+def test_object_client_delete_default(mocker):
     path = "test-path"
     mocker.patch.object(ObjectClient, "_delete_raw")
 
@@ -281,7 +325,24 @@ def test_object_client_delete(mocker):
     client.delete(PROJECT_ID, path)
 
     ObjectClient._delete_raw.assert_called_once_with(
-        "/project/{}/object/{}".format(PROJECT_ID, path), params={}
+        "/project/{}/object/{}".format(PROJECT_ID, path),
+        params={"recursive": 0},
+    )
+
+
+@pytest.mark.parametrize(
+    "recursive, expected_recursive", [(True, 1), (False, 0)]
+)
+def test_object_client_delete(mocker, recursive, expected_recursive):
+    path = "test-path"
+    mocker.patch.object(ObjectClient, "_delete_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.delete(PROJECT_ID, path, recursive=recursive)
+
+    ObjectClient._delete_raw.assert_called_once_with(
+        "/project/{}/object/{}".format(PROJECT_ID, path),
+        params={"recursive": expected_recursive},
     )
 
 
@@ -293,6 +354,17 @@ def test_object_client_delete_path_not_found(mocker):
 
     client = ObjectClient(mocker.Mock())
     with pytest.raises(PathNotFound, match="'test-path' cannot be found"):
+        client.delete(PROJECT_ID, path)
+
+
+def test_object_client_delete_target_is_a_directory(mocker):
+    path = "test-path"
+    error_code = "target_is_a_directory"
+    exception = BadRequest(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ObjectClient, "_delete_raw", side_effect=exception)
+
+    client = ObjectClient(mocker.Mock())
+    with pytest.raises(TargetIsADirectory, match="'test-path' is a directory"):
         client.delete(PROJECT_ID, path)
 
 
@@ -368,7 +440,7 @@ def test_object_client_presign_upload(mocker):
 
 def test_object_client_presign_upload_part(mocker):
     mocker.patch.object(
-        ObjectClient, "_post", return_value=SIMPLE_PRESIGN_RESPONSE
+        ObjectClient, "_put", return_value=SIMPLE_PRESIGN_RESPONSE
     )
     schema_mock = mocker.patch(
         "faculty.clients.object.SimplePresignResponseSchema"
@@ -382,7 +454,7 @@ def test_object_client_presign_upload_part(mocker):
     assert returned == SIMPLE_PRESIGN_RESPONSE.url
 
     schema_mock.assert_called_once_with()
-    ObjectClient._post.assert_called_once_with(
+    ObjectClient._put.assert_called_once_with(
         "/project/{}/presign/upload/part".format(PROJECT_ID),
         schema_mock.return_value,
         json={"path": "/path", "uploadId": "upload-id", "partNumber": 2},
