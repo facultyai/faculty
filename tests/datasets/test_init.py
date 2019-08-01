@@ -38,7 +38,7 @@ def mock_client(mocker):
     get_session_mock.assert_called_once_with()
 
 
-def test_datasets_ls_all_files(mocker, mock_client):
+def test_ls_all_files(mocker, mock_client):
     list_response = mocker.Mock()
     list_response.objects = [
         mocker.Mock(path=".test-hidden"),
@@ -52,7 +52,7 @@ def test_datasets_ls_all_files(mocker, mock_client):
     mock_client.list.assert_called_once_with(PROJECT_ID, "test-prefix")
 
 
-def test_datasets_ls_files_hide_hidden_files(mocker, mock_client):
+def test_ls_files_hide_hidden_files(mocker, mock_client):
     list_response = mocker.Mock()
     list_response.objects = [
         mocker.Mock(path=".test-hidden"),
@@ -66,7 +66,7 @@ def test_datasets_ls_files_hide_hidden_files(mocker, mock_client):
     mock_client.list.assert_called_once_with(PROJECT_ID, "test-prefix")
 
 
-def test_datasets_ls_with_continuation(mocker, mock_client):
+def test_ls_with_continuation(mocker, mock_client):
     list_response1 = mocker.Mock()
     mock_object1 = mocker.Mock()
     mock_object1.path = ".test-hidden-path"
@@ -92,7 +92,7 @@ def test_datasets_ls_with_continuation(mocker, mock_client):
     )
 
 
-def test_datasets_glob(mocker):
+def test_glob(mocker):
     content = [
         "/project-path/",
         "/project-path/this-path",
@@ -118,7 +118,7 @@ def test_datasets_glob(mocker):
     )
 
 
-def test_datasets_get_file(mocker, mock_client):
+def test_get_file(mocker, mock_client):
     ls_mock = mocker.patch("faculty.datasets.ls", return_value=[])
 
     download_mock = mocker.patch("faculty.datasets.transfer.download_file")
@@ -135,7 +135,7 @@ def test_datasets_get_file(mocker, mock_client):
     )
 
 
-def test_datasets_get_empty_directory(mocker, mock_client):
+def test_get_empty_directory(mocker, mock_client):
     dirname = "local-path/"
     os_path_dirname_mock = mocker.patch(
         "os.path.dirname", return_value=dirname
@@ -183,7 +183,7 @@ def test_datasets_get_empty_directory(mocker, mock_client):
     )
 
 
-def test_datasets_get_directory(mocker, mock_client):
+def test_get_directory(mocker, mock_client):
     dirname = "local-path/"
     os_path_dirname_mock = mocker.patch(
         "os.path.dirname", return_value=dirname
@@ -254,7 +254,7 @@ def test_datasets_get_directory(mocker, mock_client):
     )
 
 
-def test_datasets_put_file(mocker, mock_client):
+def test_put_file(mocker, mock_client):
     posixpath_dirname_mock = mocker.patch(
         "posixpath.dirname", return_value="/"
     )
@@ -275,7 +275,7 @@ def test_datasets_put_file(mocker, mock_client):
     )
 
 
-def test_datasets_put_directory(mocker, mock_client):
+def test_put_directory(mocker, mock_client):
     posixpath_dirname_mock = mocker.patch(
         "posixpath.dirname", return_value="/"
     )
@@ -310,7 +310,7 @@ def test_datasets_put_directory(mocker, mock_client):
     )
 
 
-def test_datasets_cp(mocker, mock_client):
+def test_cp(mocker, mock_client):
     posixpath_dirname_mock = mocker.patch(
         "posixpath.dirname", return_value="/"
     )
@@ -331,7 +331,7 @@ def test_datasets_cp(mocker, mock_client):
     )
 
 
-def test_datasets_rm(mocker, mock_client):
+def test_rm(mocker, mock_client):
     datasets.rm("project-path", project_id=PROJECT_ID, recursive=True)
 
     mock_client.delete.assert_called_once_with(
@@ -340,7 +340,7 @@ def test_datasets_rm(mocker, mock_client):
 
 
 @pytest.mark.parametrize("prefix", ["", "/"])
-def test_datasets_rmdir(mocker, prefix):
+def test_rmdir(mocker, prefix):
     ls_mock = mocker.patch(
         "faculty.datasets.ls", return_value=["/project-path/"]
     )
@@ -363,7 +363,7 @@ def test_datasets_rmdir(mocker, prefix):
 
 
 @pytest.mark.parametrize("prefix", ["", "/"])
-def test_datasets_rmdir_not_a_directory(mocker, prefix):
+def test_rmdir_not_a_directory(mocker, prefix):
     ls_mock = mocker.patch(
         "faculty.datasets.ls", return_value=["/project-path"]
     )
@@ -385,7 +385,7 @@ def test_datasets_rmdir_not_a_directory(mocker, prefix):
     [[], ["/project-path/some-file"]],
     ids=["missing", "implicit directory"],
 )
-def test_datasets_rmdir_no_such_file_or_directory(mocker, prefix, ls_result):
+def test_rmdir_no_such_file_or_directory(mocker, prefix, ls_result):
     ls_mock = mocker.patch("faculty.datasets.ls", return_value=ls_result)
 
     with pytest.raises(DatasetsError, match="No such file or directory"):
@@ -400,7 +400,7 @@ def test_datasets_rmdir_no_such_file_or_directory(mocker, prefix, ls_result):
 
 
 @pytest.mark.parametrize("prefix", ["", "/"])
-def test_datasets_rmdir_nonempty_directory(mocker, prefix):
+def test_rmdir_nonempty_directory(mocker, prefix):
     ls_mock = mocker.patch(
         "faculty.datasets.ls",
         return_value=["/project-path/", "/project-path/some-file"],
@@ -417,7 +417,7 @@ def test_datasets_rmdir_nonempty_directory(mocker, prefix):
     )
 
 
-def test_datasets_mv(mocker, mock_client):
+def test_mv(mocker, mock_client):
     cp_mock = mocker.patch("faculty.datasets.cp")
     rm_mock = mocker.patch("faculty.datasets.rm")
 
@@ -438,7 +438,7 @@ def test_datasets_mv(mocker, mock_client):
     )
 
 
-def test_datasets_etag(mocker, mock_client):
+def test_etag(mocker, mock_client):
     object_mock = mocker.Mock()
     object_mock.etag = "test-etag"
     mock_client.get.return_value = object_mock
