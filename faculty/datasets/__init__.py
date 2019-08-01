@@ -425,6 +425,7 @@ def rmdir(project_path, project_id=None, object_client=None):
         Advanced - can be used to benefit from caching in chain interactions
         with datasets.
     """
+
     contents = ls(
         prefix=project_path,
         project_id=project_id,
@@ -432,9 +433,9 @@ def rmdir(project_path, project_id=None, object_client=None):
         object_client=object_client,
     )
 
-    # Only refer to the directory corresponding to this path
-    project_path_as_file = project_path.rstrip("/")
-    project_path_as_dir = project_path_as_file + "/"
+    rationalised_path = util.rationalise_path(project_path)
+    project_path_as_file = rationalised_path.rstrip("/")
+    project_path_as_dir = rationalised_path + "/"
 
     if contents == [project_path_as_dir]:
         rm(

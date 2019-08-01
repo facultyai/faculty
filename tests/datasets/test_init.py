@@ -94,9 +94,9 @@ def test_datasets_ls_with_continuation(mocker, mock_client):
 
 def test_datasets_glob(mocker):
     content = [
-        "project-path/",
-        "project-path/this-path",
-        "project-path/other-path",
+        "/project-path/",
+        "/project-path/this-path",
+        "/project-path/other-path",
     ]
     ls_mock = mocker.patch("faculty.datasets.ls", return_value=content)
 
@@ -108,7 +108,7 @@ def test_datasets_glob(mocker):
         object_client=None,
     )
 
-    assert result == ["project-path/this-path"]
+    assert result == ["/project-path/this-path"]
 
     ls_mock.assert_called_once_with(
         prefix="project-path",
@@ -152,7 +152,7 @@ def test_datasets_get_empty_directory(mocker, mock_client):
     )
 
     ls_mock = mocker.patch(
-        "faculty.datasets.ls", return_value=["project-path/"]
+        "faculty.datasets.ls", return_value=["/project-path/"]
     )
 
     datasets.get("project-path", "local-path", PROJECT_ID)
@@ -160,7 +160,7 @@ def test_datasets_get_empty_directory(mocker, mock_client):
     os_path_dirname_mock.assert_called_once_with("local-path")
     os_path_isdir_mock.assert_called_once_with("local-path/")
     get_relative_path_mock.assert_called_once_with(
-        "project-path", "project-path/"
+        "project-path", "/project-path/"
     )
     os_path_join_mock.assert_called_once_with("local-path", relative_path)
     os_path_exists_mock.assert_called_once_with(local_dest)
@@ -203,7 +203,7 @@ def test_datasets_get_directory(mocker, mock_client):
 
     ls_mock = mocker.patch(
         "faculty.datasets.ls",
-        return_value=["project-path/", "project-path/test-file"],
+        return_value=["/project-path/", "/project-path/test-file"],
     )
     _get_file_mock = mocker.patch(
         "faculty.datasets._get_file", return_value=None
@@ -217,8 +217,8 @@ def test_datasets_get_directory(mocker, mock_client):
     os_path_isdir_mock.assert_called_once_with("local-path/")
     get_relative_path_mock.assert_has_calls(
         [
-            mocker.call("project-path", "project-path/"),
-            mocker.call("project-path", "project-path/test-file"),
+            mocker.call("project-path", "/project-path/"),
+            mocker.call("project-path", "/project-path/test-file"),
         ]
     )
     os_path_join_mock.assert_has_calls(
@@ -250,7 +250,7 @@ def test_datasets_get_directory(mocker, mock_client):
         ]
     )
     _get_file_mock.assert_called_once_with(
-        "project-path/test-file", local_dests[1], PROJECT_ID, mock_client
+        "/project-path/test-file", local_dests[1], PROJECT_ID, mock_client
     )
 
 
@@ -339,57 +339,78 @@ def test_datasets_rm(mocker, mock_client):
     )
 
 
-def test_datasets_rmdir(mocker):
+@pytest.mark.parametrize("prefix", ["", "/"])
+def test_datasets_rmdir(mocker, prefix):
     ls_mock = mocker.patch(
-        "faculty.datasets.ls", return_value=["project-path/"]
+        "faculty.datasets.ls", return_value=["/project-path/"]
     )
     rm_mock = mocker.patch("faculty.datasets.rm")
 
-    datasets.rmdir("project-path", project_id=PROJECT_ID)
+    datasets.rmdir(prefix + "project-path", project_id=PROJECT_ID)
 
     ls_mock.assert_called_once_with(
-        prefix="project-path",
+        prefix=prefix + "project-path",
         project_id=PROJECT_ID,
         show_hidden=True,
         object_client=None,
     )
     rm_mock.assert_called_once_with(
-        "project-path/",
+        "/project-path/",
         project_id=PROJECT_ID,
         object_client=None,
         recursive=True,
     )
 
 
-def test_datasets_rmdir_empty_directory_raises_when_file_returned(mocker):
+@pytest.mark.parametrize("prefix", ["", "/"])
+def test_datasets_rmdir_not_a_directory(mocker, prefix):
     ls_mock = mocker.patch(
-        "faculty.datasets.ls", return_value=["project-path"]
+        "faculty.datasets.ls", return_value=["/project-path"]
     )
 
-    with pytest.raises(DatasetsError, match="'project-path' Not a directory"):
-        datasets.rmdir("project-path", project_id=PROJECT_ID)
+    with pytest.raises(DatasetsError, match="Not a directory"):
+        datasets.rmdir(prefix + "project-path", project_id=PROJECT_ID)
 
     ls_mock.assert_called_once_with(
-        prefix="project-path",
+        prefix=prefix + "project-path",
         project_id=PROJECT_ID,
         show_hidden=True,
         object_client=None,
     )
 
 
-def test_datasets_rmdir_empty_directory_raises_with_non_empty_dir(mocker):
-    ls_mock = mocker.patch(
-        "faculty.datasets.ls",
-        return_value=["project-path/", "project-path/some-file"],
-    )
+@pytest.mark.parametrize("prefix", ["", "/"])
+@pytest.mark.parametrize(
+    "ls_result",
+    [[], ["/project-path/some-file"]],
+    ids=["missing", "implicit directory"],
+)
+def test_datasets_rmdir_no_such_file_or_directory(mocker, prefix, ls_result):
+    ls_mock = mocker.patch("faculty.datasets.ls", return_value=ls_result)
 
-    with pytest.raises(
-        DatasetsError, match="'project-path' Directory is not empty"
-    ):
-        datasets.rmdir("project-path", project_id=PROJECT_ID)
+    with pytest.raises(DatasetsError, match="No such file or directory"):
+        datasets.rmdir(prefix + "project-path", project_id=PROJECT_ID)
 
     ls_mock.assert_called_once_with(
-        prefix="project-path",
+        prefix=prefix + "project-path",
+        project_id=PROJECT_ID,
+        show_hidden=True,
+        object_client=None,
+    )
+
+
+@pytest.mark.parametrize("prefix", ["", "/"])
+def test_datasets_rmdir_nonempty_directory(mocker, prefix):
+    ls_mock = mocker.patch(
+        "faculty.datasets.ls",
+        return_value=["/project-path/", "/project-path/some-file"],
+    )
+
+    with pytest.raises(DatasetsError, match="Directory is not empty"):
+        datasets.rmdir(prefix + "project-path", project_id=PROJECT_ID)
+
+    ls_mock.assert_called_once_with(
+        prefix=prefix + "project-path",
         project_id=PROJECT_ID,
         show_hidden=True,
         object_client=None,
