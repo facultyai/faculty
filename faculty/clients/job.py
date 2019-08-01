@@ -387,27 +387,26 @@ class JobClient(BaseClient):
         endpoint = "/project/{}/job".format(project_id)
         return self._get(endpoint, JobSummarySchema(many=True))
 
-    def create(self, project_id, job_parameters):
+    def create(self, project_id, name, description, definition):
         """Create a job.
 
         Parameters
         ----------
         project_id : uuid.UUID
-        job_parameters : Dict[dict]
-            A dictionnary containing the metadata and definition of the job to
-            be created.
+        name: str
+        description: str
+        definition: Dict
+            A dictionnary containing the definition of the job to be created.
 
         Returns
         -------
-        string
+        uuid.UUID
             The ID of the created job.
         """
+        job_metadata_body = {"name": name, "description": description}
 
         endpoint = "/project/{}/job".format(project_id)
-        payload = {
-            "meta": job_parameters["meta"],
-            "definition": job_parameters["definition"],
-        }
+        payload = {"meta": job_metadata_body, "definition": definition}
 
         return self._post(endpoint, JobIdSchema(), json=payload)
 
