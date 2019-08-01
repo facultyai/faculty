@@ -14,7 +14,6 @@
 
 
 import random
-import requests
 import string
 from uuid import uuid4
 
@@ -77,6 +76,11 @@ def mock_client_upload_gcs(mocker, requests_mock):
     object_client.presign_upload.return_value = presigned_response_mock
 
     yield object_client
+
+
+def _assert_contains(dict_1, dict_2):
+    for key, value in dict_2.items():
+        assert dict_1[key] == value
 
 
 def test_download(mock_client_download):
@@ -179,6 +183,10 @@ def test_aws_upload_chunks(mocker, mock_client_upload_aws, requests_mock):
     transfer.upload(
         mock_client_upload_aws, PROJECT_ID, TEST_PATH, TEST_CONTENT
     )
+
+    history = requests_mock.request_history
+    assert len(history) == 2
+
     mock_client_upload_aws.complete_multipart_upload.assert_called_once_with(
         PROJECT_ID,
         TEST_PATH,
@@ -202,45 +210,24 @@ def test_gcs_upload(mock_client_upload_gcs, requests_mock):
     )
 
 
-def test_gcs_upload_retry(mock_client_upload_gcs, requests_mock):
-    requests_mock.put(TEST_URL, exc=requests.exceptions.ConnectionError)
-    requests_mock.put(
-        TEST_URL, headers={"Range": "bytes=0-100"}, status_code=308
-    )
-    requests_mock.put(
-        TEST_URL,
-        request_headers={
-            "Content-Length": "1900",
-            "Content-Range": "bytes 99-1999/2000",
-        },
-        status_code=200,
-    )
-
-    transfer.upload(
-        mock_client_upload_gcs, PROJECT_ID, TEST_PATH, TEST_CONTENT
-    )
-
-
 def test_gcs_upload_chunking(mocker, mock_client_upload_gcs, requests_mock):
     mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 1000)
+    chunk_headers = [
+        {"Content-Length": "1000", "Content-Range": "bytes 0-999/*"},
+        {"Content-Length": "1000", "Content-Range": "bytes 1000-1999/2000"},
+    ]
 
-    requests_mock.put(
-        TEST_URL,
-        request_headers={
-            "Content-Length": "1000",
-            "Content-Range": "bytes 0-999/*",
-        },
-        status_code=200,
-    )
-    requests_mock.put(
-        TEST_URL,
-        request_headers={
-            "Content-Length": "1000",
-            "Content-Range": "bytes 1000-1999/2000",
-        },
-        status_code=200,
-    )
+    for headers in chunk_headers:
+        requests_mock.put(TEST_URL, status_code=200, request_headers=headers)
 
     transfer.upload(
         mock_client_upload_gcs, PROJECT_ID, TEST_PATH, TEST_CONTENT
     )
+
+    history = requests_mock.request_history
+    assert len(history) == 2
+
+    _assert_contains(history[0].headers, chunk_headers[0])
+    _assert_contains(history[1].headers, chunk_headers[1])
+    assert history[0].text.encode("utf8") == TEST_CONTENT[:1000]
+    assert history[1].text.encode("utf8") == TEST_CONTENT[1000:]

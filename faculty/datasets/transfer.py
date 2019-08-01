@@ -204,37 +204,16 @@ def _gcs_upload(upload_url, content):
     start_index = 0
 
     for i, (chunk, is_last) in enumerate(_rechunk_and_label_as_last(content)):
-        if is_last is False:
-            _upload_to_gcs_with_retry(upload_url, chunk, start_index)
-        else:
+        if is_last:
             total_file_size = start_index + len(chunk)
-            _upload_to_gcs_with_retry(
-                upload_url, chunk, start_index, total_file_size
-            )
+        else:
+            total_file_size = "*"
+
+        _gcs_upload_chunk(upload_url, chunk, start_index, total_file_size)
         start_index += len(chunk)
 
 
-def _upload_to_gcs_with_retry(
-    upload_url, content, start_index, total_size="*"
-):
-    max_retries = 5
-    retry = 0
-    while retry <= max_retries:
-        try:
-            result = _stream_to_gcs(
-                upload_url, content, start_index, total_size
-            )
-            result.raise_for_status()
-            break
-        except requests.RequestException:
-            start_index = _get_resumption_byte_index(
-                upload_url, content, start_index
-            )
-            sleep(1 + (retry * 2))
-            retry += 1
-
-
-def _stream_to_gcs(upload_url, content, start_index, total_size):
+def _gcs_upload_chunk(upload_url, content, start_index, total_file_size):
     end_index = start_index + len(content) - 1
     result = requests.put(
         upload_url,
@@ -242,27 +221,11 @@ def _stream_to_gcs(upload_url, content, start_index, total_size):
         headers={
             "Content-Length": "{0}".format(len(content)),
             "Content-Range": "bytes {0}-{1}/{2}".format(
-                start_index, end_index, total_size
+                start_index, end_index, total_file_size
             ),
         },
     )
-    return result
-
-
-def _get_resumption_byte_index(upload_url, content, start_index):
-    # Response header example:
-    # {
-    #   'Range': 'bytes=0-82837503',
-    #   'X-Range-MD5': '871932daecb0582948040f473c199932'
-    # }
-    # The hash is actually for the lower-bound to the (upper bound +1)
-    # of Range.
-    response = requests.put(
-        upload_url,
-        headers={"content-range": "bytes {0}-*/*".format(start_index)},
-    )
-    upper_bound = int(response.headers["Range"].split("-")[1]) + 1
-    return upper_bound
+    result.raise_for_status()
 
 
 def _file_chunk_iterator(local_path):
