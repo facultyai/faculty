@@ -27,7 +27,7 @@ PROJECT_ID = uuid4()
 TEST_PATH = "/path/to/file"
 TEST_URL = "https://example.com/presigned/url"
 OTHER_URL = "https://example.com/other-presigned/url"
-TEST_AWS_UPLOAD_ID = 123
+TEST_S3_UPLOAD_ID = 123
 
 TEST_ETAG = "5d24e152bcdfa5a0357f46471be3be6c"
 TEST_COMPLETED_PART = CompletedUploadPart(1, TEST_ETAG)
@@ -58,12 +58,12 @@ def mock_client_download(mocker, requests_mock):
 def mock_client_upload_s3(mocker, requests_mock):
     presigned_response_mock = mocker.Mock()
     presigned_response_mock.provider = CloudStorageProvider.S3
-    presigned_response_mock.upload_id = TEST_AWS_UPLOAD_ID
+    presigned_response_mock.upload_id = TEST_S3_UPLOAD_ID
 
     object_client = mocker.Mock()
     object_client.presign_upload.return_value = presigned_response_mock
 
-    yield object_client
+    return object_client
 
 
 @pytest.fixture
@@ -75,7 +75,7 @@ def mock_client_upload_gcs(mocker, requests_mock):
     object_client = mocker.Mock()
     object_client.presign_upload.return_value = presigned_response_mock
 
-    yield object_client
+    return object_client
 
 
 def _assert_contains(dict_1, dict_2):
@@ -144,7 +144,7 @@ def test_s3_upload(mock_client_upload_s3, requests_mock):
 
     transfer.upload(mock_client_upload_s3, PROJECT_ID, TEST_PATH, TEST_CONTENT)
     mock_client_upload_s3.complete_multipart_upload.assert_called_once_with(
-        PROJECT_ID, TEST_PATH, TEST_AWS_UPLOAD_ID, [TEST_COMPLETED_PART]
+        PROJECT_ID, TEST_PATH, TEST_S3_UPLOAD_ID, [TEST_COMPLETED_PART]
     )
 
 
@@ -186,7 +186,7 @@ def test_s3_upload_chunks(mocker, mock_client_upload_s3, requests_mock):
     mock_client_upload_s3.complete_multipart_upload.assert_called_once_with(
         PROJECT_ID,
         TEST_PATH,
-        TEST_AWS_UPLOAD_ID,
+        TEST_S3_UPLOAD_ID,
         [TEST_COMPLETED_PART, OTHER_COMPLETED_PART],
     )
 
