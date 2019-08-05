@@ -21,6 +21,7 @@ from faculty.datasets.util import DatasetsError
 
 KILOBYTE = 1024
 MEGABYTE = 1024 * KILOBYTE
+UPLOAD_CHUNK_SIZE = 5 * MEGABYTE
 
 
 def download(object_client, project_id, datasets_path):
@@ -97,7 +98,7 @@ def download_file(object_client, project_id, datasets_path, local_path):
     # file
     stream = download_stream(object_client, project_id, datasets_path)
 
-    with open(local_path, "wb") as fp:
+    with open(str(local_path), "wb") as fp:
         for chunk in stream:
             fp.write(chunk)
 
@@ -198,32 +199,66 @@ def _s3_upload(object_client, project_id, datasets_path, content, upload_id):
 
 
 def _gcs_upload(upload_url, content):
-    raise NotImplementedError("GCS upload is not implemented")
+
+    start_index = 0
+
+    for i, (chunk, is_last) in enumerate(_rechunk_and_label_as_last(content)):
+        if is_last:
+            total_file_size = start_index + len(chunk)
+        else:
+            total_file_size = "*"
+
+        _gcs_upload_chunk(upload_url, chunk, start_index, total_file_size)
+        start_index += len(chunk)
 
 
-def _file_chunk_iterator(local_path, chunk_size=5 * MEGABYTE):
+def _gcs_upload_chunk(upload_url, content, start_index, total_file_size):
+    end_index = start_index + len(content) - 1
+    result = requests.put(
+        upload_url,
+        data=content,
+        headers={
+            "Content-Length": "{0}".format(len(content)),
+            "Content-Range": "bytes {0}-{1}/{2}".format(
+                start_index, end_index, total_file_size
+            ),
+        },
+    )
+    result.raise_for_status()
+
+
+def _file_chunk_iterator(local_path):
     with open(local_path, "rb") as fp:
-        chunk = fp.read(chunk_size)
+        chunk = fp.read(UPLOAD_CHUNK_SIZE)
         while chunk:
             yield chunk
-            chunk = fp.read(chunk_size)
+            chunk = fp.read(UPLOAD_CHUNK_SIZE)
 
 
-def _rechunk_data(content, chunk_size=5 * MEGABYTE):
-
+def _rechunk_data(content):
     chunk = b""
-
     for original_chunk in content:
 
         while len(original_chunk) > 0:
-
-            remaining = chunk_size - len(chunk)
+            remaining = UPLOAD_CHUNK_SIZE - len(chunk)
             chunk += original_chunk[:remaining]
             original_chunk = original_chunk[remaining:]
-
-            if len(chunk) >= chunk_size:
+            if len(chunk) >= UPLOAD_CHUNK_SIZE:
                 yield chunk
                 chunk = b""
 
     if len(chunk) > 0:
         yield chunk
+
+
+def _rechunk_and_label_as_last(content):
+    chunks = _rechunk_data(content=content)
+    current_chunk = next(chunks, b"")
+    while True:
+        try:
+            next_chunk = next(chunks)
+            yield (current_chunk, False)
+            current_chunk = next_chunk
+        except StopIteration:
+            yield (current_chunk, True)
+            break
