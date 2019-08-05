@@ -63,7 +63,8 @@ def mock_client_upload_s3(mocker, requests_mock):
     object_client = mocker.Mock()
     object_client.presign_upload.return_value = presigned_response_mock
 
-    return object_client
+    yield object_client
+    object_client.presign_upload.assert_called_once_with(PROJECT_ID, TEST_PATH)
 
 
 @pytest.fixture
@@ -75,7 +76,8 @@ def mock_client_upload_gcs(mocker, requests_mock):
     object_client = mocker.Mock()
     object_client.presign_upload.return_value = presigned_response_mock
 
-    return object_client
+    yield object_client
+    object_client.presign_upload.assert_called_once_with(PROJECT_ID, TEST_PATH)
 
 
 def _assert_contains(dict_1, dict_2):
