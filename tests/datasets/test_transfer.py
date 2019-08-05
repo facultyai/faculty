@@ -111,22 +111,30 @@ def test_download_file(mock_client_download, tmpdir):
 def test_chunking_and_labelling_data_of_exact_sizes(mocker):
     mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
     content = [b"1111", b"2222", b"last"]
-    a = transfer._rechunk_and_label_as_last(content)
-    assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
+    chunks = transfer._rechunk_and_label_as_last(content)
+    assert list(chunks) == [
+        (b"1111", False),
+        (b"2222", False),
+        (b"last", True),
+    ]
 
 
 def test_chunking_and_labelling_of_smaller_sizes(mocker):
     mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 12)
     content = [b"1111", b"2222", b"last"]
-    a = transfer._rechunk_and_label_as_last(content)
-    assert list(a) == [(b"11112222last", True)]
+    chunks = transfer._rechunk_and_label_as_last(content)
+    assert list(chunks) == [(b"11112222last", True)]
 
 
 def test_chunking_and_labelling_of_greater_sizes(mocker):
     mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
     content = [b"11112222last"]
-    a = transfer._rechunk_and_label_as_last(content)
-    assert list(a) == [(b"1111", False), (b"2222", False), (b"last", True)]
+    chunks = transfer._rechunk_and_label_as_last(content)
+    assert list(chunks) == [
+        (b"1111", False),
+        (b"2222", False),
+        (b"last", True),
+    ]
 
 
 def test_s3_upload(mock_client_upload_s3, requests_mock):
