@@ -503,12 +503,12 @@ def test_job_client_list(mocker):
     )
 
 
-def test_job_client_create_job(mocker):
+def test_job_client_create(mocker):
     mocker.patch.object(JobClient, "_post", return_value=str(JOB_ID))
     schema_mock = mocker.patch("faculty.clients.job.JobIdSchema")
 
     client = JobClient(mocker.Mock())
-    assert client.create_job(
+    assert client.create(
         PROJECT_ID,
         {"meta": JOB_METADATA_BODY, "definition": JOB_DEFINITION_BODY},
     ) == str(JOB_ID)
