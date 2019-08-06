@@ -504,25 +504,6 @@ def test_job_client_list(mocker):
 
 
 def test_job_client_create(mocker):
-    mocker.patch.object(JobClient, "_post", return_value=str(JOB_ID))
-    schema_mock = mocker.patch("faculty.clients.job.JobIdSchema")
-
-    client = JobClient(mocker.Mock())
-    assert client.create(
-        PROJECT_ID,
-        {"meta": JOB_METADATA_BODY, "definition": JOB_DEFINITION_BODY},
-    ) == str(JOB_ID)
-
-    schema_mock.assert_called_once_with()
-
-    last_call_args, last_call_kwargs = JobClient._post.call_args
-    assert last_call_args == (
-        "/project/{}/job".format(PROJECT_ID),
-        schema_mock.return_value,
-    )
-
-
-def test_job_client_create(mocker):
     mocker.patch.object(JobClient, "_post", return_value=JOB_ID)
     schema_mock = mocker.patch("faculty.clients.job.JobIdSchema")
 
