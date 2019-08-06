@@ -435,7 +435,7 @@ def rmdir(project_path, project_id=None, object_client=None):
 
     rationalised_path = util.rationalise_path(project_path)
     project_path_as_file = rationalised_path.rstrip("/")
-    project_path_as_dir = rationalised_path + "/"
+    project_path_as_dir = project_path_as_file + "/"
 
     if contents == [project_path_as_dir]:
         rm(

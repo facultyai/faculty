@@ -339,17 +339,18 @@ def test_rm(mocker, mock_client):
     )
 
 
-@pytest.mark.parametrize("prefix", ["", "/"])
-def test_rmdir(mocker, prefix):
+@pytest.mark.parametrize("prefix,suffix", [("", ""), ("/", ""), ("/", "/")])
+def test_rmdir(mocker, prefix, suffix):
+    project_path = prefix + "project-path" + suffix
     ls_mock = mocker.patch(
         "faculty.datasets.ls", return_value=["/project-path/"]
     )
     rm_mock = mocker.patch("faculty.datasets.rm")
 
-    datasets.rmdir(prefix + "project-path", project_id=PROJECT_ID)
+    datasets.rmdir(project_path, project_id=PROJECT_ID)
 
     ls_mock.assert_called_once_with(
-        prefix=prefix + "project-path",
+        prefix=project_path,
         project_id=PROJECT_ID,
         show_hidden=True,
         object_client=None,
