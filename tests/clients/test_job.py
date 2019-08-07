@@ -130,7 +130,6 @@ JOB_DEFINITION = JobDefinition(
     instance_size=INSTANCE_SIZE,
     max_runtime_seconds=MAX_RUNTIME_SECONDS,
 )
-
 JOB_DEFINITION_BODY = {
     "workingDir": JOB_DEFINITION.working_dir,
     "command": JOB_COMMAND_BODY,
@@ -139,7 +138,7 @@ JOB_DEFINITION_BODY = {
     "environmentIds": [str(ENVIRONMENT_ID)],
     "instanceSizeType": JOB_DEFINITION.instance_size_type,
     "instanceSize": INSTANCE_SIZE_BODY,
-    "maxRuntimeSeconds": str(MAX_RUNTIME_SECONDS),
+    "maxRuntimeSeconds": MAX_RUNTIME_SECONDS,
 }
 JOB_DEFINITION_ALTERNATIVE = JobDefinition(
     working_dir="/project/subdir/",
@@ -154,11 +153,12 @@ JOB_DEFINITION_ALTERNATIVE = JobDefinition(
 JOB_DEFINITION_ALTERNATIVE_BODY = {
     "workingDir": JOB_DEFINITION.working_dir,
     "command": JOB_COMMAND_BODY,
-    "imageType": JOB_DEFINITION.image_type,
+    "imageType": JOB_DEFINITION.image_type.value,
     "condaEnvironment": JOB_DEFINITION.conda_environment,
     "environmentIds": [str(ENVIRONMENT_ID)],
     "instanceSizeType": JOB_DEFINITION_ALTERNATIVE.instance_size_type,
-    "maxRuntimeSeconds": str(MAX_RUNTIME_SECONDS),
+    "instanceSize": None,
+    "maxRuntimeSeconds": MAX_RUNTIME_SECONDS,
 }
 JOB = Job(id=JOB_ID, meta=JOB_METADATA, definition=JOB_DEFINITION)
 JOB_BODY = {
@@ -291,19 +291,34 @@ def test_job_summary_schema():
     assert data == JOB_SUMMARY
 
 
-def test_instance_size_schema():
+def test_instance_size_schema_load():
     data = InstanceSizeSchema().load(INSTANCE_SIZE_BODY)
     assert data == INSTANCE_SIZE
 
 
-def test_job_parameter_schema():
+def test_instance_size_schema_dump():
+    data = InstanceSizeSchema().dump(INSTANCE_SIZE)
+    assert data == INSTANCE_SIZE_BODY
+
+
+def test_job_parameter_schema_load():
     data = JobParameterSchema().load(JOB_PARAMETER_BODY)
     assert data == JOB_PARAMETER
 
 
-def test_job_command_schema():
+def test_job_parameter_schema_dump():
+    data = JobParameterSchema().dump(JOB_PARAMETER)
+    assert data == JOB_PARAMETER_BODY
+
+
+def test_job_command_schema_load():
     data = JobCommandSchema().load(JOB_COMMAND_BODY)
     assert data == JOB_COMMAND
+
+
+def test_job_command_schema_dump():
+    data = JobCommandSchema().dump(JOB_COMMAND)
+    assert data == JOB_COMMAND_BODY
 
 
 @pytest.mark.parametrize(
@@ -313,11 +328,21 @@ def test_job_command_schema():
         (JOB_DEFINITION_ALTERNATIVE, JOB_DEFINITION_ALTERNATIVE_BODY),
     ],
 )
-def test_job_definition_schema(job_definition, job_definition_body):
-    schema = job_definition
-    schema_body = job_definition_body
-    data = JobDefinitionSchema().load(schema_body)
-    assert data == schema
+def test_job_definition_schema_load(job_definition, job_definition_body):
+    data = JobDefinitionSchema().load(job_definition_body)
+    assert data == job_definition
+
+
+@pytest.mark.parametrize(
+    "job_definition_body, job_definition",
+    [
+        (JOB_DEFINITION_BODY, JOB_DEFINITION),
+        (JOB_DEFINITION_ALTERNATIVE_BODY, JOB_DEFINITION_ALTERNATIVE),
+    ],
+)
+def test_job_definition_schema_dump(job_definition_body, job_definition):
+    data = JobDefinitionSchema().dump(job_definition)
+    assert data == job_definition_body
 
 
 @pytest.mark.parametrize(
@@ -485,7 +510,7 @@ def test_list_runs_response_schema():
         ListRunsResponseSchema,
     ],
 )
-def test_schemas_invalid_data(schema_class):
+def test_schemas_load_invalid_data(schema_class):
     with pytest.raises(ValidationError):
         schema_class().load({})
 
