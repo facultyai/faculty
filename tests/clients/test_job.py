@@ -505,7 +505,8 @@ def test_job_client_list(mocker):
 
 def test_job_client_create(mocker):
     mocker.patch.object(JobClient, "_post", return_value=JOB_ID)
-    schema_mock = mocker.patch("faculty.clients.job.JobIdSchema")
+    response_schema_mock = mocker.patch("faculty.clients.job.JobIdSchema")
+    mocker.patch.object(JobDefinitionSchema, "dump")
 
     client = JobClient(mocker.Mock())
     assert (
@@ -518,18 +519,19 @@ def test_job_client_create(mocker):
         == JOB_ID
     )
 
-    schema_mock.assert_called_once_with()
-
-    last_call_args, last_call_kwargs = JobClient._post.call_args
-    assert last_call_args == (
+    response_schema_mock.assert_called_once_with()
+    JobDefinitionSchema.dump.assert_called_once_with(JOB_DEFINITION)
+    JobClient._post.assert_called_once_with(
         "/project/{}/job".format(PROJECT_ID),
-        schema_mock.return_value,
+        response_schema_mock.return_value,
+        json={
+            "meta": {
+                "name": JOB_METADATA.name,
+                "description": JOB_METADATA.description,
+            },
+            "definition": JobDefinitionSchema.dump.return_value,
+        },
     )
-
-    sent_meta_sets = last_call_kwargs["json"]["meta"]
-    sent_definition_sets = last_call_kwargs["json"]["definition"]
-    assert len(sent_meta_sets) == 2
-    assert len(sent_definition_sets) == 8
 
 
 def test_job_client_get(mocker):
