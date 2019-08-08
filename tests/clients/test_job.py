@@ -104,7 +104,7 @@ JOB_SUMMARY_BODY = {"jobId": str(JOB_ID), "meta": JOB_METADATA_BODY}
 INSTANCE_SIZE = InstanceSize(milli_cpus=MILLI_CPUS, memory_mb=MEMORY_MB)
 INSTANCE_SIZE_BODY = {"milliCpus": MILLI_CPUS, "memoryMb": MEMORY_MB}
 JOB_PARAMETER = JobParameter(
-    name="job name",
+    name="parameter name",
     type=ParameterType.TEXT,
     default="default parameter value",
     required=True,
