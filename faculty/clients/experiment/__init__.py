@@ -16,8 +16,8 @@
 from faculty.clients.experiment._models import (  # noqa: F401
     ComparisonOperator,
     CompoundFilter,
-    DeletedAtFilter,
     DeleteExperimentRunsResponse,
+    DeletedAtFilter,
     DurationSort,
     Experiment,
     ExperimentIdFilter,
@@ -38,6 +38,7 @@ from faculty.clients.experiment._models import (  # noqa: F401
     RestoreExperimentRunsResponse,
     RunIdFilter,
     RunNumberSort,
+    RunStatusFilter,
     StartedAtSort,
     Tag,
     TagFilter,

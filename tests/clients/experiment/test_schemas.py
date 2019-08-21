@@ -47,6 +47,7 @@ from faculty.clients.experiment._models import (
     RunIdFilter,
     RunNumberSort,
     RunQuery,
+    RunStatusFilter,
     SortOrder,
     StartedAtSort,
     Tag,
@@ -443,6 +444,22 @@ def test_filter_schema_run_id(
 
 @pytest.mark.parametrize(
     "operator, value, expected_operator, expected_value",
+    discrete_test_cases(ExperimentRunStatus.FINISHED, "finished"),
+)
+def test_filter_schema_run_status(
+    operator, value, expected_operator, expected_value
+):
+    filter = RunStatusFilter(operator, value)
+    data = FilterSchema().dump(filter)
+    assert data == {
+        "by": "status",
+        "operator": expected_operator,
+        "value": expected_value,
+    }
+
+
+@pytest.mark.parametrize(
+    "operator, value, expected_operator, expected_value",
     continuous_test_cases(DELETED_AT, DELETED_AT_STRING_PYTHON),
 )
 def test_filter_schema_deleted_at(
@@ -507,6 +524,12 @@ def test_filter_schema_metric(
     }
 
 
+def test_filter_schema_invalid_value_run_status():
+    filter = RunStatusFilter(ComparisonOperator.EQUAL_TO, "invalid")
+    with pytest.raises(AttributeError):
+        FilterSchema().dump(filter)
+
+
 @pytest.mark.parametrize(
     "filter_type",
     [ProjectIdFilter, ExperimentIdFilter, RunIdFilter, DeletedAtFilter],
@@ -532,6 +555,7 @@ def test_filter_schema_invalid_value_with_key(filter_type, value):
         (ProjectIdFilter, PROJECT_ID),
         (ExperimentIdFilter, EXPERIMENT_ID),
         (RunIdFilter, RUN_ID),
+        (RunStatusFilter, ExperimentRunStatus.FAILED),
     ],
 )
 @pytest.mark.parametrize(
