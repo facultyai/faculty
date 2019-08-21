@@ -237,7 +237,9 @@ def _file_chunk_iterator(local_path):
 
 def _rechunk_data(content):
     chunk = b""
+    empty_file = True
     for original_chunk in content:
+        empty_file = False
 
         while len(original_chunk) > 0:
             remaining = UPLOAD_CHUNK_SIZE - len(chunk)
@@ -247,7 +249,7 @@ def _rechunk_data(content):
                 yield chunk
                 chunk = b""
 
-    if len(chunk) >= 0:
+    if empty_file or len(chunk) > 0:
         yield chunk
 
 

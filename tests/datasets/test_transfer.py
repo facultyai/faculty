@@ -108,6 +108,13 @@ def test_download_file(mock_client_download, tmpdir):
     assert destination.read(mode="rb") == TEST_CONTENT
 
 
+def test_chunking_of_empty_files(mocker):
+    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
+    content = []
+    chunks = transfer._rechunk_data(content)
+    assert list(chunks) == [b""]
+
+
 def test_chunking_and_labelling_data_of_exact_sizes(mocker):
     mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
     content = [b"1111", b"2222", b"last"]
