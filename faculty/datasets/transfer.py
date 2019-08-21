@@ -247,7 +247,7 @@ def _rechunk_data(content):
                 yield chunk
                 chunk = b""
 
-    if len(chunk) > 0:
+    if len(chunk) >= 0:
         yield chunk
 
 
