@@ -108,18 +108,13 @@ def test_download_file(mock_client_download, tmpdir):
     assert destination.read(mode="rb") == TEST_CONTENT
 
 
-def test_chunking_of_empty_content(mocker):
+@pytest.mark.parametrize(
+    "content, expected_chunks", [([], [b""]), ([b""], [b""])]
+)
+def test_chunking_of_empty_files(mocker, content, expected_chunks):
     mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
-    content = []
     chunks = transfer._rechunk_data(content)
-    assert list(chunks) == [b""]
-
-
-def test_chunking_of_content_with_empty_file(mocker):
-    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
-    content = [b""]
-    chunks = transfer._rechunk_data(content)
-    assert list(chunks) == [b""]
+    assert list(chunks) == expected_chunks
 
 
 def test_chunking_and_labelling_data_of_exact_sizes(mocker):
