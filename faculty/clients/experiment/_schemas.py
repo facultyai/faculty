@@ -207,10 +207,10 @@ class _FilterValueField(fields.Field):
 
     def _serialize(self, value, attr, obj, **kwargs):
         if obj.operator == ComparisonOperator.DEFINED:
-            field_cls = fields.Boolean
+            field = fields.Boolean()
         else:
-            field_cls = self.other_field_type
-        return field_cls()._serialize(value, attr, obj, **kwargs)
+            field = self.other_field_type
+        return field._serialize(value, attr, obj, **kwargs)
 
 
 def _validate_discrete(operator):
@@ -224,7 +224,7 @@ def _validate_discrete(operator):
 
 class _ProjectIdFilterSchema(BaseSchema):
     operator = EnumField(ComparisonOperator, by_value=True)
-    value = _FilterValueField(fields.UUID)
+    value = _FilterValueField(fields.UUID())
     by = fields.Constant("projectId", dump_only=True)
 
     @pre_dump
@@ -235,7 +235,7 @@ class _ProjectIdFilterSchema(BaseSchema):
 
 class _ExperimentIdFilterSchema(BaseSchema):
     operator = EnumField(ComparisonOperator, by_value=True)
-    value = _FilterValueField(fields.Integer)
+    value = _FilterValueField(fields.Integer())
     by = fields.Constant("experimentId", dump_only=True)
 
     @pre_dump
@@ -246,8 +246,19 @@ class _ExperimentIdFilterSchema(BaseSchema):
 
 class _RunIdFilterSchema(BaseSchema):
     operator = EnumField(ComparisonOperator, by_value=True)
-    value = _FilterValueField(fields.UUID)
+    value = _FilterValueField(fields.UUID())
     by = fields.Constant("runId", dump_only=True)
+
+    @pre_dump
+    def check_operator(self, obj):
+        _validate_discrete(obj.operator)
+        return obj
+
+
+class _RunStatusFilterSchema(BaseSchema):
+    operator = EnumField(ComparisonOperator, by_value=True)
+    value = _FilterValueField(EnumField(ExperimentRunStatus, by_value=True))
+    by = fields.Constant("status", dump_only=True)
 
     @pre_dump
     def check_operator(self, obj):
@@ -257,14 +268,14 @@ class _RunIdFilterSchema(BaseSchema):
 
 class _DeletedAtFilterSchema(BaseSchema):
     operator = EnumField(ComparisonOperator, by_value=True)
-    value = _FilterValueField(fields.DateTime)
+    value = _FilterValueField(fields.DateTime())
     by = fields.Constant("deletedAt", dump_only=True)
 
 
 class _TagFilterSchema(BaseSchema):
     key = fields.String()
     operator = EnumField(ComparisonOperator, by_value=True)
-    value = _FilterValueField(fields.String)
+    value = _FilterValueField(fields.String())
     by = fields.Constant("tag", dump_only=True)
 
     @pre_dump
@@ -276,7 +287,7 @@ class _TagFilterSchema(BaseSchema):
 class _ParamFilterSchema(BaseSchema):
     key = fields.String()
     operator = EnumField(ComparisonOperator, by_value=True)
-    value = _FilterValueField(_ParamFilterValueField)
+    value = _FilterValueField(_ParamFilterValueField())
     by = fields.Constant("param", dump_only=True)
 
     @pre_dump
@@ -289,7 +300,7 @@ class _ParamFilterSchema(BaseSchema):
 class _MetricFilterSchema(BaseSchema):
     key = fields.String()
     operator = EnumField(ComparisonOperator, by_value=True)
-    value = _FilterValueField(fields.Float)
+    value = _FilterValueField(fields.Float())
     by = fields.Constant("metric", dump_only=True)
 
 
@@ -303,6 +314,7 @@ class FilterSchema(_OneOfSchemaWithoutType):
         "ProjectIdFilter": _ProjectIdFilterSchema,
         "ExperimentIdFilter": _ExperimentIdFilterSchema,
         "RunIdFilter": _RunIdFilterSchema,
+        "RunStatusFilter": _RunStatusFilterSchema,
         "DeletedAtFilter": _DeletedAtFilterSchema,
         "TagFilter": _TagFilterSchema,
         "ParamFilter": _ParamFilterSchema,

@@ -84,6 +84,7 @@ class ComparisonOperator(Enum):
 ProjectIdFilter = namedtuple("ProjectIdFilter", ["operator", "value"])
 ExperimentIdFilter = namedtuple("ExperimentIdFilter", ["operator", "value"])
 RunIdFilter = namedtuple("RunIdFilter", ["operator", "value"])
+RunStatusFilter = namedtuple("RunStatusFilter", ["operator", "value"])
 DeletedAtFilter = namedtuple("DeletedAtFilter", ["operator", "value"])
 TagFilter = namedtuple("TagFilter", ["key", "operator", "value"])
 ParamFilter = namedtuple("ParamFilter", ["key", "operator", "value"])
