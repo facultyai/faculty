@@ -36,15 +36,7 @@ ReportWithVersions = namedtuple(
 
 ReportVersion = namedtuple(
     "ReportVersion",
-    [
-        "created_at",
-        "author_id",
-        "report_path",
-        "report_key",
-        "report_bucket",
-        "notebook_path",
-        "id",
-    ],
+    ["created_at", "author_id", "report_path", "notebook_path", "id"],
 )
 
 
@@ -53,8 +45,6 @@ class ReportVersionSchema(BaseSchema):
     created_at = fields.DateTime(required=True)
     author_id = fields.UUID(required=True)
     report_path = fields.String(required=True)
-    report_key = fields.String(required=True)
-    report_bucket = fields.String(required=True)
     notebook_path = fields.String(required=True)
 
     @post_load

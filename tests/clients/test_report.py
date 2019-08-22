@@ -39,10 +39,6 @@ ACTIVE_VERSION = ReportVersion(
     created_at=datetime.datetime(2018, 10, 3, 9, 23, 5, 0, tzinfo=UTC),
     author_id=USER_ID,
     report_path="/.sml/tavern/{}/{}/index.html".format(REPORT_ID, VERSION_ID),
-    report_key="{}/.sml/tavern/{}/{}/index.html".format(
-        PROJECT_ID, REPORT_ID, VERSION_ID
-    ),
-    report_bucket="sml-projects-test-bucket",
     notebook_path="/test-notebook-path.ipynb",
     id=VERSION_ID,
 )
@@ -68,8 +64,6 @@ VERSION_BODY = {
     "created_at": "2018-10-03T09:23:05Z",
     "author_id": str(USER_ID),
     "report_path": ACTIVE_VERSION.report_path,
-    "report_key": ACTIVE_VERSION.report_key,
-    "report_bucket": ACTIVE_VERSION.report_bucket,
     "notebook_path": ACTIVE_VERSION.notebook_path,
     "version_id": str(ACTIVE_VERSION.id),
 }
