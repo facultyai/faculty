@@ -39,12 +39,8 @@ def download(object_client, project_id, datasets_path):
     bytes
         The content of the file
     """
-
-    content = b""
-    for chunk in download_stream(object_client, project_id, datasets_path):
-        content += chunk
-
-    return content
+    chunk_generator = download_stream(object_client, project_id, datasets_path)
+    return b"".join(chunk_generator)
 
 
 def download_stream(object_client, project_id, datasets_path):
