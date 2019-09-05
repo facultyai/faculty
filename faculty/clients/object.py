@@ -15,6 +15,8 @@
 
 from collections import namedtuple
 from enum import Enum
+import json
+import gzip
 
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
@@ -422,4 +424,15 @@ class ObjectClient(BaseClient):
         body = schema.dump(
             {"path": path, "upload_id": upload_id, "parts": completed_parts}
         )
-        self._put_raw(endpoint, json=body)
+
+        json_body = json.dumps(body, separators=(",", ":"))
+        compressed_json_body = gzip.compress(json_body.encode("utf8"))
+
+        self._put_raw(
+            endpoint,
+            data=compressed_json_body,
+            headers={
+                "Content-Type": "application/json",
+                "Content-Encoding": "gzip",
+            },
+        )

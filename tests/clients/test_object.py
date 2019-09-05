@@ -15,6 +15,7 @@
 
 import uuid
 from datetime import datetime
+import gzip
 
 import pytest
 from marshmallow import ValidationError
@@ -463,17 +464,18 @@ def test_object_client_presign_upload_part(mocker):
 
 def test_object_client_complete_multipart_upload(mocker):
     mocker.patch.object(ObjectClient, "_put_raw")
-    payload_schema_mock = mocker.patch(
-        "faculty.clients.object.CompleteMultipartUploadSchema"
+    dump_mock = mocker.patch.object(
+        CompleteMultipartUploadSchema,
+        "dump",
+        return_value={"dummy": "content"},
     )
+    compressed_dummy_content = gzip.compress(b'{"dummy":"content"}')
 
     client = ObjectClient(mocker.Mock())
     client.complete_multipart_upload(
         PROJECT_ID, "/path", "upload-id", [COMPLETED_UPLOAD_PART]
     )
 
-    payload_schema_mock.assert_called_once_with()
-    dump_mock = payload_schema_mock.return_value.dump
     dump_mock.assert_called_once_with(
         {
             "path": "/path",
@@ -483,5 +485,9 @@ def test_object_client_complete_multipart_upload(mocker):
     )
     ObjectClient._put_raw.assert_called_once_with(
         "/project/{}/presign/upload/complete".format(PROJECT_ID),
-        json=dump_mock.return_value,
+        data=compressed_dummy_content,
+        headers={
+            "Content-Type": "application/json",
+            "Content-Encoding": "gzip",
+        },
     )
