@@ -189,7 +189,7 @@ def test_object_client_get(mocker, path):
     )
 
 
-@pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path"])
+@pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path",])
 def test_object_client_list(mocker, path):
     mocker.patch.object(
         ObjectClient, "_get", return_value=LIST_OBJECTS_RESPONSE
@@ -227,6 +227,28 @@ def test_object_client_list_defaults(mocker):
         "/project/{}/object-list/".format(PROJECT_ID),
         schema_mock.return_value,
         params={},
+    )
+
+
+def test_object_client_list_url_encoding(mocker):
+    path = "/test [1]/"
+    mocker.patch.object(
+        ObjectClient, "_get", return_value=LIST_OBJECTS_RESPONSE
+    )
+    schema_mock = mocker.patch(
+        "faculty.clients.object.ListObjectsResponseSchema"
+    )
+
+    client = ObjectClient(mocker.Mock())
+
+    response = client.list(PROJECT_ID, path, page_token="token")
+    assert response == LIST_OBJECTS_RESPONSE
+
+    schema_mock.assert_called_once_with()
+    ObjectClient._get.assert_called_once_with(
+        "/project/{}/object-list/test%20%5B1%5D/".format(PROJECT_ID),
+        schema_mock.return_value,
+        params={"pageToken": "token"},
     )
 
 
