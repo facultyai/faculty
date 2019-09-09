@@ -204,7 +204,7 @@ def test_object_client_get_url_encoding(mocker):
     )
 
 
-@pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path",])
+@pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path"])
 def test_object_client_list(mocker, path):
     mocker.patch.object(
         ObjectClient, "_get", return_value=LIST_OBJECTS_RESPONSE
@@ -338,7 +338,7 @@ def test_object_client_copy_url_encoding(mocker):
     client.copy(PROJECT_ID, "source", "/[1]/")
 
     ObjectClient._put_raw.assert_called_once_with(
-        "/project/{}/object/%5B1%5D/".format(PROJECT_ID,),
+        "/project/{}/object/%5B1%5D/".format(PROJECT_ID),
         params={"sourcePath": "source", "recursive": 0},
     )
 

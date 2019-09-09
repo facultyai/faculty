@@ -246,7 +246,7 @@ class ObjectClient(BaseClient):
         SourceIsADirectory
             When the source path to copy is a directory but recursive is false
         """
-        
+
         url_encoded_destination = urllib.parse.quote(destination.lstrip("/"))
 
         endpoint = "/project/{}/object/{}".format(
