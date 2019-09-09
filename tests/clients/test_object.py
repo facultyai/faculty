@@ -189,6 +189,21 @@ def test_object_client_get(mocker, path):
     )
 
 
+def test_object_client_get_url_encoding(mocker):
+    path = "/test/[1].txt"
+    mocker.patch.object(ObjectClient, "_get", return_value=OBJECT)
+    schema_mock = mocker.patch("faculty.clients.object.ObjectSchema")
+
+    client = ObjectClient(mocker.Mock())
+    assert client.get(PROJECT_ID, path) == OBJECT
+
+    schema_mock.assert_called_once_with()
+    ObjectClient._get.assert_called_once_with(
+        "/project/{}/object/test/%5B1%5D.txt".format(PROJECT_ID),
+        schema_mock.return_value,
+    )
+
+
 @pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path",])
 def test_object_client_list(mocker, path):
     mocker.patch.object(
@@ -277,6 +292,18 @@ def test_object_client_create_directory(mocker, parents, expected_parent):
     )
 
 
+def test_object_client_create_directory_url_encoding(mocker):
+    mocker.patch.object(ObjectClient, "_put_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.create_directory(PROJECT_ID, "[1]")
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/directory/%5B1%5D".format(PROJECT_ID),
+        params={"parents": 0},
+    )
+
+
 def test_object_client_create_directory_already_exists(mocker):
     error_code = "object_already_exists"
     exception = Conflict(mocker.Mock(), mocker.Mock(), error_code)
@@ -300,6 +327,18 @@ def test_object_client_copy_default(mocker):
 
     ObjectClient._put_raw.assert_called_once_with(
         "/project/{}/object/{}".format(PROJECT_ID, "destination"),
+        params={"sourcePath": "source", "recursive": 0},
+    )
+
+
+def test_object_client_copy_url_encoding(mocker):
+    mocker.patch.object(ObjectClient, "_put_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.copy(PROJECT_ID, "source", "/[1]/")
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/object/%5B1%5D/".format(PROJECT_ID,),
         params={"sourcePath": "source", "recursive": 0},
     )
 
@@ -348,6 +387,19 @@ def test_object_client_delete_default(mocker):
 
     ObjectClient._delete_raw.assert_called_once_with(
         "/project/{}/object/{}".format(PROJECT_ID, path),
+        params={"recursive": 0},
+    )
+
+
+def test_object_client_delete_url_encoding(mocker):
+    path = "[1]"
+    mocker.patch.object(ObjectClient, "_delete_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.delete(PROJECT_ID, path)
+
+    ObjectClient._delete_raw.assert_called_once_with(
+        "/project/{}/object/%5B1%5D".format(PROJECT_ID),
         params={"recursive": 0},
     )
 
