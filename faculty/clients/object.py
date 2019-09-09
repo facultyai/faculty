@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import urllib
-
 from collections import namedtuple
 from enum import Enum
+from six.moves import urllib
 
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
