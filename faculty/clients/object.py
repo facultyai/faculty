@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import urllib
 
 from collections import namedtuple
 from enum import Enum
@@ -178,8 +179,10 @@ class ObjectClient(BaseClient):
             Containing a list of matching objects and a token to get the next
             page of objects, when relevant.
         """
+        url_encoded_prefix = urllib.parse.quote(prefix.lstrip("/"))
+
         endpoint = "/project/{}/object-list/{}".format(
-            project_id, prefix.lstrip("/")
+            project_id, url_encoded_prefix
         )
         params = {}
         if page_token is not None:
