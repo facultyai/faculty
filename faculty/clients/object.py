@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from collections import namedtuple
 from enum import Enum
+from six.moves import urllib
 
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
@@ -147,7 +147,10 @@ class ObjectClient(BaseClient):
         -------
         Object
         """
-        endpoint = "/project/{}/object/{}".format(project_id, path.lstrip("/"))
+
+        url_encoded_path = urllib.parse.quote(path.lstrip("/"))
+
+        endpoint = "/project/{}/object/{}".format(project_id, url_encoded_path)
         return self._get(endpoint, ObjectSchema())
 
     def list(self, project_id, prefix="/", page_token=None):
@@ -178,8 +181,10 @@ class ObjectClient(BaseClient):
             Containing a list of matching objects and a token to get the next
             page of objects, when relevant.
         """
+        url_encoded_prefix = urllib.parse.quote(prefix.lstrip("/"))
+
         endpoint = "/project/{}/object-list/{}".format(
-            project_id, prefix.lstrip("/")
+            project_id, url_encoded_prefix
         )
         params = {}
         if page_token is not None:
@@ -204,8 +209,10 @@ class ObjectClient(BaseClient):
         PathAlreadyExists
             when the path that we want to create as a directory already exists
         """
+        url_encoded_path = urllib.parse.quote(path.lstrip("/"))
+
         endpoint = "/project/{}/directory/{}".format(
-            project_id, path.lstrip("/")
+            project_id, url_encoded_path
         )
         params = {"parents": 1 if parents else 0}
         try:
@@ -238,8 +245,11 @@ class ObjectClient(BaseClient):
         SourceIsADirectory
             When the source path to copy is a directory but recursive is false
         """
+
+        url_encoded_destination = urllib.parse.quote(destination.lstrip("/"))
+
         endpoint = "/project/{}/object/{}".format(
-            project_id, destination.lstrip("/")
+            project_id, url_encoded_destination
         )
         params = {"sourcePath": source}
         if recursive is not None:
@@ -277,7 +287,8 @@ class ObjectClient(BaseClient):
         TargetIsADirectory
             When the target to delete is a directory but recursive is false
         """
-        endpoint = "/project/{}/object/{}".format(project_id, path.lstrip("/"))
+        url_encoded_path = urllib.parse.quote(path.lstrip("/"))
+        endpoint = "/project/{}/object/{}".format(project_id, url_encoded_path)
         params = {}
         if recursive is not None:
             params["recursive"] = 1 if recursive else 0
