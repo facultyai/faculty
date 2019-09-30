@@ -109,3 +109,63 @@ def test_model_schema_without_latest_version():
 def test_schemas_invalid(schema):
     with pytest.raises(ValidationError):
         schema().load({})
+
+
+def test_model_client_get(mocker):
+    mocker.patch.object(ModelClient, "_get", return_value=MODEL)
+    schema_mock = mocker.patch("faculty.clients.model.ModelSchema")
+    client = ModelClient(mocker.Mock())
+
+    assert client.get(PROJECT_ID, MODEL_ID) == MODEL
+
+    schema_mock.assert_called_once_with()
+    ModelClient._get.assert_called_once_with(
+        "/project/{}/model/{}".format(PROJECT_ID, MODEL_ID),
+        schema_mock.return_value,
+    )
+
+
+def test_model_client_list(mocker):
+    mocker.patch.object(ModelClient, "_get", return_value=[MODEL])
+    schema_mock = mocker.patch("faculty.clients.model.ModelSchema")
+    client = ModelClient(mocker.Mock())
+
+    assert client.list(PROJECT_ID) == [MODEL]
+
+    schema_mock.assert_called_once_with(many=True)
+    ModelClient._get.assert_called_once_with(
+        "/project/{}/model".format(PROJECT_ID, MODEL_ID),
+        schema_mock.return_value,
+    )
+
+
+def test_model_client_get_version(mocker):
+    mocker.patch.object(ModelClient, "_get", return_value=MODEL_VERSION)
+    schema_mock = mocker.patch("faculty.clients.model.ModelVersionSchema")
+    client = ModelClient(mocker.Mock())
+
+    assert (
+        client.get_version(PROJECT_ID, MODEL_ID, VERSION_ID) == MODEL_VERSION
+    )
+
+    schema_mock.assert_called_once_with()
+    ModelClient._get.assert_called_once_with(
+        "/project/{}/model/{}/version/{}".format(
+            PROJECT_ID, MODEL_ID, VERSION_ID
+        ),
+        schema_mock.return_value,
+    )
+
+
+def test_model_client_list_versions(mocker):
+    mocker.patch.object(ModelClient, "_get", return_value=[MODEL_VERSION])
+    schema_mock = mocker.patch("faculty.clients.model.ModelVersionSchema")
+    client = ModelClient(mocker.Mock())
+
+    assert client.list_versions(PROJECT_ID, MODEL_ID) == [MODEL_VERSION]
+
+    schema_mock.assert_called_once_with(many=True)
+    ModelClient._get.assert_called_once_with(
+        "/project/{}/model/{}/version".format(PROJECT_ID, MODEL_ID),
+        schema_mock.return_value,
+    )
