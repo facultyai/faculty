@@ -20,23 +20,6 @@ from faculty.clients.base import BaseSchema, BaseClient
 
 
 @attrs
-class ModelLatestVersion(object):
-    id = attrib()
-    version_number = attrib()
-    registered_at = attrib()
-    registered_by = attrib()
-
-
-@attrs
-class Model(object):
-    id = attrib()
-    name = attrib()
-    description = attrib()
-    user_ids = attrib()
-    latest_version = attrib()
-
-
-@attrs
 class ExperimentModelSource(object):
     experiment_id = attrib()
     experiment_run_id = attrib()
@@ -52,31 +35,13 @@ class ModelVersion(object):
     source = attrib()
 
 
-class ModelLatestVersionSchema(BaseSchema):
-    id = fields.UUID(data_key="modelVersionId", required=True)
-    version_number = fields.Integer(
-        data_key="modelVersionNumber", required=True
-    )
-    registered_at = fields.DateTime(data_key="registeredAt", required=True)
-    registered_by = fields.UUID(data_key="registeredBy", required=True)
-
-    @post_load
-    def make_model_latest_version(self, data):
-        return ModelLatestVersion(**data)
-
-
-class ModelSchema(BaseSchema):
-    id = fields.UUID(data_key="modelId", required=True)
-    name = fields.String(required=True)
-    description = fields.String(required=True)
-    user_ids = fields.List(fields.UUID, data_key="users", required=True)
-    latest_version = fields.Nested(
-        ModelLatestVersionSchema, data_key="latestVersion", missing=None
-    )
-
-    @post_load
-    def make_model(self, data):
-        return Model(**data)
+@attrs
+class Model(object):
+    id = attrib()
+    name = attrib()
+    description = attrib()
+    user_ids = attrib()
+    latest_version = attrib()
 
 
 class ExperimentModelSourceSchema(BaseSchema):
@@ -106,6 +71,20 @@ class ModelVersionSchema(BaseSchema):
     @post_load
     def make_model_latest_version(self, data):
         return ModelVersion(**data)
+
+
+class ModelSchema(BaseSchema):
+    id = fields.UUID(data_key="modelId", required=True)
+    name = fields.String(required=True)
+    description = fields.String(required=True)
+    user_ids = fields.List(fields.UUID, data_key="users", required=True)
+    latest_version = fields.Nested(
+        ModelVersionSchema, data_key="latestVersion", missing=None
+    )
+
+    @post_load
+    def make_model(self, data):
+        return Model(**data)
 
 
 class ModelClient(BaseClient):
