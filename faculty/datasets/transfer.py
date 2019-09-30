@@ -210,7 +210,7 @@ def _gcs_upload(upload_url, content):
 
 def _gcs_upload_chunk(upload_url, content, start_index, total_file_size):
     headers = {"Content-Length": "{0}".format(len(content))}
-    if start_index != 0 or len(content) != 0:
+    if start_index or content:
         end_index = start_index + len(content) - 1
         headers["Content-Range"] = "bytes {0}-{1}/{2}".format(
             start_index, end_index, total_file_size
