@@ -244,3 +244,15 @@ def test_gcs_upload_chunking(mocker, mock_client_upload_gcs, requests_mock):
     _assert_contains(history[1].headers, chunk_headers[1])
     assert history[0].text.encode("utf8") == TEST_CONTENT[:1000]
     assert history[1].text.encode("utf8") == TEST_CONTENT[1000:]
+
+
+def test_gcs_upload_empty_object(mock_client_upload_gcs, requests_mock):
+    test_content = "".encode("utf8")
+
+    requests_mock.put(
+        TEST_URL, request_headers={"Content-Length": "0"}, status_code=200
+    )
+
+    transfer.upload(
+        mock_client_upload_gcs, PROJECT_ID, TEST_PATH, test_content
+    )

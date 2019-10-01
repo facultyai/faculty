@@ -209,17 +209,16 @@ def _gcs_upload(upload_url, content):
 
 
 def _gcs_upload_chunk(upload_url, content, start_index, total_file_size):
-    end_index = start_index + len(content) - 1
-    result = requests.put(
-        upload_url,
-        data=content,
-        headers={
-            "Content-Length": "{0}".format(len(content)),
-            "Content-Range": "bytes {0}-{1}/{2}".format(
-                start_index, end_index, total_file_size
-            ),
-        },
-    )
+    headers = {"Content-Length": "{0}".format(len(content))}
+    # Only add Content-Range if not empty, otherwise this will result in
+    # a bad request
+    if start_index or content:
+        end_index = start_index + len(content) - 1
+        headers["Content-Range"] = "bytes {0}-{1}/{2}".format(
+            start_index, end_index, total_file_size
+        )
+    result = requests.put(upload_url, data=content, headers=headers)
+
     result.raise_for_status()
 
 
