@@ -233,7 +233,7 @@ class EnvironmentSchema(BaseSchema):
     id = fields.UUID(data_key="environmentId", required=True)
     project_id = fields.UUID(data_key="projectId", required=True)
     name = fields.String(required=True)
-    description = fields.String(required=True)
+    description = fields.String(missing=None)
     author_id = fields.UUID(data_key="authorId", required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     updated_at = fields.DateTime(data_key="updatedAt", required=True)
@@ -246,7 +246,7 @@ class EnvironmentSchema(BaseSchema):
 
 class EnvironmentCreateUpdateSchema(BaseSchema):
     name = fields.String(required=True)
-    description = fields.String(required=True, allow_none=True)
+    description = fields.String(missing=None)
     specification = fields.Nested(SpecificationSchema(), required=True)
 
     @post_load
