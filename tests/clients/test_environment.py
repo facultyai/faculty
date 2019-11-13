@@ -172,6 +172,27 @@ ENVIRONMENT = Environment(
     specification=SPECIFICATION,
 )
 
+ENVIRONMENT_BODY_NO_DESCRIPTION = {
+    "environmentId": str(ENVIRONMENT_ID),
+    "projectId": str(PROJECT_ID),
+    "name": NAME,
+    "description": None,
+    "authorId": str(AUTHOR_ID),
+    "createdAt": "2018-10-03T04:20:00Z",
+    "updatedAt": "2018-11-03T04:21:15Z",
+    "specification": SPECIFICATION_BODY,
+}
+ENVIRONMENT_NO_DESCRIPTION = Environment(
+    id=ENVIRONMENT_ID,
+    project_id=PROJECT_ID,
+    name=NAME,
+    description=None,
+    author_id=AUTHOR_ID,
+    created_at=datetime.datetime(2018, 10, 3, 4, 20, 0, 0, tzinfo=UTC),
+    updated_at=datetime.datetime(2018, 11, 3, 4, 21, 15, 0, tzinfo=UTC),
+    specification=SPECIFICATION,
+)
+
 ENVIRONMENT_CREATION_RESPONSE_BODY = {"environmentId": str(ENVIRONMENT_ID)}
 ENVIRONMENT_CREATION_RESPONSE = EnvironmentCreationResponse(id=ENVIRONMENT_ID)
 
@@ -407,6 +428,11 @@ def test_environment_creation_response_schema():
 def test_environment_schema():
     data = EnvironmentSchema().load(ENVIRONMENT_BODY)
     assert data == ENVIRONMENT
+
+
+def test_environment_schema_no_description():
+    data = EnvironmentSchema().load(ENVIRONMENT_BODY_NO_DESCRIPTION)
+    assert data == ENVIRONMENT_NO_DESCRIPTION
 
 
 def test_environment_schema_invalid():
