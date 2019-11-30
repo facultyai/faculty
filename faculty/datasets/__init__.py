@@ -507,7 +507,7 @@ def open(project_path, mode="r", temp_dir=None, project_id=None, **kwargs):
         your environment.
     """
 
-    if _isdir(project_path):
+    if _isdir(project_path, project_id=project_id):
         raise DatasetsError("Can't open directories.")
 
     if any(char in mode for char in ("w", "a", "x")):
