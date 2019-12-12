@@ -106,13 +106,20 @@ def test_get_session(mocker, isolated_session_cache):
     access_token_cache = mocker.Mock()
     mocker.spy(Session, "__init__")
 
+    config_kwargs = {
+        "credentials_path": "/path/to/credentials",
+        "profile_name": "my-profile",
+        "domain": "domain.com",
+        "protocol": "http",
+        "client_id": "client-id",
+        "client_secret": "client-secret",
+    }
+
     session = get_session(
-        kwarg1="foo", kwarg2="bar", access_token_cache=access_token_cache
+        access_token_cache=access_token_cache, **config_kwargs
     )
 
-    faculty.config.resolve_profile.assert_called_once_with(
-        kwarg1="foo", kwarg2="bar"
-    )
+    faculty.config.resolve_profile.assert_called_once_with(**config_kwargs)
     Session.__init__.assert_called_once_with(
         session, PROFILE, access_token_cache
     )
@@ -129,7 +136,14 @@ def test_get_session_defaults(mocker, isolated_session_cache):
 
     session = get_session()
 
-    faculty.config.resolve_profile.assert_called_once_with()
+    faculty.config.resolve_profile.assert_called_once_with(
+        credentials_path=None,
+        profile_name=None,
+        domain=None,
+        protocol=None,
+        client_id=None,
+        client_secret=None,
+    )
     Session.__init__.assert_called_once_with(
         session, PROFILE, access_token_cache
     )
@@ -140,8 +154,12 @@ def test_get_session_cache(mocker, isolated_session_cache):
     access_token_cache = mocker.Mock()
     mocker.spy(Session, "__init__")
 
-    session1 = get_session(kwarg="foo", access_token_cache=access_token_cache)
-    session2 = get_session(kwarg="foo", access_token_cache=access_token_cache)
+    session1 = get_session(
+        access_token_cache=access_token_cache, profile_name="profile"
+    )
+    session2 = get_session(
+        access_token_cache=access_token_cache, profile_name="profile"
+    )
 
     assert session1 is session2
 
