@@ -75,9 +75,9 @@ def client(
     ... )
     <faculty.clients.account.AccountClient object at 0x10e447550>
 
-    To override any of the domain, protocol, client ID or client secret read
-    from a credentials file or from environment variables, pass their
-    respective arguments:
+    To set any of the domain, protocol, client ID or client secret, pass their
+    respective arguments. These always take higher precendence than values read
+    from configuration files or environment variables:
 
     >>> faculty.client(
     ...     "account",
