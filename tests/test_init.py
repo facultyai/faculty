@@ -20,10 +20,41 @@ def test_client(mocker):
     get_session_mock = mocker.patch("faculty.session.get_session")
     for_resource_mock = mocker.patch("faculty.clients.for_resource")
 
-    options = {"foo": "bar"}
+    options = {
+        "credentials_path": "/path/to/credentials",
+        "profile_name": "my-profile",
+        "domain": "domain.com",
+        "protocol": "http",
+        "client_id": "client-id",
+        "client_secret": "client-secret",
+        "access_token_cache": mocker.Mock(),
+    }
+
     faculty.client("test-resource", **options)
 
     get_session_mock.assert_called_once_with(**options)
+    for_resource_mock.assert_called_once_with("test-resource")
+
+    returned_session = get_session_mock.return_value
+    returned_class = for_resource_mock.return_value
+    returned_class.assert_called_once_with(returned_session)
+
+
+def test_client_defaults(mocker):
+    get_session_mock = mocker.patch("faculty.session.get_session")
+    for_resource_mock = mocker.patch("faculty.clients.for_resource")
+
+    faculty.client("test-resource")
+
+    get_session_mock.assert_called_once_with(
+        credentials_path=None,
+        profile_name=None,
+        domain=None,
+        protocol=None,
+        client_id=None,
+        client_secret=None,
+        access_token_cache=None,
+    )
     for_resource_mock.assert_called_once_with("test-resource")
 
     returned_session = get_session_mock.return_value

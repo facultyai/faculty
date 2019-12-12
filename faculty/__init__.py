@@ -17,7 +17,24 @@ import faculty.session
 import faculty.clients
 
 
-def client(resource, **kwargs):
-    session = faculty.session.get_session(**kwargs)
+def client(
+    resource,
+    credentials_path=None,
+    profile_name=None,
+    domain=None,
+    protocol=None,
+    client_id=None,
+    client_secret=None,
+    access_token_cache=None,
+):
+    session = faculty.session.get_session(
+        credentials_path=credentials_path,
+        profile_name=profile_name,
+        domain=domain,
+        protocol=protocol,
+        client_id=client_id,
+        client_secret=client_secret,
+        access_token_cache=access_token_cache,
+    )
     client_class = faculty.clients.for_resource(resource)
     return client_class(session)
