@@ -108,9 +108,7 @@ class AptVersionSchema(BaseSchema):
 
 
 class PythonVersionField(fields.Field):
-    """
-    Field that serialises/deserialises a Python package version.
-    """
+    """Field that serialises/deserialises a Python package version."""
 
     def _deserialize(self, value, attr, obj, **kwargs):
         if value == "latest":
@@ -126,9 +124,7 @@ class PythonVersionField(fields.Field):
 
 
 class AptVersionField(fields.Field):
-    """
-    Field that serialises/deserialises an apt package version.
-    """
+    """Field that serialises/deserialises an apt package version."""
 
     def _deserialize(self, value, attr, obj, **kwargs):
         if value == "latest":

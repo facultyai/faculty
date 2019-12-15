@@ -27,8 +27,7 @@ def client(
     client_secret=None,
     access_token_cache=None,
 ):
-    """
-    Construct a client for a Faculty resource.
+    """Construct a client for a Faculty resource.
 
     Parameters
     ----------

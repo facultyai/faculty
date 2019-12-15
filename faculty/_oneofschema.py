@@ -74,7 +74,7 @@ class OneOfSchema(Schema):
     type_schemas = []
 
     def get_obj_type(self, obj):
-        """Returns name of object schema"""
+        """Returns name of object schema."""
         return obj.__class__.__name__
 
     def dump(self, obj, many=None, **kwargs):
