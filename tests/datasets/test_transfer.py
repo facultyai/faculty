@@ -166,8 +166,6 @@ def test_s3_configure_chunk_size_of_chunk(mocker, mock_presigned_response_s3):
     assert transfer._configure_chunk_size(mock_presigned_response_s3, content) == 6
 
     
-#def test_dynamic_chunk_upload(mocker):
-
 def test_s3_upload(mock_client_upload_s3, requests_mock):
     def chunk_request_matcher(request):
         return TEST_CONTENT == request.text.encode("utf-8")
