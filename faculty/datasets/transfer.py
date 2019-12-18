@@ -14,6 +14,8 @@
 
 
 import requests
+import sys
+import math
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets.util import DatasetsError
@@ -21,8 +23,22 @@ from faculty.datasets.util import DatasetsError
 
 KILOBYTE = 1024
 MEGABYTE = 1024 * KILOBYTE
-UPLOAD_CHUNK_SIZE = 5 * MEGABYTE
+GIGABYTE = 1024 * MEGABYTE
 
+class ChunkConfigS3:
+    min_chunk_size = 5*MEGABYTE
+    max_file_size = 5*1024*GIGABYTE
+    max_chunks = 10000
+    # for multithreaded upload
+    max_chunks_in_flight = 1000 
+
+class ChunkConfigGCP:
+    min_chunk_size = 5*MEGABYTE
+    max_chunks = None
+    max_file_size = 5*1024*GIGABYTE
+
+
+UPLOAD_CHUNK_SIZE = 5 * MEGABYTE
 
 def download(object_client, project_id, datasets_path):
     """Download the contents of file from the object store.
@@ -129,7 +145,8 @@ def upload_stream(object_client, project_id, datasets_path, content):
     """
 
     presign_response = object_client.presign_upload(project_id, datasets_path)
-
+    UPLOAD_CHUNK_SIZE = _configure_chunk_size(presign_response, content)
+    
     if presign_response.provider == CloudStorageProvider.S3:
         _s3_upload(
             object_client,
@@ -259,3 +276,30 @@ def _rechunk_and_label_as_last(content):
         except StopIteration:
             yield (current_chunk, True)
             break
+
+def _configure_chunk_size(presign_response, content):
+    total_size = _content_size_in_bytes(content)
+    
+    if presign_response.provider == CloudStorageProvider.S3:
+        if(total_size > ChunkConfigS3.max_file_size):
+             raise DatasetsError (f"File too big: s3 limit is {ChunkConfigGCP.max_file_size % GIGABYTE} GB")
+        # s3 chunk limit is 10000 so chunk size must be > file_size / 10000
+        UPLOAD_CHUNK_SIZE = math.ceil((total_size / ChunkConfigS3.max_chunks))
+        if(UPLOAD_CHUNK_SIZE < ChunkConfigS3.min_chunk_size):
+            UPLOAD_CHUNK_SIZE = ChunkConfigS3.min_chunk_size
+        
+    elif presign_response.provider == CloudStorageProvider.GCS:
+        if(total_size > ChunkConfigGCP.max_file_size):
+            raise DatasetsError(f"File too big: gcp limit is {ChunkConfigGCP.max_file_size % GIGABYTE} GB")
+        # gcp currently doesn't have a chunk limit so just set the default
+        UPLOAD_CHUNK_SIZE = ChunkConfigGCP.min_chunk_size
+    else:
+       raise ValueError(
+            "Unsupported cloud storage provider: {}".format(
+                presign_response.provider
+            )
+        )
+    return UPLOAD_CHUNK_SIZE
+
+def _content_size_in_bytes(content):
+    return sum([len(c) for c in content])

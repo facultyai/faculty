@@ -21,6 +21,8 @@ import pytest
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets import transfer
+from faculty.datasets.util import DatasetsError
+
 
 
 PROJECT_ID = uuid4()
@@ -53,6 +55,11 @@ def mock_client_download(mocker, requests_mock):
         PROJECT_ID, TEST_PATH
     )
 
+@pytest.fixture
+def mock_presigned_response_s3(mocker):
+    presigned_response = mocker.Mock()
+    presigned_response.provider = CloudStorageProvider.S3
+    yield presigned_response
 
 @pytest.fixture
 def mock_client_upload_s3(mocker, requests_mock):
@@ -78,7 +85,6 @@ def mock_client_upload_gcs(mocker, requests_mock):
 
     yield object_client
     object_client.presign_upload.assert_called_once_with(PROJECT_ID, TEST_PATH)
-
 
 def _assert_contains(dict_1, dict_2):
     for key, value in dict_2.items():
@@ -143,6 +149,24 @@ def test_chunking_and_labelling_of_greater_sizes(mocker):
         (b"last", True),
     ]
 
+def test_content_size_small_size(mocker):
+    content = [bytearray(100)]
+    assert transfer._content_size_in_bytes(content) == 100
+
+def test_s3_configure_chunk_file_too_large(mocker, mock_client_upload_s3):
+    mocker.patch("faculty.datasets.transfer.ChunkConfigS3.max_file_size", 10)
+    content = [b"111122223333"]
+    with pytest.raises(DatasetsError):  
+        transfer.upload(mock_client_upload_s3, PROJECT_ID, TEST_PATH, TEST_CONTENT)
+
+def test_s3_configure_chunk_size_of_chunk(mocker, mock_presigned_response_s3):
+    mocker.patch("faculty.datasets.transfer.ChunkConfigS3.max_chunks", 2)
+    mocker.patch("faculty.datasets.transfer.ChunkConfigS3.min_chunk_size", 1)
+    content = [b"123456abcdef"]
+    assert transfer._configure_chunk_size(mock_presigned_response_s3, content) == 6
+
+    
+#def test_dynamic_chunk_upload(mocker):
 
 def test_s3_upload(mock_client_upload_s3, requests_mock):
     def chunk_request_matcher(request):
