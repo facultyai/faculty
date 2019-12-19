@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import posixpath
 import pytest
 import uuid
 
@@ -118,20 +119,34 @@ def test_glob(mocker):
     )
 
 
-def test_get_file(mocker, mock_client):
+@pytest.mark.parametrize(
+    "remote_path,remote_path_expected",
+    [
+        ("remote-path", "remote-path"),
+        ("remote-path/", "remote-path/"),
+        ("remote-path/sub-path", "remote-path/sub-path"),
+        (posixpath.join("/", "remote-path"), "/remote-path"),
+        (posixpath.join("/", "remote-path", ""), "/remote-path/"),
+        (
+            posixpath.join("/", "remote-path", "sub-path"),
+            "/remote-path/sub-path",
+        ),
+    ],
+)
+def test_get_file(mocker, mock_client, remote_path, remote_path_expected):
     ls_mock = mocker.patch("faculty.datasets.ls", return_value=[])
 
     download_mock = mocker.patch("faculty.datasets.transfer.download_file")
 
-    datasets.get("project-path", "local-path", PROJECT_ID)
+    datasets.get(remote_path, "local-path", PROJECT_ID)
     ls_mock.assert_called_once_with(
-        "project-path/",
+        posixpath.join(remote_path_expected, ""),
         project_id=PROJECT_ID,
         show_hidden=True,
         object_client=mock_client,
     )
     download_mock.assert_called_once_with(
-        mock_client, PROJECT_ID, "project-path", "local-path"
+        mock_client, PROJECT_ID, remote_path_expected, "local-path"
     )
 
 
