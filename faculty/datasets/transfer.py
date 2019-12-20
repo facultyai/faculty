@@ -139,8 +139,6 @@ def upload_stream(object_client, project_id, datasets_path, content):
         The target path to upload to in the object store
     content : Iterable[bytes]
         The data to upload, chunked
-    chunk_size : int
-        The size of chunk, in bytes, to use during upload
     """
     _upload_stream(object_client, project_id, datasets_path, content)
 
