@@ -21,8 +21,6 @@ import pytest
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets import transfer
-from faculty.datasets.util import DatasetsError
-
 
 
 PROJECT_ID = uuid4()
@@ -55,11 +53,13 @@ def mock_client_download(mocker, requests_mock):
         PROJECT_ID, TEST_PATH
     )
 
+
 @pytest.fixture
 def mock_presigned_response_s3(mocker):
     presigned_response = mocker.Mock()
     presigned_response.provider = CloudStorageProvider.S3
     yield presigned_response
+
 
 @pytest.fixture
 def mock_client_upload_s3(mocker, requests_mock):
@@ -85,6 +85,7 @@ def mock_client_upload_gcs(mocker, requests_mock):
 
     yield object_client
     object_client.presign_upload.assert_called_once_with(PROJECT_ID, TEST_PATH)
+
 
 def _assert_contains(dict_1, dict_2):
     for key, value in dict_2.items():
@@ -148,26 +149,20 @@ def test_chunking_and_labelling_of_greater_sizes(mocker):
         (b"2222", False),
         (b"last", True),
     ]
+
+
 def test_s3_dynamic_chunk(mocker):
     mocker.patch("faculty.datasets.transfer.S3_MAX_CHUNKS", 10)
     mocker.patch("faculty.datasets.transfer.DEFAULT_CHUNK_SIZE", 1)
-    content = [b'111122223333']
+    content = [b"111122223333"]
     chunk_size = transfer._s3_chunk_size(12)
     chunks = transfer._rechunk_data(content, chunk_size)
-    assert list(chunks) == [
-        b'11',
-        b'11',
-        b'22',
-        b'22',
-        b'33',
-        b'33',
-    ]
+    assert list(chunks) == [b"11", b"11", b"22", b"22", b"33", b"33"]
+
 
 def test_s3_upload(mock_client_upload_s3, requests_mock):
     def chunk_request_matcher(request):
         return TEST_CONTENT == request.text.encode("utf-8")
-
-    mock_client_upload_s3.presign_upload_part.return_value = TEST_URL
 
     requests_mock.put(
         TEST_URL,
@@ -212,7 +207,7 @@ def test_s3_upload_chunks(mocker, mock_client_upload_s3, requests_mock):
         status_code=200,
     )
 
-    mock_client_upload_s3.presign_upload_part.return_value = TEST_URL
+    # mock_client_upload_s3.presign_upload_part.return_value = TEST_URL
 
     transfer.upload(mock_client_upload_s3, PROJECT_ID, TEST_PATH, TEST_CONTENT)
 
@@ -226,33 +221,37 @@ def test_s3_upload_chunks(mocker, mock_client_upload_s3, requests_mock):
         [TEST_COMPLETED_PART, OTHER_COMPLETED_PART],
     )
 
-def test_s3_dynamic_chunk_upload(mocker, mock_client_upload_s3, requests_mock):
-    max_chunks = 10
+
+@pytest.mark.parametrize("max_chunks, expected_chunks", [(10, 10), (100, 20)])
+def test_s3_dynamic_chunk_upload(
+    mocker, mock_client_upload_s3, requests_mock, max_chunks, expected_chunks
+):
     mocker.patch("faculty.datasets.transfer.DEFAULT_CHUNK_SIZE", 100)
     mocker.patch("faculty.datasets.transfer.S3_MAX_CHUNKS", max_chunks)
     chunk_size = transfer._s3_chunk_size(len(TEST_CONTENT))
     chunks = transfer._rechunk_data([TEST_CONTENT], chunk_size)
-    chunk_matchers = [lambda x: next(chunks) == x.text.encode("utf-8") 
-                     for i in range(max_chunks)]
-    urls = [f"https://example.com/presigned-url-{i}/url" for i in range(max_chunks)]
-    tags = ['tag-{tagid}'.format(tagid=i) for i in range(max_chunks)]
-    
-    for i, (url, cm, tag) in enumerate(zip(urls, chunk_matchers, tags)):
-        requests_mock.put(          url, 
-                                    status_code=200,
-                                    
-                                    additional_matcher=cm,
-                                    headers={'ETag': tag},
-                                    
-                                  )
+    chunk_matchers = [
+        lambda x: next(chunks) == x.text.encode("utf-8")
+        for i in range(max_chunks)
+    ]
+    urls = [
+        "https://example.com/presigned-url-{i}/url".format(i=i)
+        for i in range(max_chunks)
+    ]
+    tags = ["tag-{tagid}".format(tagid=i) for i in range(max_chunks)]
 
+    for i, (url, cm, tag) in enumerate(zip(urls, chunk_matchers, tags)):
+        requests_mock.put(
+            url, status_code=200, additional_matcher=cm, headers={"ETag": tag}
+        )
 
     mock_client_upload_s3.presign_upload_part.side_effect = urls
-    
+
     transfer.upload(mock_client_upload_s3, PROJECT_ID, TEST_PATH, TEST_CONTENT)
 
     history = requests_mock.request_history
-    assert len(history) == max_chunks
+    assert len(history) == expected_chunks
+
 
 def test_gcs_upload(mock_client_upload_gcs, requests_mock):
     requests_mock.put(

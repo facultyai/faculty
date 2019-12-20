@@ -14,7 +14,6 @@
 
 
 import requests
-import sys
 import os
 import math
 
@@ -28,7 +27,8 @@ GIGABYTE = 1024 * MEGABYTE
 S3_MAX_CHUNKS = 10000
 DEFAULT_CHUNK_SIZE = 5 * MEGABYTE
 
-FILE_CHUNK_SIZE = 5 * MEGABYTE 
+FILE_CHUNK_SIZE = 5 * MEGABYTE
+
 
 def download(object_client, project_id, datasets_path):
     """Download the contents of file from the object store.
@@ -118,8 +118,14 @@ def upload(object_client, project_id, datasets_path, content):
         The data to upload
     """
     # upload_stream will rechunk the data anyway so just pass as a single chunk
-    
-    _upload_stream(object_client, project_id, datasets_path, [content], known_file_size=len(content))
+
+    _upload_stream(
+        object_client,
+        project_id,
+        datasets_path,
+        [content],
+        known_file_size=len(content),
+    )
 
 
 def upload_stream(object_client, project_id, datasets_path, content):
@@ -157,14 +163,16 @@ def upload_file(object_client, project_id, datasets_path, local_path):
         project_id,
         datasets_path,
         _file_chunk_iterator(local_path),
-        known_file_size= file_size,
+        known_file_size=file_size,
     )
 
 
-def _upload_stream(object_client, project_id, datasets_path, content, known_file_size=None):
+def _upload_stream(
+    object_client, project_id, datasets_path, content, known_file_size=None
+):
 
     presign_response = object_client.presign_upload(project_id, datasets_path)
-    
+
     if presign_response.provider == CloudStorageProvider.S3:
         if known_file_size is None:
             chunk_size = DEFAULT_CHUNK_SIZE
@@ -194,7 +202,9 @@ def _upload_stream(object_client, project_id, datasets_path, content, known_file
         )
 
 
-def _s3_upload(object_client, project_id, datasets_path, content, upload_id, chunk_size):
+def _s3_upload(
+    object_client, project_id, datasets_path, content, upload_id, chunk_size
+):
 
     completed_parts = []
     for i, chunk in enumerate(_rechunk_data(content, chunk_size)):
@@ -212,16 +222,19 @@ def _s3_upload(object_client, project_id, datasets_path, content, upload_id, chu
                 part_number=part_number, etag=upload_response.headers["ETag"]
             )
         )
-    
+
     object_client.complete_multipart_upload(
         project_id, datasets_path, upload_id, completed_parts
     )
+
 
 def _gcs_upload(upload_url, content, chunk_size):
 
     start_index = 0
 
-    for i, (chunk, is_last) in enumerate(_rechunk_and_label_as_last(content, chunk_size)):
+    for i, (chunk, is_last) in enumerate(
+        _rechunk_and_label_as_last(content, chunk_size)
+    ):
         if is_last:
             total_file_size = start_index + len(chunk)
         else:
@@ -251,6 +264,7 @@ def _file_chunk_iterator(local_path):
         while chunk:
             yield chunk
             chunk = fp.read(FILE_CHUNK_SIZE)
+
 
 def _rechunk_data(content, chunk_size):
     chunk = b""
@@ -282,9 +296,15 @@ def _rechunk_and_label_as_last(content, chunk_size):
             yield (current_chunk, True)
             break
 
+
 def _s3_chunk_size(total_size):
-    chunk_size = math.ceil(total_size / S3_MAX_CHUNKS)
-    return chunk_size if chunk_size > DEFAULT_CHUNK_SIZE else DEFAULT_CHUNK_SIZE
+    chunk_size = math.ceil(total_size / float(S3_MAX_CHUNKS))
+    return (
+        int(chunk_size)
+        if chunk_size > DEFAULT_CHUNK_SIZE
+        else DEFAULT_CHUNK_SIZE
+    )
+
 
 def _gcs_chunk_size(total_size):
-    return DEFAULT_CHUNK_SIZE 
+    return DEFAULT_CHUNK_SIZE
