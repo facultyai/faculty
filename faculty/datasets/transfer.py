@@ -15,30 +15,20 @@
 
 import requests
 import sys
+import os
 import math
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets.util import DatasetsError
 
-
 KILOBYTE = 1024
 MEGABYTE = 1024 * KILOBYTE
 GIGABYTE = 1024 * MEGABYTE
 
-class ChunkConfigS3:
-    min_chunk_size = 5*MEGABYTE
-    max_file_size = 5*1024*GIGABYTE
-    max_chunks = 10000
-    # for multithreaded upload
-    max_chunks_in_flight = 1000 
+S3_MAX_CHUNKS = 10000
+DEFAULT_CHUNK_SIZE = 5 * MEGABYTE
 
-class ChunkConfigGCP:
-    min_chunk_size = 5*MEGABYTE
-    max_chunks = None
-    max_file_size = 5*1024*GIGABYTE
-
-
-UPLOAD_CHUNK_SIZE = 5 * MEGABYTE
+FILE_CHUNK_SIZE = 5 * MEGABYTE 
 
 def download(object_client, project_id, datasets_path):
     """Download the contents of file from the object store.
@@ -128,7 +118,8 @@ def upload(object_client, project_id, datasets_path, content):
         The data to upload
     """
     # upload_stream will rechunk the data anyway so just pass as a single chunk
-    upload_stream(object_client, project_id, datasets_path, [content])
+    
+    _upload_stream(object_client, project_id, datasets_path, [content], known_file_size=len(content))
 
 
 def upload_stream(object_client, project_id, datasets_path, content):
@@ -142,27 +133,10 @@ def upload_stream(object_client, project_id, datasets_path, content):
         The target path to upload to in the object store
     content : Iterable[bytes]
         The data to upload, chunked
+    chunk_size : int
+        The size of chunk, in bytes, to use during upload
     """
-
-    presign_response = object_client.presign_upload(project_id, datasets_path)
-    UPLOAD_CHUNK_SIZE = _configure_chunk_size(presign_response, content)
-    
-    if presign_response.provider == CloudStorageProvider.S3:
-        _s3_upload(
-            object_client,
-            project_id,
-            datasets_path,
-            content,
-            presign_response.upload_id,
-        )
-    elif presign_response.provider == CloudStorageProvider.GCS:
-        _gcs_upload(presign_response.url, content)
-    else:
-        raise ValueError(
-            "Unsupported cloud storage provider: {}".format(
-                presign_response.provider
-            )
-        )
+    _upload_stream(object_client, project_id, datasets_path, content)
 
 
 def upload_file(object_client, project_id, datasets_path, local_path):
@@ -177,19 +151,53 @@ def upload_file(object_client, project_id, datasets_path, local_path):
     local_path : str
         The local path of the object to upload
     """
-    upload_stream(
+    file_size = os.path.getsize(local_path)
+    _upload_stream(
         object_client,
         project_id,
         datasets_path,
         _file_chunk_iterator(local_path),
+        known_file_size= file_size,
     )
 
 
-def _s3_upload(object_client, project_id, datasets_path, content, upload_id):
+def _upload_stream(object_client, project_id, datasets_path, content, known_file_size=None):
+
+    presign_response = object_client.presign_upload(project_id, datasets_path)
+    
+    if presign_response.provider == CloudStorageProvider.S3:
+        if known_file_size is None:
+            chunk_size = DEFAULT_CHUNK_SIZE
+        else:
+            chunk_size = _s3_chunk_size(known_file_size)
+
+        _s3_upload(
+            object_client,
+            project_id,
+            datasets_path,
+            content,
+            presign_response.upload_id,
+            chunk_size,
+        )
+    elif presign_response.provider == CloudStorageProvider.GCS:
+        if known_file_size is None:
+            chunk_size = DEFAULT_CHUNK_SIZE
+        else:
+            chunk_size = _gcs_chunk_size(known_file_size)
+
+        _gcs_upload(presign_response.url, content, chunk_size)
+    else:
+        raise ValueError(
+            "Unsupported cloud storage provider: {}".format(
+                presign_response.provider
+            )
+        )
+
+
+def _s3_upload(object_client, project_id, datasets_path, content, upload_id, chunk_size):
 
     completed_parts = []
-
-    for i, chunk in enumerate(_rechunk_data(content)):
+    for i, chunk in enumerate(_rechunk_data(content, chunk_size)):
 
         part_number = i + 1
 
@@ -199,23 +207,21 @@ def _s3_upload(object_client, project_id, datasets_path, content, upload_id):
 
         upload_response = requests.put(chunk_url, data=chunk)
         upload_response.raise_for_status()
-
         completed_parts.append(
             CompletedUploadPart(
                 part_number=part_number, etag=upload_response.headers["ETag"]
             )
         )
-
+    
     object_client.complete_multipart_upload(
         project_id, datasets_path, upload_id, completed_parts
     )
 
-
-def _gcs_upload(upload_url, content):
+def _gcs_upload(upload_url, content, chunk_size):
 
     start_index = 0
 
-    for i, (chunk, is_last) in enumerate(_rechunk_and_label_as_last(content)):
+    for i, (chunk, is_last) in enumerate(_rechunk_and_label_as_last(content, chunk_size)):
         if is_last:
             total_file_size = start_index + len(chunk)
         else:
@@ -241,22 +247,21 @@ def _gcs_upload_chunk(upload_url, content, start_index, total_file_size):
 
 def _file_chunk_iterator(local_path):
     with open(local_path, "rb") as fp:
-        chunk = fp.read(UPLOAD_CHUNK_SIZE)
+        chunk = fp.read(FILE_CHUNK_SIZE)
         while chunk:
             yield chunk
-            chunk = fp.read(UPLOAD_CHUNK_SIZE)
+            chunk = fp.read(FILE_CHUNK_SIZE)
 
-
-def _rechunk_data(content):
+def _rechunk_data(content, chunk_size):
     chunk = b""
     has_yielded = False
     for original_chunk in content:
 
         while len(original_chunk) > 0:
-            remaining = UPLOAD_CHUNK_SIZE - len(chunk)
+            remaining = chunk_size - len(chunk)
             chunk += original_chunk[:remaining]
             original_chunk = original_chunk[remaining:]
-            if len(chunk) >= UPLOAD_CHUNK_SIZE:
+            if len(chunk) >= chunk_size:
                 has_yielded = True
                 yield chunk
                 chunk = b""
@@ -265,8 +270,8 @@ def _rechunk_data(content):
         yield chunk
 
 
-def _rechunk_and_label_as_last(content):
-    chunks = _rechunk_data(content=content)
+def _rechunk_and_label_as_last(content, chunk_size):
+    chunks = _rechunk_data(content=content, chunk_size=chunk_size)
     current_chunk = next(chunks, b"")
     while True:
         try:
@@ -277,29 +282,9 @@ def _rechunk_and_label_as_last(content):
             yield (current_chunk, True)
             break
 
-def _configure_chunk_size(presign_response, content):
-    total_size = _content_size_in_bytes(content)
-    
-    if presign_response.provider == CloudStorageProvider.S3:
-        if(total_size > ChunkConfigS3.max_file_size):
-             raise DatasetsError (f"File too big: s3 limit is {ChunkConfigGCP.max_file_size % GIGABYTE} GB")
-        # s3 chunk limit is 10000 so chunk size must be > file_size / 10000
-        UPLOAD_CHUNK_SIZE = math.ceil((total_size / ChunkConfigS3.max_chunks))
-        if(UPLOAD_CHUNK_SIZE < ChunkConfigS3.min_chunk_size):
-            UPLOAD_CHUNK_SIZE = ChunkConfigS3.min_chunk_size
-        
-    elif presign_response.provider == CloudStorageProvider.GCS:
-        if(total_size > ChunkConfigGCP.max_file_size):
-            raise DatasetsError(f"File too big: gcp limit is {ChunkConfigGCP.max_file_size % GIGABYTE} GB")
-        # gcp currently doesn't have a chunk limit so just set the default
-        UPLOAD_CHUNK_SIZE = ChunkConfigGCP.min_chunk_size
-    else:
-       raise ValueError(
-            "Unsupported cloud storage provider: {}".format(
-                presign_response.provider
-            )
-        )
-    return UPLOAD_CHUNK_SIZE
+def _s3_chunk_size(total_size):
+    chunk_size = math.ceil(total_size / S3_MAX_CHUNKS)
+    return chunk_size if chunk_size > DEFAULT_CHUNK_SIZE else DEFAULT_CHUNK_SIZE
 
-def _content_size_in_bytes(content):
-    return sum([len(c) for c in content])
+def _gcs_chunk_size(total_size):
+    return DEFAULT_CHUNK_SIZE 

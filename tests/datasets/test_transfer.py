@@ -116,15 +116,15 @@ def test_download_file(mock_client_download, tmpdir):
 
 @pytest.mark.parametrize("content", [[], [b""]])
 def test_chunking_of_empty_files(mocker, content):
-    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
-    chunks = transfer._rechunk_data(content)
+    chunk_size = 4
+    chunks = transfer._rechunk_data(content, chunk_size)
     assert list(chunks) == [b""]
 
 
 def test_chunking_and_labelling_data_of_exact_sizes(mocker):
-    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
+    chunk_size = 4
     content = [b"1111", b"2222", b"last"]
-    chunks = transfer._rechunk_and_label_as_last(content)
+    chunks = transfer._rechunk_and_label_as_last(content, chunk_size)
     assert list(chunks) == [
         (b"1111", False),
         (b"2222", False),
@@ -133,39 +133,36 @@ def test_chunking_and_labelling_data_of_exact_sizes(mocker):
 
 
 def test_chunking_and_labelling_of_smaller_sizes(mocker):
-    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 12)
+    chunk_size = 12
     content = [b"1111", b"2222", b"last"]
-    chunks = transfer._rechunk_and_label_as_last(content)
+    chunks = transfer._rechunk_and_label_as_last(content, chunk_size)
     assert list(chunks) == [(b"11112222last", True)]
 
 
 def test_chunking_and_labelling_of_greater_sizes(mocker):
-    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 4)
+    chunk_size = 4
     content = [b"11112222last"]
-    chunks = transfer._rechunk_and_label_as_last(content)
+    chunks = transfer._rechunk_and_label_as_last(content, chunk_size)
     assert list(chunks) == [
         (b"1111", False),
         (b"2222", False),
         (b"last", True),
     ]
+def test_s3_dynamic_chunk(mocker):
+    mocker.patch("faculty.datasets.transfer.S3_MAX_CHUNKS", 10)
+    mocker.patch("faculty.datasets.transfer.DEFAULT_CHUNK_SIZE", 1)
+    content = [b'111122223333']
+    chunk_size = transfer._s3_chunk_size(12)
+    chunks = transfer._rechunk_data(content, chunk_size)
+    assert list(chunks) == [
+        b'11',
+        b'11',
+        b'22',
+        b'22',
+        b'33',
+        b'33',
+    ]
 
-def test_content_size_small_size(mocker):
-    content = [bytearray(100)]
-    assert transfer._content_size_in_bytes(content) == 100
-
-def test_s3_configure_chunk_file_too_large(mocker, mock_client_upload_s3):
-    mocker.patch("faculty.datasets.transfer.ChunkConfigS3.max_file_size", 10)
-    content = [b"111122223333"]
-    with pytest.raises(DatasetsError):  
-        transfer.upload(mock_client_upload_s3, PROJECT_ID, TEST_PATH, TEST_CONTENT)
-
-def test_s3_configure_chunk_size_of_chunk(mocker, mock_presigned_response_s3):
-    mocker.patch("faculty.datasets.transfer.ChunkConfigS3.max_chunks", 2)
-    mocker.patch("faculty.datasets.transfer.ChunkConfigS3.min_chunk_size", 1)
-    content = [b"123456abcdef"]
-    assert transfer._configure_chunk_size(mock_presigned_response_s3, content) == 6
-
-    
 def test_s3_upload(mock_client_upload_s3, requests_mock):
     def chunk_request_matcher(request):
         return TEST_CONTENT == request.text.encode("utf-8")
@@ -188,7 +185,7 @@ def test_s3_upload(mock_client_upload_s3, requests_mock):
 
 
 def test_s3_upload_chunks(mocker, mock_client_upload_s3, requests_mock):
-    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 1000)
+    mocker.patch("faculty.datasets.transfer.DEFAULT_CHUNK_SIZE", 1000)
 
     def first_chunk_request_matcher(request):
         return TEST_CONTENT[0:1000] == request.text.encode("utf-8")
@@ -229,6 +226,33 @@ def test_s3_upload_chunks(mocker, mock_client_upload_s3, requests_mock):
         [TEST_COMPLETED_PART, OTHER_COMPLETED_PART],
     )
 
+def test_s3_dynamic_chunk_upload(mocker, mock_client_upload_s3, requests_mock):
+    max_chunks = 10
+    mocker.patch("faculty.datasets.transfer.DEFAULT_CHUNK_SIZE", 100)
+    mocker.patch("faculty.datasets.transfer.S3_MAX_CHUNKS", max_chunks)
+    chunk_size = transfer._s3_chunk_size(len(TEST_CONTENT))
+    chunks = transfer._rechunk_data([TEST_CONTENT], chunk_size)
+    chunk_matchers = [lambda x: next(chunks) == x.text.encode("utf-8") 
+                     for i in range(max_chunks)]
+    urls = [f"https://example.com/presigned-url-{i}/url" for i in range(max_chunks)]
+    tags = ['tag-{tagid}'.format(tagid=i) for i in range(max_chunks)]
+    
+    for i, (url, cm, tag) in enumerate(zip(urls, chunk_matchers, tags)):
+        requests_mock.put(          url, 
+                                    status_code=200,
+                                    
+                                    additional_matcher=cm,
+                                    headers={'ETag': tag},
+                                    
+                                  )
+
+
+    mock_client_upload_s3.presign_upload_part.side_effect = urls
+    
+    transfer.upload(mock_client_upload_s3, PROJECT_ID, TEST_PATH, TEST_CONTENT)
+
+    history = requests_mock.request_history
+    assert len(history) == max_chunks
 
 def test_gcs_upload(mock_client_upload_gcs, requests_mock):
     requests_mock.put(
@@ -246,7 +270,7 @@ def test_gcs_upload(mock_client_upload_gcs, requests_mock):
 
 
 def test_gcs_upload_chunking(mocker, mock_client_upload_gcs, requests_mock):
-    mocker.patch("faculty.datasets.transfer.UPLOAD_CHUNK_SIZE", 1000)
+    mocker.patch("faculty.datasets.transfer.DEFAULT_CHUNK_SIZE", 1000)
     chunk_headers = [
         {"Content-Length": "1000", "Content-Range": "bytes 0-999/*"},
         {"Content-Length": "1000", "Content-Range": "bytes 1000-1999/2000"},
