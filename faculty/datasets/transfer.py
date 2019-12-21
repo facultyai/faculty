@@ -170,13 +170,9 @@ def _upload_stream(
 ):
 
     presign_response = object_client.presign_upload(project_id, datasets_path)
+    chunk_size = _chunk_size(presign_response.provider, known_file_size)
 
     if presign_response.provider == CloudStorageProvider.S3:
-        if known_file_size is None:
-            chunk_size = DEFAULT_CHUNK_SIZE
-        else:
-            chunk_size = _s3_chunk_size(known_file_size)
-
         _s3_upload(
             object_client,
             project_id,
@@ -186,11 +182,6 @@ def _upload_stream(
             chunk_size,
         )
     elif presign_response.provider == CloudStorageProvider.GCS:
-        if known_file_size is None:
-            chunk_size = DEFAULT_CHUNK_SIZE
-        else:
-            chunk_size = _gcs_chunk_size(known_file_size)
-
         _gcs_upload(presign_response.url, content, chunk_size)
     else:
         raise ValueError(
@@ -295,14 +286,11 @@ def _rechunk_and_label_as_last(content, chunk_size):
             break
 
 
-def _s3_chunk_size(total_size):
-    chunk_size = math.ceil(total_size / float(S3_MAX_CHUNKS))
-    return (
-        int(chunk_size)
-        if chunk_size > DEFAULT_CHUNK_SIZE
-        else DEFAULT_CHUNK_SIZE
-    )
-
-
-def _gcs_chunk_size(total_size):
-    return DEFAULT_CHUNK_SIZE
+def _chunk_size(provider, known_file_size):
+    if known_file_size is None:
+        return DEFAULT_CHUNK_SIZE
+    elif provider == CloudStorageProvider.S3:
+        new_chunk_size = math.ceil(known_file_size / float(S3_MAX_CHUNKS))
+        return int(max([new_chunk_size, DEFAULT_CHUNK_SIZE]))
+    else:
+        return DEFAULT_CHUNK_SIZE

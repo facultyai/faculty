@@ -15,6 +15,7 @@
 
 import random
 import string
+import math
 from uuid import uuid4
 
 import pytest
@@ -151,15 +152,6 @@ def test_chunking_and_labelling_of_greater_sizes(mocker):
     ]
 
 
-def test_s3_dynamic_chunk(mocker):
-    mocker.patch("faculty.datasets.transfer.S3_MAX_CHUNKS", 10)
-    mocker.patch("faculty.datasets.transfer.DEFAULT_CHUNK_SIZE", 1)
-    content = [b"111122223333"]
-    chunk_size = transfer._s3_chunk_size(12)
-    chunks = transfer._rechunk_data(content, chunk_size)
-    assert list(chunks) == [b"11", b"11", b"22", b"22", b"33", b"33"]
-
-
 def test_s3_upload(mock_client_upload_s3, requests_mock):
     def chunk_request_matcher(request):
         return TEST_CONTENT == request.text.encode("utf-8")
@@ -207,8 +199,6 @@ def test_s3_upload_chunks(mocker, mock_client_upload_s3, requests_mock):
         status_code=200,
     )
 
-    # mock_client_upload_s3.presign_upload_part.return_value = TEST_URL
-
     transfer.upload(mock_client_upload_s3, PROJECT_ID, TEST_PATH, TEST_CONTENT)
 
     history = requests_mock.request_history
@@ -228,8 +218,13 @@ def test_s3_dynamic_chunk_upload(
 ):
     mocker.patch("faculty.datasets.transfer.DEFAULT_CHUNK_SIZE", 100)
     mocker.patch("faculty.datasets.transfer.S3_MAX_CHUNKS", max_chunks)
-    chunk_size = transfer._s3_chunk_size(len(TEST_CONTENT))
-    chunks = transfer._rechunk_data([TEST_CONTENT], chunk_size)
+    chunk_size = int(math.ceil(len(TEST_CONTENT) / expected_chunks))
+    chunks = iter(
+        [
+            TEST_CONTENT[i * chunk_size : (i + 1) * chunk_size]
+            for i in range(expected_chunks)
+        ]
+    )
     chunk_matchers = [
         lambda x: next(chunks) == x.text.encode("utf-8")
         for i in range(max_chunks)
@@ -238,11 +233,14 @@ def test_s3_dynamic_chunk_upload(
         "https://example.com/presigned-url-{i}/url".format(i=i)
         for i in range(max_chunks)
     ]
-    tags = ["tag-{tagid}".format(tagid=i) for i in range(max_chunks)]
+    etags = ["tag-{tagid}".format(tagid=i) for i in range(max_chunks)]
 
-    for i, (url, cm, tag) in enumerate(zip(urls, chunk_matchers, tags)):
+    for url, matcher, etag in zip(urls, chunk_matchers, etags):
         requests_mock.put(
-            url, status_code=200, additional_matcher=cm, headers={"ETag": tag}
+            url,
+            status_code=200,
+            additional_matcher=matcher,
+            headers={"ETag": etag},
         )
 
     mock_client_upload_s3.presign_upload_part.side_effect = urls
