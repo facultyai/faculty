@@ -152,6 +152,21 @@ def test_chunking_and_labelling_of_greater_sizes(mocker):
     ]
 
 
+@pytest.mark.parametrize(
+    "file_size, expected_chunk_size", [(100, 20), (50, 10), (None, 10)]
+)
+def test_s3_chunk_sizing(
+    mocker, mock_presigned_response_s3, file_size, expected_chunk_size
+):
+    mocker.patch("faculty.datasets.transfer.S3_MAX_CHUNKS", 5)
+    mocker.patch("faculty.datasets.transfer.DEFAULT_CHUNK_SIZE", 10)
+
+    chunk_size = transfer._chunk_size(
+        mock_presigned_response_s3.provider, file_size
+    )
+    assert chunk_size == expected_chunk_size
+
+
 def test_s3_upload(mock_client_upload_s3, requests_mock):
     def chunk_request_matcher(request):
         return TEST_CONTENT == request.text.encode("utf-8")
