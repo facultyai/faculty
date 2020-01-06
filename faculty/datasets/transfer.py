@@ -13,9 +13,10 @@
 # limitations under the License.
 
 
-import requests
 import os
 import math
+
+import requests
 
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets.util import DatasetsError
