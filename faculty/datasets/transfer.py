@@ -119,7 +119,6 @@ def upload(object_client, project_id, datasets_path, content):
         The data to upload
     """
     # upload_stream will rechunk the data anyway so just pass as a single chunk
-
     _upload_stream(
         object_client,
         project_id,
