@@ -263,7 +263,6 @@ class EnvironmentStepExecutionSchema(BaseSchema):
     )
     environment_name = fields.String(data_key="environmentName", required=True)
     command = fields.String(required=True)
-    state = EnumField(RunState, by_value=True, required=True)
     state = EnumField(
         EnvironmentStepExecutionState, by_value=True, required=True
     )
