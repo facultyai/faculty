@@ -36,7 +36,7 @@ class ProjectSchema(BaseSchema):
 
 class ProjectClient(BaseClient):
 
-    SERVICE_NAME = "casebook"
+    _SERVICE_NAME = "casebook"
 
     def create(self, owner_id, project_name):
         payload = {"owner_id": str(owner_id), "name": project_name}

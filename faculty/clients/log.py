@@ -48,7 +48,7 @@ class LogPartsResponseSchema(BaseSchema):
 
 class LogClient(BaseClient):
 
-    SERVICE_NAME = "wozniak"
+    _SERVICE_NAME = "wozniak"
 
     def get_subrun_command_logs(self, project_id, job_id, run_id, subrun_id):
         template = "/project/{}/job/{}/run/{}/subrun/{}/command/log-part"

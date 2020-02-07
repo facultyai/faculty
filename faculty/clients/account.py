@@ -45,7 +45,7 @@ class AuthenticationResponseSchema(BaseSchema):
 
 class AccountClient(BaseClient):
 
-    SERVICE_NAME = "hudson"
+    _SERVICE_NAME = "hudson"
 
     def authenticated_account(self):
         data = self._get("/authenticate", AuthenticationResponseSchema())

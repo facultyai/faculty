@@ -109,12 +109,12 @@ def _deserialise_response(schema, response):
 
 class BaseClient(object):
 
-    SERVICE_NAME = None
+    _SERVICE_NAME = None
 
     def __init__(self, session):
-        if self.SERVICE_NAME is None:
+        if self._SERVICE_NAME is None:
             raise RuntimeError(
-                "must set SERVICE_NAME in subclasses of BaseClient"
+                "must set _SERVICE_NAME in subclasses of BaseClient"
             )
         self.session = session
         self._http_session_cache = None
@@ -127,7 +127,7 @@ class BaseClient(object):
         return self._http_session_cache
 
     def _request(self, method, endpoint, check_status=True, *args, **kwargs):
-        url = self.session.service_url(self.SERVICE_NAME, endpoint)
+        url = self.session.service_url(self._SERVICE_NAME, endpoint)
         response = self.http_session.request(method, url, *args, **kwargs)
         if check_status:
             _check_status(response)

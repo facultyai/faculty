@@ -76,7 +76,7 @@ class ListResponseSchema(BaseSchema):
 
 class WorkspaceClient(BaseClient):
 
-    SERVICE_NAME = "workspace"
+    _SERVICE_NAME = "workspace"
 
     def list(self, project_id, prefix, depth):
         endpoint = "/project/{}/file".format(project_id)

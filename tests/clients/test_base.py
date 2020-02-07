@@ -105,7 +105,7 @@ class DummySchema(BaseSchema):
 
 
 class DummyClient(BaseClient):
-    SERVICE_NAME = MOCK_SERVICE_NAME
+    _SERVICE_NAME = MOCK_SERVICE_NAME
 
 
 def test_base_schema_ignores_unknown_fields():

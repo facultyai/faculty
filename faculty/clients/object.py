@@ -133,7 +133,7 @@ class CompleteMultipartUploadSchema(BaseSchema):
 
 class ObjectClient(BaseClient):
 
-    SERVICE_NAME = "hoard"
+    _SERVICE_NAME = "hoard"
 
     def get(self, project_id, path):
         """Get metadata about a single object.

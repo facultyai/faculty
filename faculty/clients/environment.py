@@ -260,7 +260,7 @@ class EnvironmentCreationResponseSchema(BaseSchema):
 
 class EnvironmentClient(BaseClient):
 
-    SERVICE_NAME = "baskerville"
+    _SERVICE_NAME = "baskerville"
 
     def list(self, project_id):
         endpoint = "/project/{}/environment".format(project_id)

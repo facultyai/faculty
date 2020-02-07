@@ -370,7 +370,7 @@ class ListRunsResponseSchema(BaseSchema):
 
 class JobClient(BaseClient):
 
-    SERVICE_NAME = "steve"
+    _SERVICE_NAME = "steve"
 
     def list(self, project_id):
         """List the jobs in a project.

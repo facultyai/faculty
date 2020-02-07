@@ -89,7 +89,7 @@ class ModelSchema(BaseSchema):
 
 class ModelClient(BaseClient):
 
-    SERVICE_NAME = "zoolander"
+    _SERVICE_NAME = "zoolander"
 
     def get(self, project_id, model_id):
         endpoint = "/project/{}/model/{}".format(project_id, model_id)

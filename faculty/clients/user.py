@@ -65,7 +65,7 @@ class UserSchema(BaseSchema):
 
 class UserClient(BaseClient):
 
-    SERVICE_NAME = "flock"
+    _SERVICE_NAME = "flock"
 
     def get_user(self, user_id):
         endpoint = "/user/{}".format(user_id)

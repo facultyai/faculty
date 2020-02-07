@@ -70,7 +70,7 @@ class ExperimentDeleted(Exception):
 
 class ExperimentClient(BaseClient):
 
-    SERVICE_NAME = "atlas"
+    _SERVICE_NAME = "atlas"
 
     def create(
         self, project_id, name, description=None, artifact_location=None

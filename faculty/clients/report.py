@@ -79,7 +79,7 @@ class ReportWithVersionsSchema(BaseSchema):
 
 class ReportClient(BaseClient):
 
-    SERVICE_NAME = "tavern"
+    _SERVICE_NAME = "tavern"
 
     def list(self, project_id):
         endpoint = "/project/{}".format(project_id)

@@ -63,7 +63,7 @@ class NodeTypeSchema(BaseSchema):
 
 class ClusterClient(BaseClient):
 
-    SERVICE_NAME = "klostermann"
+    _SERVICE_NAME = "klostermann"
 
     def list_single_tenanted_node_types(
         self,

@@ -153,7 +153,7 @@ class SSHDetailsSchema(BaseSchema):
 
 class ServerClient(BaseClient):
 
-    SERVICE_NAME = "galleon"
+    _SERVICE_NAME = "galleon"
 
     def create(
         self,
