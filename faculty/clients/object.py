@@ -350,13 +350,14 @@ class ObjectClient(BaseClient):
             Containing the storage provider plus an upload ID or presigned URL,
             as appropriate for the storage provider.
 
-        AWS Simple Storage Service (S3)
-        -------------------------------
+        Notes
+        -----
 
-        In the case that the returned ``provider`` is
-        ``CloudStorageProvider.S3``, the uploaded file must be broken up into
-        chunks of at least 5MB size (the last chunk may be any size), then each
-        chunk must be uploaded by:
+        When the object store is backed by AWS S3 (Simple Storage Service), the
+        the returned ``provider`` will be ``CloudStorageProvider.S3``. In this
+        case, the uploaded file must be broken up into chunks of at least 5MB
+        size (the last chunk may be any size), then each chunk must be uploaded
+        by:
 
         1. Assign each chunk a part number, starting from 1
         2. Presign the chunk for upload with the ``presign_upload_part`` method
@@ -369,14 +370,12 @@ class ObjectClient(BaseClient):
         ``CompletedUploadPart`` objects containing the part numbers and etags
         generated above.
 
-        Google Cloud Storage (GCS)
-        --------------------------
-
-        In the case that the returned ``provider`` is
-        ``CloudStorageProvider.GCS``, you can directly PUT the full contents of
-        the object to the returned URL in a single request, and then resume the
-        download with subsequent requests if the connection drops at some
-        point.
+        Alternatively, when the object store is backed by GCS (Google Cloud
+        Storage), the returned ``provider`` will be
+        ``CloudStorageProvider.GCS``. In this case, you can directly PUT the
+        full contents of the object to the returned URL in a single request,
+        and then resume the download with subsequent requests if the connection
+        drops at some point.
 
         For full details, see the GCP documentation, starting from "Step 3 -
         Upload the file":
