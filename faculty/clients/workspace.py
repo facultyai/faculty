@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Interact with files in the Faculty workspace.
+"""
+
+
 from enum import Enum
 from collections import namedtuple
 

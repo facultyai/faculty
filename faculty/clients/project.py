@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Manage Faculty projects.
+"""
+
 
 from collections import namedtuple
 

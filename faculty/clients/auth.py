@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Authentication against Faculty services.
+"""
+
 
 from requests.auth import AuthBase
 

@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Interact with Faculty experiments.
+"""
+
 
 from collections import namedtuple
 from enum import Enum
