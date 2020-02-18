@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Interact with Faculty jobs.
+Configure and run Faculty jobs.
 """
 
 

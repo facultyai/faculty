@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Interact with Faculty cluster configuration.
+Manage the Faculty cluster configuration.
 """
 
 

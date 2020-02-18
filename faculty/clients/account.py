@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Interact with Faculty user accounts.
+Manage Faculty user accounts.
 """
 
 

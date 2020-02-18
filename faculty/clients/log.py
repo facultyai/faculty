@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Interact with Faculty job logs.
+Access Faculty job logs.
 """
 
 
