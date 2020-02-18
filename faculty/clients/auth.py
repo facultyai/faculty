@@ -28,6 +28,9 @@ class FacultyAuth(AuthBase):
     session : faculty.session.Session
         The Faculty session to authenticate with
 
+    Examples
+    --------
+
     To perform an authenticated request against a Faculty service, first
     construct an instance of this class with a session:
 
