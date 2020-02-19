@@ -149,18 +149,16 @@ def test_cluster_client_list_single_tenanted_node_types(
 
 
 def test_cluster_client_configure_single_tenanted_node_type(mocker):
-    put_raw_mock = mocker.patch.object(ClusterClient, "_put_raw")
+    mocker.patch.object(ClusterClient, "_put_raw")
 
     client = ClusterClient(mocker.Mock())
-    response = client.configure_single_tenanted_node_type(
+    client.configure_single_tenanted_node_type(
         NODE_TYPE.id,
         NODE_TYPE.name,
         NODE_TYPE.instance_group,
         NODE_TYPE.max_interactive_instances,
         NODE_TYPE.max_job_instances,
     )
-
-    assert response == put_raw_mock.return_value
 
     ClusterClient._put_raw.assert_called_once_with(
         "/node-type/single-tenanted/{}/configuration".format(NODE_TYPE.id),
@@ -174,12 +172,10 @@ def test_cluster_client_configure_single_tenanted_node_type(mocker):
 
 
 def test_cluster_client_disable_single_tenanted_node_type(mocker):
-    delete_raw_mock = mocker.patch.object(ClusterClient, "_delete_raw")
+    mocker.patch.object(ClusterClient, "_delete_raw")
 
     client = ClusterClient(mocker.Mock())
-    response = client.disable_single_tenanted_node_type(NODE_TYPE.id)
-
-    assert response == delete_raw_mock.return_value
+    client.disable_single_tenanted_node_type(NODE_TYPE.id)
 
     ClusterClient._delete_raw.assert_called_once_with(
         "/node-type/single-tenanted/{}/configuration".format(NODE_TYPE.id)
