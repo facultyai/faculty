@@ -118,12 +118,12 @@ class ClusterClient(BaseClient):
             "maxInteractiveInstances": max_interactive_instances,
             "maxJobInstances": max_job_instances,
         }
-        return self._put_raw(
+        self._put_raw(
             "/node-type/single-tenanted/{}/configuration".format(node_type_id),
             json=payload,
         )
 
     def disable_single_tenanted_node_type(self, node_type_id):
-        return self._delete_raw(
+        self._delete_raw(
             "/node-type/single-tenanted/{}/configuration".format(node_type_id)
         )
