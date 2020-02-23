@@ -1,0 +1,13 @@
+[run]
+branch = true
+parallel = true
+source=faculty
+omit =
+    # test temp files
+    .tox/*
+    # vendored file
+    faculty/_oneofschema.py
+
+[report]
+show_missing = true
+precision = 2
