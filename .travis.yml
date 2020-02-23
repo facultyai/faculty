@@ -10,9 +10,11 @@ python:
 cache: pip
 dist: xenial
 install: 
-  - pip install tox-travis
+  - pip install tox-travis codecov
 script:
   - tox
+after_success:
+    - codecov
 
 jobs:
   fast_finish: true
