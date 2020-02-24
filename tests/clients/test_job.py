@@ -21,43 +21,43 @@ from marshmallow import ValidationError
 
 from faculty.clients.job import (
     EnvironmentStepExecution,
-    EnvironmentStepExecutionSchema,
     EnvironmentStepExecutionState,
     ImageType,
     InstanceSize,
-    InstanceSizeSchema,
     Job,
     JobClient,
     JobCommand,
-    JobCommandSchema,
     JobDefinition,
-    JobDefinitionSchema,
-    JobIdSchema,
     JobMetadata,
-    JobMetadataSchema,
     JobParameter,
-    JobParameterSchema,
-    JobSchema,
     JobSummary,
-    JobSummarySchema,
     ListRunsResponse,
-    ListRunsResponseSchema,
     Page,
-    PageSchema,
     Pagination,
-    PaginationSchema,
     ParameterType,
     Run,
-    RunIdSchema,
-    RunSchema,
     RunState,
     RunSummary,
-    RunSummarySchema,
     Subrun,
-    SubrunSchema,
     SubrunState,
     SubrunSummary,
-    SubrunSummarySchema,
+    _EnvironmentStepExecutionSchema,
+    _InstanceSizeSchema,
+    _JobCommandSchema,
+    _JobDefinitionSchema,
+    _JobIdSchema,
+    _JobMetadataSchema,
+    _JobParameterSchema,
+    _JobSchema,
+    _JobSummarySchema,
+    _ListRunsResponseSchema,
+    _PageSchema,
+    _PaginationSchema,
+    _RunIdSchema,
+    _RunSchema,
+    _RunSummarySchema,
+    _SubrunSchema,
+    _SubrunSummarySchema,
 )
 
 MILLI_CPUS = 1000
@@ -282,42 +282,42 @@ LIST_RUNS_RESPONSE_BODY = {
 
 
 def test_job_metadata_schema():
-    data = JobMetadataSchema().load(JOB_METADATA_BODY)
+    data = _JobMetadataSchema().load(JOB_METADATA_BODY)
     assert data == JOB_METADATA
 
 
 def test_job_summary_schema():
-    data = JobSummarySchema().load(JOB_SUMMARY_BODY)
+    data = _JobSummarySchema().load(JOB_SUMMARY_BODY)
     assert data == JOB_SUMMARY
 
 
 def test_instance_size_schema_load():
-    data = InstanceSizeSchema().load(INSTANCE_SIZE_BODY)
+    data = _InstanceSizeSchema().load(INSTANCE_SIZE_BODY)
     assert data == INSTANCE_SIZE
 
 
 def test_instance_size_schema_dump():
-    data = InstanceSizeSchema().dump(INSTANCE_SIZE)
+    data = _InstanceSizeSchema().dump(INSTANCE_SIZE)
     assert data == INSTANCE_SIZE_BODY
 
 
 def test_job_parameter_schema_load():
-    data = JobParameterSchema().load(JOB_PARAMETER_BODY)
+    data = _JobParameterSchema().load(JOB_PARAMETER_BODY)
     assert data == JOB_PARAMETER
 
 
 def test_job_parameter_schema_dump():
-    data = JobParameterSchema().dump(JOB_PARAMETER)
+    data = _JobParameterSchema().dump(JOB_PARAMETER)
     assert data == JOB_PARAMETER_BODY
 
 
 def test_job_command_schema_load():
-    data = JobCommandSchema().load(JOB_COMMAND_BODY)
+    data = _JobCommandSchema().load(JOB_COMMAND_BODY)
     assert data == JOB_COMMAND
 
 
 def test_job_command_schema_dump():
-    data = JobCommandSchema().dump(JOB_COMMAND)
+    data = _JobCommandSchema().dump(JOB_COMMAND)
     assert data == JOB_COMMAND_BODY
 
 
@@ -329,7 +329,7 @@ def test_job_command_schema_dump():
     ],
 )
 def test_job_definition_schema_load(job_definition, job_definition_body):
-    data = JobDefinitionSchema().load(job_definition_body)
+    data = _JobDefinitionSchema().load(job_definition_body)
     assert data == job_definition
 
 
@@ -341,7 +341,7 @@ def test_job_definition_schema_load(job_definition, job_definition_body):
     ],
 )
 def test_job_definition_schema_dump(job_definition_body, job_definition):
-    data = JobDefinitionSchema().dump(job_definition)
+    data = _JobDefinitionSchema().dump(job_definition)
     assert data == job_definition_body
 
 
@@ -356,7 +356,7 @@ def test_job_definition_schema_invalid_instance_type(
     invalid_body["instanceSizeType"] = instance_size_type
     invalid_body["instanceSize"] = instance_size
     with pytest.raises(ValidationError):
-        JobDefinitionSchema().load(invalid_body)
+        _JobDefinitionSchema().load(invalid_body)
 
 
 @pytest.mark.parametrize(
@@ -370,21 +370,21 @@ def test_job_definition_schema_invalid_image_type(
     invalid_body["imageType"] = image_type
     invalid_body["condaEnvironment"] = conda_environment
     with pytest.raises(ValidationError):
-        JobDefinitionSchema().load(invalid_body)
+        _JobDefinitionSchema().load(invalid_body)
 
 
 def test_job_schema():
-    data = JobSchema().load(JOB_BODY)
+    data = _JobSchema().load(JOB_BODY)
     assert data == JOB
 
 
 def test_job_id_schema():
-    data = JobIdSchema().load({"jobId": str(JOB_ID)})
+    data = _JobIdSchema().load({"jobId": str(JOB_ID)})
     assert data == JOB_ID
 
 
 def test_environment_step_execution_schema():
-    data = EnvironmentStepExecutionSchema().load(
+    data = _EnvironmentStepExecutionSchema().load(
         ENVIRONMENT_STEP_EXECUTION_BODY
     )
     assert data == ENVIRONMENT_STEP_EXECUTION
@@ -396,12 +396,12 @@ def test_environment_step_execution_schema():
 def test_environment_step_execution_schema_nullable_field(data_key, field):
     body = ENVIRONMENT_STEP_EXECUTION_BODY.copy()
     del body[data_key]
-    data = EnvironmentStepExecutionSchema().load(body)
+    data = _EnvironmentStepExecutionSchema().load(body)
     assert getattr(data, field) is None
 
 
 def test_subrun_summary_schema():
-    data = SubrunSummarySchema().load(SUBRUN_SUMMARY_BODY)
+    data = _SubrunSummarySchema().load(SUBRUN_SUMMARY_BODY)
     assert data == SUBRUN_SUMMARY
 
 
@@ -411,12 +411,12 @@ def test_subrun_summary_schema():
 def test_subrun_summary_schema_nullable_field(data_key, field):
     body = SUBRUN_SUMMARY_BODY.copy()
     del body[data_key]
-    data = SubrunSummarySchema().load(body)
+    data = _SubrunSummarySchema().load(body)
     assert getattr(data, field) is None
 
 
 def test_subrun_schema():
-    data = SubrunSchema().load(SUBRUN_BODY)
+    data = _SubrunSchema().load(SUBRUN_BODY)
     assert data == SUBRUN
 
 
@@ -426,12 +426,12 @@ def test_subrun_schema():
 def test_subrun_schema_nullable_field(data_key, field):
     body = SUBRUN_BODY.copy()
     del body[data_key]
-    data = SubrunSchema().load(body)
+    data = _SubrunSchema().load(body)
     assert getattr(data, field) is None
 
 
 def test_run_summary_schema():
-    data = RunSummarySchema().load(RUN_SUMMARY_BODY)
+    data = _RunSummarySchema().load(RUN_SUMMARY_BODY)
     assert data == RUN_SUMMARY
 
 
@@ -441,12 +441,12 @@ def test_run_summary_schema():
 def test_run_summary_schema_nullable_field(data_key, field):
     body = RUN_SUMMARY_BODY.copy()
     del body[data_key]
-    data = RunSummarySchema().load(body)
+    data = _RunSummarySchema().load(body)
     assert getattr(data, field) is None
 
 
 def test_run_schema():
-    data = RunSchema().load(RUN_BODY)
+    data = _RunSchema().load(RUN_BODY)
     assert data == RUN
 
 
@@ -456,22 +456,22 @@ def test_run_schema():
 def test_run_schema_nullable_field(data_key, field):
     body = RUN_BODY.copy()
     del body[data_key]
-    data = RunSchema().load(body)
+    data = _RunSchema().load(body)
     assert getattr(data, field) is None
 
 
 def test_run_id_schema():
-    data = RunIdSchema().load({"runId": str(RUN_ID)})
+    data = _RunIdSchema().load({"runId": str(RUN_ID)})
     assert data == RUN_ID
 
 
 def test_page_schema():
-    data = PageSchema().load(PAGE_BODY)
+    data = _PageSchema().load(PAGE_BODY)
     assert data == PAGE
 
 
 def test_pagination_schema():
-    data = PaginationSchema().load(PAGINATION_BODY)
+    data = _PaginationSchema().load(PAGINATION_BODY)
     assert data == PAGINATION
 
 
@@ -479,35 +479,35 @@ def test_pagination_schema():
 def test_pagination_schema_nullable_field(field):
     body = PAGINATION_BODY.copy()
     del body[field]
-    data = PaginationSchema().load(body)
+    data = _PaginationSchema().load(body)
     assert getattr(data, field) is None
 
 
 def test_list_runs_response_schema():
-    data = ListRunsResponseSchema().load(LIST_RUNS_RESPONSE_BODY)
+    data = _ListRunsResponseSchema().load(LIST_RUNS_RESPONSE_BODY)
     assert data == LIST_RUNS_RESPONSE
 
 
 @pytest.mark.parametrize(
     "schema_class",
     [
-        JobMetadataSchema,
-        JobSummarySchema,
-        InstanceSizeSchema,
-        JobParameterSchema,
-        JobCommandSchema,
-        JobDefinitionSchema,
-        JobIdSchema,
-        JobSchema,
-        EnvironmentStepExecutionSchema,
-        SubrunSummarySchema,
-        SubrunSchema,
-        RunSummarySchema,
-        RunSchema,
-        RunIdSchema,
-        PageSchema,
-        PaginationSchema,
-        ListRunsResponseSchema,
+        _JobMetadataSchema,
+        _JobSummarySchema,
+        _InstanceSizeSchema,
+        _JobParameterSchema,
+        _JobCommandSchema,
+        _JobDefinitionSchema,
+        _JobIdSchema,
+        _JobSchema,
+        _EnvironmentStepExecutionSchema,
+        _SubrunSummarySchema,
+        _SubrunSchema,
+        _RunSummarySchema,
+        _RunSchema,
+        _RunIdSchema,
+        _PageSchema,
+        _PaginationSchema,
+        _ListRunsResponseSchema,
     ],
 )
 def test_schemas_load_invalid_data(schema_class):
@@ -517,7 +517,7 @@ def test_schemas_load_invalid_data(schema_class):
 
 def test_job_client_list(mocker):
     mocker.patch.object(JobClient, "_get", return_value=[JOB_SUMMARY])
-    schema_mock = mocker.patch("faculty.clients.job.JobSummarySchema")
+    schema_mock = mocker.patch("faculty.clients.job._JobSummarySchema")
 
     client = JobClient(mocker.Mock())
     assert client.list(PROJECT_ID) == [JOB_SUMMARY]
@@ -530,8 +530,8 @@ def test_job_client_list(mocker):
 
 def test_job_client_create(mocker):
     mocker.patch.object(JobClient, "_post", return_value=JOB_ID)
-    response_schema_mock = mocker.patch("faculty.clients.job.JobIdSchema")
-    mocker.patch.object(JobDefinitionSchema, "dump")
+    response_schema_mock = mocker.patch("faculty.clients.job._JobIdSchema")
+    mocker.patch.object(_JobDefinitionSchema, "dump")
 
     client = JobClient(mocker.Mock())
     assert (
@@ -545,7 +545,7 @@ def test_job_client_create(mocker):
     )
 
     response_schema_mock.assert_called_once_with()
-    JobDefinitionSchema.dump.assert_called_once_with(JOB_DEFINITION)
+    _JobDefinitionSchema.dump.assert_called_once_with(JOB_DEFINITION)
     JobClient._post.assert_called_once_with(
         "/project/{}/job".format(PROJECT_ID),
         response_schema_mock.return_value,
@@ -554,14 +554,14 @@ def test_job_client_create(mocker):
                 "name": JOB_METADATA.name,
                 "description": JOB_METADATA.description,
             },
-            "definition": JobDefinitionSchema.dump.return_value,
+            "definition": _JobDefinitionSchema.dump.return_value,
         },
     )
 
 
 def test_job_client_get(mocker):
     mocker.patch.object(JobClient, "_get", return_value=JOB)
-    schema_mock = mocker.patch("faculty.clients.job.JobSchema")
+    schema_mock = mocker.patch("faculty.clients.job._JobSchema")
 
     client = JobClient(mocker.Mock())
     assert client.get(PROJECT_ID, JOB_ID) == JOB
@@ -587,7 +587,7 @@ def test_job_client_update_metadata(mocker):
 
 def test_job_client_create_run(mocker):
     mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
-    schema_mock = mocker.patch("faculty.clients.job.RunIdSchema")
+    schema_mock = mocker.patch("faculty.clients.job._RunIdSchema")
 
     client = JobClient(mocker.Mock())
     assert (
@@ -619,7 +619,7 @@ def test_job_client_create_run(mocker):
 
 def test_job_client_create_run_default_parameter_value_sets(mocker):
     mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
-    schema_mock = mocker.patch("faculty.clients.job.RunIdSchema")
+    schema_mock = mocker.patch("faculty.clients.job._RunIdSchema")
 
     client = JobClient(mocker.Mock())
     assert client.create_run(PROJECT_ID, JOB_ID) == RUN_ID
@@ -634,7 +634,7 @@ def test_job_client_create_run_default_parameter_value_sets(mocker):
 
 def test_job_client_list_runs(mocker):
     mocker.patch.object(JobClient, "_get", return_value=LIST_RUNS_RESPONSE)
-    schema_mock = mocker.patch("faculty.clients.job.ListRunsResponseSchema")
+    schema_mock = mocker.patch("faculty.clients.job._ListRunsResponseSchema")
 
     client = JobClient(mocker.Mock())
     assert client.list_runs(PROJECT_ID, JOB_ID) == LIST_RUNS_RESPONSE
@@ -649,7 +649,7 @@ def test_job_client_list_runs(mocker):
 
 def test_job_client_list_runs_page(mocker):
     mocker.patch.object(JobClient, "_get", return_value=LIST_RUNS_RESPONSE)
-    schema_mock = mocker.patch("faculty.clients.job.ListRunsResponseSchema")
+    schema_mock = mocker.patch("faculty.clients.job._ListRunsResponseSchema")
 
     client = JobClient(mocker.Mock())
     assert (
@@ -670,7 +670,7 @@ def test_job_client_list_runs_page(mocker):
 )
 def test_job_client_get_run(mocker, run_identifier):
     mocker.patch.object(JobClient, "_get", return_value=RUN)
-    schema_mock = mocker.patch("faculty.clients.job.RunSchema")
+    schema_mock = mocker.patch("faculty.clients.job._RunSchema")
 
     client = JobClient(mocker.Mock())
     assert client.get_run(PROJECT_ID, JOB_ID, run_identifier) == RUN
@@ -692,7 +692,7 @@ def test_job_client_get_run(mocker, run_identifier):
 )
 def test_job_client_get_subrun(mocker, run_identifier, subrun_identifier):
     mocker.patch.object(JobClient, "_get", return_value=SUBRUN)
-    schema_mock = mocker.patch("faculty.clients.job.SubrunSchema")
+    schema_mock = mocker.patch("faculty.clients.job._SubrunSchema")
 
     client = JobClient(mocker.Mock())
     assert (
