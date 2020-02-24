@@ -20,11 +20,11 @@ from dateutil.tz import UTC
 from marshmallow import ValidationError
 
 from faculty.clients.log import (
-    LogPart,
-    LogPartSchema,
-    LogPartsResponse,
-    LogPartsResponseSchema,
     LogClient,
+    LogPart,
+    LogPartsResponse,
+    _LogPartSchema,
+    _LogPartsResponseSchema,
 )
 
 PROJECT_ID = uuid4()
@@ -54,28 +54,28 @@ LOG_PARTS_RESPONSE_BODY = {"logParts": [LOG_PART_BODY]}
 
 
 def test_log_part_schema():
-    data = LogPartSchema().load(LOG_PART_BODY)
+    data = _LogPartSchema().load(LOG_PART_BODY)
     assert data == LOG_PART
 
 
 def test_log_part_schema_invalid():
     with pytest.raises(ValidationError):
-        LogPartSchema().load({})
+        _LogPartSchema().load({})
 
 
 def test_log_parts_response_schema():
-    data = LogPartsResponseSchema().load(LOG_PARTS_RESPONSE_BODY)
+    data = _LogPartsResponseSchema().load(LOG_PARTS_RESPONSE_BODY)
     assert data == LOG_PARTS_RESPONSE
 
 
 def test_log_parts_response_schema_invalid():
     with pytest.raises(ValidationError):
-        LogPartsResponseSchema().load({})
+        _LogPartsResponseSchema().load({})
 
 
 def test_log_client_get_subrun_command_logs(mocker):
     mocker.patch.object(LogClient, "_get", return_value=LOG_PARTS_RESPONSE)
-    schema_mock = mocker.patch("faculty.clients.log.LogPartsResponseSchema")
+    schema_mock = mocker.patch("faculty.clients.log._LogPartsResponseSchema")
 
     client = LogClient(mocker.Mock())
     assert (
@@ -94,7 +94,7 @@ def test_log_client_get_subrun_command_logs(mocker):
 
 def test_log_client_get_subrun_environment_step_logs(mocker):
     mocker.patch.object(LogClient, "_get", return_value=LOG_PARTS_RESPONSE)
-    schema_mock = mocker.patch("faculty.clients.log.LogPartsResponseSchema")
+    schema_mock = mocker.patch("faculty.clients.log._LogPartsResponseSchema")
 
     client = LogClient(mocker.Mock())
     assert (
