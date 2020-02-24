@@ -1,2 +1,4 @@
 codecov:
-  bot: codecov-io
+  bot: "codecov-io"
+  max_report_age: 28
+  require_ci_to_pass: yes
