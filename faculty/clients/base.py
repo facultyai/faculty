@@ -24,6 +24,19 @@ from faculty.clients.auth import FacultyAuth
 
 
 class HttpError(Exception):
+    """An HTTP error occurred.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     def __init__(self, response, error=None, error_code=None):
         self.response = response
         self.error = error
@@ -34,42 +47,172 @@ HTTPError = HttpError  # For backwards compatiblity
 
 
 class BadRequest(HttpError):
+    """A 400 Bad Request HTTP response was returned.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     pass
 
 
 class Unauthorized(HttpError):
+    """A 401 Unauthorized HTTP response was returned.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     pass
 
 
 class Forbidden(HttpError):
+    """A 403 Forbidden HTTP response was returned.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     pass
 
 
 class NotFound(HttpError):
+    """A 404 Not Found HTTP response was returned.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     pass
 
 
 class MethodNotAllowed(HttpError):
+    """A 405 Method Not Allowed HTTP response was returned.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     pass
 
 
 class Conflict(HttpError):
+    """A 409 Conflict HTTP response was returned.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     pass
 
 
 class InternalServerError(HttpError):
+    """A 500 Internal Server Error HTTP response was returned.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     pass
 
 
 class BadGateway(HttpError):
+    """A 502 Bad Gateway HTTP response was returned.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     pass
 
 
 class ServiceUnavailable(HttpError):
+    """A 503 Service Unavailable HTTP response was returned.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     pass
 
 
 class GatewayTimeout(HttpError):
+    """A 504 Gateway Timeout HTTP response was returned.
+
+    Parameters
+    ----------
+    response : requests.Response
+        The HTTP respponse.
+    error : str, optional
+        A descriptive error message returned by the server.
+    error_code : str, optional
+        A key returned by the server identifying the specific cause of the
+        error.
+    """
+
     pass
 
 
