@@ -19,7 +19,7 @@ import pytest
 from dateutil.tz import UTC
 from marshmallow import ValidationError
 
-from faculty.clients.user import UserClient, User, UserSchema, GlobalRole
+from faculty.clients.user import UserClient, User, GlobalRole, _UserSchema
 
 USER_ID = uuid.uuid4()
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
@@ -77,39 +77,39 @@ EXPECTED_SYSTEM_USER = User(
     ids=["human", "system"],
 )
 def test_user_schema(body, expected_user):
-    data = UserSchema().load(body)
+    data = _UserSchema().load(body)
     assert data == expected_user
 
 
 def test_user_schema_invalid():
     with pytest.raises(ValidationError):
-        UserSchema().load({})
+        _UserSchema().load({})
 
 
 def test_user_schema_invalid_uuid():
     body = TEST_HUMAN_USER_JSON.copy()
     body["userId"] = "not-a-uuid"
     with pytest.raises(ValidationError):
-        UserSchema().load(body)
+        _UserSchema().load(body)
 
 
 def test_user_schema_missing_userId():
     body = TEST_HUMAN_USER_JSON.copy()
     body.pop("userId")
     with pytest.raises(ValidationError):
-        UserSchema().load(body)
+        _UserSchema().load(body)
 
 
 def test_user_schema_invalid_global_role():
     body = TEST_HUMAN_USER_JSON.copy()
     body["globalRoles"] = ["invalid-global-role"]
     with pytest.raises(ValidationError):
-        UserSchema().load(body)
+        _UserSchema().load(body)
 
 
 def test_get_user(mocker):
     mocker.patch.object(UserClient, "_get", return_value=EXPECTED_HUMAN_USER)
-    schema_mock = mocker.patch("faculty.clients.user.UserSchema")
+    schema_mock = mocker.patch("faculty.clients.user._UserSchema")
 
     client = UserClient(mocker.Mock())
 
@@ -146,7 +146,7 @@ def test_get_user(mocker):
 )
 def test_get_all_users(mocker, is_system, enabled, expected_params):
     mocker.patch.object(UserClient, "_get", return_value=[EXPECTED_HUMAN_USER])
-    schema_mock = mocker.patch("faculty.clients.user.UserSchema")
+    schema_mock = mocker.patch("faculty.clients.user._UserSchema")
 
     client = UserClient(mocker.Mock())
 
@@ -162,7 +162,7 @@ def test_get_all_users(mocker, is_system, enabled, expected_params):
 
 def test_set_global_roles(mocker):
     mocker.patch.object(UserClient, "_put")
-    schema_mock = mocker.patch("faculty.clients.user.UserSchema")
+    schema_mock = mocker.patch("faculty.clients.user._UserSchema")
 
     client = UserClient(mocker.Mock())
 
