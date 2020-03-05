@@ -24,7 +24,6 @@ from faculty.clients.base import (
     BaseClient,
     BaseSchema,
     Conflict,
-    ErrorSchema,
     Forbidden,
     GatewayTimeout,
     HttpError,
@@ -33,6 +32,7 @@ from faculty.clients.base import (
     NotFound,
     ServiceUnavailable,
     Unauthorized,
+    _ErrorSchema,
 )
 
 MOCK_SERVICE_NAME = "test-service"
@@ -60,7 +60,7 @@ HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 
 
 def test_error_schema():
-    data = ErrorSchema().load(
+    data = _ErrorSchema().load(
         {"error": "error message", "errorCode": "error code"}
     )
     assert data == {"error": "error message", "error_code": "error code"}

@@ -230,32 +230,8 @@ HTTP_ERRORS = {
 }
 
 
-class BaseSchema(Schema):
-    class Meta:
-        unknown = EXCLUDE
-
-
-class ErrorSchema(BaseSchema):
-    error = fields.String(missing=None)
-    error_code = fields.String(data_key="errorCode", missing=None)
-
-
-def _check_status(response):
-    if response.status_code >= 400:
-        cls = HTTP_ERRORS.get(response.status_code, HttpError)
-        try:
-            data = ErrorSchema().load(response.json())
-        except (ValueError, ValidationError):
-            data = {}
-        raise cls(response, data.get("error"), data.get("error_code"))
-
-
-def _deserialise_response(schema, response):
-    response_json = response.json()
-    return schema.load(response_json)
-
-
 class BaseClient(object):
+    """Base class with core functionality for Faculty service clients."""
 
     _SERVICE_NAME = None
 
@@ -269,12 +245,19 @@ class BaseClient(object):
 
     @property
     def http_session(self):
+        """A requests session with authentication against Faculy services."""
         if self._http_session_cache is None:
             self._http_session_cache = requests.Session()
             self._http_session_cache.auth = FacultyAuth(self.session)
         return self._http_session_cache
 
     def _request(self, method, endpoint, check_status=True, *args, **kwargs):
+        """Perform an HTTP request.
+
+        This method should not be called from subclasses directly. Instead,
+        call one of the HTTP verb-specific methods. If it does not exist yet
+        for the HTTP method you need, contribute it.
+        """
         url = self.session.service_url(self._SERVICE_NAME, endpoint)
         response = self.http_session.request(method, url, *args, **kwargs)
         if check_status:
@@ -282,36 +265,73 @@ class BaseClient(object):
         return response
 
     def _get_raw(self, endpoint, *args, **kwargs):
+        """Perform a GET request and return the requests response object."""
         return self._request("GET", endpoint, *args, **kwargs)
 
     def _get(self, endpoint, schema, **kwargs):
+        """Perform a GET request and parse the response."""
         response = self._get_raw(endpoint, **kwargs)
         return _deserialise_response(schema, response)
 
     def _post_raw(self, endpoint, *args, **kwargs):
+        """Perform a POST request and return the requests response object."""
         return self._request("POST", endpoint, *args, **kwargs)
 
     def _post(self, endpoint, schema, **kwargs):
+        """Perform a POST request and parse the response."""
         response = self._post_raw(endpoint, **kwargs)
         return _deserialise_response(schema, response)
 
     def _put_raw(self, endpoint, *args, **kwargs):
+        """Perform a PUT request and return the requests response object."""
         return self._request("PUT", endpoint, *args, **kwargs)
 
     def _put(self, endpoint, schema, **kwargs):
+        """Perform a PUT request and parse the response."""
         response = self._put_raw(endpoint, **kwargs)
         return _deserialise_response(schema, response)
 
     def _patch_raw(self, endpoint, *args, **kwargs):
+        """Perform a PATCH request and return the requests response object."""
         return self._request("PATCH", endpoint, *args, **kwargs)
 
     def _patch(self, endpoint, schema, **kwargs):
+        """Perform a PATCH request and parse the response."""
         response = self._patch_raw(endpoint, **kwargs)
         return _deserialise_response(schema, response)
 
     def _delete_raw(self, endpoint, *args, **kwargs):
+        """Perform a DELETE request and return the requests response object."""
         return self._request("DELETE", endpoint, *args, **kwargs)
 
     def _delete(self, endpoint, schema, **kwargs):
+        """Perform a DELETE request and parse the response."""
         response = self._delete_raw(endpoint, **kwargs)
         return _deserialise_response(schema, response)
+
+
+class BaseSchema(Schema):
+    """Base class for marshmallow schemas in this library."""
+
+    class Meta:
+        unknown = EXCLUDE
+
+
+class _ErrorSchema(BaseSchema):
+    error = fields.String(missing=None)
+    error_code = fields.String(data_key="errorCode", missing=None)
+
+
+def _check_status(response):
+    if response.status_code >= 400:
+        cls = HTTP_ERRORS.get(response.status_code, HttpError)
+        try:
+            data = _ErrorSchema().load(response.json())
+        except (ValueError, ValidationError):
+            data = {}
+        raise cls(response, data.get("error"), data.get("error_code"))
+
+
+def _deserialise_response(schema, response):
+    response_json = response.json()
+    return schema.load(response_json)
