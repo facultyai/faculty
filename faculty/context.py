@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Get information about the current platform context.
+"""
+
 
 import os
 import warnings

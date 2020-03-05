@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Retrieve and cache access tokens for authenticating with Faculty services.
+"""
+
 
 import os
 import json

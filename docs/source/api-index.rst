@@ -39,3 +39,14 @@ Modules implementing common components:
 
    faculty.clients.auth
    faculty.clients.base
+
+Helpers
+-------
+
+.. autosummary::
+   :toctree: api
+
+   faculty.config
+   faculty.context
+   faculty.session
+   faculty.session.accesstoken
