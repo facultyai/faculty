@@ -7,12 +7,8 @@ interact with the `Faculty platform`_ programmatically.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
    api-index
-
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`
 
 .. _Faculty platform: https://faculty.ai/products-services/platform/
