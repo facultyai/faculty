@@ -30,7 +30,114 @@ from marshmallow import Schema, fields, post_load, ValidationError
 AccessToken = namedtuple("AccessToken", ["token", "expires_at"])
 
 
-class AccessTokenSchema(Schema):
+class AccessTokenMemoryCache(object):
+    """An in-memory cache for access tokens."""
+
+    def __init__(self):
+        self._store = _AccessTokenStore()
+
+    def get(self, profile):
+        """Get an access token from the cache.
+
+        Parameters
+        ----------
+        profile : faculty.config.Profile
+            The profile which the access token corresponds to.
+
+        Returns
+        -------
+        Optional[AccessToken]
+            The access token, or None if it is not present or is invalid.
+        """
+        access_token = self._store.get(profile)
+        return access_token if _is_valid_access_token(access_token) else None
+
+    def add(self, profile, access_token):
+        """Insert an access token into the cache.
+
+        Parameters
+        ----------
+        profile : faculty.config.Profile
+            The profile which the access token corresponds to.
+        access_token : AccessToken
+            The access token to cache.
+        """
+        self._store[profile] = access_token
+
+
+class AccessTokenFileSystemCache(object):
+    """A disk-persisted cache for access tokens.
+
+    Parameters
+    ----------
+    cache_path : str or pathlib.Path, optional
+        Pass to override the default cache location.
+    """
+
+    def __init__(self, cache_path=None):
+        if cache_path is None:
+            self.cache_path = _default_token_cache_path()
+        else:
+            self.cache_path = str(cache_path)
+        self._store = None
+
+    def get(self, profile):
+        """Get an access token from the cache.
+
+        Parameters
+        ----------
+        profile : faculty.config.Profile
+            The profile which the access token corresponds to.
+
+        Returns
+        -------
+        Optional[AccessToken]
+            The access token, or None if it is not present or is invalid.
+        """
+        if self._store is None:
+            self._load_from_disk()
+        access_token = self._store.get(profile)
+        return access_token if _is_valid_access_token(access_token) else None
+
+    def add(self, profile, access_token):
+        """Insert an access token into the cache.
+
+        Parameters
+        ----------
+        profile : faculty.config.Profile
+            The profile which the access token corresponds to.
+        access_token : AccessToken
+            The access token to cache.
+        """
+        if self._store is None:
+            self._load_from_disk()
+        self._store[profile] = access_token
+        self._persist_to_disk()
+
+    def _load_from_disk(self):
+        try:
+            with open(self.cache_path, "r") as fp:
+                data = json.load(fp)
+            self._store = _AccessTokenStoreSchema().load(data)
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+                # File does not exist - initialise empty store
+                self._store = _AccessTokenStore()
+            else:
+                raise
+        except (ValueError, ValidationError):
+            # File is of invalid format - reset with empty store
+            self._store = _AccessTokenStore()
+
+    def _persist_to_disk(self):
+        dirname = os.path.dirname(self.cache_path)
+        _ensure_directory_exists(dirname, mode=0o700)
+        data = _AccessTokenStoreSchema().dump(self._store)
+        with open(self.cache_path, "w") as fp:
+            json.dump(data, fp, separators=(",", ":"))
+
+
+class _AccessTokenSchema(Schema):
     token = fields.String(required=True)
     expires_at = fields.DateTime(data_key="expiresAt", required=True)
 
@@ -39,7 +146,7 @@ class AccessTokenSchema(Schema):
         return AccessToken(**data)
 
 
-class AccessTokenStore(object):
+class _AccessTokenStore(object):
     def __init__(self, tokens=None):
         self.tokens = tokens or {}
 
@@ -60,16 +167,16 @@ class AccessTokenStore(object):
             return None
 
 
-class AccessTokenStoreSchema(Schema):
+class _AccessTokenStoreSchema(Schema):
     tokens = fields.Dict(
         keys=fields.String(),
-        values=fields.Nested(AccessTokenSchema),
+        values=fields.Nested(_AccessTokenSchema),
         required=True,
     )
 
     @post_load
     def make_access_token_store(self, data):
-        return AccessTokenStore(**data)
+        return _AccessTokenStore(**data)
 
 
 def _is_valid_access_token(access_token_or_none):
@@ -79,16 +186,11 @@ def _is_valid_access_token(access_token_or_none):
         return access_token_or_none.expires_at >= datetime.now(tz=pytz.utc)
 
 
-class AccessTokenMemoryCache(object):
-    def __init__(self):
-        self._store = AccessTokenStore()
-
-    def get(self, profile):
-        access_token = self._store.get(profile)
-        return access_token if _is_valid_access_token(access_token) else None
-
-    def add(self, profile, access_token):
-        self._store[profile] = access_token
+def _default_token_cache_path():
+    xdg_cache_home = os.environ.get("XDG_CACHE_HOME")
+    if not xdg_cache_home:
+        xdg_cache_home = os.path.expanduser("~/.cache")
+    return os.path.join(xdg_cache_home, "faculty", "token-cache.json")
 
 
 def _ensure_directory_exists(path, mode):
@@ -100,53 +202,3 @@ def _ensure_directory_exists(path, mode):
             pass
         else:
             raise
-
-
-def _default_token_cache_path():
-    xdg_cache_home = os.environ.get("XDG_CACHE_HOME")
-    if not xdg_cache_home:
-        xdg_cache_home = os.path.expanduser("~/.cache")
-    return os.path.join(xdg_cache_home, "faculty", "token-cache.json")
-
-
-class AccessTokenFileSystemCache(object):
-    def __init__(self, cache_path=None):
-        if cache_path is None:
-            self.cache_path = _default_token_cache_path()
-        else:
-            self.cache_path = str(cache_path)
-        self._store = None
-
-    def _load_from_disk(self):
-        try:
-            with open(self.cache_path, "r") as fp:
-                data = json.load(fp)
-            self._store = AccessTokenStoreSchema().load(data)
-        except IOError as e:
-            if e.errno == errno.ENOENT:
-                # File does not exist - initialise empty store
-                self._store = AccessTokenStore()
-            else:
-                raise
-        except (ValueError, ValidationError):
-            # File is of invalid format - reset with empty store
-            self._store = AccessTokenStore()
-
-    def _persist_to_disk(self):
-        dirname = os.path.dirname(self.cache_path)
-        _ensure_directory_exists(dirname, mode=0o700)
-        data = AccessTokenStoreSchema().dump(self._store)
-        with open(self.cache_path, "w") as fp:
-            json.dump(data, fp, separators=(",", ":"))
-
-    def get(self, profile):
-        if self._store is None:
-            self._load_from_disk()
-        access_token = self._store.get(profile)
-        return access_token if _is_valid_access_token(access_token) else None
-
-    def add(self, profile, access_token):
-        if self._store is None:
-            self._load_from_disk()
-        self._store[profile] = access_token
-        self._persist_to_disk()
