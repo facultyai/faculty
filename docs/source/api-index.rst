@@ -50,3 +50,13 @@ Helpers
    faculty.context
    faculty.session
    faculty.session.accesstoken
+
+Datasets
+--------
+
+.. autosummary::
+   :toctree: api
+
+   faculty.datasets
+   faculty.datasets.util
+   faculty.datasets.transfer

@@ -148,7 +148,7 @@ def test_get_empty_directory(mocker, mock_client):
 
     relative_path = mocker.Mock()
     get_relative_path_mock = mocker.patch(
-        "faculty.datasets.util.get_relative_path", return_value=relative_path
+        "faculty.datasets._get_relative_path", return_value=relative_path
     )
 
     ls_mock = mocker.patch(
@@ -198,7 +198,7 @@ def test_get_directory(mocker, mock_client):
     relative_path2 = mocker.Mock()
     relative_paths = [relative_path1, relative_path2]
     get_relative_path_mock = mocker.patch(
-        "faculty.datasets.util.get_relative_path", side_effect=relative_paths
+        "faculty.datasets._get_relative_path", side_effect=relative_paths
     )
 
     ls_mock = mocker.patch(
@@ -448,3 +448,21 @@ def test_etag(mocker, mock_client):
 
     assert etag == object_mock.etag
     mock_client.get.assert_called_once_with(PROJECT_ID, "project-path")
+
+
+@pytest.mark.parametrize(
+    "input_path, rationalised_path",
+    [
+        ("", "/"),
+        ("./", "/"),
+        ("/", "/"),
+        ("path", "/path"),
+        ("./path", "/path"),
+        ("/path", "/path"),
+        ("path/", "/path/"),
+        ("./path/", "/path/"),
+        ("/path/", "/path/"),
+    ],
+)
+def test_rationalise_path(input_path, rationalised_path):
+    assert datasets._rationalise_path(input_path) == rationalised_path
