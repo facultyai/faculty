@@ -85,6 +85,7 @@ def get_context():
     Returns
     -------
     PlatformContext
+        Information about the current platform context.
     """
     return PlatformContext(
         project_id=_get_environ_as_type("FACULTY_PROJECT_ID", UUID),
