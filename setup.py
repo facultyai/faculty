@@ -13,12 +13,21 @@
 # limitations under the License.
 
 
+import os
 from setuptools import setup, find_packages
+
+
+def load_readme():
+    path = os.path.join(os.path.dirname(__file__), "README.rst")
+    with open(path) as fp:
+        content = fp.read()
+    return content
 
 
 setup(
     name="faculty",
     description="Python library for interacting with the Faculty platform.",
+    long_description=load_readme(),
     url="https://faculty.ai/products-services/platform/",
     author="Faculty",
     author_email="opensource@faculty.ai",
