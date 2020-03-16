@@ -21,7 +21,6 @@ from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseSchema, BaseClient
 
-
 ServerSize = namedtuple("ServerSize", ["milli_cpus", "memory_mb"])
 
 
@@ -192,6 +191,10 @@ class ServerClient(BaseClient):
         return self._post(
             "/instance/{}".format(project_id), ServerIdSchema(), json=payload
         )
+
+    def list_for_user(self, user_id):
+        endpoint = "/user/{}/instances".format(user_id)
+        return self._get(endpoint, ServerSchema(many=True))
 
     def delete(self, server_id):
         endpoint = "/instance/{}".format(server_id)
