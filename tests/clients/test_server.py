@@ -312,7 +312,7 @@ def test_server_client_list_for_user(mocker):
 
     schema_mock.assert_called_once_with(many=True)
     ServerClient._get.assert_called_once_with(
-        "/user/{}/instances".format(USER_ID), schema_mock.return_value,
+        "/user/{}/instances".format(USER_ID), schema_mock.return_value
     )
 
 
