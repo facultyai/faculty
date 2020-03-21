@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Load library configuration from files, environment variables or code.
+"""
+
 
 import os
 import warnings
@@ -30,7 +34,18 @@ DEFAULT_PROTOCOL = "https"
 
 
 def load(path):
-    """Read the Faculty configuration from a file."""
+    """Read the Faculty configuration from a file.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        The path of the file to load configuration from.
+
+    Returns
+    -------
+    Dict[str, Profile]
+        The profiles loaded from the file, keyed by their names.
+    """
 
     parser = ConfigParser()
     parser.read(str(path))
@@ -55,7 +70,21 @@ def load(path):
 
 
 def load_profile(path, profile):
-    """Read a Faculty profile from a file."""
+    """Read a single profile from a file.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        The path of the file to load the profile from.
+    profile : str
+        The name of the profile to load.
+
+    Returns
+    -------
+    Profile
+        The loaded profile. If the requested profile is not present, an empty
+        profile (with all None values) is returned.
+    """
     profiles = load(path)
     try:
         return profiles[profile]
@@ -99,6 +128,18 @@ def _get_deprecated_env_var(key, expected_key):
 
 
 def resolve_credentials_path(credentials_path=None):
+    """Determine which credentials file to load.
+
+    This function implements the order of precendence in which the path of the
+    credentials file can be configured. This order is (highed priority first):
+
+    * The path passed to this function
+    * The environment variable ``FACULTY_CREDENTIALS_PATH``
+    * ``~/.config/faculty/credentials``
+
+    The last path will be relative to the XDG home directory, when this is
+    configured.
+    """
     return (
         credentials_path
         or os.getenv("FACULTY_CREDENTIALS_PATH")
@@ -110,6 +151,8 @@ def resolve_credentials_path(credentials_path=None):
 
 
 class CredentialsError(RuntimeError):
+    """An error was encourntered when loading Faculty credentials."""
+
     pass
 
 
@@ -125,6 +168,53 @@ def resolve_profile(
     client_id=None,
     client_secret=None,
 ):
+    """Resolve all sources of configuration to load a Faculty profile.
+
+    This function implements the order of precendence in which configuration
+    entries are determined from files, environment variables and code.
+
+    Configuration entries are determined in this order of priority (highest
+    first):
+
+    * The value passed to this function
+    * The value set in an environment variable
+    * The value read from a configuration file
+
+    The logic for determining the configuration file is described in
+    :func:`resolve_credentials_path`.
+
+    The profile read from the configuration file will be, in order of priority:
+
+    * The value passed to this function
+    * The value set in the environment variable ``FACULTY_PROFILE``
+    * ``default``
+
+    Parameters
+    ----------
+    credentials_path : str or pathlib.Path, optional
+        The path of the credentials file to load. Can also be set with the
+        environment variable ``FACULTY_CREDENTIALS_PATH``.
+    profile_name : str, optional
+        The name of the profile to load from the credentials file. Can also be
+        set with the environment variable ``FACULTY_PROFILE``.
+    domain : str, optional
+        The domain name where Faculty services are hosted. Can also be set with
+        the environment variable ``FACULTY_DOMAIN``.
+    protocol : str, optional
+        The protocol to use when making requests to Faculty services. Can also
+        be set with the environment variable ``FACULTY_PROTOCOL``.
+    client_id : str, optional
+        The OAuth client ID to authenticate requests with. Can also be set with
+        the environment variable ``FACULTY_CLIENT_ID``.
+    client_secret : str, optional
+        The OAuth client secret to authenticate requests with. Can also be set
+        with the environment variable ``FACULTY_CLIENT_SECRET``.
+
+    Returns
+    -------
+    Profile
+        The resolved Faculty profile.
+    """
 
     resolved_profile_name = (
         profile_name

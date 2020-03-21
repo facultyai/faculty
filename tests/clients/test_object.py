@@ -23,22 +23,22 @@ from pytz import UTC
 from faculty.clients.base import BadRequest, Conflict, NotFound
 from faculty.clients.object import (
     CloudStorageProvider,
-    CompleteMultipartUploadSchema,
     CompletedUploadPart,
-    CompletedUploadPartSchema,
     ListObjectsResponse,
-    ListObjectsResponseSchema,
     Object,
     ObjectClient,
-    ObjectSchema,
     PathAlreadyExists,
     PathNotFound,
     PresignUploadResponse,
-    PresignUploadResponseSchema,
-    SimplePresignResponse,
-    SimplePresignResponseSchema,
     SourceIsADirectory,
     TargetIsADirectory,
+    _CompleteMultipartUploadSchema,
+    _CompletedUploadPartSchema,
+    _ListObjectsResponseSchema,
+    _ObjectSchema,
+    _PresignUploadResponseSchema,
+    _SimplePresignResponse,
+    _SimplePresignResponseSchema,
 )
 
 
@@ -73,7 +73,7 @@ LIST_OBJECTS_RESPONSE_WITHOUT_PAGE_TOKEN = ListObjectsResponse(
 )
 LIST_OBJECTS_RESPONSE_WITHOUT_PAGE_TOKEN_BODY = {"objects": [OBJECT_BODY]}
 
-SIMPLE_PRESIGN_RESPONSE = SimplePresignResponse(url="http://example.com")
+SIMPLE_PRESIGN_RESPONSE = _SimplePresignResponse(url="http://example.com")
 SIMPLE_PRESIGN_RESPONSE_BODY = {"url": SIMPLE_PRESIGN_RESPONSE.url}
 
 PRESIGN_UPLOAD_RESPONSE_S3 = PresignUploadResponse(
@@ -113,7 +113,7 @@ COMPLETED_MULTIPART_UPLOAD_BODY = {
 
 
 def test_object_schema():
-    data = ObjectSchema().load(OBJECT_BODY)
+    data = _ObjectSchema().load(OBJECT_BODY)
     assert data == OBJECT
 
 
@@ -128,12 +128,12 @@ def test_object_schema():
     ],
 )
 def test_list_objects_response_schema(body, expected):
-    data = ListObjectsResponseSchema().load(body)
+    data = _ListObjectsResponseSchema().load(body)
     assert data == expected
 
 
 def test_simple_presign_response_schema():
-    data = SimplePresignResponseSchema().load(SIMPLE_PRESIGN_RESPONSE_BODY)
+    data = _SimplePresignResponseSchema().load(SIMPLE_PRESIGN_RESPONSE_BODY)
     assert data == SIMPLE_PRESIGN_RESPONSE
 
 
@@ -146,17 +146,17 @@ def test_simple_presign_response_schema():
     ids=["S3", "GCS"],
 )
 def test_presign_upload_response_schema(body, expected):
-    data = PresignUploadResponseSchema().load(body)
+    data = _PresignUploadResponseSchema().load(body)
     assert data == expected
 
 
 @pytest.mark.parametrize(
     "schema",
     [
-        ObjectSchema,
-        ListObjectsResponseSchema,
-        SimplePresignResponseSchema,
-        PresignUploadResponseSchema,
+        _ObjectSchema,
+        _ListObjectsResponseSchema,
+        _SimplePresignResponseSchema,
+        _PresignUploadResponseSchema,
     ],
 )
 def test_schema_invalid_body(schema):
@@ -165,19 +165,19 @@ def test_schema_invalid_body(schema):
 
 
 def test_completed_upload_part_schema_dump():
-    data = CompletedUploadPartSchema().dump(COMPLETED_UPLOAD_PART)
+    data = _CompletedUploadPartSchema().dump(COMPLETED_UPLOAD_PART)
     assert data == COMPLETED_UPLOAD_PART_BODY
 
 
 def test_complete_multipart_upload_schema_dump():
-    data = CompleteMultipartUploadSchema().dump(COMPLETED_MULTIPART_UPLOAD)
+    data = _CompleteMultipartUploadSchema().dump(COMPLETED_MULTIPART_UPLOAD)
     assert data == COMPLETED_MULTIPART_UPLOAD_BODY
 
 
 @pytest.mark.parametrize("path", ["test/path", "/test/path", "//test/path"])
 def test_object_client_get(mocker, path):
     mocker.patch.object(ObjectClient, "_get", return_value=OBJECT)
-    schema_mock = mocker.patch("faculty.clients.object.ObjectSchema")
+    schema_mock = mocker.patch("faculty.clients.object._ObjectSchema")
 
     client = ObjectClient(mocker.Mock())
     assert client.get(PROJECT_ID, path) == OBJECT
@@ -192,7 +192,7 @@ def test_object_client_get(mocker, path):
 def test_object_client_get_url_encoding(mocker):
     path = "/test/[1].txt"
     mocker.patch.object(ObjectClient, "_get", return_value=OBJECT)
-    schema_mock = mocker.patch("faculty.clients.object.ObjectSchema")
+    schema_mock = mocker.patch("faculty.clients.object._ObjectSchema")
 
     client = ObjectClient(mocker.Mock())
     assert client.get(PROJECT_ID, path) == OBJECT
@@ -210,7 +210,7 @@ def test_object_client_list(mocker, path):
         ObjectClient, "_get", return_value=LIST_OBJECTS_RESPONSE
     )
     schema_mock = mocker.patch(
-        "faculty.clients.object.ListObjectsResponseSchema"
+        "faculty.clients.object._ListObjectsResponseSchema"
     )
 
     client = ObjectClient(mocker.Mock())
@@ -231,7 +231,7 @@ def test_object_client_list_defaults(mocker):
         ObjectClient, "_get", return_value=LIST_OBJECTS_RESPONSE
     )
     schema_mock = mocker.patch(
-        "faculty.clients.object.ListObjectsResponseSchema"
+        "faculty.clients.object._ListObjectsResponseSchema"
     )
 
     client = ObjectClient(mocker.Mock())
@@ -251,7 +251,7 @@ def test_object_client_list_url_encoding(mocker):
         ObjectClient, "_get", return_value=LIST_OBJECTS_RESPONSE
     )
     schema_mock = mocker.patch(
-        "faculty.clients.object.ListObjectsResponseSchema"
+        "faculty.clients.object._ListObjectsResponseSchema"
     )
 
     client = ObjectClient(mocker.Mock())
@@ -447,7 +447,7 @@ def test_object_client_presign_download(mocker):
         ObjectClient, "_post", return_value=SIMPLE_PRESIGN_RESPONSE
     )
     schema_mock = mocker.patch(
-        "faculty.clients.object.SimplePresignResponseSchema"
+        "faculty.clients.object._SimplePresignResponseSchema"
     )
 
     client = ObjectClient(mocker.Mock())
@@ -475,7 +475,7 @@ def test_object_client_presign_download_defaults(mocker):
         ObjectClient, "_post", return_value=SIMPLE_PRESIGN_RESPONSE
     )
     schema_mock = mocker.patch(
-        "faculty.clients.object.SimplePresignResponseSchema"
+        "faculty.clients.object._SimplePresignResponseSchema"
     )
 
     client = ObjectClient(mocker.Mock())
@@ -496,7 +496,7 @@ def test_object_client_presign_upload(mocker):
         ObjectClient, "_post", return_value=PRESIGN_UPLOAD_RESPONSE_S3
     )
     schema_mock = mocker.patch(
-        "faculty.clients.object.PresignUploadResponseSchema"
+        "faculty.clients.object._PresignUploadResponseSchema"
     )
 
     client = ObjectClient(mocker.Mock())
@@ -517,7 +517,7 @@ def test_object_client_presign_upload_part(mocker):
         ObjectClient, "_put", return_value=SIMPLE_PRESIGN_RESPONSE
     )
     schema_mock = mocker.patch(
-        "faculty.clients.object.SimplePresignResponseSchema"
+        "faculty.clients.object._SimplePresignResponseSchema"
     )
 
     client = ObjectClient(mocker.Mock())
@@ -538,7 +538,7 @@ def test_object_client_presign_upload_part(mocker):
 def test_object_client_complete_multipart_upload(mocker):
     mocker.patch.object(ObjectClient, "_put_raw")
     payload_schema_mock = mocker.patch(
-        "faculty.clients.object.CompleteMultipartUploadSchema"
+        "faculty.clients.object._CompleteMultipartUploadSchema"
     )
 
     client = ObjectClient(mocker.Mock())

@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Manage Faculty user accounts.
+"""
+
 
 from collections import namedtuple
 
@@ -21,9 +25,48 @@ from faculty.clients.base import BaseSchema, BaseClient
 
 
 Account = namedtuple("Account", ["user_id", "username"])
+_AuthenticationResponse = namedtuple("_AuthenticationResponse", ["account"])
 
 
-class AccountSchema(BaseSchema):
+class AccountClient(BaseClient):
+    """Client for the Faculty account service.
+
+    Either build this client with a session directly, or use the
+    :func:`faculty.client` helper function:
+
+    >>> client = faculty.client("account")
+
+    Parameters
+    ----------
+    session : faculty.session.Session
+        The session to use to make requests
+    """
+
+    _SERVICE_NAME = "hudson"
+
+    def authenticated_account(self):
+        """Get information on the account used to authenticate this session.
+
+        Returns
+        -------
+        Account
+            The account used to authenticate this session.
+        """
+        data = self._get("/authenticate", _AuthenticationResponseSchema())
+        return data.account
+
+    def authenticated_user_id(self):
+        """Get the user ID of the account used to authenticate this session.
+
+        Returns
+        -------
+        uuid.UUID
+            The user ID used to authenticate this session.
+        """
+        return self.authenticated_account().user_id
+
+
+class _AccountSchema(BaseSchema):
     user_id = fields.UUID(data_key="userId", required=True)
     username = fields.String(required=True)
 
@@ -32,24 +75,9 @@ class AccountSchema(BaseSchema):
         return Account(**data)
 
 
-AuthenticationResponse = namedtuple("AuthenticationResponse", ["account"])
-
-
-class AuthenticationResponseSchema(BaseSchema):
-    account = fields.Nested(AccountSchema, required=True)
+class _AuthenticationResponseSchema(BaseSchema):
+    account = fields.Nested(_AccountSchema, required=True)
 
     @post_load
     def make_authentication_response(self, data):
-        return AuthenticationResponse(**data)
-
-
-class AccountClient(BaseClient):
-
-    SERVICE_NAME = "hudson"
-
-    def authenticated_account(self):
-        data = self._get("/authenticate", AuthenticationResponseSchema())
-        return data.account
-
-    def authenticated_user_id(self):
-        return self.authenticated_account().user_id
+        return _AuthenticationResponse(**data)

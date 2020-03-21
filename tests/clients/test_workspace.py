@@ -23,10 +23,10 @@ from marshmallow import ValidationError
 from faculty.clients.workspace import (
     Directory,
     File,
-    FileNodeSchema,
-    ListResponse,
-    ListResponseSchema,
     WorkspaceClient,
+    _FileNodeSchema,
+    _ListResponse,
+    _ListResponseSchema,
 )
 
 
@@ -66,7 +66,7 @@ DIRECTORY_BODY = {
     "content": [FILE_BODY],
 }
 
-LIST_RESPONSE = ListResponse(
+LIST_RESPONSE = _ListResponse(
     project_id=uuid4(), path="/path/to/test-directory/", content=[DIRECTORY]
 )
 
@@ -78,30 +78,30 @@ LIST_RESPONSE_BODY = {
 
 
 def test_file_node_schema_file():
-    assert FileNodeSchema().load(FILE_BODY) == FILE
+    assert _FileNodeSchema().load(FILE_BODY) == FILE
 
 
 def test_file_node_schema_directory():
-    assert FileNodeSchema().load(DIRECTORY_BODY) == DIRECTORY
+    assert _FileNodeSchema().load(DIRECTORY_BODY) == DIRECTORY
 
 
 def test_file_node_schema_invalid():
     with pytest.raises(ValidationError):
-        FileNodeSchema().load({})
+        _FileNodeSchema().load({})
 
 
 def test_list_response_schema():
-    assert ListResponseSchema().load(LIST_RESPONSE_BODY) == LIST_RESPONSE
+    assert _ListResponseSchema().load(LIST_RESPONSE_BODY) == LIST_RESPONSE
 
 
 def test_list_response_schema_invalid():
     with pytest.raises(ValidationError):
-        ListResponseSchema().load({})
+        _ListResponseSchema().load({})
 
 
 def test_workspace_client_get(mocker):
     mocker.patch.object(WorkspaceClient, "_get", return_value=LIST_RESPONSE)
-    schema_mock = mocker.patch("faculty.clients.workspace.ListResponseSchema")
+    schema_mock = mocker.patch("faculty.clients.workspace._ListResponseSchema")
 
     client = WorkspaceClient(mocker.Mock())
     assert client.list(

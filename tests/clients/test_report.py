@@ -21,11 +21,11 @@ from marshmallow import ValidationError
 
 from faculty.clients.report import (
     Report,
-    ReportSchema,
-    ReportWithVersions,
-    ReportWithVersionsSchema,
-    ReportVersion,
     ReportClient,
+    ReportVersion,
+    ReportWithVersions,
+    _ReportSchema,
+    _ReportWithVersionsSchema,
 )
 
 
@@ -87,22 +87,22 @@ VERSIONED_REPORT_BODY = {
 
 
 def test_report_schema():
-    data = ReportSchema().load(REPORT_BODY)
+    data = _ReportSchema().load(REPORT_BODY)
     assert data == REPORT
     with pytest.raises(ValidationError):
-        ReportSchema().load({})
+        _ReportSchema().load({})
 
 
 def test_versioned_report_schema():
-    data = ReportWithVersionsSchema().load(VERSIONED_REPORT_BODY)
+    data = _ReportWithVersionsSchema().load(VERSIONED_REPORT_BODY)
     assert data == VERSIONED_REPORT
     with pytest.raises(ValidationError):
-        ReportWithVersionsSchema().load({})
+        _ReportWithVersionsSchema().load({})
 
 
 def test_report_client_list(mocker):
     mocker.patch.object(ReportClient, "_get", return_value=[REPORT])
-    schema_mock = mocker.patch("faculty.clients.report.ReportSchema")
+    schema_mock = mocker.patch("faculty.clients.report._ReportSchema")
 
     client = ReportClient(mocker.Mock())
 
@@ -117,7 +117,7 @@ def test_report_client_list(mocker):
 
 def test_report_client_get(mocker):
     mocker.patch.object(ReportClient, "_get", return_value=REPORT)
-    schema_mock = mocker.patch("faculty.clients.report.ReportSchema")
+    schema_mock = mocker.patch("faculty.clients.report._ReportSchema")
 
     client = ReportClient(mocker.Mock())
 
@@ -133,7 +133,7 @@ def test_report_client_get(mocker):
 def test_report_client_get_with_versions(mocker):
     mocker.patch.object(ReportClient, "_get", return_value=VERSIONED_REPORT)
     schema_mock = mocker.patch(
-        "faculty.clients.report.ReportWithVersionsSchema"
+        "faculty.clients.report._ReportWithVersionsSchema"
     )
 
     client = ReportClient(mocker.Mock())
@@ -149,7 +149,7 @@ def test_report_client_get_with_versions(mocker):
 
 def test_report_client_create(mocker):
     mocker.patch.object(ReportClient, "_post", return_value=REPORT)
-    schema_mock = mocker.patch("faculty.clients.report.ReportSchema")
+    schema_mock = mocker.patch("faculty.clients.report._ReportSchema")
 
     client = ReportClient(mocker.Mock())
 
@@ -181,7 +181,7 @@ def test_report_client_create(mocker):
 
 def test_report_client_create_version(mocker):
     mocker.patch.object(ReportClient, "_post", return_value=ACTIVE_VERSION)
-    schema_mock = mocker.patch("faculty.clients.report.ReportVersionSchema")
+    schema_mock = mocker.patch("faculty.clients.report._ReportVersionSchema")
 
     client = ReportClient(mocker.Mock())
 

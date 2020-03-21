@@ -22,9 +22,9 @@ import pytz
 import faculty.config
 from faculty.session.accesstoken import (
     AccessToken,
-    AccessTokenStore,
-    AccessTokenMemoryCache,
     AccessTokenFileSystemCache,
+    AccessTokenMemoryCache,
+    _AccessTokenStore,
     _default_token_cache_path,
 )
 
@@ -52,19 +52,19 @@ def mock_datetime_now(mocker):
 
 
 def test_access_token_store():
-    store = AccessTokenStore()
+    store = _AccessTokenStore()
     store[PROFILE] = VALID_ACCESS_TOKEN
     assert store[PROFILE] == VALID_ACCESS_TOKEN
 
 
 def test_access_token_store_get():
-    store = AccessTokenStore()
+    store = _AccessTokenStore()
     store[PROFILE] = VALID_ACCESS_TOKEN
     assert store.get(PROFILE) == VALID_ACCESS_TOKEN
 
 
 def test_access_token_store_get_default():
-    store = AccessTokenStore()
+    store = _AccessTokenStore()
     assert store.get(PROFILE) is None
 
 

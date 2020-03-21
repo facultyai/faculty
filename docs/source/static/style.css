@@ -1,0 +1,17 @@
+.wy-nav-side, .wy-nav-top {
+    background: #1c1c1c;
+}
+
+.rst-content dl:not(.docutils) dt {
+    color: #fa7268;
+    border-top: solid 3px #fa7268;
+    background: #ffefee;
+}
+
+.wy-menu-vertical header, .wy-menu-vertical p.caption, .rst-content a {
+    color: #fa7268;
+}
+
+.rst-content a:visited {
+    color: #bf0d00;
+}

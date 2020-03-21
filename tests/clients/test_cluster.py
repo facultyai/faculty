@@ -18,7 +18,7 @@ from decimal import Decimal
 import pytest
 from marshmallow import ValidationError
 
-from faculty.clients.cluster import NodeType, NodeTypeSchema, ClusterClient
+from faculty.clients.cluster import NodeType, ClusterClient, _NodeTypeSchema
 
 
 NODE_TYPE = NodeType(
@@ -75,18 +75,18 @@ NODE_TYPE_BODY_DEFAULT = {
 
 
 def test_node_type_schema():
-    data = NodeTypeSchema().load(NODE_TYPE_BODY)
+    data = _NodeTypeSchema().load(NODE_TYPE_BODY)
     assert data == NODE_TYPE
 
 
 def test_node_type_schema_with_defaults():
-    data = NodeTypeSchema().load(NODE_TYPE_BODY_DEFAULT)
+    data = _NodeTypeSchema().load(NODE_TYPE_BODY_DEFAULT)
     assert data == NODE_TYPE_DEFAULT
 
 
 def test_node_type_schema_load_invalid():
     with pytest.raises(ValidationError):
-        NodeTypeSchema().load({})
+        _NodeTypeSchema().load({})
 
 
 @pytest.mark.parametrize(
@@ -135,7 +135,7 @@ def test_cluster_client_list_single_tenanted_node_types(
     mocker, kwargs, query_params
 ):
     mocker.patch.object(ClusterClient, "_get", return_value=[NODE_TYPE])
-    schema_mock = mocker.patch("faculty.clients.cluster.NodeTypeSchema")
+    schema_mock = mocker.patch("faculty.clients.cluster._NodeTypeSchema")
 
     client = ClusterClient(mocker.Mock())
     assert client.list_single_tenanted_node_types(**kwargs) == [NODE_TYPE]

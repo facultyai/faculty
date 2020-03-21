@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Authentication against Faculty services.
+"""
+
 
 from requests.auth import AuthBase
 
@@ -23,6 +27,9 @@ class FacultyAuth(AuthBase):
     ----------
     session : faculty.session.Session
         The Faculty session to authenticate with
+
+    Examples
+    --------
 
     To perform an authenticated request against a Faculty service, first
     construct an instance of this class with a session:

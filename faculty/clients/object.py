@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Interact with Faculty datasets.
+"""
+
+
 from collections import namedtuple
 from enum import Enum
 from six.moves import urllib
@@ -71,7 +76,6 @@ Object = namedtuple("Object", ["path", "size", "etag", "last_modified_at"])
 ListObjectsResponse = namedtuple(
     "ListObjectsResponse", ["objects", "next_page_token"]
 )
-SimplePresignResponse = namedtuple("SimplePresignResponse", ["url"])
 PresignUploadResponse = namedtuple(
     "PresignUploadResponse", ["provider", "upload_id", "url"]
 )
@@ -80,60 +84,21 @@ CompletedUploadPart = namedtuple(
 )
 
 
-class ObjectSchema(BaseSchema):
-    path = fields.String(required=True)
-    size = fields.Integer(required=True)
-    etag = fields.String(required=True)
-    last_modified_at = fields.DateTime(
-        data_key="lastModifiedAt", required=True
-    )
-
-    @post_load
-    def make_object(self, data):
-        return Object(**data)
-
-
-class ListObjectsResponseSchema(BaseSchema):
-    objects = fields.List(fields.Nested(ObjectSchema), required=True)
-    next_page_token = fields.String(data_key="nextPageToken", missing=None)
-
-    @post_load
-    def make_list_objects_response(self, data):
-        return ListObjectsResponse(**data)
-
-
-class SimplePresignResponseSchema(BaseSchema):
-    url = fields.String(required=True)
-
-    @post_load
-    def make_simple_presign_response(self, data):
-        return SimplePresignResponse(**data)
-
-
-class PresignUploadResponseSchema(BaseSchema):
-    provider = EnumField(CloudStorageProvider, by_value=True, required=True)
-    upload_id = fields.String(data_key="uploadId", missing=None)
-    url = fields.String(missing=None)
-
-    @post_load
-    def make_presign_upload_response(self, data):
-        return PresignUploadResponse(**data)
-
-
-class CompletedUploadPartSchema(BaseSchema):
-    part_number = fields.Integer(data_key="partNumber")
-    etag = fields.String()
-
-
-class CompleteMultipartUploadSchema(BaseSchema):
-    path = fields.String()
-    upload_id = fields.String(data_key="uploadId")
-    parts = fields.List(fields.Nested(CompletedUploadPartSchema))
-
-
 class ObjectClient(BaseClient):
+    """Client for the Faculty object storage service.
 
-    SERVICE_NAME = "hoard"
+    Either build this client with a session directly, or use the
+    :func:`faculty.client` helper function:
+
+    >>> client = faculty.client("object")
+
+    Parameters
+    ----------
+    session : faculty.session.Session
+        The session to use to make requests
+    """
+
+    _SERVICE_NAME = "hoard"
 
     def get(self, project_id, path):
         """Get metadata about a single object.
@@ -141,17 +106,20 @@ class ObjectClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
+            The project containing the object.
         path : str
+            The path of the object in the project's datasets.
 
         Returns
         -------
         Object
+            Information about the requested object.
         """
 
         url_encoded_path = urllib.parse.quote(path.lstrip("/"))
 
         endpoint = "/project/{}/object/{}".format(project_id, url_encoded_path)
-        return self._get(endpoint, ObjectSchema())
+        return self._get(endpoint, _ObjectSchema())
 
     def list(self, project_id, prefix="/", page_token=None):
         """List objects in the store.
@@ -170,6 +138,7 @@ class ObjectClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
+            The project containing the objects.
         prefix : str, optional
             If specified, only list files in the store matching this prefix.
         page_token : str, optional
@@ -189,7 +158,7 @@ class ObjectClient(BaseClient):
         params = {}
         if page_token is not None:
             params["pageToken"] = page_token
-        return self._get(endpoint, ListObjectsResponseSchema(), params=params)
+        return self._get(endpoint, _ListObjectsResponseSchema(), params=params)
 
     def create_directory(self, project_id, path, parents=False):
         """Create empty object as placeholder to a directory in the store.
@@ -197,17 +166,18 @@ class ObjectClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
+            The project to create a directory in.
         path : str
             Create empty object at this source path as a placeholder
-            for a directory
+            for a directory.
         parents : bool, optional
             Create also missing parent directories, with behaviour similar to
-            mkdir -p
+            ``mkdir -p``.
 
         Raises
         ------
         PathAlreadyExists
-            when the path that we want to create as a directory already exists
+            When the path that we want to create as a directory already exists.
         """
         url_encoded_path = urllib.parse.quote(path.lstrip("/"))
 
@@ -229,10 +199,11 @@ class ObjectClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
+            The project to copy objects in.
         source : str
-            Copy object(s) from this source path
+            Copy object(s) from this source path.
         destination : str
-            Copy to this destination path
+            Copy to this destination path.
         recursive : bool, optional
             If present allows to copy whole paths with all its content,
             like a recursive copy in a filesystem. By default the action
@@ -241,9 +212,10 @@ class ObjectClient(BaseClient):
         Raises
         ------
         PathNotFound
-            When the source path does not exist or is not found
+            When the source path does not exist or is not found.
         SourceIsADirectory
-            When the source path to copy is a directory but recursive is false
+            When the source path to copy is a directory but recursive is
+            ``False``.
         """
 
         url_encoded_destination = urllib.parse.quote(destination.lstrip("/"))
@@ -273,8 +245,9 @@ class ObjectClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
+            The project to delete objects from.
         path : str
-            Delete object(s) from this path
+            Delete object(s) from this path.
         recursive : bool, optional
             If present allows to delete whole paths with all its content,
             like a recursive delete in a filesystem. By default the action
@@ -283,15 +256,18 @@ class ObjectClient(BaseClient):
         Raises
         ------
         PathNotFound
-            When the path does not exist or is not found
+            When the path does not exist or is not found.
         TargetIsADirectory
-            When the target to delete is a directory but recursive is false
+            When the target to delete is a directory but recursive is
+            ``False``.
         """
+
         url_encoded_path = urllib.parse.quote(path.lstrip("/"))
         endpoint = "/project/{}/object/{}".format(project_id, url_encoded_path)
         params = {}
         if recursive is not None:
             params["recursive"] = 1 if recursive else 0
+
         try:
             self._delete_raw(endpoint, params=params)
         except NotFound as err:
@@ -313,7 +289,9 @@ class ObjectClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
+            The project containing the object.
         path : str
+            The path of the object.
         response_content_disposition : str, optional
             Sets the 'Content-Disposition' header in the response when the
             generated presigned URL is used.
@@ -328,7 +306,7 @@ class ObjectClient(BaseClient):
         if response_content_disposition is not None:
             body["responseContentDisposition"] = response_content_disposition
         response = self._post(
-            endpoint, SimplePresignResponseSchema(), json=body
+            endpoint, _SimplePresignResponseSchema(), json=body
         )
         return response.url
 
@@ -336,13 +314,15 @@ class ObjectClient(BaseClient):
         """Generate a presigned URL for upload of an object over HTTP.
 
         Due to differences in how S3 and GCS handle uploads of large files, the
-        content of the PresignUploadResponse returned by this method will vary
-        depending on the storage backend.
+        content of the :class:`PresignUploadResponse` returned by this method
+        will vary depending on the storage backend.
 
         Parameters
         ----------
         project_id : uuid.UUID
+            The project to upload to.
         path : str
+            The path to upload to.
 
         Returns
         -------
@@ -350,33 +330,32 @@ class ObjectClient(BaseClient):
             Containing the storage provider plus an upload ID or presigned URL,
             as appropriate for the storage provider.
 
-        AWS Simple Storage Service (S3)
-        -------------------------------
+        Notes
+        -----
 
-        In the case that the returned ``provider`` is
-        ``CloudStorageProvider.S3``, the uploaded file must be broken up into
-        chunks of at least 5MB size (the last chunk may be any size), then each
-        chunk must be uploaded by:
+        When the object store is backed by AWS S3 (Simple Storage Service), the
+        the returned ``provider`` will be :const:`CloudStorageProvider.S3`. In
+        this case, the uploaded file must be broken up into chunks of at least
+        5MB size (the last chunk may be any size), then each chunk must be
+        uploaded by:
 
         1. Assign each chunk a part number, starting from 1
-        2. Presign the chunk for upload with the ``presign_upload_part`` method
+        2. Presign the chunk for upload with :meth:`presign_upload_part`
         3. Upload the chunk by PUTting to the returned URL
         4. Get the 'ETag' header from the response
 
-        Once all chunks have been uploaded, make a final call to the
-        ``complete_multipart_upload`` method to finalise the upload. The last
-        argument to ``complete_multipart_upload`` must be a collection of
-        ``CompletedUploadPart`` objects containing the part numbers and etags
-        generated above.
+        Once all chunks have been uploaded, make a final call to
+        :meth:`complete_multipart_upload` to finalise the upload. The last
+        argument to :meth:`complete_multipart_upload` must be a collection of
+        :class:`CompletedUploadPart` objects containing the part numbers and
+        etags generated above.
 
-        Google Cloud Storage (GCS)
-        --------------------------
-
-        In the case that the returned ``provider`` is
-        ``CloudStorageProvider.GCS``, you can directly PUT the full contents of
-        the object to the returned URL in a single request, and then resume the
-        download with subsequent requests if the connection drops at some
-        point.
+        Alternatively, when the object store is backed by GCS (Google Cloud
+        Storage), the returned ``provider`` will be
+        :const:`CloudStorageProvider.GCS`. In this case, you can directly PUT
+        the full contents of the object to the returned URL in a single
+        request, and then resume the download with subsequent requests if the
+        connection drops at some point.
 
         For full details, see the GCP documentation, starting from "Step 3 -
         Upload the file":
@@ -384,7 +363,7 @@ class ObjectClient(BaseClient):
         """
         endpoint = "/project/{}/presign/upload".format(project_id)
         body = {"path": path}
-        return self._post(endpoint, PresignUploadResponseSchema(), json=body)
+        return self._post(endpoint, _PresignUploadResponseSchema(), json=body)
 
     def presign_upload_part(self, project_id, path, upload_id, part_number):
         """Generate a presigned URL for a part of an S3 multipart upload.
@@ -392,9 +371,11 @@ class ObjectClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
+            The project being uploaded to.
         path : str
+            The path being uploaded to.
         upload_id : str
-            The S3 upload ID returned by ``presign_upload``.
+            The S3 upload ID returned by :meth:`presign_upload`.
         part_number : int
             The number of the part determining its ordering. Part numbers start
             from 1.
@@ -407,7 +388,7 @@ class ObjectClient(BaseClient):
         endpoint = "/project/{}/presign/upload/part".format(project_id)
         body = {"path": path, "uploadId": upload_id, "partNumber": part_number}
         response = self._put(
-            endpoint, SimplePresignResponseSchema(), json=body
+            endpoint, _SimplePresignResponseSchema(), json=body
         )
         return response.url
 
@@ -419,18 +400,74 @@ class ObjectClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
+            The project being uploaded to.
         path : str
+            The path being uploaded to.
         upload_id : str
-            The S3 upload ID returned by ``presign_upload``.
+            The S3 upload ID returned by :meth:`presign_upload`.
         completed_parts : List[CompletedUploadPart]
-            Information about the uploaded parts. The ``CompletedUploadPart``s
-            contain both the part numbers and the ETag for each part, which is
-            obtained from the ``ETag`` header in the HTTP response when
-            uploading each part.
+            Information about the uploaded parts. Each
+            :class:`CompletedUploadPart` contains the part number and the
+            ETag for each previously uploaded part. The ETags are obtained from
+            the ``ETag`` header in the HTTP response when uploading each part.
         """
         endpoint = "/project/{}/presign/upload/complete".format(project_id)
-        schema = CompleteMultipartUploadSchema()
+        schema = _CompleteMultipartUploadSchema()
         body = schema.dump(
             {"path": path, "upload_id": upload_id, "parts": completed_parts}
         )
         self._put_raw(endpoint, json=body)
+
+
+_SimplePresignResponse = namedtuple("_SimplePresignResponse", ["url"])
+
+
+class _ObjectSchema(BaseSchema):
+    path = fields.String(required=True)
+    size = fields.Integer(required=True)
+    etag = fields.String(required=True)
+    last_modified_at = fields.DateTime(
+        data_key="lastModifiedAt", required=True
+    )
+
+    @post_load
+    def make_object(self, data):
+        return Object(**data)
+
+
+class _ListObjectsResponseSchema(BaseSchema):
+    objects = fields.List(fields.Nested(_ObjectSchema), required=True)
+    next_page_token = fields.String(data_key="nextPageToken", missing=None)
+
+    @post_load
+    def make_list_objects_response(self, data):
+        return ListObjectsResponse(**data)
+
+
+class _SimplePresignResponseSchema(BaseSchema):
+    url = fields.String(required=True)
+
+    @post_load
+    def make_simple_presign_response(self, data):
+        return _SimplePresignResponse(**data)
+
+
+class _PresignUploadResponseSchema(BaseSchema):
+    provider = EnumField(CloudStorageProvider, by_value=True, required=True)
+    upload_id = fields.String(data_key="uploadId", missing=None)
+    url = fields.String(missing=None)
+
+    @post_load
+    def make_presign_upload_response(self, data):
+        return PresignUploadResponse(**data)
+
+
+class _CompletedUploadPartSchema(BaseSchema):
+    part_number = fields.Integer(data_key="partNumber")
+    etag = fields.String()
+
+
+class _CompleteMultipartUploadSchema(BaseSchema):
+    path = fields.String()
+    upload_id = fields.String(data_key="uploadId")
+    parts = fields.List(fields.Nested(_CompletedUploadPartSchema))

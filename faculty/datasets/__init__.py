@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Query, read and write Faculty datasets."""
+
 
 import fnmatch
 import os
@@ -23,7 +25,7 @@ import io
 from faculty.session import get_session
 from faculty.context import get_context
 from faculty.clients.object import ObjectClient
-from faculty.datasets import util, transfer
+from faculty.datasets import transfer
 from faculty.datasets.util import DatasetsError
 
 
@@ -172,7 +174,7 @@ def _isfile(project_path, project_id=None, object_client=None):
         show_hidden=True,
         object_client=object_client,
     )
-    rationalised_path = util.rationalise_path(project_path)
+    rationalised_path = _rationalise_path(project_path)
     return any(match == rationalised_path for match in matches)
 
 
@@ -266,7 +268,7 @@ def _get_directory(project_path, local_path, project_id, object_client):
     for object_path in paths_to_get:
 
         local_dest = os.path.join(
-            local_path, util.get_relative_path(project_path, object_path)
+            local_path, _get_relative_path(project_path, object_path)
         )
 
         if object_path.endswith("/"):
@@ -433,7 +435,7 @@ def rmdir(project_path, project_id=None, object_client=None):
         object_client=object_client,
     )
 
-    rationalised_path = util.rationalise_path(project_path)
+    rationalised_path = _rationalise_path(project_path)
     project_path_as_file = rationalised_path.rstrip("/")
     project_path_as_dir = project_path_as_file + "/"
 
@@ -525,3 +527,31 @@ def open(project_path, mode="r", temp_dir=None, project_id=None, **kwargs):
             os.remove(local_path)
         if os.path.isdir(tmpdir):
             os.rmdir(tmpdir)
+
+
+def _rationalise_path(path):
+
+    # All paths should be relative to root
+    path = posixpath.join("/", path)
+
+    normed = posixpath.normpath(path)
+
+    if path.endswith("/") and not normed.endswith("/"):
+        normed += "/"
+
+    return normed
+
+
+def _get_relative_path(parent_directory, directory):
+
+    parent_directory = _rationalise_path(parent_directory)
+    directory = _rationalise_path(directory)
+
+    if not directory.startswith(parent_directory):
+        tpl = "{} is not a sub path of {}"
+        raise ValueError(tpl.format(directory, parent_directory))
+
+    # Remove the root
+    relative_path = posixpath.relpath(directory, parent_directory)
+
+    return relative_path

@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Get information about the current platform context.
+"""
+
 
 import os
 import warnings
@@ -22,7 +26,39 @@ from attr import attrs, attrib
 
 @attrs
 class PlatformContext(object):
-    """Information about the runtime context in Faculty platform."""
+    """Information about the runtime context in Faculty platform.
+
+    Parameters
+    ----------
+    project_id : uuid.UUID
+        The ID of the current project.
+    server_id : uuid.UUID
+        The ID of the current server.
+    server_name : str
+        The name of the current server.
+    server_cpus : int
+        The number of CPUs on the current server.
+    server_gpus : int
+        The number of GPUs on the current server.
+    server_memory_mb : int
+        The amount of memory available on the current server, in MB.
+    app_id : uuid.UUID
+        The ID of the current app.
+    api_id : uuid.UUID
+        The ID of the current API.
+    job_id : uuid.UUID
+        The ID of the current job.
+    job_name : str
+        The name of the current job.
+    job_run_id : uuid.UUID
+        The ID of the current job run.
+    job_run_number : int
+        The number of the current job run.
+    job_subrun_id : uuid.UUID
+        The ID of the current job subrun.
+    job_subrun_number : int
+        The number of the current job subrun.
+    """
 
     project_id = attrib()
 
@@ -43,27 +79,13 @@ class PlatformContext(object):
     job_subrun_number = attrib()
 
 
-def _get_environ_as_type(key, cls):
-    try:
-        return cls(os.environ[key])
-    except KeyError:
-        # Not in environment
-        return None
-    except ValueError:
-        # Badly formatted
-        template = (
-            "Error interpreting badly formatted environment variable {}={}"
-        )
-        warnings.warn(template.format(key, os.environ[key]))
-        return None
-
-
 def get_context():
     """Get information about the Faculty platform runtime context.
 
     Returns
     -------
     PlatformContext
+        Information about the current platform context.
     """
     return PlatformContext(
         project_id=_get_environ_as_type("FACULTY_PROJECT_ID", UUID),
@@ -81,3 +103,18 @@ def get_context():
         job_subrun_id=_get_environ_as_type("FACULTY_SUBRUN_ID", UUID),
         job_subrun_number=_get_environ_as_type("FACULTY_SUBRUN_NUMBER", int),
     )
+
+
+def _get_environ_as_type(key, cls):
+    try:
+        return cls(os.environ[key])
+    except KeyError:
+        # Not in environment
+        return None
+    except ValueError:
+        # Badly formatted
+        template = (
+            "Error interpreting badly formatted environment variable {}={}"
+        )
+        warnings.warn(template.format(key, os.environ[key]))
+        return None

@@ -20,7 +20,7 @@ import pytest
 from marshmallow import ValidationError
 from pytz import UTC
 
-from faculty.clients.experiment._models import (
+from faculty.clients.experiment import (
     ComparisonOperator,
     CompoundFilter,
     DeleteExperimentRunsResponse,
@@ -53,24 +53,22 @@ from faculty.clients.experiment._models import (
     Tag,
     TagFilter,
     TagSort,
-)
-from faculty.clients.experiment._schemas import (
-    CreateRunSchema,
-    DeleteExperimentRunsResponseSchema,
-    ExperimentRunDataSchema,
-    ExperimentRunSchema,
-    ExperimentSchema,
-    FilterSchema,
-    ListExperimentRunsResponseSchema,
-    MetricHistorySchema,
-    MetricSchema,
-    PageSchema,
-    PaginationSchema,
-    ParamSchema,
-    RestoreExperimentRunsResponseSchema,
-    RunQuerySchema,
-    SortSchema,
-    TagSchema,
+    _CreateRunSchema,
+    _DeleteExperimentRunsResponseSchema,
+    _ExperimentRunDataSchema,
+    _ExperimentRunSchema,
+    _ExperimentSchema,
+    _FilterSchema,
+    _ListExperimentRunsResponseSchema,
+    _MetricHistorySchema,
+    _MetricSchema,
+    _PageSchema,
+    _PaginationSchema,
+    _ParamSchema,
+    _RestoreExperimentRunsResponseSchema,
+    _RunQuerySchema,
+    _SortSchema,
+    _TagSchema,
 )
 
 PROJECT_ID = uuid4()
@@ -254,24 +252,24 @@ RESTORE_EXPERIMENT_RUNS_RESPONSE_BODY = {
 
 
 def test_experiment_schema():
-    data = ExperimentSchema().load(EXPERIMENT_BODY)
+    data = _ExperimentSchema().load(EXPERIMENT_BODY)
     assert data == EXPERIMENT
 
 
 def test_experiment_schema_nullable_deleted_at():
     body = EXPERIMENT_BODY.copy()
     body["deletedAt"] = None
-    data = ExperimentSchema().load(body)
+    data = _ExperimentSchema().load(body)
     assert data.deleted_at is None
 
 
 def test_experiment_schema_invalid():
     with pytest.raises(ValidationError):
-        ExperimentSchema().load({})
+        _ExperimentSchema().load({})
 
 
 def test_experiment_run_schema():
-    data = ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
+    data = _ExperimentRunSchema().load(EXPERIMENT_RUN_BODY)
     assert data == EXPERIMENT_RUN
 
 
@@ -286,7 +284,7 @@ def test_experiment_run_schema():
 def test_experiment_run_schema_nullable_field(data_key, field):
     body = EXPERIMENT_RUN_BODY.copy()
     del body[data_key]
-    data = ExperimentRunSchema().load(body)
+    data = _ExperimentRunSchema().load(body)
     assert getattr(data, field) is None
 
 
@@ -299,7 +297,7 @@ def test_experiment_run_schema_nullable_field(data_key, field):
 @pytest.mark.parametrize("artifact_location", [None, "faculty:project-id"])
 @pytest.mark.parametrize("tags", [[], [{"key": "key", "value": "value"}]])
 def test_create_run_schema(parent_run_id, started_at, artifact_location, tags):
-    data = CreateRunSchema().dump(
+    data = _CreateRunSchema().dump(
         {
             "name": EXPERIMENT_RUN_NAME,
             "parent_run_id": parent_run_id,
@@ -318,39 +316,39 @@ def test_create_run_schema(parent_run_id, started_at, artifact_location, tags):
 
 
 def test_metric_schema():
-    data = MetricSchema().load(METRIC_BODY)
+    data = _MetricSchema().load(METRIC_BODY)
     assert data == METRIC
 
 
 def test_param_schema():
-    data = ParamSchema().load(PARAM_BODY)
+    data = _ParamSchema().load(PARAM_BODY)
     assert data == PARAM
 
 
 def test_tag_schema():
-    data = TagSchema().load(TAG_BODY)
+    data = _TagSchema().load(TAG_BODY)
     assert data == TAG
 
 
 def test_tag_schema_dump():
-    data = TagSchema().dump(TAG_BODY)
+    data = _TagSchema().dump(TAG_BODY)
     assert data == TAG_BODY
 
 
 def test_experiment_run_data_schema():
-    data = ExperimentRunDataSchema().dump(
+    data = _ExperimentRunDataSchema().dump(
         {"metrics": [METRIC], "params": [PARAM], "tags": [TAG]}
     )
     assert data == EXPERIMENT_RUN_DATA_BODY
 
 
 def test_experiment_run_data_schema_empty():
-    data = ExperimentRunDataSchema().dump({})
+    data = _ExperimentRunDataSchema().dump({})
     assert data == {}
 
 
 def test_experiment_run_data_schema_multiple():
-    data = ExperimentRunDataSchema().dump({"tags": [TAG, OTHER_TAG]})
+    data = _ExperimentRunDataSchema().dump({"tags": [TAG, OTHER_TAG]})
     assert data == {"tags": [TAG_BODY, OTHER_TAG_BODY]}
 
 
@@ -402,7 +400,7 @@ def test_filter_schema_project_id(
     operator, value, expected_operator, expected_value
 ):
     filter = ProjectIdFilter(operator, value)
-    data = FilterSchema().dump(filter)
+    data = _FilterSchema().dump(filter)
     assert data == {
         "by": "projectId",
         "operator": expected_operator,
@@ -418,7 +416,7 @@ def test_filter_schema_experiment_id(
     operator, value, expected_operator, expected_value
 ):
     filter = ExperimentIdFilter(operator, value)
-    data = FilterSchema().dump(filter)
+    data = _FilterSchema().dump(filter)
     assert data == {
         "by": "experimentId",
         "operator": expected_operator,
@@ -434,7 +432,7 @@ def test_filter_schema_run_id(
     operator, value, expected_operator, expected_value
 ):
     filter = RunIdFilter(operator, value)
-    data = FilterSchema().dump(filter)
+    data = _FilterSchema().dump(filter)
     assert data == {
         "by": "runId",
         "operator": expected_operator,
@@ -450,7 +448,7 @@ def test_filter_schema_run_status(
     operator, value, expected_operator, expected_value
 ):
     filter = RunStatusFilter(operator, value)
-    data = FilterSchema().dump(filter)
+    data = _FilterSchema().dump(filter)
     assert data == {
         "by": "status",
         "operator": expected_operator,
@@ -466,7 +464,7 @@ def test_filter_schema_deleted_at(
     operator, value, expected_operator, expected_value
 ):
     filter = DeletedAtFilter(operator, value)
-    data = FilterSchema().dump(filter)
+    data = _FilterSchema().dump(filter)
     assert data == {
         "by": "deletedAt",
         "operator": expected_operator,
@@ -480,7 +478,7 @@ def test_filter_schema_deleted_at(
 )
 def test_filter_schema_tag(operator, value, expected_operator, expected_value):
     filter = TagFilter("tag-key", operator, value)
-    data = FilterSchema().dump(filter)
+    data = _FilterSchema().dump(filter)
     assert data == {
         "by": "tag",
         "key": "tag-key",
@@ -498,7 +496,7 @@ def test_filter_schema_param(
     operator, value, expected_operator, expected_value
 ):
     filter = ParamFilter("param-key", operator, value)
-    data = FilterSchema().dump(filter)
+    data = _FilterSchema().dump(filter)
     assert data == {
         "by": "param",
         "key": "param-key",
@@ -515,7 +513,7 @@ def test_filter_schema_metric(
     operator, value, expected_operator, expected_value
 ):
     filter = MetricFilter("metric-key", operator, value)
-    data = FilterSchema().dump(filter)
+    data = _FilterSchema().dump(filter)
     assert data == {
         "by": "metric",
         "key": "metric-key",
@@ -527,7 +525,7 @@ def test_filter_schema_metric(
 def test_filter_schema_invalid_value_run_status():
     filter = RunStatusFilter(ComparisonOperator.EQUAL_TO, "invalid")
     with pytest.raises(AttributeError):
-        FilterSchema().dump(filter)
+        _FilterSchema().dump(filter)
 
 
 @pytest.mark.parametrize(
@@ -537,7 +535,7 @@ def test_filter_schema_invalid_value_run_status():
 def test_filter_schema_invalid_value_no_key(filter_type):
     filter = filter_type(ComparisonOperator.EQUAL_TO, "invalid")
     with pytest.raises(ValidationError):
-        FilterSchema().dump(filter)
+        _FilterSchema().dump(filter)
 
 
 @pytest.mark.parametrize(
@@ -546,7 +544,7 @@ def test_filter_schema_invalid_value_no_key(filter_type):
 def test_filter_schema_invalid_value_with_key(filter_type, value):
     filter = filter_type("key", ComparisonOperator.EQUAL_TO, value)
     with pytest.raises(ValidationError):
-        FilterSchema().dump(filter)
+        _FilterSchema().dump(filter)
 
 
 @pytest.mark.parametrize(
@@ -570,7 +568,7 @@ def test_filter_schema_invalid_value_with_key(filter_type, value):
 def test_filter_schema_invalid_operator_no_key(filter_type, value, operator):
     filter = filter_type(operator, value)
     with pytest.raises(ValidationError, match="Not a discrete operator"):
-        FilterSchema().dump(filter)
+        _FilterSchema().dump(filter)
 
 
 @pytest.mark.parametrize(
@@ -589,7 +587,7 @@ def test_filter_schema_invalid_operator_no_key(filter_type, value, operator):
 def test_filter_schema_invalid_operator_with_key(filter_type, value, operator):
     filter = filter_type("key", operator, value)
     with pytest.raises(ValidationError, match="Not a discrete operator"):
-        FilterSchema().dump(filter)
+        _FilterSchema().dump(filter)
 
 
 @pytest.mark.parametrize(
@@ -598,7 +596,7 @@ def test_filter_schema_invalid_operator_with_key(filter_type, value, operator):
 )
 def test_filter_schema_compound(operator, expected_operator):
     filter = CompoundFilter(operator, [PROJECT_ID_FILTER, TAG_FILTER])
-    data = FilterSchema().dump(filter)
+    data = _FilterSchema().dump(filter)
     assert data == {
         "operator": expected_operator,
         "conditions": [PROJECT_ID_FILTER_BODY, TAG_FILTER_BODY],
@@ -617,7 +615,7 @@ def test_filter_schema_nested():
             ),
         ],
     )
-    data = FilterSchema().dump(filter)
+    data = _FilterSchema().dump(filter)
     assert data == {
         "operator": "and",
         "conditions": [
@@ -646,7 +644,7 @@ def test_filter_schema_nested():
 )
 def test_sort_schema_no_key(sort_type, by, order, expected_order):
     sort = sort_type(order)
-    data = SortSchema().dump(sort)
+    data = _SortSchema().dump(sort)
     assert data == {"by": by, "order": expected_order}
 
 
@@ -659,54 +657,54 @@ def test_sort_schema_no_key(sort_type, by, order, expected_order):
 )
 def test_sort_schema_with_key(sort_type, by, order, expected_order):
     sort = sort_type("sort-key", order)
-    data = SortSchema().dump(sort)
+    data = _SortSchema().dump(sort)
     assert data == {"by": by, "key": "sort-key", "order": expected_order}
 
 
 def test_run_query_schema(mocker):
-    mocker.patch.object(FilterSchema, "dump")
-    mocker.patch.object(SortSchema, "dump")
-    mocker.patch.object(PageSchema, "dump")
+    mocker.patch.object(_FilterSchema, "dump")
+    mocker.patch.object(_SortSchema, "dump")
+    mocker.patch.object(_PageSchema, "dump")
 
     filter = mocker.Mock()
     sorts = [mocker.Mock(), mocker.Mock()]
     page = mocker.Mock()
 
     run_query = RunQuery(filter, sorts, page)
-    data = RunQuerySchema().dump(run_query)
+    data = _RunQuerySchema().dump(run_query)
 
     assert data == {
-        "filter": FilterSchema.dump.return_value,
-        "sort": [SortSchema.dump.return_value, SortSchema.dump.return_value],
-        "page": PageSchema.dump.return_value,
+        "filter": _FilterSchema.dump.return_value,
+        "sort": [_SortSchema.dump.return_value, _SortSchema.dump.return_value],
+        "page": _PageSchema.dump.return_value,
     }
 
 
 def test_run_query_schema_defaults():
     run_query = RunQuery(None, None, None)
-    data = RunQuerySchema().dump(run_query)
+    data = _RunQuerySchema().dump(run_query)
     assert data == {"filter": None, "sort": None, "page": None}
 
 
 def test_list_runs_schema(mocker):
-    data = ListExperimentRunsResponseSchema().load(
+    data = _ListExperimentRunsResponseSchema().load(
         LIST_EXPERIMENT_RUNS_RESPONSE_BODY
     )
     assert data == LIST_EXPERIMENT_RUNS_RESPONSE
 
 
 def test_page_schema_load():
-    data = PageSchema().load(PAGE_BODY)
+    data = _PageSchema().load(PAGE_BODY)
     assert data == PAGE
 
 
 def test_page_schema_dump():
-    data = PageSchema().dump(PAGE)
+    data = _PageSchema().dump(PAGE)
     assert data == PAGE_BODY
 
 
 def test_pagination_schema():
-    data = PaginationSchema().load(PAGINATION_BODY)
+    data = _PaginationSchema().load(PAGINATION_BODY)
     assert data == PAGINATION
 
 
@@ -714,12 +712,12 @@ def test_pagination_schema():
 def test_pagination_schema_nullable_field(field):
     body = PAGINATION_BODY.copy()
     del body[field]
-    data = PaginationSchema().load(body)
+    data = _PaginationSchema().load(body)
     assert getattr(data, field) is None
 
 
 def test_delete_experiment_runs_response_schema(mocker):
-    data = DeleteExperimentRunsResponseSchema().load(
+    data = _DeleteExperimentRunsResponseSchema().load(
         DELETE_EXPERIMENT_RUNS_RESPONSE_BODY
     )
     assert data == DELETE_EXPERIMENT_RUNS_RESPONSE
@@ -727,11 +725,11 @@ def test_delete_experiment_runs_response_schema(mocker):
 
 def test_delete_experiment_runs_response_schema_invalid(mocker):
     with pytest.raises(ValidationError):
-        DeleteExperimentRunsResponseSchema().load({})
+        _DeleteExperimentRunsResponseSchema().load({})
 
 
 def test_restore_experiment_runs_response_schema(mocker):
-    data = RestoreExperimentRunsResponseSchema().load(
+    data = _RestoreExperimentRunsResponseSchema().load(
         RESTORE_EXPERIMENT_RUNS_RESPONSE_BODY
     )
     assert data == RESTORE_EXPERIMENT_RUNS_RESPONSE
@@ -739,14 +737,14 @@ def test_restore_experiment_runs_response_schema(mocker):
 
 def test_restore_experiment_runs_response_schema_invalid(mocker):
     with pytest.raises(ValidationError):
-        RestoreExperimentRunsResponseSchema().load({})
+        _RestoreExperimentRunsResponseSchema().load({})
 
 
 def test_metric_history_schema():
-    data = MetricHistorySchema().load(METRIC_HISTORY_BODY)
+    data = _MetricHistorySchema().load(METRIC_HISTORY_BODY)
     assert data == METRIC_HISTORY
 
 
 def test_metric_history_schema_invalid():
     with pytest.raises(ValidationError):
-        MetricHistorySchema().load({})
+        _MetricHistorySchema().load({})
