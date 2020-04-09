@@ -4,6 +4,8 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
+
 # -- Project information -----------------------------------------------------
 
 project = "Faculty library"
@@ -20,6 +22,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
     "faculty_sphinx_theme",
 ]
 
@@ -50,3 +53,16 @@ html_show_sphinx = False
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["static"]
+
+
+# -- Intersphinx config ------------------------------------------------------
+
+user_guide_root = (
+    os.environ.get("USER_GUIDE_ROOT") or "https://docs.faculty.ai/user-guide/"
+)
+user_guide_inventory = (
+    os.environ.get("USER_GUIDE_INVENTORY")
+    or user_guide_root.strip("/") + "/objects.inv"
+)
+
+intersphinx_mapping = {"user-guide": (user_guide_root, user_guide_inventory)}
