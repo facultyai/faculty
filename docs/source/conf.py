@@ -8,7 +8,9 @@ import os
 
 # -- Project information -----------------------------------------------------
 
-project = "Faculty library"
+combined_docs = bool(int(os.environ.get("COMBINED_DOCS", False)))
+
+project = "Python library" if combined_docs else "Faculty Python library"
 copyright = "2020 Faculty Science Limited"
 author = "Faculty"
 
@@ -45,6 +47,11 @@ exclude_patterns = []
 # a list of builtin themes.
 
 html_theme = "faculty-sphinx-theme"
+html_theme_options = {
+    "navigation": combined_docs,
+}
+if "COMBINED_DOCS_ROOT" in os.environ:
+    html_theme_options["navigation_root"] = os.environ["COMBINED_DOCS_ROOT"]
 
 # Disable Sphinx attribution
 html_show_sphinx = False
