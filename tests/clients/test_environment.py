@@ -22,33 +22,33 @@ from marshmallow import ValidationError
 from faculty.clients.environment import (
     Apt,
     AptPackage,
-    AptPackageSchema,
-    AptSchema,
-    AptVersionSchema,
     Conda,
-    CondaSchema,
     Constraint,
     Environment,
     EnvironmentClient,
-    EnvironmentCreateUpdate,
-    EnvironmentCreateUpdateSchema,
-    EnvironmentCreationResponse,
-    EnvironmentCreationResponseSchema,
-    EnvironmentSchema,
     Pip,
-    PipSchema,
-    PythonSpecification,
-    PythonPackage,
-    PythonPackageSchema,
-    PythonSpecificationSchema,
     PythonEnvironment,
-    PythonEnvironmentSchema,
+    PythonPackage,
+    PythonSpecification,
     Script,
-    ScriptSchema,
     Specification,
-    SpecificationSchema,
     Version,
-    PythonVersionSchema,
+    _AptPackageSchema,
+    _AptSchema,
+    _AptVersionSchema,
+    _CondaSchema,
+    _EnvironmentCreateUpdate,
+    _EnvironmentCreateUpdateSchema,
+    _EnvironmentCreationResponse,
+    _EnvironmentCreationResponseSchema,
+    _EnvironmentSchema,
+    _PipSchema,
+    _PythonEnvironmentSchema,
+    _PythonPackageSchema,
+    _PythonSpecificationSchema,
+    _PythonVersionSchema,
+    _ScriptSchema,
+    _SpecificationSchema,
 )
 
 VERSION_BODY = {"constraint": "==", "identifier": "1.0.0"}
@@ -194,14 +194,14 @@ ENVIRONMENT_NO_DESCRIPTION = Environment(
 )
 
 ENVIRONMENT_CREATION_RESPONSE_BODY = {"environmentId": str(ENVIRONMENT_ID)}
-ENVIRONMENT_CREATION_RESPONSE = EnvironmentCreationResponse(id=ENVIRONMENT_ID)
+ENVIRONMENT_CREATION_RESPONSE = _EnvironmentCreationResponse(id=ENVIRONMENT_ID)
 
 ENVIRONMENT_CREATE_UPDATE_BODY = {
     "name": NAME,
     "description": DESCRIPTION,
     "specification": SPECIFICATION_BODY,
 }
-ENVIRONMENT_CREATE_UPDATE = EnvironmentCreateUpdate(
+ENVIRONMENT_CREATE_UPDATE = _EnvironmentCreateUpdate(
     name=NAME, description=DESCRIPTION, specification=SPECIFICATION
 )
 ENVIRONMENT_CREATE_UPDATE_BODY_NO_DESCRIPTION = {
@@ -209,49 +209,49 @@ ENVIRONMENT_CREATE_UPDATE_BODY_NO_DESCRIPTION = {
     "description": None,
     "specification": SPECIFICATION_BODY,
 }
-ENVIRONMENT_CREATE_UPDATE_NO_DESCRIPTION = EnvironmentCreateUpdate(
+ENVIRONMENT_CREATE_UPDATE_NO_DESCRIPTION = _EnvironmentCreateUpdate(
     name=NAME, description=None, specification=SPECIFICATION
 )
 
 
 def test_python_version_schema_load():
-    data = PythonVersionSchema().load(VERSION_BODY)
+    data = _PythonVersionSchema().load(VERSION_BODY)
     assert data == VERSION
 
 
 def test_python_version_schema_dump():
-    data = PythonVersionSchema().dump(VERSION)
+    data = _PythonVersionSchema().dump(VERSION)
     assert data == VERSION_BODY
 
 
 def test_python_version_schema_load_invalid():
     with pytest.raises(ValidationError):
-        PythonVersionSchema().load(INVALID_PYTHON_VERSION_BODY)
+        _PythonVersionSchema().load(INVALID_PYTHON_VERSION_BODY)
 
 
 def test_python_version_schema_dump_invalid():
     with pytest.raises(ValidationError):
-        PythonVersionSchema().dump(INVALID_PYTHON_VERSION)
+        _PythonVersionSchema().dump(INVALID_PYTHON_VERSION)
 
 
 def test_apt_version_schema_load():
-    data = AptVersionSchema().load(VERSION_BODY)
+    data = _AptVersionSchema().load(VERSION_BODY)
     assert data == VERSION
 
 
 def test_apt_version_schema_dump():
-    data = AptVersionSchema().dump(VERSION)
+    data = _AptVersionSchema().dump(VERSION)
     assert data == VERSION_BODY
 
 
 def test_apt_version_schema_load_invalid():
     with pytest.raises(ValidationError):
-        AptVersionSchema().load(INVALID_APT_VERSION_BODY)
+        _AptVersionSchema().load(INVALID_APT_VERSION_BODY)
 
 
 def test_apt_version_schema_dump_invalid():
     with pytest.raises(ValidationError):
-        AptVersionSchema().dump(INVALID_APT_VERSION)
+        _AptVersionSchema().dump(INVALID_APT_VERSION)
 
 
 @pytest.mark.parametrize(
@@ -262,7 +262,7 @@ def test_apt_version_schema_dump_invalid():
     ],
 )
 def test_python_package_schema_load(body, expected):
-    data = PythonPackageSchema().load(body)
+    data = _PythonPackageSchema().load(body)
     assert data == expected
 
 
@@ -274,57 +274,57 @@ def test_python_package_schema_load(body, expected):
     ],
 )
 def test_python_package_schema_dump(object, expected):
-    data = PythonPackageSchema().dump(object)
+    data = _PythonPackageSchema().dump(object)
     assert data == expected
 
 
 def test_pip_schema_load():
-    data = PipSchema().load(PIP_BODY)
+    data = _PipSchema().load(PIP_BODY)
     assert data == PIP
 
 
 def test_pip_schema_dump():
-    data = PipSchema().dump(PIP)
+    data = _PipSchema().dump(PIP)
     assert data == PIP_BODY
 
 
 def test_conda_schema_load():
-    data = CondaSchema().load(CONDA_BODY)
+    data = _CondaSchema().load(CONDA_BODY)
     assert data == CONDA
 
 
 def test_conda_schema_dump():
-    data = CondaSchema().dump(CONDA)
+    data = _CondaSchema().dump(CONDA)
     assert data == CONDA_BODY
 
 
 def test_python_environment_schema_load():
-    data = PythonEnvironmentSchema().load(PYTHON_ENVIRONMENT_BODY)
+    data = _PythonEnvironmentSchema().load(PYTHON_ENVIRONMENT_BODY)
     assert data == PYTHON_ENVIRONMENT
 
 
 def test_python_environment_schema_dump():
-    data = PythonEnvironmentSchema().dump(PYTHON_ENVIRONMENT)
+    data = _PythonEnvironmentSchema().dump(PYTHON_ENVIRONMENT)
     assert data == PYTHON_ENVIRONMENT_BODY
 
 
 def test_apt_package_schema_load():
-    data = AptPackageSchema().load(APT_PACKAGE_BODY)
+    data = _AptPackageSchema().load(APT_PACKAGE_BODY)
     assert data == APT_PACKAGE
 
 
 def test_apt_package_schema_dump():
-    data = AptPackageSchema().dump(APT_PACKAGE)
+    data = _AptPackageSchema().dump(APT_PACKAGE)
     assert data == APT_PACKAGE_BODY
 
 
 def test_apt_schema_load():
-    data = AptSchema().load(APT_BODY)
+    data = _AptSchema().load(APT_BODY)
     assert data == APT
 
 
 def test_apt_schema_dump():
-    data = AptSchema().dump(APT)
+    data = _AptSchema().dump(APT)
     assert data == APT_BODY
 
 
@@ -344,7 +344,7 @@ def test_apt_schema_dump():
     ],
 )
 def test_python_specification_schema_load(body, expected):
-    data = PythonSpecificationSchema().load(body)
+    data = _PythonSpecificationSchema().load(body)
     assert data == expected
 
 
@@ -364,27 +364,27 @@ def test_python_specification_schema_load(body, expected):
     ],
 )
 def test_python_specification_schema_dump(object, expected):
-    data = PythonSpecificationSchema().dump(object)
+    data = _PythonSpecificationSchema().dump(object)
     assert data == expected
 
 
 def test_script_schema_load():
-    data = ScriptSchema().load(SCRIPT_BODY)
+    data = _ScriptSchema().load(SCRIPT_BODY)
     assert data == SCRIPT
 
 
 def test_script_schema_dump():
-    data = ScriptSchema().dump(SCRIPT)
+    data = _ScriptSchema().dump(SCRIPT)
     assert data == SCRIPT_BODY
 
 
 def test_specification_schema_load():
-    data = SpecificationSchema().load(SPECIFICATION_BODY)
+    data = _SpecificationSchema().load(SPECIFICATION_BODY)
     assert data == SPECIFICATION
 
 
 def test_specification_schema_dump():
-    data = SpecificationSchema().dump(SPECIFICATION)
+    data = _SpecificationSchema().dump(SPECIFICATION)
     assert data == SPECIFICATION_BODY
 
 
@@ -399,7 +399,7 @@ def test_specification_schema_dump():
     ],
 )
 def test_environment_create_update_schema_load(body, expected):
-    data = EnvironmentCreateUpdateSchema().load(body)
+    data = _EnvironmentCreateUpdateSchema().load(body)
     assert data == expected
 
 
@@ -414,35 +414,37 @@ def test_environment_create_update_schema_load(body, expected):
     ],
 )
 def test_environment_create_update_schema_dump(object, expected):
-    data = EnvironmentCreateUpdateSchema().dump(object)
+    data = _EnvironmentCreateUpdateSchema().dump(object)
     assert data == expected
 
 
 def test_environment_creation_response_schema():
-    data = EnvironmentCreationResponseSchema().load(
+    data = _EnvironmentCreationResponseSchema().load(
         ENVIRONMENT_CREATION_RESPONSE_BODY
     )
     assert data == ENVIRONMENT_CREATION_RESPONSE
 
 
 def test_environment_schema():
-    data = EnvironmentSchema().load(ENVIRONMENT_BODY)
+    data = _EnvironmentSchema().load(ENVIRONMENT_BODY)
     assert data == ENVIRONMENT
 
 
 def test_environment_schema_no_description():
-    data = EnvironmentSchema().load(ENVIRONMENT_BODY_NO_DESCRIPTION)
+    data = _EnvironmentSchema().load(ENVIRONMENT_BODY_NO_DESCRIPTION)
     assert data == ENVIRONMENT_NO_DESCRIPTION
 
 
 def test_environment_schema_invalid():
     with pytest.raises(ValidationError):
-        EnvironmentSchema().load({})
+        _EnvironmentSchema().load({})
 
 
 def test_environment_client_list(mocker):
     mocker.patch.object(EnvironmentClient, "_get", return_value=[ENVIRONMENT])
-    schema_mock = mocker.patch("faculty.clients.environment.EnvironmentSchema")
+    schema_mock = mocker.patch(
+        "faculty.clients.environment._EnvironmentSchema"
+    )
 
     client = EnvironmentClient(mocker.Mock())
     assert client.list(PROJECT_ID) == [ENVIRONMENT]
@@ -455,7 +457,9 @@ def test_environment_client_list(mocker):
 
 def test_environment_client_get(mocker):
     mocker.patch.object(EnvironmentClient, "_get", return_value=ENVIRONMENT)
-    schema_mock = mocker.patch("faculty.clients.environment.EnvironmentSchema")
+    schema_mock = mocker.patch(
+        "faculty.clients.environment._EnvironmentSchema"
+    )
 
     client = EnvironmentClient(mocker.Mock())
     assert client.get(PROJECT_ID, ENVIRONMENT_ID) == ENVIRONMENT
@@ -470,7 +474,7 @@ def test_environment_client_get(mocker):
 def test_environment_client_update(mocker):
     mocker.patch.object(EnvironmentClient, "_put_raw")
     mocker.patch.object(
-        EnvironmentCreateUpdateSchema,
+        _EnvironmentCreateUpdateSchema,
         "dump",
         return_value=ENVIRONMENT_CREATE_UPDATE_BODY,
     )
@@ -478,7 +482,7 @@ def test_environment_client_update(mocker):
     client = EnvironmentClient(mocker.Mock())
     client.update(PROJECT_ID, ENVIRONMENT_ID, NAME, SPECIFICATION, DESCRIPTION)
 
-    EnvironmentCreateUpdateSchema.dump.assert_called_once_with(
+    _EnvironmentCreateUpdateSchema.dump.assert_called_once_with(
         ENVIRONMENT_CREATE_UPDATE
     )
     EnvironmentClient._put_raw.assert_called_once_with(
@@ -492,12 +496,12 @@ def test_environment_client_create(mocker):
         EnvironmentClient, "_post", return_value=ENVIRONMENT_CREATION_RESPONSE
     )
     mocker.patch.object(
-        EnvironmentCreateUpdateSchema,
+        _EnvironmentCreateUpdateSchema,
         "dump",
         return_value=ENVIRONMENT_CREATE_UPDATE_BODY,
     )
     schema_mock = mocker.patch(
-        "faculty.clients.environment.EnvironmentCreationResponseSchema"
+        "faculty.clients.environment._EnvironmentCreationResponseSchema"
     )
 
     client = EnvironmentClient(mocker.Mock())
@@ -505,7 +509,7 @@ def test_environment_client_create(mocker):
         client.create(PROJECT_ID, NAME, SPECIFICATION, description=DESCRIPTION)
         == ENVIRONMENT_CREATION_RESPONSE.id
     )
-    EnvironmentCreateUpdateSchema.dump.assert_called_once_with(
+    _EnvironmentCreateUpdateSchema.dump.assert_called_once_with(
         ENVIRONMENT_CREATE_UPDATE
     )
     EnvironmentClient._post.assert_called_once_with(

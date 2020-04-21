@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Interact with Faculty server environments.
+"""
+
 
 import re
 from collections import namedtuple
@@ -30,6 +34,8 @@ from faculty.clients.base import BaseClient, BaseSchema
 
 
 class Constraint(Enum):
+    """An enumeration of supported version constraints."""
+
     AT_LEAST = ">="
     EQUAL = "=="
 
@@ -57,19 +63,145 @@ Environment = namedtuple(
         "specification",
     ],
 )
-EnvironmentCreationResponse = namedtuple("EnvironmentCreationResponse", ["id"])
-EnvironmentCreateUpdate = namedtuple(
-    "EnvironmentCreateUpdate", ["name", "description", "specification"]
+_EnvironmentCreationResponse = namedtuple(
+    "_EnvironmentCreationResponse", ["id"]
+)
+_EnvironmentCreateUpdate = namedtuple(
+    "_EnvironmentCreateUpdate", ["name", "description", "specification"]
 )
 
 PYTHON_VERSION_REGEX = re.compile(
     r"^(?:\d+\!)?\d+(?:\.\d+)*(?:(?:a|b|rc)\d+)?(?:\.post\d+)?(?:\.dev\d+)?$"
 )
-
 APT_VERSION_REGEX = re.compile(r"^[a-zA-Z0-9\\.\\+-:~]+$")
 
 
-class PythonVersionSchema(BaseSchema):
+class EnvironmentClient(BaseClient):
+    """Client for the Faculty environment service.
+
+    Either build this client with a session directly, or use the
+    :func:`faculty.client` helper function:
+
+    >>> client = faculty.client("environment")
+
+    Parameters
+    ----------
+    session : faculty.session.Session
+        The session to use to make requests
+    """
+
+    _SERVICE_NAME = "baskerville"
+
+    def list(self, project_id):
+        """List the environments in a project.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project to list environments in.
+
+        Returns
+        -------
+        list of Environment
+        """
+        endpoint = "/project/{}/environment".format(project_id)
+        return self._get(endpoint, _EnvironmentSchema(many=True))
+
+    def get(self, project_id, environment_id):
+        """Get an environment.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the environment.
+        environment_id : uuid.UUID
+            The ID of the environment.
+
+        Returns
+        -------
+        list of Environment
+        """
+        endpoint = "/project/{}/environment/{}".format(
+            project_id, environment_id
+        )
+        return self._get(endpoint, _EnvironmentSchema())
+
+    def update(
+        self, project_id, environment_id, name, specification, description=None
+    ):
+        """Update an existing environment.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the environment.
+        environment_id : uuid.UUID
+            The ID of the environment.
+        name : str
+            The name to set on the environment.
+        specification : Specification
+            The specification of the environment to set.
+        description : str, optional
+            The description to set on the environment. If None (the default),
+            any existing description will be removed.
+        """
+        content = _EnvironmentCreateUpdate(
+            name=name, specification=specification, description=description
+        )
+        endpoint = "/project/{}/environment/{}".format(
+            project_id, environment_id
+        )
+        self._put_raw(
+            endpoint, json=_EnvironmentCreateUpdateSchema().dump(content)
+        )
+
+    def create(self, project_id, name, specification, description=None):
+        """Create a new environment.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project to create the environment.
+        name : str
+            The name of the environment.
+        specification : Specification
+            The specification of the environment.
+        description : str, optional
+            If provided, the description to set on the environment.
+
+        Returns
+        -------
+        uuid.UUID
+            The ID of the created environment.
+        """
+        endpoint = "/project/{}/environment".format(project_id)
+        content = _EnvironmentCreateUpdate(
+            name=name, specification=specification, description=description
+        )
+        response = self._post(
+            endpoint,
+            _EnvironmentCreationResponseSchema(),
+            json=_EnvironmentCreateUpdateSchema().dump(content),
+        )
+        return response.id
+
+    def delete(self, project_id, environment_id):
+        """Delete an environment.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the environment.
+        environment_id : uuid.UUID
+            The ID of the environment.
+        """
+        endpoint = "/project/{}/environment/{}".format(
+            project_id, environment_id
+        )
+        self._delete_raw(endpoint)
+
+
+class _PythonVersionSchema(BaseSchema):
     constraint = EnumField(Constraint, by_value=True, required=True)
     identifier = fields.String(required=True)
 
@@ -88,7 +220,7 @@ class PythonVersionSchema(BaseSchema):
         return data
 
 
-class AptVersionSchema(BaseSchema):
+class _AptVersionSchema(BaseSchema):
     constraint = EnumField(Constraint, by_value=True, required=True)
     identifier = fields.String(required=True)
 
@@ -107,82 +239,86 @@ class AptVersionSchema(BaseSchema):
         return data
 
 
-class PythonVersionField(fields.Field):
+class _PythonVersionField(fields.Field):
     """Field that serialises/deserialises a Python package version."""
 
     def _deserialize(self, value, attr, obj, **kwargs):
         if value == "latest":
             return "latest"
         else:
-            return PythonVersionSchema().load(value)
+            return _PythonVersionSchema().load(value)
 
     def _serialize(self, value, attr, obj, **kwargs):
         if value == "latest":
             return "latest"
         else:
-            return PythonVersionSchema().dump(value)
+            return _PythonVersionSchema().dump(value)
 
 
-class AptVersionField(fields.Field):
+class _AptVersionField(fields.Field):
     """Field that serialises/deserialises an apt package version."""
 
     def _deserialize(self, value, attr, obj, **kwargs):
         if value == "latest":
             return "latest"
         else:
-            return AptVersionSchema().load(value)
+            return _AptVersionSchema().load(value)
 
     def _serialize(self, value, attr, obj, **kwargs):
         if value == "latest":
             return "latest"
         else:
-            return AptVersionSchema().dump(value)
+            return _AptVersionSchema().dump(value)
 
 
-class PythonPackageSchema(BaseSchema):
+class _PythonPackageSchema(BaseSchema):
     name = fields.String(required=True)
-    version = PythonVersionField(required=True)
+    version = _PythonVersionField(required=True)
 
     @post_load
     def make_python_package(self, data):
         return PythonPackage(**data)
 
 
-class PipSchema(BaseSchema):
+class _PipSchema(BaseSchema):
     extra_index_urls = fields.List(
         fields.String(), data_key="extraIndexUrls", required=True
     )
-    packages = fields.List(fields.Nested(PythonPackageSchema()), required=True)
+    packages = fields.List(
+        fields.Nested(_PythonPackageSchema()), required=True
+    )
 
     @post_load
     def make_pip(self, data):
         return Pip(**data)
 
 
-class CondaSchema(BaseSchema):
+class _CondaSchema(BaseSchema):
     channels = fields.List(fields.String(), required=True)
-    packages = fields.List(fields.Nested(PythonPackageSchema()), required=True)
+    packages = fields.List(
+        fields.Nested(_PythonPackageSchema()), required=True
+    )
 
     @post_load
     def make_conda(self, data):
         return Conda(**data)
 
 
-class PythonEnvironmentSchema(BaseSchema):
-    conda = fields.Nested(CondaSchema(), required=True)
-    pip = fields.Nested(PipSchema(), required=True)
+class _PythonEnvironmentSchema(BaseSchema):
+    conda = fields.Nested(_CondaSchema(), required=True)
+    pip = fields.Nested(_PipSchema(), required=True)
 
     @post_load
     def make_python_specification(self, data):
         return PythonEnvironment(**data)
 
 
-class PythonSpecificationSchema(BaseSchema):
+class _PythonSpecificationSchema(BaseSchema):
     python2 = fields.Nested(
-        PythonEnvironmentSchema(), data_key="Python2", missing=None
+        _PythonEnvironmentSchema(), data_key="Python2", missing=None
     )
     python3 = fields.Nested(
-        PythonEnvironmentSchema(), data_key="Python3", missing=None
+        _PythonEnvironmentSchema(), data_key="Python3", missing=None
     )
 
     @post_load
@@ -190,24 +326,24 @@ class PythonSpecificationSchema(BaseSchema):
         return PythonSpecification(**data)
 
 
-class AptPackageSchema(BaseSchema):
+class _AptPackageSchema(BaseSchema):
     name = fields.String(required=True)
-    version = AptVersionField(required=True)
+    version = _AptVersionField(required=True)
 
     @post_load
     def make_apt_package(self, data):
         return AptPackage(**data)
 
 
-class AptSchema(BaseSchema):
-    packages = fields.List(fields.Nested(AptPackageSchema()), required=True)
+class _AptSchema(BaseSchema):
+    packages = fields.List(fields.Nested(_AptPackageSchema()), required=True)
 
     @post_load
     def make_apt(self, data):
         return Apt(**data)
 
 
-class ScriptSchema(BaseSchema):
+class _ScriptSchema(BaseSchema):
     script = fields.String(required=True)
 
     @post_load
@@ -215,17 +351,17 @@ class ScriptSchema(BaseSchema):
         return Script(**data)
 
 
-class SpecificationSchema(BaseSchema):
-    apt = fields.Nested(AptSchema(), required=True)
-    bash = fields.List(fields.Nested(ScriptSchema()), required=True)
-    python = fields.Nested(PythonSpecificationSchema(), required=True)
+class _SpecificationSchema(BaseSchema):
+    apt = fields.Nested(_AptSchema(), required=True)
+    bash = fields.List(fields.Nested(_ScriptSchema()), required=True)
+    python = fields.Nested(_PythonSpecificationSchema(), required=True)
 
     @post_load
     def make_specification(self, data):
         return Specification(**data)
 
 
-class EnvironmentSchema(BaseSchema):
+class _EnvironmentSchema(BaseSchema):
     id = fields.UUID(data_key="environmentId", required=True)
     project_id = fields.UUID(data_key="projectId", required=True)
     name = fields.String(required=True)
@@ -233,72 +369,26 @@ class EnvironmentSchema(BaseSchema):
     author_id = fields.UUID(data_key="authorId", required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     updated_at = fields.DateTime(data_key="updatedAt", required=True)
-    specification = fields.Nested(SpecificationSchema(), required=True)
+    specification = fields.Nested(_SpecificationSchema(), required=True)
 
     @post_load
     def make_environment(self, data):
         return Environment(**data)
 
 
-class EnvironmentCreateUpdateSchema(BaseSchema):
+class _EnvironmentCreateUpdateSchema(BaseSchema):
     name = fields.String(required=True)
     description = fields.String(missing=None)
-    specification = fields.Nested(SpecificationSchema(), required=True)
+    specification = fields.Nested(_SpecificationSchema(), required=True)
 
     @post_load
     def make_environment_update(self, data):
-        return EnvironmentCreateUpdate(**data)
+        return _EnvironmentCreateUpdate(**data)
 
 
-class EnvironmentCreationResponseSchema(BaseSchema):
+class _EnvironmentCreationResponseSchema(BaseSchema):
     id = fields.UUID(data_key="environmentId", required=True)
 
     @post_load
     def make_environment(self, data):
-        return EnvironmentCreationResponse(**data)
-
-
-class EnvironmentClient(BaseClient):
-
-    SERVICE_NAME = "baskerville"
-
-    def list(self, project_id):
-        endpoint = "/project/{}/environment".format(project_id)
-        return self._get(endpoint, EnvironmentSchema(many=True))
-
-    def get(self, project_id, environment_id):
-        endpoint = "/project/{}/environment/{}".format(
-            project_id, environment_id
-        )
-        return self._get(endpoint, EnvironmentSchema())
-
-    def update(
-        self, project_id, environment_id, name, specification, description=None
-    ):
-        content = EnvironmentCreateUpdate(
-            name=name, specification=specification, description=description
-        )
-        endpoint = "/project/{}/environment/{}".format(
-            project_id, environment_id
-        )
-        self._put_raw(
-            endpoint, json=EnvironmentCreateUpdateSchema().dump(content)
-        )
-
-    def create(self, project_id, name, specification, description=None):
-        endpoint = "/project/{}/environment".format(project_id)
-        content = EnvironmentCreateUpdate(
-            name=name, specification=specification, description=description
-        )
-        response = self._post(
-            endpoint,
-            EnvironmentCreationResponseSchema(),
-            json=EnvironmentCreateUpdateSchema().dump(content),
-        )
-        return response.id
-
-    def delete(self, project_id, environment_id):
-        endpoint = "/project/{}/environment/{}".format(
-            project_id, environment_id
-        )
-        self._delete_raw(endpoint)
+        return _EnvironmentCreationResponse(**data)

@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Configure and run Faculty jobs.
+"""
+
+
 from collections import namedtuple
 from enum import Enum
 
@@ -22,16 +27,27 @@ from faculty.clients.base import BaseClient, BaseSchema
 
 
 class ParameterType(Enum):
+    """An enumeration of allowed parameter types for a job.
+
+    :const:`ParameterType.TEXT` parameters allow any string to be passed when
+    running a job, while :const:`ParameterType.NUMBER` parameters must be a
+    valid number.
+    """
+
     TEXT = "text"
     NUMBER = "number"
 
 
 class ImageType(Enum):
+    """An enumeration of allows image types for a job."""
+
     PYTHON = "python"
     R = "r"
 
 
 class EnvironmentStepExecutionState(Enum):
+    """An enumeration of environment step execution states."""
+
     QUEUED = "queued"
     RUNNING = "running"
     SUCCEEDED = "succeeded"
@@ -40,6 +56,8 @@ class EnvironmentStepExecutionState(Enum):
 
 
 class SubrunState(Enum):
+    """An enumeration of states for a job subrun."""
+
     QUEUED = "queued"
     STARTING = "starting"
     ENVIRONMENT_APPLICATION_STARTED = "environment-application-started"
@@ -53,6 +71,8 @@ class SubrunState(Enum):
 
 
 class RunState(Enum):
+    """An enumeration of states for a job run."""
+
     QUEUED = "queued"
     STARTING = "starting"
     RUNNING = "running"
@@ -134,7 +154,252 @@ Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
 ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
 
 
-class JobMetadataSchema(BaseSchema):
+class JobClient(BaseClient):
+    """Client for the Faculty job service.
+
+    Either build this client with a session directly, or use the
+    :func:`faculty.client` helper function:
+
+    >>> client = faculty.client("job")
+
+    Parameters
+    ----------
+    session : faculty.session.Session
+        The session to use to make requests
+    """
+
+    _SERVICE_NAME = "steve"
+
+    def list(self, project_id):
+        """List the jobs in a project.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project to list jobs in.
+
+        Returns
+        -------
+        List[JobSummary]
+            The jobs in the project.
+        """
+        endpoint = "/project/{}/job".format(project_id)
+        return self._get(endpoint, _JobSummarySchema(many=True))
+
+    def create(self, project_id, name, description, job_definition):
+        """Create a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project to create a job in.
+        name : str
+            The name of the new job.
+        description : str
+            The description of the new job.
+        job_definition : JobDefinition
+            The configuration of the new job.
+
+        Returns
+        -------
+        uuid.UUID
+            The ID of the created job.
+        """
+
+        job_metadata_body = {"name": name, "description": description}
+        job_definition_body = _JobDefinitionSchema().dump(job_definition)
+        endpoint = "/project/{}/job".format(project_id)
+        payload = {
+            "meta": job_metadata_body,
+            "definition": job_definition_body,
+        }
+
+        return self._post(endpoint, _JobIdSchema(), json=payload)
+
+    def get(self, project_id, job_id):
+        """Get a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the job.
+        job_id : uuid.UUID
+            The ID of the job to get.
+
+        Returns
+        -------
+        Job
+            The retrieved job.
+        """
+        endpoint = "/project/{}/job/{}".format(project_id, job_id)
+        return self._get(endpoint, _JobSchema())
+
+    def update_metadata(self, project_id, job_id, name, description):
+        """Update the metadata of a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the job.
+        job_id : uuid.UUID
+            The ID of the job to update.
+        name : str
+            The new name of the job.
+        description : str
+            The new description of the job
+        """
+        endpoint = "/project/{}/job/{}/meta".format(project_id, job_id)
+        payload = {"name": name, "description": description}
+        self._put_raw(endpoint, json=payload)
+
+    def create_run(self, project_id, job_id, parameter_value_sets=None):
+        """Create a run for a job.
+
+        When creating a run, each item in ``parameter_value_sets`` will be
+        translated into an individual subrun. For example, to start a single
+        run of job with ``file`` and ``alpha`` arguments:
+
+        >>> client.create_run(
+        >>>     project_id, job_id, [{"file": "data.txt", "alpha": "0.1"}]
+        >>> )
+
+        Pass additional entries in ``parameter_value_sets`` to start a run
+        array with multiple subruns. For example, for a job with a single
+        ``file`` argument:
+
+        >>> client.create_run(
+        >>>     project_id,
+        >>>     job_id,
+        >>>     [{"file": "data1.txt"}, {"file": "data2.txt"}]
+        >>> )
+
+        Many jobs do not take any arguments. In this case, simply pass a list
+        containing empty parameter value dictionaries, with the number of
+        entries in the list corresponding to the number of subruns you want:
+
+        >>> client.create_run(project_id, job_id, [{}, {}])
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the job.
+        job_id : uuid.UUID
+            The ID of the job to run.
+        parameter_value_sets : List[dict], optional
+            A list of parameter value sets. Each set of parameter values will
+            result in a subrun with those parameter values passed. Default:
+            single subrun with no parameter values.
+
+        Returns
+        -------
+        uuid.UUID
+            The ID of the created run.
+        """
+
+        if parameter_value_sets is None:
+            parameter_value_sets = [{}]
+
+        endpoint = "/project/{}/job/{}/run".format(project_id, job_id)
+        payload = {
+            "parameterValues": [
+                [
+                    {"name": name, "value": value}
+                    for name, value in parameter_values.items()
+                ]
+                for parameter_values in parameter_value_sets
+            ]
+        }
+        return self._post(endpoint, _RunIdSchema(), json=payload)
+
+    def list_runs(self, project_id, job_id, start=None, limit=None):
+        """List the runs of a job.
+
+        This method returns pages of runs. If less than the full number of runs
+        for the job is returned, the ``next`` page of the returned response
+        object will not be ``None``:
+
+        >>> response = client.list_runs(project_id, job_id)
+        >>> response.pagination.next
+        Page(start=10, limit=10)
+
+        Get all the runs for a job by making successive calls to ``list_runs``,
+        passing the ``start`` and ``limit`` of the ``next`` page each time
+        until ``next`` is returned as ``None``.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the job.
+        job_id : uuid.UUID
+            The ID of the job to list runs from.
+        start : int, optional
+            The (zero-indexed) starting point of runs to retrieve.
+        limit : int, optional
+            The maximum number of runs to retrieve.
+
+        Returns
+        -------
+        ListRunsResponse
+            The retrieved job runs.
+        """
+        endpoint = "/project/{}/job/{}/run".format(project_id, job_id)
+        params = {}
+        if start is not None:
+            params["start"] = start
+        if limit is not None:
+            params["limit"] = limit
+        return self._get(endpoint, _ListRunsResponseSchema(), params=params)
+
+    def get_run(self, project_id, job_id, run_identifier):
+        """Get a run of a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the job.
+        job_id : uuid.UUID
+            The ID of the job containing the run.
+        run_identifier : uuid.UUID or int
+            The ID of the run to get or its run number.
+
+        Returns
+        -------
+        Run
+            The retrieved run.
+        """
+        endpoint = "/project/{}/job/{}/run/{}".format(
+            project_id, job_id, run_identifier
+        )
+        return self._get(endpoint, _RunSchema())
+
+    def get_subrun(
+        self, project_id, job_id, run_identifier, subrun_identifier
+    ):
+        """Get a subrun of a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the job.
+        job_id : uuid.UUID
+            The ID of the job containing the run.
+        run_identifier : uuid.UUID or int
+            The ID of the run to get or its run number.
+        subrun_identifier : uuid.UUID or int
+            The ID of the subrun to get or its subrun number.
+
+        Returns
+        -------
+        Subrun
+            The retrieved subrun.
+        """
+        endpoint = "/project/{}/job/{}/run/{}/subrun/{}".format(
+            project_id, job_id, run_identifier, subrun_identifier
+        )
+        return self._get(endpoint, _SubrunSchema())
+
+
+class _JobMetadataSchema(BaseSchema):
     name = fields.String(required=True)
     description = fields.String(required=True)
     author_id = fields.UUID(data_key="authorId", required=True)
@@ -146,16 +411,18 @@ class JobMetadataSchema(BaseSchema):
         return JobMetadata(**data)
 
 
-class JobSummarySchema(BaseSchema):
+class _JobSummarySchema(BaseSchema):
     id = fields.UUID(data_key="jobId", required=True)
-    metadata = fields.Nested(JobMetadataSchema, data_key="meta", required=True)
+    metadata = fields.Nested(
+        _JobMetadataSchema, data_key="meta", required=True
+    )
 
     @post_load
     def make_job_summary(self, data):
         return JobSummary(**data)
 
 
-class InstanceSizeSchema(BaseSchema):
+class _InstanceSizeSchema(BaseSchema):
     milli_cpus = fields.Integer(data_key="milliCpus", required=True)
     memory_mb = fields.Integer(data_key="memoryMb", required=True)
 
@@ -164,7 +431,7 @@ class InstanceSizeSchema(BaseSchema):
         return InstanceSize(**data)
 
 
-class JobParameterSchema(BaseSchema):
+class _JobParameterSchema(BaseSchema):
     name = fields.String(required=True)
     type = EnumField(ParameterType, by_value=True, required=True)
     default = fields.String(required=True)
@@ -175,18 +442,18 @@ class JobParameterSchema(BaseSchema):
         return JobParameter(**data)
 
 
-class JobCommandSchema(BaseSchema):
+class _JobCommandSchema(BaseSchema):
     name = fields.String(required=True)
-    parameters = fields.List(fields.Nested(JobParameterSchema), required=True)
+    parameters = fields.List(fields.Nested(_JobParameterSchema), required=True)
 
     @post_load
     def make_job_command(self, data):
         return JobCommand(**data)
 
 
-class JobDefinitionSchema(BaseSchema):
+class _JobDefinitionSchema(BaseSchema):
     working_dir = fields.String(data_key="workingDir", required=True)
-    command = fields.Nested(JobCommandSchema, required=True)
+    command = fields.Nested(_JobCommandSchema, required=True)
     image_type = EnumField(
         ImageType, by_value=True, data_key="imageType", required=True
     )
@@ -200,7 +467,7 @@ class JobDefinitionSchema(BaseSchema):
         data_key="instanceSizeType", required=True
     )
     instance_size = fields.Nested(
-        InstanceSizeSchema, data_key="instanceSize", missing=None
+        _InstanceSizeSchema, data_key="instanceSize", missing=None
     )
     max_runtime_seconds = fields.Integer(
         data_key="maxRuntimeSeconds", required=True
@@ -238,17 +505,17 @@ class JobDefinitionSchema(BaseSchema):
         return JobDefinition(**data)
 
 
-class JobSchema(BaseSchema):
+class _JobSchema(BaseSchema):
     id = fields.UUID(data_key="jobId", required=True)
-    meta = fields.Nested(JobMetadataSchema, required=True)
-    definition = fields.Nested(JobDefinitionSchema, required=True)
+    meta = fields.Nested(_JobMetadataSchema, required=True)
+    definition = fields.Nested(_JobDefinitionSchema, required=True)
 
     @post_load
     def make_job(self, data):
         return Job(**data)
 
 
-class JobIdSchema(BaseSchema):
+class _JobIdSchema(BaseSchema):
     jobId = fields.UUID(required=True)
 
     @post_load
@@ -256,7 +523,7 @@ class JobIdSchema(BaseSchema):
         return data["jobId"]
 
 
-class EnvironmentStepExecutionSchema(BaseSchema):
+class _EnvironmentStepExecutionSchema(BaseSchema):
     environment_id = fields.UUID(data_key="environmentId", required=True)
     environment_step_id = fields.UUID(
         data_key="environmentStepId", required=True
@@ -274,7 +541,7 @@ class EnvironmentStepExecutionSchema(BaseSchema):
         return EnvironmentStepExecution(**data)
 
 
-class SubrunSummarySchema(BaseSchema):
+class _SubrunSummarySchema(BaseSchema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
     state = EnumField(SubrunState, by_value=True, required=True)
@@ -286,14 +553,14 @@ class SubrunSummarySchema(BaseSchema):
         return SubrunSummary(**data)
 
 
-class SubrunSchema(BaseSchema):
+class _SubrunSchema(BaseSchema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
     state = EnumField(SubrunState, by_value=True, required=True)
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
     environment_step_executions = fields.Nested(
-        EnvironmentStepExecutionSchema,
+        _EnvironmentStepExecutionSchema,
         data_key="environmentExecutionState",
         many=True,
         required=True,
@@ -304,7 +571,7 @@ class SubrunSchema(BaseSchema):
         return Subrun(**data)
 
 
-class RunSummarySchema(BaseSchema):
+class _RunSummarySchema(BaseSchema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
     state = EnumField(RunState, by_value=True, required=True)
@@ -317,21 +584,21 @@ class RunSummarySchema(BaseSchema):
         return RunSummary(**data)
 
 
-class RunSchema(BaseSchema):
+class _RunSchema(BaseSchema):
     id = fields.UUID(data_key="runId", required=True)
     run_number = fields.Integer(data_key="runNumber", required=True)
     state = EnumField(RunState, by_value=True, required=True)
     submitted_at = fields.DateTime(data_key="submittedAt", required=True)
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
-    subruns = fields.Nested(SubrunSummarySchema, many=True, required=True)
+    subruns = fields.Nested(_SubrunSummarySchema, many=True, required=True)
 
     @post_load
     def make_run(self, data):
         return Run(**data)
 
 
-class RunIdSchema(BaseSchema):
+class _RunIdSchema(BaseSchema):
     runId = fields.UUID(required=True)
 
     @post_load
@@ -339,7 +606,7 @@ class RunIdSchema(BaseSchema):
         return data["runId"]
 
 
-class PageSchema(BaseSchema):
+class _PageSchema(BaseSchema):
     start = fields.Integer(required=True)
     limit = fields.Integer(required=True)
 
@@ -348,234 +615,21 @@ class PageSchema(BaseSchema):
         return Page(**data)
 
 
-class PaginationSchema(BaseSchema):
+class _PaginationSchema(BaseSchema):
     start = fields.Integer(required=True)
     size = fields.Integer(required=True)
-    previous = fields.Nested(PageSchema, missing=None)
-    next = fields.Nested(PageSchema, missing=None)
+    previous = fields.Nested(_PageSchema, missing=None)
+    next = fields.Nested(_PageSchema, missing=None)
 
     @post_load
     def make_pagination(self, data):
         return Pagination(**data)
 
 
-class ListRunsResponseSchema(BaseSchema):
-    pagination = fields.Nested(PaginationSchema, required=True)
-    runs = fields.Nested(RunSummarySchema, many=True, required=True)
+class _ListRunsResponseSchema(BaseSchema):
+    pagination = fields.Nested(_PaginationSchema, required=True)
+    runs = fields.Nested(_RunSummarySchema, many=True, required=True)
 
     @post_load
     def make_list_runs_response_schema(self, data):
         return ListRunsResponse(**data)
-
-
-class JobClient(BaseClient):
-
-    SERVICE_NAME = "steve"
-
-    def list(self, project_id):
-        """List the jobs in a project.
-
-        Parameters
-        ----------
-        project_id : uuid.UUID
-
-        Returns
-        -------
-        List[JobSummary]
-        """
-        endpoint = "/project/{}/job".format(project_id)
-        return self._get(endpoint, JobSummarySchema(many=True))
-
-    def create(self, project_id, name, description, job_definition):
-        """Create a job.
-
-        Parameters
-        ----------
-        project_id : uuid.UUID
-        name: str
-        description: str
-        job_definition: namedtuple
-            A JobDefinition object containing the job's definition parameters.
-
-        Returns
-        -------
-        uuid.UUID
-            The ID of the created job.
-        """
-
-        job_metadata_body = {"name": name, "description": description}
-        job_definition_body = JobDefinitionSchema().dump(job_definition)
-        endpoint = "/project/{}/job".format(project_id)
-        payload = {
-            "meta": job_metadata_body,
-            "definition": job_definition_body,
-        }
-
-        return self._post(endpoint, JobIdSchema(), json=payload)
-
-    def get(self, project_id, job_id):
-        """Get a job.
-
-        Parameters
-        ----------
-        project_id : uuid.UUID
-        job_id : uuid.UUID
-
-        Returns
-        -------
-        Job
-        """
-        endpoint = "/project/{}/job/{}".format(project_id, job_id)
-        return self._get(endpoint, JobSchema())
-
-    def update_metadata(self, project_id, job_id, name, description):
-        """Update the metadata of a job.
-
-        Parameters
-        ----------
-        project_id : uuid.UUID
-        job_id : uuid.UUID
-        name : str
-            The new name of the job.
-        description : str
-            The new description of the job
-        """
-
-        endpoint = "/project/{}/job/{}/meta".format(project_id, job_id)
-        payload = {"name": name, "description": description}
-        self._put_raw(endpoint, json=payload)
-
-    def create_run(self, project_id, job_id, parameter_value_sets=None):
-        """Create a run for a job.
-
-        When creating a run, each item in ``parameter_value_sets`` will be
-        translated into an individual subrun. For example, to start a single
-        run of job with ``file`` and ``alpha`` arguments:
-
-        >>> client.create_run(
-        >>>     project_id, job_id, [{"file": "data.txt", "alpha": "0.1"}]
-        >>> )
-
-        Pass additional entries in ``parameter_value_sets`` to start a run
-        array with multiple subruns. For example, for a job with a single
-        ``file`` argument:
-
-        >>> client.create_run(
-        >>>     project_id,
-        >>>     job_id,
-        >>>     [{"file": "data1.txt"}, {"file": "data2.txt"}]
-        >>> )
-
-        Many jobs do not take any arguments. In this case, simply pass a list
-        containing empty parameter value dictionaries, with the number of
-        entries in the list corresponding to the number of subruns you want:
-
-        >>> client.create_run(project_id, job_id, [{}, {}])
-
-        Parameters
-        ----------
-        project_id : uuid.UUID
-        job_id : uuid.UUID
-        parameter_value_sets : List[dict], optional
-            A list of parameter value sets. Each set of parameter values will
-            result in a subrun with those parameter values passed. Default:
-            single subrun with no parameter values.
-
-        Returns
-        -------
-        uuid.UUID
-            The ID of the created run.
-        """
-
-        if parameter_value_sets is None:
-            parameter_value_sets = [{}]
-
-        endpoint = "/project/{}/job/{}/run".format(project_id, job_id)
-        payload = {
-            "parameterValues": [
-                [
-                    {"name": name, "value": value}
-                    for name, value in parameter_values.items()
-                ]
-                for parameter_values in parameter_value_sets
-            ]
-        }
-        return self._post(endpoint, RunIdSchema(), json=payload)
-
-    def list_runs(self, project_id, job_id, start=None, limit=None):
-        """List the runs of a job.
-
-        This method returns pages of runs. If less than the full number of runs
-        for the job is returned, the ``next`` page of the returned response
-        object will not be ``None``:
-
-        >>> response = client.list_runs(project_id, job_id)
-        >>> response.pagination.next
-        Page(start=10, limit=10)
-
-        Get all the runs for a job by making successive calls to ``list_runs``,
-        passing the ``start`` and ``limit`` of the ``next`` page each time
-        until ``next`` is returned as ``None``.
-
-        Parameters
-        ----------
-        project_id : uuid.UUID
-        job_id : uuid.UUID
-        start : int, optional
-            The (zero-indexed) starting point of runs to retrieve.
-        limit : int, optional
-            The maximum number of runs to retrieve.
-
-        Returns
-        -------
-        ListRunsResponse
-        """
-        endpoint = "/project/{}/job/{}/run".format(project_id, job_id)
-        params = {}
-        if start is not None:
-            params["start"] = start
-        if limit is not None:
-            params["limit"] = limit
-        return self._get(endpoint, ListRunsResponseSchema(), params=params)
-
-    def get_run(self, project_id, job_id, run_identifier):
-        """Get a run of a job.
-
-        Parameters
-        ----------
-        project_id : uuid.UUID
-        job_id : uuid.UUID
-        run_identifier : uuid.UUID or int
-            The ID of the run to get or its run number.
-
-        Returns
-        -------
-        Run
-        """
-        endpoint = "/project/{}/job/{}/run/{}".format(
-            project_id, job_id, run_identifier
-        )
-        return self._get(endpoint, RunSchema())
-
-    def get_subrun(
-        self, project_id, job_id, run_identifier, subrun_identifier
-    ):
-        """Get a subrun of a job.
-
-        Parameters
-        ----------
-        project_id : uuid.UUID
-        job_id : uuid.UUID
-        run_identifier : uuid.UUID or int
-            The ID of the run to get or its run number.
-        subrun_identifier : uuid.UUID or int
-            The ID of the subrun to get or its subrun number.
-
-        Returns
-        -------
-        Subrun
-        """
-        endpoint = "/project/{}/job/{}/run/{}/subrun/{}".format(
-            project_id, job_id, run_identifier, subrun_identifier
-        )
-        return self._get(endpoint, SubrunSchema())

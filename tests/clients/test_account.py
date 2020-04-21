@@ -18,11 +18,11 @@ import pytest
 from marshmallow import ValidationError
 
 from faculty.clients.account import (
-    AccountClient,
     Account,
-    AccountSchema,
-    AuthenticationResponse,
-    AuthenticationResponseSchema,
+    AccountClient,
+    _AccountSchema,
+    _AuthenticationResponse,
+    _AuthenticationResponseSchema,
 )
 
 
@@ -34,7 +34,7 @@ ACCOUNT_BODY = {"userId": str(USER_ID), "username": USERNAME}
 
 
 def test_account_schema():
-    data = AccountSchema().load(ACCOUNT_BODY)
+    data = _AccountSchema().load(ACCOUNT_BODY)
     assert data == ACCOUNT
 
 
@@ -43,29 +43,29 @@ def test_account_schema():
 )
 def test_account_schema_invalid(data):
     with pytest.raises(ValidationError):
-        AccountSchema().load(data)
+        _AccountSchema().load(data)
 
 
 def test_authentication_response_schema():
-    data = AuthenticationResponseSchema().load({"account": ACCOUNT_BODY})
-    assert data == AuthenticationResponse(account=ACCOUNT)
+    data = _AuthenticationResponseSchema().load({"account": ACCOUNT_BODY})
+    assert data == _AuthenticationResponse(account=ACCOUNT)
 
 
 @pytest.mark.parametrize("data", [{}, {"account": "not-an-account"}])
 def test_authentication_response_schema_invalid(data):
     with pytest.raises(ValidationError):
-        AuthenticationResponseSchema().load(data)
+        _AuthenticationResponseSchema().load(data)
 
 
 def test_account_client_authenticated_account(mocker):
     mocker.patch.object(
         AccountClient,
         "_get",
-        return_value=AuthenticationResponse(account=ACCOUNT),
+        return_value=_AuthenticationResponse(account=ACCOUNT),
     )
 
     schema_mock = mocker.patch(
-        "faculty.clients.account.AuthenticationResponseSchema"
+        "faculty.clients.account._AuthenticationResponseSchema"
     )
 
     client = AccountClient(mocker.Mock())

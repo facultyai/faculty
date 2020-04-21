@@ -22,16 +22,16 @@ import pytest
 
 from faculty.clients.server import (
     DedicatedServerResources,
+    SSHDetails,
     Server,
     ServerClient,
-    ServerIdSchema,
-    ServerSchema,
     ServerStatus,
     Service,
-    ServiceSchema,
     SharedServerResources,
-    SSHDetails,
-    SSHDetailsSchema,
+    _SSHDetailsSchema,
+    _ServerIdSchema,
+    _ServerSchema,
+    _ServiceSchema,
 )
 
 SERVICE = Service(
@@ -125,13 +125,13 @@ SSH_DETAILS_BODY = {
 
 
 def test_service_schema():
-    data = ServiceSchema().load(SERVICE_BODY)
+    data = _ServiceSchema().load(SERVICE_BODY)
     assert data == SERVICE
 
 
 def test_service_schema_invalid():
     with pytest.raises(ValidationError):
-        ServiceSchema().load({})
+        _ServiceSchema().load({})
 
 
 @pytest.mark.parametrize(
@@ -142,45 +142,45 @@ def test_service_schema_invalid():
     ],
 )
 def test_server_schema(body, expected):
-    data = ServerSchema().load(body)
+    data = _ServerSchema().load(body)
     assert data == expected
 
 
 def test_server_schema_invalid():
     with pytest.raises(ValidationError):
-        ServerSchema().load({})
+        _ServerSchema().load({})
 
 
 def test_server_schema_invalid_missing_instance_size():
     body = SHARED_SERVER_BODY.copy()
     del body["instanceSize"]
     with pytest.raises(ValidationError):
-        ServerSchema().load(body)
+        _ServerSchema().load(body)
 
 
 def test_server_id_schema():
-    data = ServerIdSchema().load(SERVER_ID_BODY)
+    data = _ServerIdSchema().load(SERVER_ID_BODY)
     assert data == SERVER_ID
 
 
 def test_server_id_schema_invalid():
     with pytest.raises(ValidationError):
-        ServerIdSchema().load({})
+        _ServerIdSchema().load({})
 
 
 def test_ssh_details_schema():
-    data = SSHDetailsSchema().load(SSH_DETAILS_BODY)
+    data = _SSHDetailsSchema().load(SSH_DETAILS_BODY)
     assert data == SSH_DETAILS
 
 
 def test_ssh_details_schema_invalid():
     with pytest.raises(ValidationError):
-        SSHDetailsSchema().load({})
+        _SSHDetailsSchema().load({})
 
 
 def test_server_client_create_shared(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
-    schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
+    schema_mock = mocker.patch("faculty.clients.server._ServerIdSchema")
 
     client = ServerClient(mocker.Mock())
 
@@ -223,7 +223,7 @@ def test_server_client_create_shared(mocker):
 
 def test_server_client_create_dedicated(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
-    schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
+    schema_mock = mocker.patch("faculty.clients.server._ServerIdSchema")
 
     client = ServerClient(mocker.Mock())
 
@@ -262,7 +262,7 @@ def test_server_client_create_dedicated(mocker):
 
 def test_server_client_create_minimal(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
-    schema_mock = mocker.patch("faculty.clients.server.ServerIdSchema")
+    schema_mock = mocker.patch("faculty.clients.server._ServerIdSchema")
 
     client = ServerClient(mocker.Mock())
 
@@ -289,7 +289,7 @@ def test_server_client_create_minimal(mocker):
 
 def test_server_client_get(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=SHARED_SERVER)
-    schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
+    schema_mock = mocker.patch("faculty.clients.server._ServerSchema")
 
     client = ServerClient(mocker.Mock())
 
@@ -318,7 +318,7 @@ def test_server_client_list_for_user(mocker):
 
 def test_server_client_list(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
-    schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
+    schema_mock = mocker.patch("faculty.clients.server._ServerSchema")
 
     client = ServerClient(mocker.Mock())
 
@@ -334,7 +334,7 @@ def test_server_client_list(mocker):
 
 def test_server_client_list_filter_name(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
-    schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
+    schema_mock = mocker.patch("faculty.clients.server._ServerSchema")
 
     client = ServerClient(mocker.Mock())
 
@@ -371,7 +371,7 @@ def test_server_client_apply_environment(mocker):
 
 def test_server_client_get_ssh_details(mocker):
     _get_mock = mocker.patch.object(ServerClient, "_get")
-    schema_mock = mocker.patch("faculty.clients.server.SSHDetailsSchema")
+    schema_mock = mocker.patch("faculty.clients.server._SSHDetailsSchema")
 
     client = ServerClient(mocker.Mock())
 
