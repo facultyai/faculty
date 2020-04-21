@@ -304,7 +304,7 @@ def test_server_client_get(mocker):
 
 def test_server_client_list_for_user(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
-    schema_mock = mocker.patch("faculty.clients.server.ServerSchema")
+    schema_mock = mocker.patch("faculty.clients.server._ServerSchema")
 
     client = ServerClient(mocker.Mock())
 
