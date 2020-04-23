@@ -398,6 +398,22 @@ class JobClient(BaseClient):
         )
         return self._get(endpoint, _SubrunSchema())
 
+    def cancel_run(self, project_id, job_id, run_identifier):
+        """Cancel a running job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+        job_id : uuid.UUID
+        run_identifier : uuid.UUID or int
+            The ID or number of the run to cancel.
+        """
+
+        endpoint = "/project/{}/job/{}/run/{}".format(
+            project_id, job_id, run_identifier
+        )
+        self._delete_raw(endpoint)
+
 
 class _JobMetadataSchema(BaseSchema):
     name = fields.String(required=True)
