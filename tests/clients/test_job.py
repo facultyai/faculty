@@ -709,3 +709,17 @@ def test_job_client_get_subrun(mocker, run_identifier, subrun_identifier):
         ),
         schema_mock.return_value,
     )
+
+
+@pytest.mark.parametrize(
+    "run_identifier", [RUN_ID, RUN.run_number], ids=["ID", "Number"]
+)
+def test_job_client_cancel_run(mocker, run_identifier):
+    mocker.patch.object(JobClient, "_delete_raw")
+
+    client = JobClient(mocker.Mock())
+    client.cancel_run(PROJECT_ID, JOB_ID, run_identifier)
+
+    JobClient._delete_raw.assert_called_once_with(
+        "/project/{}/job/{}/run/{}".format(PROJECT_ID, JOB_ID, run_identifier)
+    )
