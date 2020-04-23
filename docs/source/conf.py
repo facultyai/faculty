@@ -40,10 +40,12 @@ autosummary_generate = True
 
 html_theme = "faculty-sphinx-theme"
 html_theme_options = {
-    "navigation": combined_docs,
+    "platform_navbar": combined_docs,
 }
 if "COMBINED_DOCS_ROOT" in os.environ:
-    html_theme_options["navigation_root"] = os.environ["COMBINED_DOCS_ROOT"]
+    html_theme_options["platform_navbar_root"] = os.environ[
+        "COMBINED_DOCS_ROOT"
+    ]
 
 # Disable Sphinx attribution
 html_show_sphinx = False
