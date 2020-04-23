@@ -404,7 +404,9 @@ class JobClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
+            The ID of the project containing the job.
         job_id : uuid.UUID
+            The ID of the job containing the run.
         run_identifier : uuid.UUID or int
             The ID or number of the run to cancel.
         """
