@@ -54,6 +54,7 @@ ENVIRONMENT_ID = uuid.uuid4()
 OWNER_ID = uuid.uuid4()
 PROJECT_ID = uuid.uuid4()
 SERVER_ID = uuid.uuid4()
+USER_ID = uuid.uuid4()
 
 CREATED_AT = datetime(2018, 3, 10, 11, 32, 6, 247000, tzinfo=UTC)
 CREATED_AT_STRING = "2018-03-10T11:32:06.247Z"
@@ -298,6 +299,20 @@ def test_server_client_get(mocker):
     ServerClient._get.assert_called_once_with(
         "/instance/{}/{}".format(PROJECT_ID, SERVER_ID),
         schema_mock.return_value,
+    )
+
+
+def test_server_client_list_for_user(mocker):
+    mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
+    schema_mock = mocker.patch("faculty.clients.server._ServerSchema")
+
+    client = ServerClient(mocker.Mock())
+
+    assert client.list_for_user(USER_ID) == [SHARED_SERVER]
+
+    schema_mock.assert_called_once_with(many=True)
+    ServerClient._get.assert_called_once_with(
+        "/user/{}/instances".format(USER_ID), schema_mock.return_value
     )
 
 

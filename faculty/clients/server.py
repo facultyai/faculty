@@ -142,6 +142,22 @@ class ServerClient(BaseClient):
             "/instance/{}".format(project_id), _ServerIdSchema(), json=payload
         )
 
+    def list_for_user(self, user_id):
+        """List servers owned by a user.
+
+        Parameters
+        ----------
+        user_id : uuid.UUID
+            The user to list servers for.
+
+        Returns
+        -------
+        List[Server]
+            The servers owned by the user.
+        """
+        endpoint = "/user/{}/instances".format(user_id)
+        return self._get(endpoint, _ServerSchema(many=True))
+
     def delete(self, server_id):
         """Terminate a running server.
 
