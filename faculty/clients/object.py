@@ -245,7 +245,7 @@ class ObjectClient(BaseClient):
         Parameters
         ----------
         project_id : uuid.UUID
-            The project to copy objects in.
+            The project to move objects in.
         source : str
             Move object from this source path.
         destination : str
