@@ -439,6 +439,16 @@ def test_mv(mocker, mock_client):
     )
 
 
+def test_mv_identical_source_and_destination(mocker, mock_client):
+    cp_mock = mocker.patch("faculty.datasets.cp")
+    rm_mock = mocker.patch("faculty.datasets.rm")
+
+    datasets.mv("source-path", "source-path", project_id=PROJECT_ID)
+
+    cp_mock.assert_not_called()
+    rm_mock.assert_not_called()
+
+
 def test_etag(mocker, mock_client):
     object_mock = mocker.Mock()
     object_mock.etag = "test-etag"

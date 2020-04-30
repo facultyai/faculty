@@ -334,6 +334,9 @@ def mv(source_path, destination_path, project_id=None, object_client=None):
     project_id = project_id or get_context().project_id
     object_client = object_client or ObjectClient(get_session())
 
+    if source_path == destination_path:
+        return
+
     cp(
         source_path,
         destination_path,
