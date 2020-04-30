@@ -421,7 +421,7 @@ def test_rmdir_nonempty_directory(mocker, prefix):
 def test_mv(mocker, mock_client):
     datasets.mv("source-path", "destination-path", project_id=PROJECT_ID)
     mock_client.move.assert_called_once_with(
-        PROJECT_ID, "source-path", "destination-path",
+        PROJECT_ID, "source-path", "destination-path"
     )
 
 
