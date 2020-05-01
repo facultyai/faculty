@@ -29,7 +29,7 @@ class HttpError(Exception):
     Parameters
     ----------
     response : requests.Response
-        The HTTP respponse.
+        The HTTP response.
     error : str, optional
         A descriptive error message returned by the server.
     error_code : str, optional
