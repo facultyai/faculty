@@ -1,8 +1,8 @@
 faculty
 =======
 
-.. image:: https://travis-ci.org/facultyai/faculty.svg?branch=master
-    :target: https://travis-ci.org/facultyai/faculty
+.. image:: https://github.com/facultyai/faculty/workflows/Test/badge.svg
+    :target: https://github.com/facultyai/faculty/actions
 
 A Python library for interacting with
 `the Faculty platform <https://faculty.ai/products-services/platform/>`_.
