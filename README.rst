@@ -1,7 +1,7 @@
 faculty
 =======
 
-.. image:: https://github.com/facultyai/faculty/workflows/Test/badge.svg
+.. image:: https://github.com/facultyai/faculty/workflows/Tests/badge.svg
     :target: https://github.com/facultyai/faculty/actions
 
 A Python library for interacting with
