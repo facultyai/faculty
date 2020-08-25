@@ -323,6 +323,7 @@ class _ErrorSchema(BaseSchema):
 
 
 def _check_status(response):
+    print(response.json())
     if response.status_code >= 400:
         cls = HTTP_ERRORS.get(response.status_code, HttpError)
         try:

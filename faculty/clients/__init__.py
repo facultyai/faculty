@@ -25,6 +25,7 @@ from faculty.clients.project import ProjectClient
 from faculty.clients.report import ReportClient
 from faculty.clients.secret import SecretClient
 from faculty.clients.server import ServerClient
+from faculty.clients.template import TemplateClient
 from faculty.clients.user import UserClient
 from faculty.clients.workspace import WorkspaceClient
 
@@ -42,6 +43,7 @@ CLIENT_FOR_RESOURCE = {
     "report": ReportClient,
     "secret": SecretClient,
     "server": ServerClient,
+    "template": TemplateClient,
     "user": UserClient,
     "workspace": WorkspaceClient,
 }
