@@ -16,8 +16,6 @@
 Interact with the Faculty knowledge centre templates.
 """
 
-from contextlib import contextmanager
-
 from marshmallow import fields
 
 from faculty.clients.base import BaseClient, BaseSchema
@@ -26,46 +24,13 @@ class TemplateClient(BaseClient):
 
     _SERVICE_NAME = "kanto"
 
-    def publish_new(self, template, source_directory):
+    def publish_new(self, template, source_directory, project_id):
         endpoint = "template"
         payload = {
-            "sourceProjectId": "30ca140a-b454-48f1-8f51-98bbe39b97d3",
+            "sourceProjectId": str(project_id),
             "sourceDirectory": source_directory,
             "name": template
         }
         response = self._post_raw(endpoint, json=payload)
         
-    # TODO move from faculty-cli
-    @contextmanager 
-    def _stream(self, endpoint):
-        """Stream from a SSE endpoint.
 
-        Usage
-        -----
-
-        >>> with self._stream(endpoint) as stream:
-        ...     for sse in stream:
-        ...         print(sse.data)
-
-        """
-        response = self._get(endpoint, stream=True)
-
-        def sse_stream_iterator():
-            buf = []
-            for line in response.iter_lines(decode_unicode=True):
-                if not line.strip():
-                    yield ServerSentEventMessage.from_lines(buf)
-                    buf = []
-                else:
-                    buf.append(line)
-
-        try:
-            yield sse_stream_iterator()
-        finally:
-            response.close()
-
-
-# class _PublishNewTemplateSchema(BaseSchema):
-#     source_project_id = fields.UUID(data_key="sourceProjectId")
-#     source_directory = fields.String(data_key="sourceDirectory")
-#     name = fields.String()
