@@ -28,7 +28,7 @@ import faculty.session
 
 class FrontendClient(BaseClient):
 
-    _SERVICE_NAME = "frontend"
+    _SERVICE_NAME = "frontend" # TODO what if used from outside the platform
 
     def user_updates(self, user_id):
         endpoint = "api/updates/user/{}".format(user_id)
