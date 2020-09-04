@@ -33,7 +33,6 @@ class FrontendClient(BaseClient):
     def user_updates(self, user_id):
         endpoint = "api/updates/user/{}".format(user_id)
         response = self._get_raw(endpoint, stream=True)
-        
         client = sseclient.SSEClient(response)
         return client.events()
 
@@ -57,7 +56,7 @@ def _extract_publishing_error_msg(error_body):
         errors = error_body["errors"]
         msg = "Failed to render the template with default parameters:"
         for e in errors:
-            msg += "\n\t{} in {}".format(e["error"], e["path"])
+            msg += "\n\t{} in file {}".format(e["error"], e["path"])
         return msg
     else:
         return "Unexpected error when publishing the template"
