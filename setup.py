@@ -45,6 +45,7 @@ setup(
         "attrs",
         "marshmallow[reco]==3.0.0rc3",
         "marshmallow_enum",
+        "sseclient-py"
     ],
     dependency_links=[
         "git+https://github.com/marshmallow-code/marshmallow"

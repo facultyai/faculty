@@ -40,7 +40,6 @@ class FrontendClient(BaseClient):
         for event in events:
             if event.event == '@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_FAILED':
                 error_body = json.loads(event.data)
-                print(error_body)
                 if error_body['sourceProjectId'] == str(project_id):
                     msg = _extract_publishing_error_msg(error_body)            
                     raise TemplatePublishingError(msg)
