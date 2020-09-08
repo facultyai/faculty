@@ -25,18 +25,18 @@ from faculty.clients.base import BaseClient
 
 
 class NotificationClient(BaseClient):
-    def __init__(self, session, *domain):
-        self.session = session
-        self._http_session_cache = None
-        domain = domain or self.session.profile.domain
-        self.host = (
-            domain
-            if self._running_in_platform()
-            else domain[len("services.") :]
-        )
+    """
+    TODO
+    from faculty.clients.notification import NotificationClient
+    session = faculty.session.get_session()
+    notification_client = NotificationClient(session,
+    protocol="https", host="gollum.platform.asidata.science")
+    """
 
-    def _running_in_platform(self):
-        return True
+    def __init__(self, session, protocol=None, host=None):
+        self.protocol = protocol or session.profile.protocol
+        self.host = host or "frontend.{}".format(session.profile.domain)
+        super(NotificationClient, self).__init__(session)
 
     def _service_url(self, endpoint):
         url_parts = (self.profile.protocol, self.host, endpoint, None, None)
