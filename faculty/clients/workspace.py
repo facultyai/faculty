@@ -23,7 +23,7 @@ from collections import namedtuple
 from marshmallow import fields, post_load, validates_schema, ValidationError
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseSchema, BaseClient
+from faculty.clients.base import BaseSchema, BackendServiceClient
 
 
 File = namedtuple("File", ["path", "name", "last_modified", "size"])
@@ -33,7 +33,7 @@ Directory = namedtuple(
 )
 
 
-class WorkspaceClient(BaseClient):
+class WorkspaceClient(BackendServiceClient):
     """Client for the Faculty workspace service.
 
     Either build this client with a session directly, or use the

@@ -26,9 +26,20 @@ from faculty.clients.auth import FacultyAuth
 from faculty.clients.base import _check_status, BaseClient
 import faculty.session
 
-class FrontendClient(BaseClient):
+class NotificationClient(BaseClient):
 
-    _SERVICE_NAME = "frontend" # TODO what if used from outside the platform
+    def __init__(self, session, *domain):
+        self.session = session
+        self._http_session_cache = None
+        domain = domain or self.session.profile.domain
+        self.host = domain if self._running_in_platform() else domain[len("services."):] 
+
+    def _running_in_platform(self):
+        return True
+
+    def _service_url(self, endpoint):
+        url_parts = (profile.protocol, self.host, endpoint, None, None)
+        return urllib.parse.urlunsplit(url_parts)
 
     def user_updates(self, user_id):
         endpoint = "api/updates/user/{}".format(user_id)

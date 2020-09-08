@@ -21,7 +21,7 @@ from collections import namedtuple
 
 from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseSchema, BaseClient
+from faculty.clients.base import BaseSchema, BackendServiceClient
 
 Report = namedtuple(
     "Report", ["created_at", "name", "id", "description", "active_version"]
@@ -45,7 +45,7 @@ ReportVersion = namedtuple(
 )
 
 
-class ReportClient(BaseClient):
+class ReportClient(BackendServiceClient):
     """Client for the Faculty report service.
 
     Either build this client with a session directly, or use the

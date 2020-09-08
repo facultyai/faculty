@@ -18,9 +18,9 @@ Interact with the Faculty knowledge centre templates.
 
 from marshmallow import fields
 
-from faculty.clients.base import BaseClient, BaseSchema
+from faculty.clients.base import BackendServiceClient, BaseSchema
 
-class TemplateClient(BaseClient):
+class TemplateClient(BackendServiceClient):
 
     _SERVICE_NAME = "kanto"
 

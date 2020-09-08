@@ -21,7 +21,7 @@ from collections import namedtuple
 
 from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseSchema, BaseClient
+from faculty.clients.base import BaseSchema, BackendServiceClient
 
 
 NodeType = namedtuple(
@@ -41,7 +41,7 @@ NodeType = namedtuple(
 )
 
 
-class ClusterClient(BaseClient):
+class ClusterClient(BackendServiceClient):
     """Client for the Faculty cluster configuration service.
 
     Either build this client with a session directly, or use the

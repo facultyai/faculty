@@ -21,7 +21,7 @@ from marshmallow import fields, post_load, ValidationError
 from faculty.clients.base import (
     BadGateway,
     BadRequest,
-    BaseClient,
+    BackendServiceClient,
     BaseSchema,
     Conflict,
     Forbidden,
@@ -104,7 +104,7 @@ class DummySchema(BaseSchema):
         return DummyObject(**data)
 
 
-class DummyClient(BaseClient):
+class DummyClient(BackendServiceClient):
     _SERVICE_NAME = MOCK_SERVICE_NAME
 
 
