@@ -16,9 +16,8 @@
 Interact with the Faculty knowledge centre templates.
 """
 
-from marshmallow import fields
+from faculty.clients.base import BackendServiceClient
 
-from faculty.clients.base import BackendServiceClient, BaseSchema
 
 class TemplateClient(BackendServiceClient):
 
@@ -29,8 +28,6 @@ class TemplateClient(BackendServiceClient):
         payload = {
             "sourceProjectId": str(project_id),
             "sourceDirectory": source_directory,
-            "name": template
+            "name": template,
         }
-        response = self._post_raw(endpoint, json=payload)
-        
-
+        self._post_raw(endpoint, json=payload)

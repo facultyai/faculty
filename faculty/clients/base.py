@@ -16,11 +16,10 @@
 Common functionality of Faculty service clients.
 """
 
-
 import requests
 from marshmallow import Schema, fields, ValidationError, EXCLUDE
+from six.moves import urllib
 
-import faculty.session
 from faculty.clients.auth import FacultyAuth
 
 
@@ -339,7 +338,7 @@ def _deserialise_response(schema, response):
 
 class BackendServiceClient(BaseClient):
     """Base class for Faculty backend service clients."""
-    
+
     _SERVICE_NAME = None
 
     def __init__(self, session):
@@ -348,7 +347,7 @@ class BackendServiceClient(BaseClient):
                 "must set _SERVICE_NAME in subclasses of BaseClient"
             )
         super(BackendServiceClient, self).__init__(session)
-        
+
     def _service_url(self, endpoint):
         profile = self.session.profile
         host = "{}.{}".format(self._SERVICE_NAME, profile.domain)

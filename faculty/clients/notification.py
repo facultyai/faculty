@@ -16,29 +16,30 @@
 Interact with the Faculty frontend.
 """
 
-from contextlib import contextmanager
 import json
 
-import requests
+from six.moves import urllib
 import sseclient
 
-from faculty.clients.auth import FacultyAuth
-from faculty.clients.base import _check_status, BaseClient
-import faculty.session
+from faculty.clients.base import BaseClient
+
 
 class NotificationClient(BaseClient):
-
     def __init__(self, session, *domain):
         self.session = session
         self._http_session_cache = None
         domain = domain or self.session.profile.domain
-        self.host = domain if self._running_in_platform() else domain[len("services."):] 
+        self.host = (
+            domain
+            if self._running_in_platform()
+            else domain[len("services.") :]
+        )
 
     def _running_in_platform(self):
         return True
 
     def _service_url(self, endpoint):
-        url_parts = (profile.protocol, self.host, endpoint, None, None)
+        url_parts = (self.profile.protocol, self.host, endpoint, None, None)
         return urllib.parse.urlunsplit(url_parts)
 
     def user_updates(self, user_id):
@@ -49,12 +50,12 @@ class NotificationClient(BaseClient):
 
     def check_publish_template_result(self, events, project_id):
         for event in events:
-            if event.event == '@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_FAILED':
+            if event.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_FAILED":
                 error_body = json.loads(event.data)
-                if error_body['sourceProjectId'] == str(project_id):
-                    msg = _extract_publishing_error_msg(error_body)            
+                if error_body["sourceProjectId"] == str(project_id):
+                    msg = _extract_publishing_error_msg(error_body)
                     raise TemplatePublishingError(msg)
-            elif event.event == '@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_COMPLETED':
+            elif event.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_COMPLETED":
                 return
 
 
@@ -71,6 +72,6 @@ def _extract_publishing_error_msg(error_body):
     else:
         return "Unexpected error when publishing the template"
 
+
 class TemplatePublishingError(Exception):
     pass
-

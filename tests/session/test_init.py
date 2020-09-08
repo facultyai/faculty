@@ -87,20 +87,6 @@ def test_session_access_token_cache_miss(mocker):
     access_token_cache.add.assert_called_once_with(PROFILE, new_token)
 
 
-def test_session_service_url(mocker):
-    session = Session(PROFILE, mocker.Mock())
-    assert session.service_url(
-        "service", "an/endpoint"
-    ) == "{}://service.{}/an/endpoint".format(PROFILE.protocol, PROFILE.domain)
-
-
-def test_session_service_url_default_endpoint(mocker):
-    session = Session(PROFILE, mocker.Mock())
-    assert session.service_url("service") == "{}://service.{}".format(
-        PROFILE.protocol, PROFILE.domain
-    )
-
-
 def test_get_session(mocker, isolated_session_cache):
     mocker.patch("faculty.config.resolve_profile", return_value=PROFILE)
     access_token_cache = mocker.Mock()
