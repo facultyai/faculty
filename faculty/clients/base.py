@@ -349,6 +349,19 @@ class BackendServiceClient(BaseClient):
         super(BackendServiceClient, self).__init__(session)
 
     def _service_url(self, endpoint):
+        """Determine the URL of a Faculty backend service endpoint.
+
+        Parameters
+        ----------
+        endpoint : str, optional
+            The endpoint to generate a URL for. If not provided, the root
+            endpoint will be used.
+
+        Returns
+        -------
+        str
+            The resolved URL.
+        """
         profile = self.session.profile
         host = "{}.{}".format(self._SERVICE_NAME, profile.domain)
         url_parts = (profile.protocol, host, endpoint, None, None)

@@ -64,24 +64,6 @@ class Session(object):
             self.access_token_cache.add(self.profile, access_token)
         return access_token
 
-    # def service_url(self, service_name, endpoint=""):
-    #     """Determine the URL of a Faculty service endpoint.
-
-    #     Parameters
-    #     ----------
-    #     service_name : str
-    #         The name of the service to make a request to.
-    #     endpoint : str, optional
-    #         The endpoint to generate a URL for. If not provided, the root
-    #         endpoint will be used.
-
-    #     Returns
-    #     -------
-    #     str
-    #         The resolved URL.
-    #     """
-    #     return _service_url(self.profile, service_name, endpoint)
-
 
 _SESSION_CACHE = {}
 
