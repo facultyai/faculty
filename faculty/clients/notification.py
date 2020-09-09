@@ -55,7 +55,7 @@ class NotificationClient(BaseClient):
         super(NotificationClient, self).__init__(session)
 
     def _service_url(self, endpoint):
-        url_parts = (self.profile.protocol, self.host, endpoint, None, None)
+        url_parts = (self.protocol, self.host, endpoint, None, None)
         return urllib.parse.urlunsplit(url_parts)
 
     def user_updates(self, user_id):
