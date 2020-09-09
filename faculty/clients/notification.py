@@ -18,7 +18,6 @@ Consume notifications from the Faculty frontend.
 
 import json
 
-from six.moves import urllib
 import sseclient
 
 from faculty.clients.base import BaseClient
@@ -27,15 +26,8 @@ from faculty.clients.base import BaseClient
 class NotificationClient(BaseClient):
     """Client to listen on notifications from the Faculty frontend.
 
-    Either build this client with a session directly:
-
-    >>> from faculty.clients.notification import NotificationClient
-    >>> session = faculty.session.get_session()
-    >>> notification_client = NotificationClient(session,
-    >>> protocol="https", host="my-domain.my.faculty.ai")
-
-    or use the :func:`faculty.client` helper function to create the client
-    with default values:
+    Either build this client with a session directly, or use the
+    :func:`faculty.client` helper function:
 
     >>> client = faculty.client("notification")
 
@@ -43,20 +35,9 @@ class NotificationClient(BaseClient):
     ----------
     session : faculty.session.Session
         The session to use to make requests
-    protocol : str
-        Protocol to use for requests to the frontend. (`http` when used from
-        within the platform via internal DNS or `https` when using external
-        domain name.)
     """
 
-    def __init__(self, session, protocol=None, host=None):
-        self.protocol = protocol or session.profile.protocol
-        self.host = host or "frontend.{}".format(session.profile.domain)
-        super(NotificationClient, self).__init__(session)
-
-    def _service_url(self, endpoint):
-        url_parts = (self.protocol, self.host, endpoint, None, None)
-        return urllib.parse.urlunsplit(url_parts)
+    _SERVICE_NAME = "frontend"
 
     def user_updates(self, user_id):
         """Get notification events for the given user.

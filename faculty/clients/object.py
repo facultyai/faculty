@@ -27,7 +27,7 @@ from marshmallow_enum import EnumField
 from faculty.clients.base import (
     BadRequest,
     BaseSchema,
-    BackendServiceClient,
+    BaseClient,
     Conflict,
     NotFound,
 )
@@ -84,7 +84,7 @@ CompletedUploadPart = namedtuple(
 )
 
 
-class ObjectClient(BackendServiceClient):
+class ObjectClient(BaseClient):
     """Client for the Faculty object storage service.
 
     Either build this client with a session directly, or use the

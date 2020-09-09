@@ -23,7 +23,7 @@ from enum import Enum
 from marshmallow import ValidationError, fields, post_load, validates_schema
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BackendServiceClient, BaseSchema
+from faculty.clients.base import BaseClient, BaseSchema
 
 
 class ParameterType(Enum):
@@ -154,7 +154,7 @@ Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
 ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
 
 
-class JobClient(BackendServiceClient):
+class JobClient(BaseClient):
     """Client for the Faculty job service.
 
     Either build this client with a session directly, or use the

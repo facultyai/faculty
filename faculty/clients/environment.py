@@ -30,7 +30,7 @@ from marshmallow import (
 )
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BackendServiceClient, BaseSchema
+from faculty.clients.base import BaseClient, BaseSchema
 
 
 class Constraint(Enum):
@@ -76,7 +76,7 @@ PYTHON_VERSION_REGEX = re.compile(
 APT_VERSION_REGEX = re.compile(r"^[a-zA-Z0-9\\.\\+-:~]+$")
 
 
-class EnvironmentClient(BackendServiceClient):
+class EnvironmentClient(BaseClient):
     """Client for the Faculty environment service.
 
     Either build this client with a session directly, or use the

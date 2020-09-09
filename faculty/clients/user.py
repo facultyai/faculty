@@ -23,7 +23,7 @@ from enum import Enum
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseSchema, BackendServiceClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 class GlobalRole(Enum):
@@ -49,7 +49,7 @@ User = namedtuple(
 )
 
 
-class UserClient(BackendServiceClient):
+class UserClient(BaseClient):
     """Client for the Faculty user service.
 
     Either build this client with a session directly, or use the
