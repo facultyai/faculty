@@ -30,6 +30,26 @@ USER_ID_STRING = "3024d586-6a4a-4fc1-98a9-c6135b163f17"
 USER_ID = uuid.UUID(USER_ID_STRING)
 
 
+def test_url_default(mocker):
+    mock_session = mocker.Mock()
+    mock_session.profile = mocker.Mock()
+    mock_session.profile.protocol = "http"
+    mock_session.profile.domain = "sml-services"
+    client = NotificationClient(mock_session)
+
+    assert client.protocol == "http"
+    assert client.host == "frontend.sml-services"
+
+
+def test_url_custom(mocker):
+    client = NotificationClient(
+        mocker.Mock(), protocol="https", host="test.my.faculty.ai"
+    )
+
+    assert client.protocol == "https"
+    assert client.host == "test.my.faculty.ai"
+
+
 def test_user_updates(mocker):
     mocker.patch.object(NotificationClient, "_get_raw")
 
@@ -37,7 +57,6 @@ def test_user_updates(mocker):
     client.user_updates(USER_ID)
 
     # TODO test SSEClient?
-
     NotificationClient._get_raw.assert_called_once_with(
         "api/updates/user/{}".format(USER_ID_STRING), stream=True
     )
