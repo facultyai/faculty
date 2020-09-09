@@ -49,28 +49,31 @@ class NotificationClient(BaseClient):
         return client.events()
 
     def check_publish_template_result(self, events, project_id):
-        for event in events:
-            if event.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_FAILED":
-                error_body = json.loads(event.data)
-                if error_body["sourceProjectId"] == str(project_id):
-                    msg = _extract_publishing_error_msg(error_body)
+        for e in events:
+            body = json.loads(e.data)
+            if body["sourceProjectId"] == str(project_id):
+                if e.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_FAILED":
+                    msg = _extract_publishing_error_msg(body)
                     raise TemplatePublishingError(msg)
-            elif event.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_COMPLETED":
-                return
+                elif e.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_COMPLETED":
+                    return
 
 
 def _extract_publishing_error_msg(error_body):
-    code = error_body["errorCode"]
-    if code in {"name_conflict", "unexpected_error"}:
-        return error_body["error"]
-    elif code == "template_rendering_error":
-        errors = error_body["errors"]
-        msg = "Failed to render the template with default parameters:"
-        for e in errors:
-            msg += "\n\t{} in file {}".format(e["error"], e["path"])
-        return msg
-    else:
-        return "Unexpected error when publishing the template"
+    try:
+        code = error_body["errorCode"]
+        if code in {"name_conflict", "unexpected_error"}:
+            return error_body["error"]
+        elif code == "template_rendering_error":
+            errors = error_body["errors"]
+            msg = "Failed to render the template with default parameters:"
+            for e in errors:
+                msg += "\n\t{} in file {}".format(e["error"], e["path"])
+            return msg
+        else:
+            return "Unexpected error code received"
+    except KeyError:
+        return "Unexpected server response"
 
 
 class TemplatePublishingError(Exception):
