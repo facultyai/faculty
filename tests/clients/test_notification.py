@@ -17,6 +17,7 @@ import json
 import uuid
 
 import pytest
+import sseclient
 from sseclient import Event
 
 from faculty.clients.notification import (
@@ -51,15 +52,23 @@ def test_url_custom(mocker):
 
 
 def test_user_updates(mocker):
-    mocker.patch.object(NotificationClient, "_get_raw")
+    mock_response = mocker.Mock()
+    mocker.patch.object(
+        NotificationClient, "_get_raw", return_value=mock_response
+    )
+    mock_sse_client = mocker.Mock()
+    mock_events = mocker.Mock()
+    mock_sse_client.events = mocker.Mock(return_value=mock_events)
+    mocker.patch.object(sseclient, "SSEClient", return_value=mock_sse_client)
 
     client = NotificationClient(mocker.Mock())
     client.user_updates(USER_ID)
 
-    # TODO test SSEClient?
     NotificationClient._get_raw.assert_called_once_with(
         "api/updates/user/{}".format(USER_ID_STRING), stream=True
     )
+    sseclient.SSEClient.assert_called_once_with(mock_response)
+    mock_sse_client.events.assert_called_once_with()
 
 
 def test_check_publish_template_result_success(mocker):
