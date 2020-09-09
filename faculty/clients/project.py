@@ -21,13 +21,13 @@ from collections import namedtuple
 
 from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseSchema, BackendServiceClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 Project = namedtuple("Project", ["id", "name", "owner_id"])
 
 
-class ProjectClient(BackendServiceClient):
+class ProjectClient(BaseClient):
     """Client for the Faculty project service.
 
     Either build this client with a session directly, or use the

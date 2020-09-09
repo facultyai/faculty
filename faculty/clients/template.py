@@ -16,10 +16,10 @@
 Interact with the Faculty knowledge centre templates.
 """
 
-from faculty.clients.base import BackendServiceClient
+from faculty.clients.base import BaseClient
 
 
-class TemplateClient(BackendServiceClient):
+class TemplateClient(BaseClient):
     """Client for the the Knowledge centre templates.
 
     Either build this client with a session directly, or use the
@@ -42,4 +42,4 @@ class TemplateClient(BackendServiceClient):
             "sourceDirectory": source_directory,
             "name": template,
         }
-        self._post_raw(endpoint, json=payload)
+        return self._post_raw(endpoint, json=payload)

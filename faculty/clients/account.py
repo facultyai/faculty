@@ -21,14 +21,14 @@ from collections import namedtuple
 
 from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseSchema, BackendServiceClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 Account = namedtuple("Account", ["user_id", "username"])
 _AuthenticationResponse = namedtuple("_AuthenticationResponse", ["account"])
 
 
-class AccountClient(BackendServiceClient):
+class AccountClient(BaseClient):
     """Client for the Faculty account service.
 
     Either build this client with a session directly, or use the

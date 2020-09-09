@@ -16,7 +16,7 @@ from collections import namedtuple
 
 from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseSchema, BackendServiceClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 DatasetsSecrets = namedtuple(
     "DatasetsSecrets",
@@ -36,7 +36,7 @@ class DatasetsSecretsSchema(BaseSchema):
         return DatasetsSecrets(**data)
 
 
-class SecretClient(BackendServiceClient):
+class SecretClient(BaseClient):
 
     _SERVICE_NAME = "secret-service"
 

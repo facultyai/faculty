@@ -18,7 +18,6 @@ Consume notifications from the Faculty frontend.
 
 import json
 
-from six.moves import urllib
 import sseclient
 
 from faculty.clients.base import BaseClient
@@ -49,14 +48,7 @@ class NotificationClient(BaseClient):
         domain name.)
     """
 
-    def __init__(self, session, protocol=None, host=None):
-        self.protocol = protocol or session.profile.protocol
-        self.host = host or "frontend.{}".format(session.profile.domain)
-        super(NotificationClient, self).__init__(session)
-
-    def _service_url(self, endpoint):
-        url_parts = (self.protocol, self.host, endpoint, None, None)
-        return urllib.parse.urlunsplit(url_parts)
+    _SERVICE_NAME = "frontend"
 
     def user_updates(self, user_id):
         """Get notification events for the given user.

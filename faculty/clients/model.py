@@ -20,7 +20,7 @@ Interact with the Faculty model registry.
 from attr import attrs, attrib
 from marshmallow import fields, post_load, validate
 
-from faculty.clients.base import BaseSchema, BackendServiceClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 @attrs
@@ -92,7 +92,7 @@ class Model(object):
     latest_version = attrib()
 
 
-class ModelClient(BackendServiceClient):
+class ModelClient(BaseClient):
     """Client for the Faculty model service.
 
     Either build this client with a session directly, or use the

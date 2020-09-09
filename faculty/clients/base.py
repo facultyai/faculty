@@ -16,9 +16,9 @@
 Common functionality of Faculty service clients.
 """
 
+
 import requests
 from marshmallow import Schema, fields, ValidationError, EXCLUDE
-from six.moves import urllib
 
 from faculty.clients.auth import FacultyAuth
 
@@ -233,14 +233,15 @@ HTTP_ERRORS = {
 class BaseClient(object):
     """Base class with core functionality for Faculty service clients."""
 
+    _SERVICE_NAME = None
+
     def __init__(self, session):
+        if self._SERVICE_NAME is None:
+            raise RuntimeError(
+                "must set _SERVICE_NAME in subclasses of BaseClient"
+            )
         self.session = session
         self._http_session_cache = None
-
-    def _service_url(self, endpoint):
-        raise RuntimeError(
-            "must implement _service_url in subclasses of BaseClient"
-        )
 
     @property
     def http_session(self):
@@ -257,7 +258,7 @@ class BaseClient(object):
         call one of the HTTP verb-specific methods. If it does not exist yet
         for the HTTP method you need, contribute it.
         """
-        url = self._service_url(endpoint)
+        url = self.session.service_url(self._SERVICE_NAME, endpoint)
         response = self.http_session.request(method, url, *args, **kwargs)
         if check_status:
             _check_status(response)
@@ -334,35 +335,3 @@ def _check_status(response):
 def _deserialise_response(schema, response):
     response_json = response.json()
     return schema.load(response_json)
-
-
-class BackendServiceClient(BaseClient):
-    """Base class for Faculty backend service clients."""
-
-    _SERVICE_NAME = None
-
-    def __init__(self, session):
-        if self._SERVICE_NAME is None:
-            raise RuntimeError(
-                "must set _SERVICE_NAME in subclasses of BaseClient"
-            )
-        super(BackendServiceClient, self).__init__(session)
-
-    def _service_url(self, endpoint):
-        """Determine the URL of a Faculty backend service endpoint.
-
-        Parameters
-        ----------
-        endpoint : str, optional
-            The endpoint to generate a URL for. If not provided, the root
-            endpoint will be used.
-
-        Returns
-        -------
-        str
-            The resolved URL.
-        """
-        profile = self.session.profile
-        host = "{}.{}".format(self._SERVICE_NAME, profile.domain)
-        url_parts = (profile.protocol, host, endpoint, None, None)
-        return urllib.parse.urlunsplit(url_parts)

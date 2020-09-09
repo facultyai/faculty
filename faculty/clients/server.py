@@ -23,7 +23,7 @@ from enum import Enum
 from marshmallow import fields, post_load, ValidationError
 from marshmallow_enum import EnumField
 
-from faculty.clients.base import BaseSchema, BackendServiceClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 class ServerStatus(Enum):
@@ -62,7 +62,7 @@ Server = namedtuple(
 SSHDetails = namedtuple("SSHDetails", ["hostname", "port", "username", "key"])
 
 
-class ServerClient(BackendServiceClient):
+class ServerClient(BaseClient):
     """Client for the Faculty server management service.
 
     Either build this client with a session directly, or use the

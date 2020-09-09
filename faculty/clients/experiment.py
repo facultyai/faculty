@@ -24,7 +24,7 @@ from marshmallow import fields, post_load, pre_dump, ValidationError
 from marshmallow_enum import EnumField
 
 from faculty._oneofschema import OneOfSchema
-from faculty.clients.base import BaseSchema, BackendServiceClient, Conflict
+from faculty.clients.base import BaseSchema, BaseClient, Conflict
 
 
 class LifecycleStage(Enum):
@@ -165,7 +165,7 @@ class ExperimentDeleted(Exception):
         self.experiment_id = experiment_id
 
 
-class ExperimentClient(BackendServiceClient):
+class ExperimentClient(BaseClient):
     """Client for the Faculty experiment service.
 
     Either build this client with a session directly, or use the

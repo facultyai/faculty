@@ -21,7 +21,7 @@ from collections import namedtuple
 
 from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseSchema, BackendServiceClient
+from faculty.clients.base import BaseSchema, BaseClient
 
 
 LogPart = namedtuple(
@@ -30,7 +30,7 @@ LogPart = namedtuple(
 LogPartsResponse = namedtuple("LogPartsResponse", ["log_parts"])
 
 
-class LogClient(BackendServiceClient):
+class LogClient(BaseClient):
     """Client for the Faculty log service.
 
     Either build this client with a session directly, or use the
