@@ -20,6 +20,18 @@ from faculty.clients.base import BackendServiceClient
 
 
 class TemplateClient(BackendServiceClient):
+    """Client for the the Knowledge centre templates.
+
+    Either build this client with a session directly, or use the
+    :func:`faculty.client` helper function:
+
+    >>> client = faculty.client("template")
+
+    Parameters
+    ----------
+    session : faculty.session.Session
+        The session to use to make requests
+    """
 
     _SERVICE_NAME = "kanto"
 

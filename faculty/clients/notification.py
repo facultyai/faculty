@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Interact with the Faculty frontend.
+Consume notifications from the Faculty frontend.
 """
 
 import json
@@ -25,12 +25,28 @@ from faculty.clients.base import BaseClient
 
 
 class NotificationClient(BaseClient):
-    """
-    TODO
-    from faculty.clients.notification import NotificationClient
-    session = faculty.session.get_session()
-    notification_client = NotificationClient(session,
-    protocol="https", host="gollum.platform.asidata.science")
+    """Client to listen on notifications from the Faculty frontend.
+
+    Either build this client with a session directly:
+
+    >>> from faculty.clients.notification import NotificationClient
+    >>> session = faculty.session.get_session()
+    >>> notification_client = NotificationClient(session,
+    >>> protocol="https", host="my-domain.my.faculty.ai")
+
+    or use the :func:`faculty.client` helper function to create the client
+    with default values:
+
+    >>> client = faculty.client("notification")
+
+    Parameters
+    ----------
+    session : faculty.session.Session
+        The session to use to make requests
+    protocol : str
+        Protocol to use for requests to the frontend. (`http` when used from
+        within the platform via internal DNS or `https` when using external
+        domain name.)
     """
 
     def __init__(self, session, protocol=None, host=None):
@@ -43,12 +59,37 @@ class NotificationClient(BaseClient):
         return urllib.parse.urlunsplit(url_parts)
 
     def user_updates(self, user_id):
+        """Get notification events for the given user.
+
+        Parameters
+        ----------
+        user_id : uuid.UUID
+            ID of the user to get updates for.
+
+        Returns
+        -------
+        generator
+            Server-sent events
+        """
         endpoint = "api/updates/user/{}".format(user_id)
         response = self._get_raw(endpoint, stream=True)
         client = sseclient.SSEClient(response)
         return client.events()
 
     def check_publish_template_result(self, events, project_id):
+        """Handle results of a template publishing operation.
+
+        Only returns when success or failure events are received for the given
+        source project_id. Events with other project IDs are ignored.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The project from which the template was published.
+        events : generator
+            The value that was returned from
+            :func:`faculty.clients.notification.NotificationClient.user_updates`
+        """
         for e in events:
             body = json.loads(e.data)
             if body["sourceProjectId"] == str(project_id):
