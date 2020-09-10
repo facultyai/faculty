@@ -17,6 +17,7 @@ from faculty.clients.account import AccountClient
 from faculty.clients.cluster import ClusterClient
 from faculty.clients.environment import EnvironmentClient
 from faculty.clients.experiment import ExperimentClient
+from faculty.clients.notification import NotificationClient
 from faculty.clients.job import JobClient
 from faculty.clients.log import LogClient
 from faculty.clients.model import ModelClient
@@ -25,6 +26,7 @@ from faculty.clients.project import ProjectClient
 from faculty.clients.report import ReportClient
 from faculty.clients.secret import SecretClient
 from faculty.clients.server import ServerClient
+from faculty.clients.template import TemplateClient
 from faculty.clients.user import UserClient
 from faculty.clients.workspace import WorkspaceClient
 
@@ -34,6 +36,7 @@ CLIENT_FOR_RESOURCE = {
     "cluster": ClusterClient,
     "environment": EnvironmentClient,
     "experiment": ExperimentClient,
+    "notification": NotificationClient,
     "job": JobClient,
     "log": LogClient,
     "model": ModelClient,
@@ -42,6 +45,7 @@ CLIENT_FOR_RESOURCE = {
     "report": ReportClient,
     "secret": SecretClient,
     "server": ServerClient,
+    "template": TemplateClient,
     "user": UserClient,
     "workspace": WorkspaceClient,
 }
