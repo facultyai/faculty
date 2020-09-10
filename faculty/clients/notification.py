@@ -73,7 +73,7 @@ class NotificationClient(BaseClient):
         """
         for e in events:
             body = json.loads(e.data)
-            if body["sourceProjectId"] == str(project_id):
+            if body.get("sourceProjectId") == str(project_id):
                 if e.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_FAILED":
                     msg = _extract_publishing_error_msg(body)
                     raise TemplatePublishingError(msg)
