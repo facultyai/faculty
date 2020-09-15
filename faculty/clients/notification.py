@@ -57,28 +57,28 @@ class NotificationClient(BaseClient):
         client = sseclient.SSEClient(response)
         return client.events()
 
-    def check_publish_template_result(self, project_id, events):
-        """Handle results of a template publishing operation.
+    def get_publish_template_notifications(self, user_id, source_project_id):
+        """Get notification events of a template publishing operation.
 
         Only returns when success or failure events are received for the given
         source project_id. Events with other project IDs are ignored.
 
         Parameters
         ----------
-        project_id : uuid.UUID
+        user_id : uuid.UUID
+            The user who started the publish operation.
+        source_project_id : uuid.UUID
             The project from which the template was published.
-        events : generator
-            The value that was returned from
-            :func:`faculty.clients.notification.NotificationClient.user_updates`
         """
-        for e in events:
-            body = json.loads(e.data)
-            if body.get("sourceProjectId") == str(project_id):
-                if e.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_FAILED":
-                    msg = _extract_publishing_error_msg(body)
-                    raise TemplatePublishingError(msg)
-                elif e.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_COMPLETED":
-                    return
+        def is_publishing_event(event):
+            if not event.event.startswith("@SSE/PROJECT_TEMPLATE_PUBLISH"):
+                return False
+            body = json.loads(event.data)
+            return body.get("sourceProjectId") == str(source_project_id)
+
+        return PublishTemplateNotifications(
+            filter(is_publishing_event, self.user_updates(user_id))
+        )
 
 
 def _extract_publishing_error_msg(error_body):
@@ -100,3 +100,28 @@ def _extract_publishing_error_msg(error_body):
 
 class TemplatePublishingError(Exception):
     pass
+
+
+class PublishTemplateNotifications:
+    """
+    Wrapper around notification events from template publishig.
+
+    Parameters
+    ----------
+    events : generator
+            Publishing events. Should be already filtered for a project and
+            user IDs.
+    """
+
+    def __init__(self, events):
+        self.events = events
+
+    def wait_for_completion(self):
+        """Block until template publishing completes or fails."""
+        for e in self.events:
+            if e.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_FAILED":
+                body = json.loads(e.data)
+                msg = _extract_publishing_error_msg(body)
+                raise TemplatePublishingError(msg)
+            elif e.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_COMPLETED":
+                return
