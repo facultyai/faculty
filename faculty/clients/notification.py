@@ -70,6 +70,7 @@ class NotificationClient(BaseClient):
         source_project_id : uuid.UUID
             The project from which the template was published.
         """
+
         def is_publishing_event(event):
             if not event.event.startswith("@SSE/PROJECT_TEMPLATE_PUBLISH"):
                 return False

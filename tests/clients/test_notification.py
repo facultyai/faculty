@@ -184,6 +184,7 @@ def test_wait_for_completion_rendering_unexpected_error_code(mocker):
                 }
             ),
         )
+
     user_updates_mock = mocker.patch.object(
         NotificationClient, "user_updates", return_value=events()
     )
