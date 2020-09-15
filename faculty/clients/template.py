@@ -35,7 +35,7 @@ class TemplateClient(BaseClient):
 
     _SERVICE_NAME = "kanto"
 
-    def publish_new(self, template, source_directory, project_id):
+    def publish_new(self, project_id, template, source_directory):
         endpoint = "template"
         payload = {
             "sourceProjectId": str(project_id),

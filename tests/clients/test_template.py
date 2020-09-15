@@ -25,7 +25,7 @@ def test_publish_new(mocker):
     mocker.patch.object(TemplateClient, "_post_raw")
 
     client = TemplateClient(mocker.Mock())
-    client.publish_new("template name", "source/dir", PROJECT_ID)
+    client.publish_new(PROJECT_ID, "template name", "source/dir")
 
     TemplateClient._post_raw.assert_called_once_with(
         "template",

@@ -59,7 +59,7 @@ def test_check_publish_template_result_success(mocker):
         )
 
     client = NotificationClient(mocker.Mock())
-    client.check_publish_template_result(events(), PROJECT_ID)
+    client.check_publish_template_result(PROJECT_ID, events())
 
 
 def test_check_publish_template_result_other_project(mocker):
@@ -74,7 +74,7 @@ def test_check_publish_template_result_other_project(mocker):
         )
 
     client = NotificationClient(mocker.Mock())
-    client.check_publish_template_result(events(), PROJECT_ID)
+    client.check_publish_template_result(PROJECT_ID, events())
 
 
 @pytest.mark.parametrize("error_code", ["name_conflict", "unexpected_error"])
@@ -93,7 +93,7 @@ def test_check_publish_template_result_errors(mocker, error_code):
 
     client = NotificationClient(mocker.Mock())
     with pytest.raises(TemplatePublishingError, match="dummy error message"):
-        client.check_publish_template_result(events(), PROJECT_ID)
+        client.check_publish_template_result(PROJECT_ID, events())
 
 
 def test_check_publish_template_result_rendering_errors(mocker):
@@ -117,7 +117,7 @@ def test_check_publish_template_result_rendering_errors(mocker):
 \tUnexpected key { abc } in file a.py
 \tUnexpected key { abc } in file a/b.py"""
     with pytest.raises(TemplatePublishingError, match=expected_message):
-        client.check_publish_template_result(events(), PROJECT_ID)
+        client.check_publish_template_result(PROJECT_ID, events())
 
 
 def test_check_publish_template_result_rendering_unexpected_error_code(mocker):
@@ -136,7 +136,7 @@ def test_check_publish_template_result_rendering_unexpected_error_code(mocker):
     with pytest.raises(
         TemplatePublishingError, match="Unexpected error code received"
     ):
-        client.check_publish_template_result(events(), PROJECT_ID)
+        client.check_publish_template_result(PROJECT_ID, events())
 
 
 def test_check_publish_template_result_rendering_no_error_code(mocker):
@@ -150,4 +150,4 @@ def test_check_publish_template_result_rendering_no_error_code(mocker):
     with pytest.raises(
         TemplatePublishingError, match="Unexpected server response"
     ):
-        client.check_publish_template_result(events(), PROJECT_ID)
+        client.check_publish_template_result(PROJECT_ID, events())

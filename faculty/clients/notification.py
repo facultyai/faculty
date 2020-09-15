@@ -57,7 +57,7 @@ class NotificationClient(BaseClient):
         client = sseclient.SSEClient(response)
         return client.events()
 
-    def check_publish_template_result(self, events, project_id):
+    def check_publish_template_result(self, project_id, events):
         """Handle results of a template publishing operation.
 
         Only returns when success or failure events are received for the given
