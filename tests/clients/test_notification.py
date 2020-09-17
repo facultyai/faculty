@@ -63,14 +63,14 @@ def test_wait_for_completion_success(mocker):
     )
     client = NotificationClient(mocker.Mock())
 
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     publish_notifications.wait_for_completion()
     user_updates_mock.assert_called_once_with(USER_ID)
 
 
-def test_get_publish_template_notifications_filter(mocker):
+def test_publish_template_notifications_filter(mocker):
     def events():
         yield Event(
             event="@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_FAILED",
@@ -98,7 +98,7 @@ def test_get_publish_template_notifications_filter(mocker):
     )
     client = NotificationClient(mocker.Mock())
 
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     event_data = [(e.event, e.data) for e in publish_notifications.events]
@@ -134,7 +134,7 @@ def test_wait_for_completion_errors(mocker, error_code):
         NotificationClient, "user_updates", return_value=events()
     )
     client = NotificationClient(mocker.Mock())
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     with pytest.raises(TemplatePublishingError, match="dummy error message"):
@@ -162,7 +162,7 @@ def test_wait_for_completion_rendering_errors(mocker):
         NotificationClient, "user_updates", return_value=events()
     )
     client = NotificationClient(mocker.Mock())
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     expected_message = """Failed to render the template with default parameters:
@@ -189,7 +189,7 @@ def test_wait_for_completion_rendering_unexpected_error_code(mocker):
         NotificationClient, "user_updates", return_value=events()
     )
     client = NotificationClient(mocker.Mock())
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     with pytest.raises(
@@ -210,7 +210,7 @@ def test_wait_for_completion_rendering_no_error_code(mocker):
         NotificationClient, "user_updates", return_value=events()
     )
     client = NotificationClient(mocker.Mock())
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     with pytest.raises(
