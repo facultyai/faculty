@@ -28,6 +28,7 @@ from faculty.clients.template import (
     ParameterValidationFailure,
     TemplateRetrievalFailure,
     DefaultParametersParsingError,
+    GenericParsingError,
 )
 
 SOURCE_PROJECT_ID = uuid.uuid4()
@@ -148,14 +149,17 @@ def test_add_to_project_from_directory(mocker):
             {
                 "errorCode": "template_retrieval_failure",
                 "errors": {
-                    "apps": [],
-                    "apis": [],
-                    "environments": [],
-                    "jobs": [],
+                    "apps": ["app error"],
+                    "apis": ["API error"],
+                    "environments": ["env error"],
+                    "jobs": ["job error"],
                 },
             },
             TemplateRetrievalFailure(
-                apps=[], apis=[], environments=[], jobs=[]
+                apps=["app error"],
+                apis=["API error"],
+                environments=["env error"],
+                jobs=["job error"],
             ),
         ),
         (
@@ -164,6 +168,13 @@ def test_add_to_project_from_directory(mocker):
                 "error": "parameter error",
             },
             DefaultParametersParsingError(error=["parameter error"]),
+        ),
+        (
+            {
+                "errorCode": "generic_parsing_failure",
+                "error": "generic parsing error",
+            },
+            GenericParsingError(error=["generic parsing error"]),
         ),
     ],
 )
@@ -201,15 +212,3 @@ def test_add_to_project_from_directory_errors(
         },
         check_status=False,
     )
-
-
-#             """App subdomain already exists: app-subdomain-1
-# App name already exists: test-app-name-1
-# App name already exists: test-app-name-2
-# Invalid app working directory: invalid/app/dir
-# API subdomain already exists: api-subdomain-1
-# API name already exists: test-api-name
-# Invalid API working directory: invalid/API/dir
-# Environment name already exists: test-env-name
-# Invalid environment name: invalid#env
-# """,

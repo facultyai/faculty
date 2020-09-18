@@ -74,81 +74,21 @@ class TemplateClient(BaseClient):
                 raise ResourceValidationFailureResponseSchema().load(
                     response_body
                 )
-                # _resource_validation_error(response_body)
             elif error_code == "parameter_validation_failure":
                 raise ParameterValidationFailureSchema().load(response_body)
-                # msg = "Parameter validation failed:"
-                # for e in response_body["errors"]["parameters"]:
-                #     msg += "\n" + e
-                # raise ParameterValidationFailure(msg)
             elif error_code == "template_retrieval_failure":
                 raise TemplateRetrievalFailureResponseSchema().load(
                     response_body
                 )
-                # raise _retrieval_error(response_body)
             elif error_code == "default_parameters_parsing_error":
                 raise DefaultParametersParsingErrorSchema().load(response_body)
             elif error_code == "generic_parsing_failure":
-                raise TemplateRetrievalFailure(response_body["error"])
+                raise GenericParsingErrorSchema().load(response_body)
             # TODO more cases
             else:
                 _unexpected_response(response)
         else:
             _unexpected_response(response)
-
-
-# def _map_prefix(prefix, errors):
-#     return [prefix + e for e in errors]
-#
-#
-# def _one_per_line(error_message_lists):
-#     messages = [msg for sublist in error_message_lists for msg in sublist]
-#     return "\n".join(messages)
-#
-#
-# def _retrieval_error(response_body):
-#     errors = response_body["errors"]
-#     apps = errors["apps"]
-#     apis = errors["apis"]
-#     envs = errors["environments"]
-#     jobs = errors["jobs"]
-#     message_lists = [
-#         _map_prefix(prefix, errors)
-#         for prefix, errors in [
-#             ("Error reading app resource definition: ", apps),
-#             ("Error reading API resource definition: ", apis),
-#             ("Error reading environment resource definition: ", envs),
-#             ("Error reading app job definition: ", jobs),
-#         ]
-#     ]
-#     raise TemplateRetrievalFailure(_one_per_line(message_lists))
-#
-#
-# def _resource_validation_error(response_body):
-#     errors = response_body["errors"]
-#     apps = errors["apps"]
-#     apis = errors["apis"]
-#     envs = errors["environments"]
-#     jobs = errors["jobs"]
-#     workspace = errors["workspace"]
-#     message_lists = [
-#         _map_prefix(prefix, errors)
-#         for prefix, errors in [
-#             ("App subdomain already exists: ", apps["subdomainConflicts"]),
-#             ("App name already exists: ", apps["nameConflicts"]),
-#             ("Invalid app working directory: ", apps["invalidWorkingDirs"]),
-#             ("API subdomain already exists: ", apis["subdomainConflicts"]),
-#             ("API name already exists: ", apis["nameConflicts"]),
-#             ("Invalid API working directory: ", apis["invalidWorkingDirs"]),
-#             ("Environment name already exists: ", envs["nameConflicts"]),
-#             ("Invalid environment name: ", envs["invalidNames"]),
-#             ("Job name already exists: ", jobs["nameConflicts"]),
-#             ("Invalid job name: ", jobs["invalidNames"]),
-#             ("Invalid job working directory: ", jobs["invalidWorkingDirs"]),
-#             ("Workspace file conflicts: ", workspace["nameConflicts"]),
-#         ]
-#     ]
-#     raise ResourceValidationFailure(_one_per_line(message_lists))
 
 
 def _unexpected_response(response):
@@ -159,9 +99,22 @@ class TemplateException(Exception):
     pass
 
 
+class GenericParsingError(TemplateException):
+    def __init__(self, error):
+        self.error = error
+
+
+class GenericParsingErrorSchema(BaseSchema):
+    error = fields.String(required=True)
+
+    @post_load
+    def make_error(self, data, **kwargs):
+        return GenericParsingError(**data)
+
+
 class DefaultParametersParsingError(TemplateException):
     def __init__(self, error):
-        self.errors = error
+        self.error = error
 
 
 class DefaultParametersParsingErrorSchema(BaseSchema):
