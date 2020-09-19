@@ -503,7 +503,7 @@ def open(project_path, mode="r", temp_dir=None, project_id=None, **kwargs):
         standard python open function. Writing is currently not supported.
     temp_dir : str
         A directory on the local filesystem where you would like the file to be
-        saved into temporarily. Note that on SherlockML servers, the default
+        saved into temporarily. Note that on Faculty servers, the default
         temporary directory can break with large files, so if your file is
         upwards of 2GB, it is recommended to specify temp_dir='/project'.
     project_id : str, optional
