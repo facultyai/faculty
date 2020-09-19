@@ -134,8 +134,7 @@ def test_model_client_list(mocker):
 
     schema_mock.assert_called_once_with(many=True)
     ModelClient._get.assert_called_once_with(
-        "/project/{}/model".format(PROJECT_ID, MODEL_ID),
-        schema_mock.return_value,
+        "/project/{}/model".format(PROJECT_ID), schema_mock.return_value
     )
 
 
