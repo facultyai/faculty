@@ -45,7 +45,8 @@ class TemplateClient(BaseClient):
             "sourceDirectory": source_directory,
             "name": template,
         }
-        return self._post_raw(endpoint, json=payload)
+        response = self._post_raw(endpoint, json=payload, check_status=False)
+        return _handle_publishing_response(response)
 
     def add_to_project_from_directory(
         self,
@@ -63,29 +64,31 @@ class TemplateClient(BaseClient):
             "parameterValues": parameters,
         }
         response = self._post_raw(endpoint, json=payload, check_status=False)
-        if 200 <= response.status_code < 300:
-            return response
-        elif 400 <= response.status_code < 500:
-            response_body = response.json()
-            error_code = response_body.get("errorCode")
-            if error_code == "resources_validation_failure":
-                raise ResourceValidationFailureResponseSchema().load(
-                    response_body
-                )
-            elif error_code == "parameter_validation_failure":
-                raise ParameterValidationFailureSchema().load(response_body)
-            elif error_code == "template_retrieval_failure":
-                raise TemplateRetrievalFailureResponseSchema().load(
-                    response_body
-                )
-            elif error_code == "default_parameters_parsing_error":
-                raise DefaultParametersParsingErrorSchema().load(response_body)
-            elif error_code == "generic_parsing_failure":
-                raise GenericParsingErrorSchema().load(response_body)
-            elif error_code == "workspace_files_validation_error":
-                raise WorkspaceFilesValidationErrorSchema().load(response_body)
-        else:
-            raise Exception("Unexpected response from the server:\n", response.text)
+        return _handle_publishing_response(response)
+
+
+def _handle_publishing_response(response):
+    if 200 <= response.status_code < 300:
+        return response
+    elif 400 <= response.status_code < 500:
+        response_body = response.json()
+        error_code = response_body.get("errorCode")
+        if error_code == "resources_validation_failure":
+            raise ResourceValidationFailureResponseSchema().load(response_body)
+        elif error_code == "parameter_validation_failure":
+            raise ParameterValidationFailureSchema().load(response_body)
+        elif error_code == "template_retrieval_failure":
+            raise TemplateRetrievalFailureResponseSchema().load(response_body)
+        elif error_code == "default_parameters_parsing_error":
+            raise DefaultParametersParsingErrorSchema().load(response_body)
+        elif error_code == "generic_parsing_failure":
+            raise GenericParsingErrorSchema().load(response_body)
+        elif error_code == "workspace_files_validation_error":
+            raise WorkspaceFilesValidationErrorSchema().load(response_body)
+    else:
+        raise Exception(
+            "Unexpected response from the server:\n", response.text
+        )
 
 
 class TemplateException(Exception):
