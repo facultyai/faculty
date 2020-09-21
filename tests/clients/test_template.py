@@ -29,6 +29,9 @@ from faculty.clients.template import (
     TemplateRetrievalFailure,
     DefaultParametersParsingError,
     GenericParsingError,
+    WorkpaceFilesValidationError,
+    FileTooLargeError,
+    TooManyFilesError,
 )
 
 SOURCE_PROJECT_ID = uuid.uuid4()
@@ -175,6 +178,23 @@ def test_add_to_project_from_directory(mocker):
                 "error": "generic parsing error",
             },
             GenericParsingError(error=["generic parsing error"]),
+        ),
+        (
+            {
+                "errorCode": "workspace_files_validation_error",
+                "filesTooLarge": [
+                    {"path": "/too/large", "actualSizeBytes": 2, "maxBytes": 1}
+                ],
+                "tooManyFiles": {"actualFiles": 2, "maxFiles": 1},
+            },
+            WorkpaceFilesValidationError(
+                files_too_large=[
+                    FileTooLargeError(
+                        "/too/large", actual_size_bytes=2, max_bytes=1
+                    )
+                ],
+                too_many_files=TooManyFilesError(actual_files=2, max_files=1),
+            ),
         ),
     ],
 )

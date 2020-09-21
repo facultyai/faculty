@@ -84,7 +84,8 @@ class TemplateClient(BaseClient):
                 raise DefaultParametersParsingErrorSchema().load(response_body)
             elif error_code == "generic_parsing_failure":
                 raise GenericParsingErrorSchema().load(response_body)
-            # TODO more cases
+            elif error_code == "workspace_files_validation_error":
+                raise WorkspaceFilesValidationErrorSchema().load(response_body)
             else:
                 _unexpected_response(response)
         else:
@@ -97,6 +98,56 @@ def _unexpected_response(response):
 
 class TemplateException(Exception):
     pass
+
+
+FileTooLargeError = namedtuple(
+    "FileTooLargeError", ["path", "actual_size_bytes", "max_bytes"]
+)
+
+
+class FileTooLargeSchema(BaseSchema):
+    path = fields.String(required=True)
+    actual_size_bytes = fields.Int(data_key="actualSizeBytes", required=True)
+    max_bytes = fields.Int(data_key="maxBytes", required=True)
+
+    @post_load
+    def make_error(self, data):
+        return FileTooLargeError(**data)
+
+
+TooManyFilesError = namedtuple(
+    "TooManyFilesError", ["actual_files", "max_files"]
+)
+
+
+class TooManyFilesSchema(BaseSchema):
+    actual_files = fields.Int(data_key="actualFiles", required=True)
+    max_files = fields.Int(data_key="maxFiles", required=True)
+
+    @post_load
+    def make_error(self, data):
+        return TooManyFilesError(**data)
+
+
+class WorkpaceFilesValidationError(TemplateException):
+    def __init__(self, files_too_large, too_many_files):
+        self.files_too_large = files_too_large
+        self.too_many_files = too_many_files
+
+
+class WorkspaceFilesValidationErrorSchema(BaseSchema):
+    files_too_large = fields.List(
+        fields.Nested(FileTooLargeSchema()),
+        data_key="filesTooLarge",
+        required=True,
+    )
+    too_many_files = fields.Nested(
+        TooManyFilesSchema(), data_key="tooManyFiles"
+    )
+
+    @post_load
+    def make_error(self, data):
+        return WorkpaceFilesValidationError(**data)
 
 
 class GenericParsingError(TemplateException):
