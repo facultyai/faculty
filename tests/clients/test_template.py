@@ -166,8 +166,7 @@ def test_publish_new(mocker):
             "sourceDirectory": "source/dir",
             "name": "template name",
         },
-        check_status=False
-        
+        check_status=False,
     )
 
 
@@ -197,7 +196,7 @@ def test_publish_new_errors(mocker, mock_response_payload, expected_exception):
             "sourceDirectory": "source/dir",
             "name": "template name",
         },
-        check_status=False
+        check_status=False,
     )
 
 

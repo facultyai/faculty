@@ -175,14 +175,14 @@ class AddTemplateToProjectFromDirectoryNotifications:
         """Block until template publishing completes or fails."""
         for e in self.events:
             if (
-                e.event
-                == "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY_ADD_TO_PROJECT_FAILED"
+                e.event == "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+                "_ADD_TO_PROJECT_FAILED"
             ):
                 body = json.loads(e.data)
                 msg = _extract_publishing_error_msg(body)
                 raise TemplatePublishingError(msg)
             elif (
-                e.event
-                == "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY_ADD_TO_PROJECT_COMPLETED"
+                e.event == "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+                "_ADD_TO_PROJECT_COMPLETED"
             ):
                 return
