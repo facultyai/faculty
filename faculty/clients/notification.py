@@ -178,7 +178,7 @@ class AddTemplateToProjectFromDirectoryNotifications:
                 e.event == "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
                 "_ADD_TO_PROJECT_FAILED"
             ):
-                body = json.loads(e.data)
+                json.loads(e.data)
                 # TODO backend needs to return rendering errors here
                 msg = "Failed to apply template to directory"
                 raise TemplatePublishingError(msg)

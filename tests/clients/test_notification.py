@@ -243,8 +243,7 @@ def test_add_to_project_from_dir_notifications_filter(mocker):
             data=json.dumps({"projectId": str(PROJECT_ID)}),
         )
         yield Event(
-            event="@SSE/OTHER",
-            data=json.dumps({"projectId": str(PROJECT_ID)}),
+            event="@SSE/OTHER", data=json.dumps({"projectId": str(PROJECT_ID)})
         )
 
     user_updates_mock = mocker.patch.object(
