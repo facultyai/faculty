@@ -63,10 +63,8 @@ class TemplateClient(BaseClient):
             "parameterValues": parameters,
         }
         response = self._post_raw(endpoint, json=payload, check_status=False)
-        print(response.status_code)
-        print(response.text)
         if 200 <= response.status_code < 300:
-            return
+            return response
         elif 400 <= response.status_code < 500:
             response_body = response.json()
             error_code = response_body.get("errorCode")
@@ -86,14 +84,8 @@ class TemplateClient(BaseClient):
                 raise GenericParsingErrorSchema().load(response_body)
             elif error_code == "workspace_files_validation_error":
                 raise WorkspaceFilesValidationErrorSchema().load(response_body)
-            else:
-                _unexpected_response(response)
         else:
-            _unexpected_response(response)
-
-
-def _unexpected_response(response):
-    raise Exception("Unexpected response from the server:\n", response.text)
+            raise Exception("Unexpected response from the server:\n", response.text)
 
 
 class TemplateException(Exception):
