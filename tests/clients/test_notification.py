@@ -180,7 +180,7 @@ def test_wait_for_completion_rendering_unexpected_error_code(mocker):
             data=json.dumps(
                 {
                     "sourceProjectId": str(PROJECT_ID),
-                    "errorCode": "unkown erorr code",
+                    "errorCode": "unkown error code",
                 }
             ),
         )
@@ -217,4 +217,56 @@ def test_wait_for_completion_rendering_no_error_code(mocker):
         TemplatePublishingError, match="Unexpected server response"
     ):
         publish_notifications.wait_for_completion()
+    user_updates_mock.assert_called_once_with(USER_ID)
+
+
+def test_add_to_project_from_dir_notifications_filter(mocker):
+    def events():
+        yield Event(
+            event="@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_FAILED",
+            data=json.dumps({"projectId": "other project ID"}),
+        )
+        yield Event(
+            event="@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_FAILED",
+            data=json.dumps({"projectId": str(PROJECT_ID)}),
+        )
+        yield Event(
+            event="@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_COMPLETED",
+            data=json.dumps({"projectId": "other project ID"}),
+        )
+        yield Event(
+            event="@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_COMPLETED",
+            data=json.dumps({"projectId": str(PROJECT_ID)}),
+        )
+        yield Event(
+            event="@SSE/OTHER",
+            data=json.dumps({"projectId": str(PROJECT_ID)}),
+        )
+
+    user_updates_mock = mocker.patch.object(
+        NotificationClient, "user_updates", return_value=events()
+    )
+    client = NotificationClient(mocker.Mock())
+
+    publish_notifications = client.add_to_project_from_dir_notifications(
+        USER_ID, PROJECT_ID
+    )
+    event_data = [(e.event, e.data) for e in publish_notifications.events]
+
+    assert event_data == [
+        (
+            "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_FAILED",
+            json.dumps({"projectId": str(PROJECT_ID)}),
+        ),
+        (
+            "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_COMPLETED",
+            json.dumps({"projectId": str(PROJECT_ID)}),
+        ),
+    ]
     user_updates_mock.assert_called_once_with(USER_ID)
