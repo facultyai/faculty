@@ -72,26 +72,20 @@ class TemplateClient(BaseClient):
 
 
 def _handle_publishing_error(exception):
-    if exception.error_code == "resources_validation_failure":
-        raise ResourceValidationErrorResponseSchema().load(
-            exception.response.json()
-        )
-    elif exception.error_code == "parameter_validation_failure":
-        raise ParameterValidationErrorSchema().load(exception.response.json())
-    elif exception.error_code == "template_retrieval_failure":
-        raise TemplateRetrievalErrorResponseSchema().load(
-            exception.response.json()
-        )
-    elif exception.error_code == "default_parameters_parsing_error":
-        raise DefaultParametersParsingErrorSchema().load(
-            exception.response.json()
-        )
-    elif exception.error_code == "generic_parsing_failure":
-        raise GenericParsingErrorSchema().load(exception.response.json())
-    elif exception.error_code == "workspace_files_validation_error":
-        raise WorkspaceFilesValidationErrorSchema().load(
-            exception.response.json()
-        )
+    code = exception.error_code
+    body = exception.response.json()
+    if code == "resources_validation_failure":
+        raise ResourceValidationErrorResponseSchema().load(body)
+    elif code == "parameter_validation_failure":
+        raise ParameterValidationErrorSchema().load(body)
+    elif code == "template_retrieval_failure":
+        raise TemplateRetrievalErrorResponseSchema().load(body)
+    elif code == "default_parameters_parsing_error":
+        raise DefaultParametersParsingErrorSchema().load(body)
+    elif code == "generic_parsing_failure":
+        raise GenericParsingErrorSchema().load(body)
+    elif code == "workspace_files_validation_error":
+        raise WorkspaceFilesValidationErrorSchema().load(body)
     else:
         raise
 
