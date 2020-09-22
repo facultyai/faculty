@@ -285,7 +285,8 @@ class ResourceValidationErrorResponseSchema(BaseSchema):
 
     @post_load
     def make_error(self, data, **kwargs):
-        return ResourceValidationError.from_errors(**data)
+        errors = data["errors"]
+        return ResourceValidationError(**errors)
 
 
 class ResourceValidationError(TemplateException):
@@ -295,16 +296,6 @@ class ResourceValidationError(TemplateException):
         self.environments = environments
         self.jobs = jobs
         self.workspace = workspace
-
-    @staticmethod
-    def from_errors(errors):
-        return ResourceValidationError(
-            apps=errors["apps"],
-            apis=errors["apis"],
-            environments=errors["environments"],
-            jobs=errors["jobs"],
-            workspace=errors["workspace"],
-        )
 
 
 class ParameterValidationError(TemplateException):
@@ -327,15 +318,6 @@ class TemplateRetrievalError(TemplateException):
         self.environments = environments
         self.jobs = jobs
 
-    @staticmethod
-    def from_errors(errors):
-        return TemplateRetrievalError(
-            apps=errors["apps"],
-            apis=errors["apis"],
-            environments=errors["environments"],
-            jobs=errors["jobs"],
-        )
-
 
 class TemplateRetrievalErrorSchema(BaseSchema):
     apps = fields.List(fields.String(), required=True)
@@ -349,4 +331,5 @@ class TemplateRetrievalErrorResponseSchema(BaseSchema):
 
     @post_load()
     def make_error(self, data, **kwargs):
-        return TemplateRetrievalError.from_errors(**data)
+        errors = data["errors"]
+        return TemplateRetrievalError(**errors)
