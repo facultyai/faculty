@@ -19,7 +19,7 @@ from collections import namedtuple
 
 from marshmallow import fields, post_load
 
-from faculty.clients.base import BaseClient, BaseSchema
+from faculty.clients.base import BaseClient, BaseSchema, HttpError
 
 
 class TemplateClient(BaseClient):
@@ -45,8 +45,10 @@ class TemplateClient(BaseClient):
             "sourceDirectory": source_directory,
             "name": template,
         }
-        response = self._post_raw(endpoint, json=payload, check_status=False)
-        return _handle_publishing_response(response)
+        try:
+            self._post_raw(endpoint, json=payload)
+        except HttpError as err:
+            _handle_publishing_error(err)
 
     def add_to_project_from_directory(
         self,
@@ -63,32 +65,35 @@ class TemplateClient(BaseClient):
             "targetDirectory": target_directory,
             "parameterValues": parameters,
         }
-        response = self._post_raw(endpoint, json=payload, check_status=False)
-        return _handle_publishing_response(response)
+        try:
+            self._post_raw(endpoint, json=payload)
+        except HttpError as err:
+            _handle_publishing_error(err)
 
 
-def _handle_publishing_response(response):
-    if 200 <= response.status_code < 300:
-        return response
-    elif 400 <= response.status_code < 500:
-        response_body = response.json()
-        error_code = response_body.get("errorCode")
-        if error_code == "resources_validation_failure":
-            raise ResourceValidationErrorResponseSchema().load(response_body)
-        elif error_code == "parameter_validation_failure":
-            raise ParameterValidationErrorSchema().load(response_body)
-        elif error_code == "template_retrieval_failure":
-            raise TemplateRetrievalErrorResponseSchema().load(response_body)
-        elif error_code == "default_parameters_parsing_error":
-            raise DefaultParametersParsingErrorSchema().load(response_body)
-        elif error_code == "generic_parsing_failure":
-            raise GenericParsingErrorSchema().load(response_body)
-        elif error_code == "workspace_files_validation_error":
-            raise WorkspaceFilesValidationErrorSchema().load(response_body)
-    else:
-        raise Exception(
-            "Unexpected response from the server:\n", response.text
+def _handle_publishing_error(exception):
+    if exception.error_code == "resources_validation_failure":
+        raise ResourceValidationErrorResponseSchema().load(
+            exception.response.json()
         )
+    elif exception.error_code == "parameter_validation_failure":
+        raise ParameterValidationErrorSchema().load(exception.response.json())
+    elif exception.error_code == "template_retrieval_failure":
+        raise TemplateRetrievalErrorResponseSchema().load(
+            exception.response.json()
+        )
+    elif exception.error_code == "default_parameters_parsing_error":
+        raise DefaultParametersParsingErrorSchema().load(
+            exception.response.json()
+        )
+    elif exception.error_code == "generic_parsing_failure":
+        raise GenericParsingErrorSchema().load(exception.response.json())
+    elif exception.error_code == "workspace_files_validation_error":
+        raise WorkspaceFilesValidationErrorSchema().load(
+            exception.response.json()
+        )
+    else:
+        raise
 
 
 class TemplateException(Exception):

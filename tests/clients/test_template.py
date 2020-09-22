@@ -33,6 +33,7 @@ from faculty.clients.template import (
     FileTooLarge,
     TooManyFiles,
 )
+from faculty.clients.base import BadRequest, Conflict
 
 SOURCE_PROJECT_ID = uuid.uuid4()
 TARGET_PROJECT_ID = uuid.uuid4()
@@ -164,7 +165,6 @@ def test_publish_new(mocker):
             "sourceDirectory": "source/dir",
             "name": "template name",
         },
-        check_status=False,
     )
 
 
@@ -173,12 +173,15 @@ def test_publish_new(mocker):
 )
 def test_publish_new_errors(mocker, mock_response_payload, expected_exception):
     mock_response = mocker.Mock()
-    mock_response.status_code = 400
+    mock_response.json.return_value = mock_response_payload
     mocker.patch.object(
-        mock_response, "json", return_value=mock_response_payload
-    )
-    mocker.patch.object(
-        TemplateClient, "_post_raw", return_value=mock_response
+        TemplateClient,
+        "_post_raw",
+        side_effect=BadRequest(
+            mock_response,
+            mock_response_payload.get("error"),
+            mock_response_payload.get("errorCode"),
+        ),
     )
 
     client = TemplateClient(mocker.Mock())
@@ -194,7 +197,6 @@ def test_publish_new_errors(mocker, mock_response_payload, expected_exception):
             "sourceDirectory": "source/dir",
             "name": "template name",
         },
-        check_status=False,
     )
 
 
@@ -222,7 +224,6 @@ def test_add_to_project_from_directory(mocker):
             "targetDirectory": "target/dir",
             "parameterValues": {"paramA": "a", "paramB": "B"},
         },
-        check_status=False,
     )
 
 
@@ -233,12 +234,15 @@ def test_add_to_project_from_directory_errors(
     mocker, mock_response_payload, expected_exception
 ):
     mock_response = mocker.Mock()
-    mock_response.status_code = 409
+    mock_response.json.return_value = mock_response_payload
     mocker.patch.object(
-        mock_response, "json", return_value=mock_response_payload
-    )
-    mocker.patch.object(
-        TemplateClient, "_post_raw", return_value=mock_response
+        TemplateClient,
+        "_post_raw",
+        side_effect=Conflict(
+            mock_response,
+            mock_response_payload.get("error"),
+            mock_response_payload.get("errorCode"),
+        ),
     )
 
     client = TemplateClient(mocker.Mock())
@@ -260,5 +264,4 @@ def test_add_to_project_from_directory_errors(
             "targetDirectory": "target/dir",
             "parameterValues": {"paramA": "a", "paramB": "B"},
         },
-        check_status=False,
     )
