@@ -117,7 +117,7 @@ def _extract_publishing_error_msg(error_body):
             return error_body["error"]
         elif code == "template_rendering_error":
             errors = error_body["errors"]
-            msg = "Failed to render the template with default parameters:"
+            msg = "Failed to render the template:"
             for e in errors:
                 msg += "\n\t{} in file {}".format(e["error"], e["path"])
             return msg
@@ -177,9 +177,8 @@ class AddTemplateToProjectFromDirectoryNotifications:
                 e.event == "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
                 "_ADD_TO_PROJECT_FAILED"
             ):
-                json.loads(e.data)
-                # TODO backend needs to return rendering errors here
-                msg = "Failed to apply template to directory"
+                body = json.loads(e.data)
+                msg = _extract_publishing_error_msg(body)
                 raise TemplatePublishingError(msg)
             elif (
                 e.event == "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
