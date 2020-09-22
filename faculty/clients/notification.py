@@ -133,13 +133,13 @@ class TemplatePublishingError(Exception):
 
 class PublishTemplateNotifications:
     """
-    Wrapper around notification events from template publishing.
+    Events from the "publish new template" operation.
 
     Parameters
     ----------
     events : generator
-            Publishing events. Should be already filtered for a project and
-            user IDs.
+        Publishing events. Should be already filtered for a project and
+        user IDs.
     """
 
     def __init__(self, events):
@@ -158,14 +158,13 @@ class PublishTemplateNotifications:
 
 class AddTemplateToProjectFromDirectoryNotifications:
     """
-    Wrapper around notification events from the "add template to project from
-    directory" operation
+    Events from the "add template to project from directory" operation.
 
     Parameters
     ----------
     events : generator
-            Events from the "add to project from directory" operation.
-            Should be already filtered for a project and user IDs.
+        Events from the "add to project from directory" operation.
+        Should be already filtered for a project and user IDs.
     """
 
     def __init__(self, events):
