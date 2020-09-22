@@ -19,19 +19,19 @@ import pytest
 
 from faculty.clients.template import (
     TemplateClient,
-    ResourceValidationFailure,
+    ResourceValidationError,
     AppValidationFailure,
     ApiValidationFailure,
     EnvironmentValidationFailure,
     JobValidationFailure,
     WorkspaceValidationFailure,
-    ParameterValidationFailure,
-    TemplateRetrievalFailure,
+    ParameterValidationError,
+    TemplateRetrievalError,
     DefaultParametersParsingError,
     GenericParsingError,
     WorkpaceFilesValidationError,
-    FileTooLargeError,
-    TooManyFilesError,
+    FileTooLarge,
+    TooManyFiles,
 )
 
 SOURCE_PROJECT_ID = uuid.uuid4()
@@ -65,7 +65,7 @@ PUBLISHING_ERRORS = [
                 "workspace": {"nameConflicts": ["test-file-path"]},
             },
         },
-        ResourceValidationFailure(
+        ResourceValidationError(
             apps=AppValidationFailure(
                 subdomain_conflicts=["app-subdomain-1"],
                 name_conflicts=["test-app-name-1", "test-app-name-2"],
@@ -94,7 +94,7 @@ PUBLISHING_ERRORS = [
             "errorCode": "parameter_validation_failure",
             "errors": ["test param 1 error", "test param 2 error"],
         },
-        ParameterValidationFailure(
+        ParameterValidationError(
             errors=["test param 1 error", "test param 2 error"]
         ),
     ),
@@ -108,7 +108,7 @@ PUBLISHING_ERRORS = [
                 "jobs": ["job error"],
             },
         },
-        TemplateRetrievalFailure(
+        TemplateRetrievalError(
             apps=["app error"],
             apis=["API error"],
             environments=["env error"],
@@ -139,11 +139,9 @@ PUBLISHING_ERRORS = [
         },
         WorkpaceFilesValidationError(
             files_too_large=[
-                FileTooLargeError(
-                    "/too/large", actual_size_bytes=2, max_bytes=1
-                )
+                FileTooLarge("/too/large", actual_size_bytes=2, max_bytes=1)
             ],
-            too_many_files=TooManyFilesError(actual_files=2, max_files=1),
+            too_many_files=TooManyFiles(actual_files=2, max_files=1),
         ),
     ),
 ]

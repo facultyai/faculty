@@ -74,11 +74,11 @@ def _handle_publishing_response(response):
         response_body = response.json()
         error_code = response_body.get("errorCode")
         if error_code == "resources_validation_failure":
-            raise ResourceValidationFailureResponseSchema().load(response_body)
+            raise ResourceValidationErrorResponseSchema().load(response_body)
         elif error_code == "parameter_validation_failure":
-            raise ParameterValidationFailureSchema().load(response_body)
+            raise ParameterValidationErrorSchema().load(response_body)
         elif error_code == "template_retrieval_failure":
-            raise TemplateRetrievalFailureResponseSchema().load(response_body)
+            raise TemplateRetrievalErrorResponseSchema().load(response_body)
         elif error_code == "default_parameters_parsing_error":
             raise DefaultParametersParsingErrorSchema().load(response_body)
         elif error_code == "generic_parsing_failure":
@@ -95,8 +95,8 @@ class TemplateException(Exception):
     pass
 
 
-FileTooLargeError = namedtuple(
-    "FileTooLargeError", ["path", "actual_size_bytes", "max_bytes"]
+FileTooLarge = namedtuple(
+    "FileTooLarge", ["path", "actual_size_bytes", "max_bytes"]
 )
 
 
@@ -107,12 +107,10 @@ class FileTooLargeSchema(BaseSchema):
 
     @post_load
     def make_error(self, data):
-        return FileTooLargeError(**data)
+        return FileTooLarge(**data)
 
 
-TooManyFilesError = namedtuple(
-    "TooManyFilesError", ["actual_files", "max_files"]
-)
+TooManyFiles = namedtuple("TooManyFiles", ["actual_files", "max_files"])
 
 
 class TooManyFilesSchema(BaseSchema):
@@ -121,7 +119,7 @@ class TooManyFilesSchema(BaseSchema):
 
     @post_load
     def make_error(self, data):
-        return TooManyFilesError(**data)
+        return TooManyFiles(**data)
 
 
 class WorkpaceFilesValidationError(TemplateException):
@@ -270,7 +268,7 @@ WorkspaceValidationFailure = namedtuple(
 )
 
 
-class ResourceValidationFailuresSchema(BaseSchema):
+class ResourceValidationErrorsSchema(BaseSchema):
     apps = fields.Nested(AppValidationFailureSchema(), required=True)
     apis = fields.Nested(ApiValidationFailureSchema(), required=True)
     environments = fields.Nested(
@@ -282,15 +280,15 @@ class ResourceValidationFailuresSchema(BaseSchema):
     )
 
 
-class ResourceValidationFailureResponseSchema(BaseSchema):
-    errors = fields.Nested(ResourceValidationFailuresSchema(), required=True)
+class ResourceValidationErrorResponseSchema(BaseSchema):
+    errors = fields.Nested(ResourceValidationErrorsSchema(), required=True)
 
     @post_load
-    def make_failure(self, data, **kwargs):
-        return ResourceValidationFailure.from_errors(**data)
+    def make_error(self, data, **kwargs):
+        return ResourceValidationError.from_errors(**data)
 
 
-class ResourceValidationFailure(TemplateException):
+class ResourceValidationError(TemplateException):
     def __init__(self, apps, apis, environments, jobs, workspace):
         self.apps = apps
         self.apis = apis
@@ -300,7 +298,7 @@ class ResourceValidationFailure(TemplateException):
 
     @staticmethod
     def from_errors(errors):
-        return ResourceValidationFailure(
+        return ResourceValidationError(
             apps=errors["apps"],
             apis=errors["apis"],
             environments=errors["environments"],
@@ -309,20 +307,20 @@ class ResourceValidationFailure(TemplateException):
         )
 
 
-class ParameterValidationFailure(TemplateException):
+class ParameterValidationError(TemplateException):
     def __init__(self, errors):
         self.errors = errors
 
 
-class ParameterValidationFailureSchema(BaseSchema):
+class ParameterValidationErrorSchema(BaseSchema):
     errors = fields.List(fields.String(), required=True)
 
     @post_load()
-    def make_failure(self, data, **kwargs):
-        return ParameterValidationFailure(**data)
+    def make_error(self, data, **kwargs):
+        return ParameterValidationError(**data)
 
 
-class TemplateRetrievalFailure(TemplateException):
+class TemplateRetrievalError(TemplateException):
     def __init__(self, apps, apis, environments, jobs):
         self.apps = apps
         self.apis = apis
@@ -331,7 +329,7 @@ class TemplateRetrievalFailure(TemplateException):
 
     @staticmethod
     def from_errors(errors):
-        return TemplateRetrievalFailure(
+        return TemplateRetrievalError(
             apps=errors["apps"],
             apis=errors["apis"],
             environments=errors["environments"],
@@ -339,16 +337,16 @@ class TemplateRetrievalFailure(TemplateException):
         )
 
 
-class TemplateRetrievalFailureSchema(BaseSchema):
+class TemplateRetrievalErrorSchema(BaseSchema):
     apps = fields.List(fields.String(), required=True)
     apis = fields.List(fields.String(), required=True)
     environments = fields.List(fields.String(), required=True)
     jobs = fields.List(fields.String(), required=True)
 
 
-class TemplateRetrievalFailureResponseSchema(BaseSchema):
-    errors = fields.Nested(TemplateRetrievalFailureSchema(), required=True)
+class TemplateRetrievalErrorResponseSchema(BaseSchema):
+    errors = fields.Nested(TemplateRetrievalErrorSchema(), required=True)
 
     @post_load()
-    def make_failure(self, data, **kwargs):
-        return TemplateRetrievalFailure.from_errors(**data)
+    def make_error(self, data, **kwargs):
+        return TemplateRetrievalError.from_errors(**data)
