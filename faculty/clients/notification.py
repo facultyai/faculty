@@ -57,7 +57,7 @@ class NotificationClient(BaseClient):
         client = sseclient.SSEClient(response)
         return client.events()
 
-    def get_publish_template_notifications(self, user_id, source_project_id):
+    def publish_template_notifications(self, user_id, source_project_id):
         """Get notification events of a template publishing operation.
 
         Only returns when success or failure events are received for the given
@@ -81,6 +81,34 @@ class NotificationClient(BaseClient):
             filter(is_publishing_event, self.user_updates(user_id))
         )
 
+    def add_to_project_from_dir_notifications(
+        self, user_id, target_project_id
+    ):
+        """Get notifications of a "add to project from directory" operation.
+
+        Only returns when success or failure events are received for the given
+        target project_id. Events with other project IDs are ignored.
+
+        Parameters
+        ----------
+        user_id : uuid.UUID
+            The user who started the publish operation.
+        target_project_id : uuid.UUID
+            The project from which the template was published.
+        """
+
+        def is_publishing_event(event):
+            if not event.event.startswith(
+                "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY_ADD_TO_PROJECT"
+            ):
+                return False
+            body = json.loads(event.data)
+            return body.get("projectId") == str(target_project_id)
+
+        return AddTemplateToProjectFromDirectoryNotifications(
+            filter(is_publishing_event, self.user_updates(user_id))
+        )
+
 
 def _extract_publishing_error_msg(error_body):
     try:
@@ -89,7 +117,7 @@ def _extract_publishing_error_msg(error_body):
             return error_body["error"]
         elif code == "template_rendering_error":
             errors = error_body["errors"]
-            msg = "Failed to render the template with default parameters:"
+            msg = "Failed to render the template:"
             for e in errors:
                 msg += "\n\t{} in file {}".format(e["error"], e["path"])
             return msg
@@ -105,13 +133,13 @@ class TemplatePublishingError(Exception):
 
 class PublishTemplateNotifications:
     """
-    Wrapper around notification events from template publishig.
+    Events from the "publish new template" operation.
 
     Parameters
     ----------
     events : generator
-            Publishing events. Should be already filtered for a project and
-            user IDs.
+        Publishing events. Should be already filtered for a project and
+        user IDs.
     """
 
     def __init__(self, events):
@@ -125,4 +153,35 @@ class PublishTemplateNotifications:
                 msg = _extract_publishing_error_msg(body)
                 raise TemplatePublishingError(msg)
             elif e.event == "@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_COMPLETED":
+                return
+
+
+class AddTemplateToProjectFromDirectoryNotifications:
+    """
+    Events from the "add template to project from directory" operation.
+
+    Parameters
+    ----------
+    events : generator
+        Events from the "add to project from directory" operation.
+        Should be already filtered for a project and user IDs.
+    """
+
+    def __init__(self, events):
+        self.events = events
+
+    def wait_for_completion(self):
+        """Block until template publishing completes or fails."""
+        for e in self.events:
+            if (
+                e.event == "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+                "_ADD_TO_PROJECT_FAILED"
+            ):
+                body = json.loads(e.data)
+                msg = _extract_publishing_error_msg(body)
+                raise TemplatePublishingError(msg)
+            elif (
+                e.event == "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+                "_ADD_TO_PROJECT_COMPLETED"
+            ):
                 return

@@ -63,14 +63,14 @@ def test_wait_for_completion_success(mocker):
     )
     client = NotificationClient(mocker.Mock())
 
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     publish_notifications.wait_for_completion()
     user_updates_mock.assert_called_once_with(USER_ID)
 
 
-def test_get_publish_template_notifications_filter(mocker):
+def test_publish_template_notifications_filter(mocker):
     def events():
         yield Event(
             event="@SSE/PROJECT_TEMPLATE_PUBLISH_NEW_FAILED",
@@ -98,7 +98,7 @@ def test_get_publish_template_notifications_filter(mocker):
     )
     client = NotificationClient(mocker.Mock())
 
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     event_data = [(e.event, e.data) for e in publish_notifications.events]
@@ -134,7 +134,7 @@ def test_wait_for_completion_errors(mocker, error_code):
         NotificationClient, "user_updates", return_value=events()
     )
     client = NotificationClient(mocker.Mock())
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     with pytest.raises(TemplatePublishingError, match="dummy error message"):
@@ -162,10 +162,10 @@ def test_wait_for_completion_rendering_errors(mocker):
         NotificationClient, "user_updates", return_value=events()
     )
     client = NotificationClient(mocker.Mock())
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
-    expected_message = """Failed to render the template with default parameters:
+    expected_message = """Failed to render the template:
 \tUnexpected key { abc } in file a.py
 \tUnexpected key { abc } in file a/b.py"""
     with pytest.raises(TemplatePublishingError, match=expected_message):
@@ -180,7 +180,7 @@ def test_wait_for_completion_rendering_unexpected_error_code(mocker):
             data=json.dumps(
                 {
                     "sourceProjectId": str(PROJECT_ID),
-                    "errorCode": "unkown erorr code",
+                    "errorCode": "unkown error code",
                 }
             ),
         )
@@ -189,7 +189,7 @@ def test_wait_for_completion_rendering_unexpected_error_code(mocker):
         NotificationClient, "user_updates", return_value=events()
     )
     client = NotificationClient(mocker.Mock())
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     with pytest.raises(
@@ -210,11 +210,94 @@ def test_wait_for_completion_rendering_no_error_code(mocker):
         NotificationClient, "user_updates", return_value=events()
     )
     client = NotificationClient(mocker.Mock())
-    publish_notifications = client.get_publish_template_notifications(
+    publish_notifications = client.publish_template_notifications(
         USER_ID, PROJECT_ID
     )
     with pytest.raises(
         TemplatePublishingError, match="Unexpected server response"
     ):
         publish_notifications.wait_for_completion()
+    user_updates_mock.assert_called_once_with(USER_ID)
+
+
+def test_add_to_project_from_dir_notifications_filter(mocker):
+    def events():
+        yield Event(
+            event="@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_FAILED",
+            data=json.dumps({"projectId": "other project ID"}),
+        )
+        yield Event(
+            event="@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_FAILED",
+            data=json.dumps({"projectId": str(PROJECT_ID)}),
+        )
+        yield Event(
+            event="@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_COMPLETED",
+            data=json.dumps({"projectId": "other project ID"}),
+        )
+        yield Event(
+            event="@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_COMPLETED",
+            data=json.dumps({"projectId": str(PROJECT_ID)}),
+        )
+        yield Event(
+            event="@SSE/OTHER", data=json.dumps({"projectId": str(PROJECT_ID)})
+        )
+
+    user_updates_mock = mocker.patch.object(
+        NotificationClient, "user_updates", return_value=events()
+    )
+    client = NotificationClient(mocker.Mock())
+
+    publish_notifications = client.add_to_project_from_dir_notifications(
+        USER_ID, PROJECT_ID
+    )
+    event_data = [(e.event, e.data) for e in publish_notifications.events]
+
+    assert event_data == [
+        (
+            "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_FAILED",
+            json.dumps({"projectId": str(PROJECT_ID)}),
+        ),
+        (
+            "@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_COMPLETED",
+            json.dumps({"projectId": str(PROJECT_ID)}),
+        ),
+    ]
+    user_updates_mock.assert_called_once_with(USER_ID)
+
+
+def test_add_to_project__wait_for_completion_rendering_errors(mocker):
+    def events():
+        yield Event(
+            event="@SSE/PROJECT_TEMPLATE_APPLY_FROM_DIRECTORY"
+            "_ADD_TO_PROJECT_FAILED",
+            data=json.dumps(
+                {
+                    "projectId": str(PROJECT_ID),
+                    "errorCode": "template_rendering_error",
+                    "errors": [
+                        {"error": "Unexpected key { abc }", "path": "a.py"},
+                        {"error": "Unexpected key { abc }", "path": "a/b.py"},
+                    ],
+                }
+            ),
+        )
+
+    user_updates_mock = mocker.patch.object(
+        NotificationClient, "user_updates", return_value=events()
+    )
+    client = NotificationClient(mocker.Mock())
+    notifications = client.add_to_project_from_dir_notifications(
+        USER_ID, PROJECT_ID
+    )
+    expected_message = """Failed to render the template:
+\tUnexpected key { abc } in file a.py
+\tUnexpected key { abc } in file a/b.py"""
+    with pytest.raises(TemplatePublishingError, match=expected_message):
+        notifications.wait_for_completion()
     user_updates_mock.assert_called_once_with(USER_ID)
