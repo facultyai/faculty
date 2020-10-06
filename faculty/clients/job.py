@@ -252,6 +252,23 @@ class JobClient(BaseClient):
         payload = {"name": name, "description": description}
         self._put_raw(endpoint, json=payload)
 
+    def update_definition(self, project_id, job_id, job_definition):
+        """Update the definition of a job.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the job.
+        job_id : uuid.UUID
+            The ID of the job to update.
+        job_definition : JobDefinition
+            The new definition of the job.
+        """
+        endpoint = "/project/{}/job/{}/definition".format(project_id, job_id)
+        payload = _JobDefinitionSchema().dump(job_definition)
+
+        self._put_raw(endpoint, json=payload)
+
     def create_run(self, project_id, job_id, parameter_value_sets=None):
         """Create a run for a job.
 

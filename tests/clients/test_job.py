@@ -585,6 +585,20 @@ def test_job_client_update_metadata(mocker):
     )
 
 
+def test_job_client_update_definition(mocker):
+    mocker.patch.object(JobClient, "_put_raw")
+    mocker.patch.object(_JobDefinitionSchema, "dump")
+
+    client = JobClient(mocker.Mock())
+    client.update_definition(PROJECT_ID, JOB_ID, JOB_DEFINITION)
+
+    _JobDefinitionSchema.dump.assert_called_once_with(JOB_DEFINITION)
+    JobClient._put_raw.assert_called_once_with(
+        "/project/{}/job/{}/definition".format(PROJECT_ID, JOB_ID),
+        json=_JobDefinitionSchema.dump.return_value,
+    )
+
+
 def test_job_client_create_run(mocker):
     mocker.patch.object(JobClient, "_post", return_value=RUN_ID)
     schema_mock = mocker.patch("faculty.clients.job._RunIdSchema")
