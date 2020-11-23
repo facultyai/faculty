@@ -192,7 +192,7 @@ class _ExperimentModelSourceSchema(BaseSchema):
     experiment_run_id = fields.UUID(data_key="experimentRunId", required=True)
 
     @post_load
-    def make_experiment_model_source(self, data):
+    def make_experiment_model_source(self, data, **kwargs):
         del data["type"]
         return ExperimentModelSource(**data)
 
@@ -208,7 +208,7 @@ class _ModelVersionSchema(BaseSchema):
     source = fields.Nested(_ExperimentModelSourceSchema, required=True)
 
     @post_load
-    def make_model_latest_version(self, data):
+    def make_model_latest_version(self, data, **kwargs):
         return ModelVersion(**data)
 
 
@@ -222,5 +222,5 @@ class _ModelSchema(BaseSchema):
     )
 
     @post_load
-    def make_model(self, data):
+    def make_model(self, data, **kwargs):
         return Model(**data)

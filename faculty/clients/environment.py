@@ -206,16 +206,16 @@ class _PythonVersionSchema(BaseSchema):
     identifier = fields.String(required=True)
 
     @validates("identifier")
-    def validate_version_format(self, data):
+    def validate_version_format(self, data, **kwargs):
         if not PYTHON_VERSION_REGEX.match(data):
             raise ValidationError("Invalid version format")
 
     @post_load
-    def make_version(self, data):
+    def make_version(self, data, **kwargs):
         return Version(**data)
 
     @post_dump
-    def dump_version(self, data):
+    def dump_version(self, data, **kwargs):
         self.validate_version_format(data["identifier"])
         return data
 
@@ -225,16 +225,16 @@ class _AptVersionSchema(BaseSchema):
     identifier = fields.String(required=True)
 
     @validates("identifier")
-    def validate_version_format(self, data):
+    def validate_version_format(self, data, **kwargs):
         if not APT_VERSION_REGEX.match(data):
             raise ValidationError("Invalid version format")
 
     @post_load
-    def make_version(self, data):
+    def make_version(self, data, **kwargs):
         return Version(**data)
 
     @post_dump
-    def dump_version(self, data):
+    def dump_version(self, data, **kwargs):
         self.validate_version_format(data["identifier"])
         return data
 
@@ -276,7 +276,7 @@ class _PythonPackageSchema(BaseSchema):
     version = _PythonVersionField(required=True)
 
     @post_load
-    def make_python_package(self, data):
+    def make_python_package(self, data, **kwargs):
         return PythonPackage(**data)
 
 
@@ -289,7 +289,7 @@ class _PipSchema(BaseSchema):
     )
 
     @post_load
-    def make_pip(self, data):
+    def make_pip(self, data, **kwargs):
         return Pip(**data)
 
 
@@ -300,7 +300,7 @@ class _CondaSchema(BaseSchema):
     )
 
     @post_load
-    def make_conda(self, data):
+    def make_conda(self, data, **kwargs):
         return Conda(**data)
 
 
@@ -309,7 +309,7 @@ class _PythonEnvironmentSchema(BaseSchema):
     pip = fields.Nested(_PipSchema(), required=True)
 
     @post_load
-    def make_python_specification(self, data):
+    def make_python_specification(self, data, **kwargs):
         return PythonEnvironment(**data)
 
 
@@ -322,7 +322,7 @@ class _PythonSpecificationSchema(BaseSchema):
     )
 
     @post_load
-    def make_python(self, data):
+    def make_python(self, data, **kwargs):
         return PythonSpecification(**data)
 
 
@@ -331,7 +331,7 @@ class _AptPackageSchema(BaseSchema):
     version = _AptVersionField(required=True)
 
     @post_load
-    def make_apt_package(self, data):
+    def make_apt_package(self, data, **kwargs):
         return AptPackage(**data)
 
 
@@ -339,7 +339,7 @@ class _AptSchema(BaseSchema):
     packages = fields.List(fields.Nested(_AptPackageSchema()), required=True)
 
     @post_load
-    def make_apt(self, data):
+    def make_apt(self, data, **kwargs):
         return Apt(**data)
 
 
@@ -347,7 +347,7 @@ class _ScriptSchema(BaseSchema):
     script = fields.String(required=True)
 
     @post_load
-    def make_script(self, data):
+    def make_script(self, data, **kwargs):
         return Script(**data)
 
 
@@ -357,7 +357,7 @@ class _SpecificationSchema(BaseSchema):
     python = fields.Nested(_PythonSpecificationSchema(), required=True)
 
     @post_load
-    def make_specification(self, data):
+    def make_specification(self, data, **kwargs):
         return Specification(**data)
 
 
@@ -372,7 +372,7 @@ class _EnvironmentSchema(BaseSchema):
     specification = fields.Nested(_SpecificationSchema(), required=True)
 
     @post_load
-    def make_environment(self, data):
+    def make_environment(self, data, **kwargs):
         return Environment(**data)
 
 
@@ -382,7 +382,7 @@ class _EnvironmentCreateUpdateSchema(BaseSchema):
     specification = fields.Nested(_SpecificationSchema(), required=True)
 
     @post_load
-    def make_environment_update(self, data):
+    def make_environment_update(self, data, **kwargs):
         return _EnvironmentCreateUpdate(**data)
 
 
@@ -390,5 +390,5 @@ class _EnvironmentCreationResponseSchema(BaseSchema):
     id = fields.UUID(data_key="environmentId", required=True)
 
     @post_load
-    def make_environment(self, data):
+    def make_environment(self, data, **kwargs):
         return _EnvironmentCreationResponse(**data)

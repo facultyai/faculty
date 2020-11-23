@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import sys
 from datetime import datetime
 from uuid import uuid4
 
@@ -106,7 +107,6 @@ EXPERIMENT_BODY = {
 
 RUN_ID = uuid4()
 RUN_STARTED_AT = datetime(2018, 3, 10, 11, 39, 12, 110000, tzinfo=UTC)
-RUN_STARTED_AT_NO_TIMEZONE = datetime(2018, 3, 10, 11, 39, 12, 110000)
 RUN_STARTED_AT_STRING_PYTHON = "2018-03-10T11:39:12.110000+00:00"
 RUN_STARTED_AT_STRING_JAVA = "2018-03-10T11:39:12.11Z"
 RUN_ENDED_AT = datetime(2018, 3, 10, 11, 39, 15, 110000, tzinfo=UTC)
@@ -289,19 +289,14 @@ def test_experiment_run_schema_nullable_field(data_key, field):
 
 
 @pytest.mark.parametrize("parent_run_id", [None, PARENT_RUN_ID])
-@pytest.mark.parametrize(
-    "started_at",
-    [RUN_STARTED_AT, RUN_STARTED_AT_NO_TIMEZONE],
-    ids=["timezone", "no timezone"],
-)
 @pytest.mark.parametrize("artifact_location", [None, "faculty:project-id"])
 @pytest.mark.parametrize("tags", [[], [{"key": "key", "value": "value"}]])
-def test_create_run_schema(parent_run_id, started_at, artifact_location, tags):
+def test_create_run_schema(parent_run_id, artifact_location, tags):
     data = _CreateRunSchema().dump(
         {
             "name": EXPERIMENT_RUN_NAME,
             "parent_run_id": parent_run_id,
-            "started_at": started_at,
+            "started_at": RUN_STARTED_AT,
             "artifact_location": artifact_location,
             "tags": tags,
         }
@@ -522,6 +517,10 @@ def test_filter_schema_metric(
     }
 
 
+@pytest.mark.skipif(
+    sys.version_info > (3, 0),
+    reason="Marshmallow 3 does not do validation on dump",
+)
 def test_filter_schema_invalid_value_run_status():
     filter = RunStatusFilter(ComparisonOperator.EQUAL_TO, "invalid")
     with pytest.raises(AttributeError):
@@ -532,6 +531,10 @@ def test_filter_schema_invalid_value_run_status():
     "filter_type",
     [ProjectIdFilter, ExperimentIdFilter, RunIdFilter, DeletedAtFilter],
 )
+@pytest.mark.skipif(
+    sys.version_info > (3, 0),
+    reason="Marshmallow 3 does not do validation on dump",
+)
 def test_filter_schema_invalid_value_no_key(filter_type):
     filter = filter_type(ComparisonOperator.EQUAL_TO, "invalid")
     with pytest.raises(ValidationError):
@@ -540,6 +543,10 @@ def test_filter_schema_invalid_value_no_key(filter_type):
 
 @pytest.mark.parametrize(
     "filter_type, value", [(ParamFilter, None), (MetricFilter, "invalid")]
+)
+@pytest.mark.skipif(
+    sys.version_info > (3, 0),
+    reason="Marshmallow 3 does not do validation on dump",
 )
 def test_filter_schema_invalid_value_with_key(filter_type, value):
     filter = filter_type("key", ComparisonOperator.EQUAL_TO, value)

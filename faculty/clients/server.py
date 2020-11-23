@@ -246,7 +246,7 @@ class _ServerSizeSchema(BaseSchema):
     memory_mb = fields.Integer(data_key="memoryMb", required=True)
 
     @post_load
-    def make_server_size(self, data):
+    def make_server_size(self, data, **kwargs):
         return ServerSize(**data)
 
 
@@ -259,7 +259,7 @@ class _ServiceSchema(BaseSchema):
     uri = fields.String(required=True)
 
     @post_load
-    def make_service(self, data):
+    def make_service(self, data, **kwargs):
         return Service(**data)
 
 
@@ -279,7 +279,7 @@ class _ServerSchema(BaseSchema):
     services = fields.Nested(_ServiceSchema, many=True, required=True)
 
     @post_load
-    def make_server(self, data):
+    def make_server(self, data, **kwargs):
 
         server_size_type = data["server_size_type"]
         server_size = data.get("server_size")
@@ -315,7 +315,7 @@ class _ServerIdSchema(BaseSchema):
     instanceId = fields.UUID(required=True)
 
     @post_load
-    def make_server_id(self, data):
+    def make_server_id(self, data, **kwargs):
         return data["instanceId"]
 
 
@@ -327,5 +327,5 @@ class _SSHDetailsSchema(BaseSchema):
     key = fields.String(required=True)
 
     @post_load
-    def make_ssh_details(self, data):
+    def make_ssh_details(self, data, **kwargs):
         return SSHDetails(**data)

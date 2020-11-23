@@ -442,7 +442,7 @@ class _JobMetadataSchema(BaseSchema):
     last_updated_at = fields.DateTime(data_key="lastUpdatedAt", required=True)
 
     @post_load
-    def make_job_metadata(self, data):
+    def make_job_metadata(self, data, **kwargs):
         return JobMetadata(**data)
 
 
@@ -453,7 +453,7 @@ class _JobSummarySchema(BaseSchema):
     )
 
     @post_load
-    def make_job_summary(self, data):
+    def make_job_summary(self, data, **kwargs):
         return JobSummary(**data)
 
 
@@ -462,7 +462,7 @@ class _InstanceSizeSchema(BaseSchema):
     memory_mb = fields.Integer(data_key="memoryMb", required=True)
 
     @post_load
-    def make_instance_size(self, data):
+    def make_instance_size(self, data, **kwargs):
         return InstanceSize(**data)
 
 
@@ -473,7 +473,7 @@ class _JobParameterSchema(BaseSchema):
     required = fields.Boolean(required=True)
 
     @post_load
-    def make_job_parameter(self, data):
+    def make_job_parameter(self, data, **kwargs):
         return JobParameter(**data)
 
 
@@ -482,7 +482,7 @@ class _JobCommandSchema(BaseSchema):
     parameters = fields.List(fields.Nested(_JobParameterSchema), required=True)
 
     @post_load
-    def make_job_command(self, data):
+    def make_job_command(self, data, **kwargs):
         return JobCommand(**data)
 
 
@@ -509,7 +509,7 @@ class _JobDefinitionSchema(BaseSchema):
     )
 
     @validates_schema
-    def validate_conda_environment(self, data):
+    def validate_conda_environment(self, data, **kwargs):
         image_is_r = data["image_type"] == ImageType.R
         image_is_python = data["image_type"] == ImageType.PYTHON
         conda_environment_set = data["conda_environment"] is not None
@@ -523,7 +523,7 @@ class _JobDefinitionSchema(BaseSchema):
             )
 
     @validates_schema
-    def validate_instance_size(self, data):
+    def validate_instance_size(self, data, **kwargs):
         custom_type = data["instance_size_type"] == "custom"
         instance_size_set = data["instance_size"] is not None
         if custom_type and not instance_size_set:
@@ -536,7 +536,7 @@ class _JobDefinitionSchema(BaseSchema):
             )
 
     @post_load
-    def make_job_definition(self, data):
+    def make_job_definition(self, data, **kwargs):
         return JobDefinition(**data)
 
 
@@ -546,7 +546,7 @@ class _JobSchema(BaseSchema):
     definition = fields.Nested(_JobDefinitionSchema, required=True)
 
     @post_load
-    def make_job(self, data):
+    def make_job(self, data, **kwargs):
         return Job(**data)
 
 
@@ -554,7 +554,7 @@ class _JobIdSchema(BaseSchema):
     jobId = fields.UUID(required=True)
 
     @post_load
-    def make_job_id(self, data):
+    def make_job_id(self, data, **kwargs):
         return data["jobId"]
 
 
@@ -572,7 +572,7 @@ class _EnvironmentStepExecutionSchema(BaseSchema):
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
 
     @post_load
-    def make_environment_step_execution(self, data):
+    def make_environment_step_execution(self, data, **kwargs):
         return EnvironmentStepExecution(**data)
 
 
@@ -584,7 +584,7 @@ class _SubrunSummarySchema(BaseSchema):
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
 
     @post_load
-    def make_subrun_summary(self, data):
+    def make_subrun_summary(self, data, **kwargs):
         return SubrunSummary(**data)
 
 
@@ -602,7 +602,7 @@ class _SubrunSchema(BaseSchema):
     )
 
     @post_load
-    def make_subrun(self, data):
+    def make_subrun(self, data, **kwargs):
         return Subrun(**data)
 
 
@@ -615,7 +615,7 @@ class _RunSummarySchema(BaseSchema):
     ended_at = fields.DateTime(data_key="endedAt", missing=None)
 
     @post_load
-    def make_run_summary(self, data):
+    def make_run_summary(self, data, **kwargs):
         return RunSummary(**data)
 
 
@@ -629,7 +629,7 @@ class _RunSchema(BaseSchema):
     subruns = fields.Nested(_SubrunSummarySchema, many=True, required=True)
 
     @post_load
-    def make_run(self, data):
+    def make_run(self, data, **kwargs):
         return Run(**data)
 
 
@@ -637,7 +637,7 @@ class _RunIdSchema(BaseSchema):
     runId = fields.UUID(required=True)
 
     @post_load
-    def make_run_id(self, data):
+    def make_run_id(self, data, **kwargs):
         return data["runId"]
 
 
@@ -646,7 +646,7 @@ class _PageSchema(BaseSchema):
     limit = fields.Integer(required=True)
 
     @post_load
-    def make_page(self, data):
+    def make_page(self, data, **kwargs):
         return Page(**data)
 
 
@@ -657,7 +657,7 @@ class _PaginationSchema(BaseSchema):
     next = fields.Nested(_PageSchema, missing=None)
 
     @post_load
-    def make_pagination(self, data):
+    def make_pagination(self, data, **kwargs):
         return Pagination(**data)
 
 
@@ -666,5 +666,5 @@ class _ListRunsResponseSchema(BaseSchema):
     runs = fields.Nested(_RunSummarySchema, many=True, required=True)
 
     @post_load
-    def make_list_runs_response_schema(self, data):
+    def make_list_runs_response_schema(self, data, **kwargs):
         return ListRunsResponse(**data)

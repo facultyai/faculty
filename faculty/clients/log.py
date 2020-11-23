@@ -112,7 +112,7 @@ class _LogPartSchema(BaseSchema):
     timestamp = fields.DateTime(required=True)
 
     @post_load
-    def make_log_part(self, data):
+    def make_log_part(self, data, **kwargs):
         return LogPart(**data)
 
 
@@ -122,5 +122,5 @@ class _LogPartsResponseSchema(BaseSchema):
     )
 
     @post_load
-    def make_log_parts_response(self, data):
+    def make_log_parts_response(self, data, **kwargs):
         return LogPartsResponse(**data)

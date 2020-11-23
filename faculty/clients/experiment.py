@@ -753,7 +753,7 @@ class _PageSchema(BaseSchema):
     limit = fields.Integer(required=True)
 
     @post_load
-    def make_page(self, data):
+    def make_page(self, data, **kwargs):
         return Page(**data)
 
 
@@ -764,7 +764,7 @@ class _PaginationSchema(BaseSchema):
     next = fields.Nested(_PageSchema, missing=None)
 
     @post_load
-    def make_pagination(self, data):
+    def make_pagination(self, data, **kwargs):
         return Pagination(**data)
 
 
@@ -775,7 +775,7 @@ class _MetricSchema(BaseSchema):
     step = fields.Integer(required=True)
 
     @post_load
-    def make_metric(self, data):
+    def make_metric(self, data, **kwargs):
         return Metric(**data)
 
 
@@ -784,7 +784,7 @@ class _ParamSchema(BaseSchema):
     value = fields.String(required=True)
 
     @post_load
-    def make_param(self, data):
+    def make_param(self, data, **kwargs):
         return Param(**data)
 
 
@@ -793,7 +793,7 @@ class _TagSchema(BaseSchema):
     value = fields.String(required=True)
 
     @post_load
-    def make_tag(self, data):
+    def make_tag(self, data, **kwargs):
         return Tag(**data)
 
 
@@ -809,7 +809,7 @@ class _ExperimentSchema(BaseSchema):
     deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
 
     @post_load
-    def make_experiment(self, data):
+    def make_experiment(self, data, **kwargs):
         return Experiment(**data)
 
 
@@ -831,7 +831,7 @@ class _ExperimentRunSchema(BaseSchema):
     metrics = fields.Nested(_MetricSchema, many=True, required=True)
 
     @post_load
-    def make_experiment_run(self, data):
+    def make_experiment_run(self, data, **kwargs):
         return ExperimentRun(**data)
 
 
@@ -854,7 +854,7 @@ class _ListExperimentRunsResponseSchema(BaseSchema):
     runs = fields.Nested(_ExperimentRunSchema, many=True, required=True)
 
     @post_load
-    def make_list_runs_response_schema(self, data):
+    def make_list_runs_response_schema(self, data, **kwargs):
         return ListExperimentRunsResponse(**data)
 
 
@@ -911,7 +911,7 @@ class _ProjectIdFilterSchema(BaseSchema):
     by = fields.Constant("projectId", dump_only=True)
 
     @pre_dump
-    def check_operator(self, obj):
+    def check_operator(self, obj, **kwargs):
         _validate_discrete(obj.operator)
         return obj
 
@@ -922,7 +922,7 @@ class _ExperimentIdFilterSchema(BaseSchema):
     by = fields.Constant("experimentId", dump_only=True)
 
     @pre_dump
-    def check_operator(self, obj):
+    def check_operator(self, obj, **kwargs):
         _validate_discrete(obj.operator)
         return obj
 
@@ -933,7 +933,7 @@ class _RunIdFilterSchema(BaseSchema):
     by = fields.Constant("runId", dump_only=True)
 
     @pre_dump
-    def check_operator(self, obj):
+    def check_operator(self, obj, **kwargs):
         _validate_discrete(obj.operator)
         return obj
 
@@ -944,7 +944,7 @@ class _RunStatusFilterSchema(BaseSchema):
     by = fields.Constant("status", dump_only=True)
 
     @pre_dump
-    def check_operator(self, obj):
+    def check_operator(self, obj, **kwargs):
         _validate_discrete(obj.operator)
         return obj
 
@@ -962,7 +962,7 @@ class _TagFilterSchema(BaseSchema):
     by = fields.Constant("tag", dump_only=True)
 
     @pre_dump
-    def check_operator(self, obj):
+    def check_operator(self, obj, **kwargs):
         _validate_discrete(obj.operator)
         return obj
 
@@ -974,7 +974,7 @@ class _ParamFilterSchema(BaseSchema):
     by = fields.Constant("param", dump_only=True)
 
     @pre_dump
-    def check_operator(self, obj):
+    def check_operator(self, obj, **kwargs):
         if isinstance(obj.value, str):
             _validate_discrete(obj.operator)
         return obj
@@ -1068,7 +1068,7 @@ class _DeleteExperimentRunsResponseSchema(BaseSchema):
     )
 
     @post_load
-    def make_delete_runs_response(self, data):
+    def make_delete_runs_response(self, data, **kwargs):
         return DeleteExperimentRunsResponse(**data)
 
 
@@ -1081,7 +1081,7 @@ class _RestoreExperimentRunsResponseSchema(BaseSchema):
     )
 
     @post_load
-    def make_restore_runs_response(self, data):
+    def make_restore_runs_response(self, data, **kwargs):
         return RestoreExperimentRunsResponse(**data)
 
 
@@ -1098,7 +1098,7 @@ class _MetricDataPointSchema(BaseSchema):
     step = fields.Integer(required=True)
 
     @post_load
-    def make_metric(self, data):
+    def make_metric(self, data, **kwargs):
         return MetricDataPoint(**data)
 
 
@@ -1109,5 +1109,5 @@ class _MetricHistorySchema(BaseSchema):
     history = fields.Nested(_MetricDataPointSchema, many=True, required=True)
 
     @post_load
-    def make_history(self, data):
+    def make_history(self, data, **kwargs):
         return MetricHistory(**data)

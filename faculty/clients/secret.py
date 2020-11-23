@@ -32,7 +32,7 @@ class DatasetsSecretsSchema(BaseSchema):
     verified = fields.Boolean(required=True)
 
     @post_load
-    def make_project_datasets_secrets(self, data):
+    def make_project_datasets_secrets(self, data, **kwargs):
         return DatasetsSecrets(**data)
 
 

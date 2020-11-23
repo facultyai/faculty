@@ -171,5 +171,5 @@ class _NodeTypeSchema(BaseSchema):
     )
 
     @post_load
-    def make_node_type(self, data):
+    def make_node_type(self, data, **kwargs):
         return NodeType(**data)
