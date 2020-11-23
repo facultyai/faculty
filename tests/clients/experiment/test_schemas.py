@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import sys
 from datetime import datetime
 from uuid import uuid4
 
@@ -516,6 +517,10 @@ def test_filter_schema_metric(
     }
 
 
+@pytest.mark.skipif(
+    sys.version_info > (3, 0),
+    reason="Marshmallow 3 does not do validation on dump",
+)
 def test_filter_schema_invalid_value_run_status():
     filter = RunStatusFilter(ComparisonOperator.EQUAL_TO, "invalid")
     with pytest.raises(AttributeError):
@@ -526,6 +531,10 @@ def test_filter_schema_invalid_value_run_status():
     "filter_type",
     [ProjectIdFilter, ExperimentIdFilter, RunIdFilter, DeletedAtFilter],
 )
+@pytest.mark.skipif(
+    sys.version_info > (3, 0),
+    reason="Marshmallow 3 does not do validation on dump",
+)
 def test_filter_schema_invalid_value_no_key(filter_type):
     filter = filter_type(ComparisonOperator.EQUAL_TO, "invalid")
     with pytest.raises(ValidationError):
@@ -534,6 +543,10 @@ def test_filter_schema_invalid_value_no_key(filter_type):
 
 @pytest.mark.parametrize(
     "filter_type, value", [(ParamFilter, None), (MetricFilter, "invalid")]
+)
+@pytest.mark.skipif(
+    sys.version_info > (3, 0),
+    reason="Marshmallow 3 does not do validation on dump",
 )
 def test_filter_schema_invalid_value_with_key(filter_type, value):
     filter = filter_type("key", ComparisonOperator.EQUAL_TO, value)
