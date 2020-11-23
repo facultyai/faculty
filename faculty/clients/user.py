@@ -143,5 +143,5 @@ class _UserSchema(BaseSchema):
     is_system = fields.Boolean(data_key="isSystem", required=True)
 
     @post_load
-    def make_user(self, data):
+    def make_user(self, data, **kwargs):
         return User(**data)

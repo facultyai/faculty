@@ -100,7 +100,7 @@ class DummySchema(BaseSchema):
     foo = fields.String(required=True)
 
     @post_load
-    def make_test_object(self, data):
+    def make_test_object(self, data, **kwargs):
         return DummyObject(**data)
 
 

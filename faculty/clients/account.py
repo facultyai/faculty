@@ -71,7 +71,7 @@ class _AccountSchema(BaseSchema):
     username = fields.String(required=True)
 
     @post_load
-    def make_account(self, data):
+    def make_account(self, data, **kwargs):
         return Account(**data)
 
 
@@ -79,5 +79,5 @@ class _AuthenticationResponseSchema(BaseSchema):
     account = fields.Nested(_AccountSchema, required=True)
 
     @post_load
-    def make_authentication_response(self, data):
+    def make_authentication_response(self, data, **kwargs):
         return _AuthenticationResponse(**data)

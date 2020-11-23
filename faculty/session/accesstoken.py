@@ -142,7 +142,7 @@ class _AccessTokenSchema(Schema):
     expires_at = fields.DateTime(data_key="expiresAt", required=True)
 
     @post_load
-    def make_access_token(self, data):
+    def make_access_token(self, data, **kwargs):
         return AccessToken(**data)
 
 
@@ -175,7 +175,7 @@ class _AccessTokenStoreSchema(Schema):
     )
 
     @post_load
-    def make_access_token_store(self, data):
+    def make_access_token_store(self, data, **kwargs):
         return _AccessTokenStore(**data)
 
 

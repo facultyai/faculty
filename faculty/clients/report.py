@@ -195,7 +195,7 @@ class _ReportVersionSchema(BaseSchema):
     notebook_path = fields.String(required=True)
 
     @post_load
-    def make_report_version(self, data):
+    def make_report_version(self, data, **kwargs):
         return ReportVersion(**data)
 
 
@@ -207,7 +207,7 @@ class _ReportSchema(BaseSchema):
     active_version = fields.Nested(_ReportVersionSchema, required=True)
 
     @post_load
-    def make_report(self, data):
+    def make_report(self, data, **kwargs):
         return Report(**data)
 
 
@@ -220,5 +220,5 @@ class _ReportWithVersionsSchema(BaseSchema):
     versions = fields.Nested(_ReportVersionSchema, required=True, many=True)
 
     @post_load
-    def make_report_with_versions(self, data):
+    def make_report_with_versions(self, data, **kwargs):
         return ReportWithVersions(**data)

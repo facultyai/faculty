@@ -431,7 +431,7 @@ class _ObjectSchema(BaseSchema):
     )
 
     @post_load
-    def make_object(self, data):
+    def make_object(self, data, **kwargs):
         return Object(**data)
 
 
@@ -440,7 +440,7 @@ class _ListObjectsResponseSchema(BaseSchema):
     next_page_token = fields.String(data_key="nextPageToken", missing=None)
 
     @post_load
-    def make_list_objects_response(self, data):
+    def make_list_objects_response(self, data, **kwargs):
         return ListObjectsResponse(**data)
 
 
@@ -448,7 +448,7 @@ class _SimplePresignResponseSchema(BaseSchema):
     url = fields.String(required=True)
 
     @post_load
-    def make_simple_presign_response(self, data):
+    def make_simple_presign_response(self, data, **kwargs):
         return _SimplePresignResponse(**data)
 
 
@@ -458,7 +458,7 @@ class _PresignUploadResponseSchema(BaseSchema):
     url = fields.String(missing=None)
 
     @post_load
-    def make_presign_upload_response(self, data):
+    def make_presign_upload_response(self, data, **kwargs):
         return PresignUploadResponse(**data)
 
 

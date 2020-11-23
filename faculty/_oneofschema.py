@@ -44,12 +44,12 @@ class OneOfSchema(Schema):
         class FooSchema(marshmallow.Schema):
             foo = marshmallow.fields.String(required=True)
             @marshmallow.post_load
-            def make_foo(self, data):
+            def make_foo(self, data, **kwargs):
                 return Foo(**data)
         class BarSchema(marshmallow.Schema):
             bar = marshmallow.fields.Integer(required=True)
             @marshmallow.post_load
-            def make_bar(self, data):
+            def make_bar(self, data, **kwargs):
                 return Bar(**data)
         class MyUberSchema(marshmallow.OneOfSchema):
             type_schemas = {

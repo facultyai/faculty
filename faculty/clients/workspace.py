@@ -91,7 +91,7 @@ class _FileNodeSchema(BaseSchema):
     content = fields.Nested("self", many=True)
 
     @validates_schema
-    def validate_type(self, data):
+    def validate_type(self, data, **kwargs):
         if data["type"] == _FileNodeType.DIRECTORY:
             required_fields = Directory._fields
         elif data["type"] == _FileNodeType.FILE:
@@ -100,7 +100,7 @@ class _FileNodeSchema(BaseSchema):
             raise ValidationError("Wrong fields for {}.".format(data["type"]))
 
     @post_load
-    def make_file_node(self, data):
+    def make_file_node(self, data, **kwargs):
         if data["type"] == _FileNodeType.DIRECTORY:
             return Directory(**{key: data[key] for key in Directory._fields})
         elif data["type"] == _FileNodeType.FILE:
@@ -116,5 +116,5 @@ class _ListResponseSchema(BaseSchema):
     content = fields.List(fields.Nested(_FileNodeSchema), required=True)
 
     @post_load
-    def make_list_response(self, data):
+    def make_list_response(self, data, **kwargs):
         return _ListResponse(**data)

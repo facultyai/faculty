@@ -123,5 +123,5 @@ class _ProjectSchema(BaseSchema):
     owner_id = fields.UUID(data_key="ownerId", required=True)
 
     @post_load
-    def make_project(self, data):
+    def make_project(self, data, **kwargs):
         return Project(**data)
