@@ -16,15 +16,30 @@
 Manage Faculty projects.
 """
 
-
-from collections import namedtuple
+from attr import attrs, attrib
 
 from marshmallow import fields, post_load
 
 from faculty.clients.base import BaseSchema, BaseClient
 
 
-Project = namedtuple("Project", ["id", "name", "owner_id"])
+@attrs
+class Project(object):
+    """A project in Faculty.
+
+    Parameters
+    ----------
+    id : uuid.UUID
+        The ID of the project.
+    name : str
+        The name of the project.
+    owner_id : uuid.UUID
+        The user ID of the owner of the project.
+    """
+
+    id = attrib()
+    name = attrib()
+    owner_id = attrib()
 
 
 class ProjectClient(BaseClient):
