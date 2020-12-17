@@ -97,8 +97,12 @@ def test_project_client_list_accessible_by_user(mocker):
     )
 
 
-@pytest.mark.parametrize("include_archived", [False, True])
-def test_project_client_list_all(mocker, include_archived):
+@pytest.mark.parametrize(
+    "include_archived, include_archived_param", [(False, 0), (True, 1)]
+)
+def test_project_client_list_all(
+    mocker, include_archived, include_archived_param
+):
     mocker.patch.object(ProjectClient, "_get", return_value=[PROJECT])
     schema_mock = mocker.patch("faculty.clients.project._ProjectSchema")
 
@@ -109,5 +113,5 @@ def test_project_client_list_all(mocker, include_archived):
     ProjectClient._get.assert_called_once_with(
         "/project",
         schema_mock.return_value,
-        params={"includeArchived": include_archived},
+        params={"includeArchived": include_archived_param},
     )

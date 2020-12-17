@@ -146,7 +146,7 @@ class ProjectClient(BaseClient):
         List[Project]
             The projects in Faculty.
         """
-        params = {"includeArchived": include_archived}
+        params = {"includeArchived": int(include_archived)}
         return self._get("/project", _ProjectSchema(many=True), params=params)
 
 
