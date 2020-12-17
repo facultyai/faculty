@@ -206,6 +206,19 @@ class ServerClient(BaseClient):
         params = {"name": name} if name is not None else None
         return self._get(endpoint, _ServerSchema(many=True), params=params)
 
+    def list_all(self):
+        """List all servers on the Faculty deployment.
+
+        This method requires administrative privileges not available to most
+        users.
+
+        Returns
+        -------
+        List[Server]
+            The servers.
+        """
+        return self._get("/instance", _ServerSchema(many=True))
+
     def apply_environment(self, server_id, environment_id):
         """Apply an environment to a running server.
 
