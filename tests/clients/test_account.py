@@ -88,3 +88,17 @@ def test_account_client_authenticated_user_id(mocker):
     assert client.authenticated_user_id() == USER_ID
 
     AccountClient.authenticated_account.assert_called_once_with()
+
+
+def test_account_client_get(mocker):
+    mocker.patch.object(AccountClient, "_get", return_value=ACCOUNT)
+
+    schema_mock = mocker.patch("faculty.clients.account._AccountSchema")
+
+    client = AccountClient(mocker.Mock())
+
+    assert client.get(USER_ID) == ACCOUNT
+
+    AccountClient._get.assert_called_once_with(
+        "/user/{}".format(USER_ID), schema_mock.return_value
+    )

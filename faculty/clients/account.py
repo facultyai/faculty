@@ -83,6 +83,22 @@ class AccountClient(BaseClient):
         """
         return self.authenticated_account().user_id
 
+    def get(self, user_id):
+        """Get an account by its user ID.
+
+        Parameters
+        ----------
+        user_id : uuid.UUID
+            The ID of the account to get.
+
+        Returns
+        -------
+        Account
+            The account.
+        """
+        endpoint = "/user/{}".format(user_id)
+        return self._get(endpoint, _AccountSchema())
+
 
 class _AccountSchema(BaseSchema):
     user_id = fields.UUID(data_key="userId", required=True)
