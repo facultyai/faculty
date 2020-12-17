@@ -95,3 +95,19 @@ def test_project_client_list_accessible_by_user(mocker):
     ProjectClient._get.assert_called_once_with(
         "/user/{}".format(USER_ID), schema_mock.return_value
     )
+
+
+@pytest.mark.parametrize("include_archived", [False, True])
+def test_project_client_list_all(mocker, include_archived):
+    mocker.patch.object(ProjectClient, "_get", return_value=[PROJECT])
+    schema_mock = mocker.patch("faculty.clients.project._ProjectSchema")
+
+    client = ProjectClient(mocker.Mock())
+    assert client.list_all(include_archived) == [PROJECT]
+
+    schema_mock.assert_called_once_with(many=True)
+    ProjectClient._get.assert_called_once_with(
+        "/project",
+        schema_mock.return_value,
+        params={"includeArchived": include_archived},
+    )

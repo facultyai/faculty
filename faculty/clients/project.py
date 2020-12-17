@@ -130,6 +130,25 @@ class ProjectClient(BaseClient):
         endpoint = "/user/{}".format(user_id)
         return self._get(endpoint, _ProjectSchema(many=True))
 
+    def list_all(self, include_archived=False):
+        """List all projects on the Faculty deployment.
+
+        This method requires administrative privileges not available to most
+        users.
+
+        Parameters
+        ----------
+        include_archived : bool, optional
+            If True, return archived projects. Default: False.
+
+        Returns
+        -------
+        List[Project]
+            The projects in Faculty.
+        """
+        params = {"includeArchived": include_archived}
+        return self._get("/project", _ProjectSchema(many=True), params=params)
+
 
 class _ProjectSchema(BaseSchema):
 
