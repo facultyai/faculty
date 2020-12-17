@@ -28,9 +28,10 @@ from faculty.clients.account import (
 
 USER_ID = uuid.uuid4()
 USERNAME = "joe_bloggs"
+EMAIL = "joe@bloggs.com"
 
-ACCOUNT = Account(user_id=USER_ID, username=USERNAME)
-ACCOUNT_BODY = {"userId": str(USER_ID), "username": USERNAME}
+ACCOUNT = Account(user_id=USER_ID, username=USERNAME, email=EMAIL)
+ACCOUNT_BODY = {"userId": str(USER_ID), "username": USERNAME, "email": EMAIL}
 
 
 def test_account_schema():
