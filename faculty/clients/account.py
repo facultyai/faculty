@@ -16,16 +16,34 @@
 Manage Faculty user accounts.
 """
 
-
-from collections import namedtuple
-
+from attr import attrs, attrib
 from marshmallow import fields, post_load
 
 from faculty.clients.base import BaseSchema, BaseClient
 
 
-Account = namedtuple("Account", ["user_id", "username", "email"])
-_AuthenticationResponse = namedtuple("_AuthenticationResponse", ["account"])
+@attrs
+class Account(object):
+    """A user account in Faculty.
+
+    Parameters
+    ----------
+    user_id : uuid.UUID
+        The user ID of the account.
+    username : str
+        The account's username.
+    email : str
+        The email address associated with the account.
+    """
+
+    user_id = attrib()
+    username = attrib()
+    email = attrib()
+
+
+@attrs
+class _AuthenticationResponse(object):
+    account = attrib()
 
 
 class AccountClient(BaseClient):
