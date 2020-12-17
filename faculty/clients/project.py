@@ -35,11 +35,15 @@ class Project(object):
         The name of the project.
     owner_id : uuid.UUID
         The user ID of the owner of the project.
+    archived_at : datetime, optional
+        If project is not archived, this will be None, otherwise it will be the
+        time at which the project was archived.
     """
 
     id = attrib()
     name = attrib()
     owner_id = attrib()
+    archived_at = attrib()
 
 
 class ProjectClient(BaseClient):
@@ -155,6 +159,7 @@ class _ProjectSchema(BaseSchema):
     id = fields.UUID(data_key="projectId", required=True)
     name = fields.Str(required=True)
     owner_id = fields.UUID(data_key="ownerId", required=True)
+    archived_at = fields.DateTime(data_key="archivedAt", missing=None)
 
     @post_load
     def make_project(self, data, **kwargs):
