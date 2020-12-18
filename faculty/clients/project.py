@@ -16,15 +16,34 @@
 Manage Faculty projects.
 """
 
-
-from collections import namedtuple
+from attr import attrs, attrib
 
 from marshmallow import fields, post_load
 
 from faculty.clients.base import BaseSchema, BaseClient
 
 
-Project = namedtuple("Project", ["id", "name", "owner_id"])
+@attrs
+class Project(object):
+    """A project in Faculty.
+
+    Parameters
+    ----------
+    id : uuid.UUID
+        The ID of the project.
+    name : str
+        The name of the project.
+    owner_id : uuid.UUID
+        The user ID of the owner of the project.
+    archived_at : datetime, optional
+        If project is not archived, this will be None, otherwise it will be the
+        time at which the project was archived.
+    """
+
+    id = attrib()
+    name = attrib()
+    owner_id = attrib()
+    archived_at = attrib()
 
 
 class ProjectClient(BaseClient):
@@ -115,12 +134,32 @@ class ProjectClient(BaseClient):
         endpoint = "/user/{}".format(user_id)
         return self._get(endpoint, _ProjectSchema(many=True))
 
+    def list_all(self, include_archived=False):
+        """List all projects on the Faculty deployment.
+
+        This method requires administrative privileges not available to most
+        users.
+
+        Parameters
+        ----------
+        include_archived : bool, optional
+            If True, return archived projects. Default: False.
+
+        Returns
+        -------
+        List[Project]
+            The projects in Faculty.
+        """
+        params = {"includeArchived": int(include_archived)}
+        return self._get("/project", _ProjectSchema(many=True), params=params)
+
 
 class _ProjectSchema(BaseSchema):
 
     id = fields.UUID(data_key="projectId", required=True)
     name = fields.Str(required=True)
     owner_id = fields.UUID(data_key="ownerId", required=True)
+    archived_at = fields.DateTime(data_key="archivedAt", missing=None)
 
     @post_load
     def make_project(self, data, **kwargs):

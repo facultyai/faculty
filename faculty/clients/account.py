@@ -16,16 +16,34 @@
 Manage Faculty user accounts.
 """
 
-
-from collections import namedtuple
-
+from attr import attrs, attrib
 from marshmallow import fields, post_load
 
 from faculty.clients.base import BaseSchema, BaseClient
 
 
-Account = namedtuple("Account", ["user_id", "username"])
-_AuthenticationResponse = namedtuple("_AuthenticationResponse", ["account"])
+@attrs
+class Account(object):
+    """A user account in Faculty.
+
+    Parameters
+    ----------
+    user_id : uuid.UUID
+        The user ID of the account.
+    username : str
+        The account's username.
+    email : str
+        The email address associated with the account.
+    """
+
+    user_id = attrib()
+    username = attrib()
+    email = attrib()
+
+
+@attrs
+class _AuthenticationResponse(object):
+    account = attrib()
 
 
 class AccountClient(BaseClient):
@@ -65,10 +83,27 @@ class AccountClient(BaseClient):
         """
         return self.authenticated_account().user_id
 
+    def get(self, user_id):
+        """Get an account by its user ID.
+
+        Parameters
+        ----------
+        user_id : uuid.UUID
+            The ID of the account to get.
+
+        Returns
+        -------
+        Account
+            The account.
+        """
+        endpoint = "/user/{}".format(user_id)
+        return self._get(endpoint, _AccountSchema())
+
 
 class _AccountSchema(BaseSchema):
     user_id = fields.UUID(data_key="userId", required=True)
     username = fields.String(required=True)
+    email = fields.String(required=True)
 
     @post_load
     def make_account(self, data, **kwargs):
