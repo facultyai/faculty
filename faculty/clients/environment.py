@@ -296,7 +296,7 @@ class _PipSchema(BaseSchema):
 
 
 class _CondaSchema(BaseSchema):
-    channels = fields.List(fields.String(), required=True)
+    channels = fields.List(fields.String(), missing=list)
     packages = fields.List(
         fields.Nested(_PythonPackageSchema()), required=True
     )

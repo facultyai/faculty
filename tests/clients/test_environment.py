@@ -94,6 +94,9 @@ PIP_WITHOUT_EXTRA_INDEX_URLS = Pip(
 CONDA_BODY = {"channels": ["conda-forge"], "packages": [PYTHON_PACKAGE_BODY]}
 CONDA = Conda(channels=["conda-forge"], packages=[PYTHON_PACKAGE])
 
+CONDA_BODY_WITHOUT_CHANNELS = {"packages": [PYTHON_PACKAGE_BODY]}
+CONDA_WITHOUT_CHANNELS = Conda(channels=[], packages=[PYTHON_PACKAGE])
+
 PYTHON_ENVIRONMENT_BODY = {"pip": PIP_BODY, "conda": CONDA_BODY}
 PYTHON_ENVIRONMENT = PythonEnvironment(conda=CONDA, pip=PIP)
 
@@ -300,9 +303,16 @@ def test_pip_schema_dump():
     assert data == PIP_BODY
 
 
-def test_conda_schema_load():
-    data = _CondaSchema().load(CONDA_BODY)
-    assert data == CONDA
+@pytest.mark.parametrize(
+    "body, expected",
+    [
+        (CONDA_BODY, CONDA),
+        (CONDA_BODY_WITHOUT_CHANNELS, CONDA_WITHOUT_CHANNELS),
+    ],
+)
+def test_conda_schema_load(body, expected):
+    data = _CondaSchema().load(body)
+    assert data == expected
 
 
 def test_conda_schema_dump():
