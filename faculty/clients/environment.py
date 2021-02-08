@@ -282,7 +282,9 @@ class _PythonPackageSchema(BaseSchema):
 
 class _PipSchema(BaseSchema):
     extra_index_urls = fields.List(
-        fields.String(), data_key="extraIndexUrls", required=True
+        fields.String(),
+        data_key="extraIndexUrls",
+        missing=list,
     )
     packages = fields.List(
         fields.Nested(_PythonPackageSchema()), required=True
@@ -294,7 +296,7 @@ class _PipSchema(BaseSchema):
 
 
 class _CondaSchema(BaseSchema):
-    channels = fields.List(fields.String(), required=True)
+    channels = fields.List(fields.String(), missing=list)
     packages = fields.List(
         fields.Nested(_PythonPackageSchema()), required=True
     )
