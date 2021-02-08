@@ -85,6 +85,11 @@ PIP_BODY = {
 }
 PIP = Pip(extra_index_urls=["http://example.com/"], packages=[PYTHON_PACKAGE])
 
+PIP_BODY_WITHOUT_EXTRA_INDEX_URLS = {"packages": [PYTHON_PACKAGE_BODY]}
+PIP_WITHOUT_EXTRA_INDEX_URLS = Pip(
+    extra_index_urls=[], packages=[PYTHON_PACKAGE]
+)
+
 
 CONDA_BODY = {"channels": ["conda-forge"], "packages": [PYTHON_PACKAGE_BODY]}
 CONDA = Conda(channels=["conda-forge"], packages=[PYTHON_PACKAGE])
@@ -278,9 +283,16 @@ def test_python_package_schema_dump(object, expected):
     assert data == expected
 
 
-def test_pip_schema_load():
-    data = _PipSchema().load(PIP_BODY)
-    assert data == PIP
+@pytest.mark.parametrize(
+    "body, expected",
+    [
+        (PIP_BODY, PIP),
+        (PIP_BODY_WITHOUT_EXTRA_INDEX_URLS, PIP_WITHOUT_EXTRA_INDEX_URLS),
+    ],
+)
+def test_pip_schema_load(body, expected):
+    data = _PipSchema().load(body)
+    assert data == expected
 
 
 def test_pip_schema_dump():
