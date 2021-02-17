@@ -17,28 +17,56 @@ Manage the Faculty cluster configuration.
 """
 
 
-from collections import namedtuple
-
+from attr import attrs, attrib
 from marshmallow import fields, post_load
 
 from faculty.clients.base import BaseSchema, BaseClient
 
 
-NodeType = namedtuple(
-    "NodeType",
-    [
-        "id",
-        "name",
-        "instance_group",
-        "max_interactive_instances",
-        "max_job_instances",
-        "milli_cpus",
-        "memory_mb",
-        "num_gpus",
-        "gpu_name",
-        "cost_usd_per_hour",
-    ],
-)
+@attrs
+class NodeType(object):
+    """A single tenanted node type in the platform.
+
+    Parameters
+    ----------
+    id : str
+        A unique identifier for the node type, usually the cloud provider's
+        machine type.
+    name : str
+        A short descriptive name for the node type, usually the same as the id.
+    instance_group : str
+        The Kubernetes instance group that provides this node type.
+    max_interactive_instances : int
+        The maximum number of instances of this node type that can be used for
+        workspace servers, apps and APIs at any given time.
+    max_job_instances : int
+        The maximum number of instances of this node type that can be used for
+        jobs at any given time.
+    milli_cpus : int
+        The amount of CPU resource available to servers running on nodes of
+        this type.
+    memory_mb : int
+        The amount of memory available to servers running on nodes of this
+        type.
+    num_gpus : int
+        The number of GPUs available to servers running on nodes of this type.
+    gpu_name : str, optional
+        A descriptive name of the type of GPUs available on this node type,
+        when available.
+    cost_usd_per_hour : decimal.Decimal
+        The on-demand hourly cost for this node type, in USD.
+    """
+
+    id = attrib()
+    name = attrib()
+    instance_group = attrib()
+    max_interactive_instances = attrib()
+    max_job_instances = attrib()
+    milli_cpus = attrib()
+    memory_mb = attrib()
+    num_gpus = attrib()
+    gpu_name = attrib()
+    cost_usd_per_hour = attrib()
 
 
 class ClusterClient(BaseClient):
