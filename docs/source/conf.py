@@ -7,7 +7,7 @@
 # -- Project information -----------------------------------------------------
 
 project = "Faculty library"
-copyright = "2020 Faculty Science Limited"
+copyright = "2018-2021 Faculty Science Limited"
 author = "Faculty"
 
 
