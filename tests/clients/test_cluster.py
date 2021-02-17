@@ -32,6 +32,7 @@ NODE_TYPE = NodeType(
     num_gpus=0,
     gpu_name=None,
     cost_usd_per_hour=Decimal("4.2"),
+    spot_max_usd_per_hour=Decimal("2.1"),
 )
 
 NODE_TYPE_BODY = {
@@ -45,6 +46,7 @@ NODE_TYPE_BODY = {
     "costUsdPerHour": 4.2,
     "maxInteractiveInstances": 10,
     "maxJobInstances": 0,
+    "spotMaxUsdPerHour": 2.1,
 }
 
 NODE_TYPE_DEFAULT = NodeType(
@@ -58,6 +60,7 @@ NODE_TYPE_DEFAULT = NodeType(
     num_gpus=0,
     gpu_name=None,
     cost_usd_per_hour=Decimal("4.2"),
+    spot_max_usd_per_hour=None,
 )
 
 NODE_TYPE_BODY_DEFAULT = {

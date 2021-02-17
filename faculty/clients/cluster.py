@@ -55,6 +55,13 @@ class NodeType(object):
         when available.
     cost_usd_per_hour : decimal.Decimal
         The on-demand hourly cost for this node type, in USD.
+    spot_max_usd_per_hour : decimal.Decimal, optional
+        The bid price set for this node type, when using spot instances. The
+        actual cost will usually be lower than this, but the bid price sets the
+        maximum cost (if the spot price increases beyond this price, AWS will
+        shut the instances down). If unset, indicates that the node type is
+        configured to run with on demand instances, and the `cost_usd_per_hour`
+        will be charged.
     """
 
     id = attrib()
@@ -67,6 +74,7 @@ class NodeType(object):
     num_gpus = attrib()
     gpu_name = attrib()
     cost_usd_per_hour = attrib()
+    spot_max_usd_per_hour = attrib()
 
 
 class ClusterClient(BaseClient):
@@ -205,6 +213,9 @@ class _NodeTypeSchema(BaseSchema):
     gpu_name = fields.String(data_key="gpuName", missing=None)
     cost_usd_per_hour = fields.Decimal(
         data_key="costUsdPerHour", required=True
+    )
+    spot_max_usd_per_hour = fields.Decimal(
+        data_key="spotMaxUsdPerHour", missing=None
     )
 
     @post_load
