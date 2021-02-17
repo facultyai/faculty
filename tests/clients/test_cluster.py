@@ -148,7 +148,13 @@ def test_cluster_client_list_single_tenanted_node_types(
     )
 
 
-def test_cluster_client_configure_single_tenanted_node_type(mocker):
+@pytest.mark.parametrize(
+    "spot_max_usd_per_hour, expected_spot_price",
+    [(None, None), (Decimal("1.23"), "1.23")],
+)
+def test_cluster_client_configure_single_tenanted_node_type(
+    mocker, spot_max_usd_per_hour, expected_spot_price
+):
     mocker.patch.object(ClusterClient, "_put_raw")
 
     client = ClusterClient(mocker.Mock())
@@ -158,6 +164,7 @@ def test_cluster_client_configure_single_tenanted_node_type(mocker):
         NODE_TYPE.instance_group,
         NODE_TYPE.max_interactive_instances,
         NODE_TYPE.max_job_instances,
+        spot_max_usd_per_hour,
     )
 
     ClusterClient._put_raw.assert_called_once_with(
@@ -167,6 +174,7 @@ def test_cluster_client_configure_single_tenanted_node_type(mocker):
             "instanceGroup": NODE_TYPE.instance_group,
             "maxInteractiveInstances": NODE_TYPE.max_interactive_instances,
             "maxJobInstances": NODE_TYPE.max_job_instances,
+            "spotMaxUsdPerHour": expected_spot_price,
         },
     )
 
