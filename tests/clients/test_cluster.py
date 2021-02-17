@@ -32,6 +32,7 @@ NODE_TYPE = NodeType(
     num_gpus=0,
     gpu_name=None,
     cost_usd_per_hour=Decimal("4.2"),
+    spot_max_usd_per_hour=Decimal("2.1"),
 )
 
 NODE_TYPE_BODY = {
@@ -45,6 +46,7 @@ NODE_TYPE_BODY = {
     "costUsdPerHour": 4.2,
     "maxInteractiveInstances": 10,
     "maxJobInstances": 0,
+    "spotMaxUsdPerHour": 2.1,
 }
 
 NODE_TYPE_DEFAULT = NodeType(
@@ -58,6 +60,7 @@ NODE_TYPE_DEFAULT = NodeType(
     num_gpus=0,
     gpu_name=None,
     cost_usd_per_hour=Decimal("4.2"),
+    spot_max_usd_per_hour=None,
 )
 
 NODE_TYPE_BODY_DEFAULT = {
@@ -148,7 +151,13 @@ def test_cluster_client_list_single_tenanted_node_types(
     )
 
 
-def test_cluster_client_configure_single_tenanted_node_type(mocker):
+@pytest.mark.parametrize(
+    "spot_max_usd_per_hour, expected_spot_price",
+    [(None, None), (Decimal("1.23"), "1.23")],
+)
+def test_cluster_client_configure_single_tenanted_node_type(
+    mocker, spot_max_usd_per_hour, expected_spot_price
+):
     mocker.patch.object(ClusterClient, "_put_raw")
 
     client = ClusterClient(mocker.Mock())
@@ -158,6 +167,7 @@ def test_cluster_client_configure_single_tenanted_node_type(mocker):
         NODE_TYPE.instance_group,
         NODE_TYPE.max_interactive_instances,
         NODE_TYPE.max_job_instances,
+        spot_max_usd_per_hour,
     )
 
     ClusterClient._put_raw.assert_called_once_with(
@@ -167,6 +177,7 @@ def test_cluster_client_configure_single_tenanted_node_type(mocker):
             "instanceGroup": NODE_TYPE.instance_group,
             "maxInteractiveInstances": NODE_TYPE.max_interactive_instances,
             "maxJobInstances": NODE_TYPE.max_job_instances,
+            "spotMaxUsdPerHour": expected_spot_price,
         },
     )
 
