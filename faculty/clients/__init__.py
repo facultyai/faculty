@@ -28,6 +28,7 @@ from faculty.clients.secret import SecretClient
 from faculty.clients.server import ServerClient
 from faculty.clients.user import UserClient
 from faculty.clients.workspace import WorkspaceClient
+from faculty.clients.hound import HoundClient
 
 
 CLIENT_FOR_RESOURCE = {
@@ -46,6 +47,7 @@ CLIENT_FOR_RESOURCE = {
     "server": ServerClient,
     "user": UserClient,
     "workspace": WorkspaceClient,
+    "hound": HoundClient,
 }
 
 
