@@ -87,6 +87,15 @@ def client(
     ... )
     <faculty.clients.account.AccountClient object at 0x10e4472b0>
     """
+
+    client_class = faculty.clients.for_resource(resource)
+
+    if client_class.SERVICE_NAME is None:
+        raise ValueError(
+            "Cannot infer URL for resource {} - its client does not define a "
+            "service name".format(resource)
+        )
+
     session = faculty.session.get_session(
         credentials_path=credentials_path,
         profile_name=profile_name,
@@ -96,5 +105,7 @@ def client(
         client_secret=client_secret,
         access_token_cache=access_token_cache,
     )
-    client_class = faculty.clients.for_resource(resource)
-    return client_class(session)
+
+    url = session.service_url(client_class.SERVICE_NAME)
+
+    return client_class(url, session)

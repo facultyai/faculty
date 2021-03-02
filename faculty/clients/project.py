@@ -56,11 +56,13 @@ class ProjectClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the project service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "casebook"
+    SERVICE_NAME = "casebook"
 
     def create(self, owner_id, project_name):
         """Create a new project.

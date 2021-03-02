@@ -175,11 +175,13 @@ class ExperimentClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the experiment service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "atlas"
+    SERVICE_NAME = "atlas"
 
     def create(
         self, project_id, name, description=None, artifact_location=None

@@ -86,11 +86,13 @@ class EnvironmentClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the environment service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "baskerville"
+    SERVICE_NAME = "baskerville"
 
     def list(self, project_id):
         """List the environments in a project.

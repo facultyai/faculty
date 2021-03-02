@@ -233,13 +233,10 @@ HTTP_ERRORS = {
 class BaseClient(object):
     """Base class with core functionality for Faculty service clients."""
 
-    _SERVICE_NAME = None
+    SERVICE_NAME = None
 
-    def __init__(self, session):
-        if self._SERVICE_NAME is None:
-            raise RuntimeError(
-                "must set _SERVICE_NAME in subclasses of BaseClient"
-            )
+    def __init__(self, url, session):
+        self.url = url
         self.session = session
         self._http_session_cache = None
 
@@ -258,8 +255,10 @@ class BaseClient(object):
         call one of the HTTP verb-specific methods. If it does not exist yet
         for the HTTP method you need, contribute it.
         """
-        url = self.session.service_url(self._SERVICE_NAME, endpoint)
-        response = self.http_session.request(method, url, *args, **kwargs)
+        endpoint_url = self.url.rstrip("/") + "/" + endpoint.lstrip("/")
+        response = self.http_session.request(
+            method, endpoint_url, *args, **kwargs
+        )
         if check_status:
             _check_status(response)
         return response

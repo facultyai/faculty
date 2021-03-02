@@ -56,11 +56,13 @@ class AccountClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the account service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "hudson"
+    SERVICE_NAME = "hudson"
 
     def authenticated_account(self):
         """Get information on the account used to authenticate this session.
