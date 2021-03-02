@@ -111,7 +111,7 @@ def test_get_user(mocker):
     mocker.patch.object(UserClient, "_get", return_value=EXPECTED_HUMAN_USER)
     schema_mock = mocker.patch("faculty.clients.user._UserSchema")
 
-    client = UserClient(mocker.Mock())
+    client = UserClient(mocker.Mock(), mocker.Mock())
 
     user = client.get_user(str(USER_ID))
 
@@ -148,7 +148,7 @@ def test_get_all_users(mocker, is_system, enabled, expected_params):
     mocker.patch.object(UserClient, "_get", return_value=[EXPECTED_HUMAN_USER])
     schema_mock = mocker.patch("faculty.clients.user._UserSchema")
 
-    client = UserClient(mocker.Mock())
+    client = UserClient(mocker.Mock(), mocker.Mock())
 
     users = client.get_all_users(is_system=is_system, enabled=enabled)
 
@@ -164,7 +164,7 @@ def test_set_global_roles(mocker):
     mocker.patch.object(UserClient, "_put")
     schema_mock = mocker.patch("faculty.clients.user._UserSchema")
 
-    client = UserClient(mocker.Mock())
+    client = UserClient(mocker.Mock(), mocker.Mock())
 
     roles = ["global-basic-user", "global-full-user"]
 

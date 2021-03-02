@@ -55,11 +55,13 @@ class ReportClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the report service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "tavern"
+    SERVICE_NAME = "tavern"
 
     def list(self, project_id):
         """List the reports in a project.

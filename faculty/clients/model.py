@@ -102,11 +102,13 @@ class ModelClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the model service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "zoolander"
+    SERVICE_NAME = "zoolander"
 
     def get(self, project_id, model_id):
         """Get a model in the registry.

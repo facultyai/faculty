@@ -49,7 +49,7 @@ def test_experiment_client_create(mocker, description, artifact_location):
     mocker.patch.object(ExperimentClient, "_post", return_value=experiment)
     schema_mock = mocker.patch("faculty.clients.experiment._ExperimentSchema")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     returned_experiment = client.create(
         PROJECT_ID, "experiment name", description, artifact_location
     )
@@ -72,7 +72,7 @@ def test_experiment_client_create_name_conflict(mocker):
     exception = Conflict(mocker.Mock(), mocker.Mock(), error_code)
     mocker.patch.object(ExperimentClient, "_post", side_effect=exception)
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     with pytest.raises(
         ExperimentNameConflict, match="name 'experiment name' already exists"
     ):
@@ -84,7 +84,7 @@ def test_experiment_client_get(mocker):
     mocker.patch.object(ExperimentClient, "_get", return_value=experiment)
     schema_mock = mocker.patch("faculty.clients.experiment._ExperimentSchema")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     returned_experiment = client.get(PROJECT_ID, EXPERIMENT_ID)
     assert returned_experiment == experiment
 
@@ -100,7 +100,7 @@ def test_experiment_client_list(mocker):
     mocker.patch.object(ExperimentClient, "_get", return_value=[experiment])
     schema_mock = mocker.patch("faculty.clients.experiment._ExperimentSchema")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     assert client.list(PROJECT_ID) == [experiment]
 
     schema_mock.assert_called_once_with(many=True)
@@ -116,7 +116,7 @@ def test_experiment_client_list_lifecycle_filter(mocker):
     mocker.patch.object(ExperimentClient, "_get", return_value=[experiment])
     schema_mock = mocker.patch("faculty.clients.experiment._ExperimentSchema")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     returned_experiments = client.list(
         PROJECT_ID, lifecycle_stage=LifecycleStage.ACTIVE
     )
@@ -135,7 +135,7 @@ def test_experiment_client_list_lifecycle_filter(mocker):
 def test_experiment_client_update(mocker, name, description):
     mocker.patch.object(ExperimentClient, "_patch_raw")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     client.update(
         PROJECT_ID, EXPERIMENT_ID, name=name, description=description
     )
@@ -151,7 +151,7 @@ def test_experiment_client_update_name_conflict(mocker):
     exception = Conflict(mocker.Mock(), mocker.Mock(), error_code)
     mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     with pytest.raises(
         ExperimentNameConflict, match="name 'new name' already exists"
     ):
@@ -161,7 +161,7 @@ def test_experiment_client_update_name_conflict(mocker):
 def test_delete(mocker):
     mocker.patch.object(ExperimentClient, "_delete_raw")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     client.delete(PROJECT_ID, EXPERIMENT_ID)
 
     ExperimentClient._delete_raw.assert_called_once_with(
@@ -172,7 +172,7 @@ def test_delete(mocker):
 def test_restore(mocker):
     mocker.patch.object(ExperimentClient, "_put_raw")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     client.restore(PROJECT_ID, EXPERIMENT_ID)
 
     ExperimentClient._put_raw.assert_called_once_with(
@@ -194,7 +194,7 @@ def test_experiment_create_run(mocker):
     started_at = mocker.Mock()
     artifact_location = mocker.Mock()
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     returned_run = client.create_run(
         PROJECT_ID,
         EXPERIMENT_ID,
@@ -232,7 +232,7 @@ def test_experiment_create_run_experiment_deleted_conflict(mocker):
 
     mocker.patch.object(ExperimentClient, "_post", side_effect=exception)
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     with pytest.raises(ExperimentDeleted, match=message):
         client.create_run(
             PROJECT_ID,
@@ -251,7 +251,7 @@ def test_experiment_client_get_run(mocker):
         "faculty.clients.experiment._ExperimentRunSchema"
     )
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     returned_run = client.get_run(PROJECT_ID, EXPERIMENT_RUN_ID)
     assert returned_run == run
 
@@ -265,7 +265,7 @@ def test_experiment_client_get_run(mocker):
 def test_experiment_client_list_runs(mocker):
     mocker.patch.object(ExperimentClient, "query_runs")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     response = client.list_runs(
         PROJECT_ID,
         experiment_ids=[123, 456],
@@ -296,7 +296,7 @@ def test_experiment_client_list_runs(mocker):
 def test_experiment_client_list_runs_defaults(mocker):
     mocker.patch.object(ExperimentClient, "query_runs")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     response = client.list_runs(PROJECT_ID)
 
     assert response == ExperimentClient.query_runs.return_value
@@ -319,7 +319,7 @@ def test_experiment_client_query_runs(mocker):
     filter = mocker.Mock()
     sort = mocker.Mock()
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     list_result = client.query_runs(
         PROJECT_ID, filter, sort, start=20, limit=10
     )
@@ -348,7 +348,7 @@ def test_log_run_data(mocker):
     param = mocker.Mock()
     tag = mocker.Mock()
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     client.log_run_data(
         PROJECT_ID,
         EXPERIMENT_RUN_ID,
@@ -376,7 +376,7 @@ def test_log_run_data_param_conflict(mocker):
 
     mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
 
     with pytest.raises(ParamConflict, match=message):
         client.log_run_data(
@@ -389,7 +389,7 @@ def test_log_run_data_other_conflict(mocker):
     exception = Conflict(response_mock, "", "")
 
     mocker.patch.object(ExperimentClient, "_patch_raw", side_effect=exception)
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
 
     with pytest.raises(Conflict):
         client.log_run_data(
@@ -400,7 +400,7 @@ def test_log_run_data_other_conflict(mocker):
 def test_log_run_data_empty(mocker):
     mocker.patch.object(ExperimentClient, "_patch_raw")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
 
     client.log_run_data(PROJECT_ID, EXPERIMENT_RUN_ID)
     ExperimentClient._patch_raw.assert_not_called()
@@ -420,7 +420,7 @@ def test_update_run_info(mocker):
     status = mocker.Mock()
     ended_at = mocker.Mock()
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     returned_run = client.update_run_info(
         PROJECT_ID, EXPERIMENT_RUN_ID, status, ended_at
     )
@@ -449,7 +449,7 @@ def test_get_metric_history(mocker):
         "faculty.clients.experiment._MetricHistorySchema"
     )
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     metrics = client.get_metric_history(
         PROJECT_ID, EXPERIMENT_RUN_ID, "metric-key"
     )
@@ -494,7 +494,7 @@ def test_delete_runs(mocker):
 
     run_ids = [uuid4(), uuid4()]
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     response = client.delete_runs(PROJECT_ID, run_ids)
 
     assert response == delete_runs_response
@@ -520,7 +520,7 @@ def test_delete_runs_no_run_ids(mocker):
         "faculty.clients.experiment._DeleteExperimentRunsResponseSchema"
     )
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     client.delete_runs(PROJECT_ID)
 
     ExperimentClient._post.assert_called_once_with(
@@ -533,7 +533,7 @@ def test_delete_runs_no_run_ids(mocker):
 def test_delete_runs_empty_list(mocker):
     mocker.patch.object(ExperimentClient, "_post")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     response = client.delete_runs(PROJECT_ID, run_ids=[])
 
     ExperimentClient._post.assert_not_called()
@@ -556,7 +556,7 @@ def test_restore_runs(mocker):
 
     run_ids = [uuid4(), uuid4()]
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     response = client.restore_runs(PROJECT_ID, run_ids)
 
     assert response == restore_runs_response
@@ -582,7 +582,7 @@ def test_restore_runs_no_run_ids(mocker):
         "faculty.clients.experiment._RestoreExperimentRunsResponseSchema"
     )
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     client.restore_runs(PROJECT_ID)
 
     ExperimentClient._post.assert_called_once_with(
@@ -595,7 +595,7 @@ def test_restore_runs_no_run_ids(mocker):
 def test_restore_runs_empty_list(mocker):
     mocker.patch.object(ExperimentClient, "_post")
 
-    client = ExperimentClient(mocker.Mock())
+    client = ExperimentClient(mocker.Mock(), mocker.Mock())
     response = client.restore_runs(PROJECT_ID, run_ids=[])
 
     ExperimentClient._post.assert_not_called()

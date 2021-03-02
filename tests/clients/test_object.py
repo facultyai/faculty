@@ -179,7 +179,7 @@ def test_object_client_get(mocker, path):
     mocker.patch.object(ObjectClient, "_get", return_value=OBJECT)
     schema_mock = mocker.patch("faculty.clients.object._ObjectSchema")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     assert client.get(PROJECT_ID, path) == OBJECT
 
     schema_mock.assert_called_once_with()
@@ -194,7 +194,7 @@ def test_object_client_get_url_encoding(mocker):
     mocker.patch.object(ObjectClient, "_get", return_value=OBJECT)
     schema_mock = mocker.patch("faculty.clients.object._ObjectSchema")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     assert client.get(PROJECT_ID, path) == OBJECT
 
     schema_mock.assert_called_once_with()
@@ -213,7 +213,7 @@ def test_object_client_list(mocker, path):
         "faculty.clients.object._ListObjectsResponseSchema"
     )
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
 
     response = client.list(PROJECT_ID, path, page_token="token")
     assert response == LIST_OBJECTS_RESPONSE
@@ -234,7 +234,7 @@ def test_object_client_list_defaults(mocker):
         "faculty.clients.object._ListObjectsResponseSchema"
     )
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     assert client.list(PROJECT_ID) == LIST_OBJECTS_RESPONSE
 
     schema_mock.assert_called_once_with()
@@ -254,7 +254,7 @@ def test_object_client_list_url_encoding(mocker):
         "faculty.clients.object._ListObjectsResponseSchema"
     )
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
 
     response = client.list(PROJECT_ID, path, page_token="token")
     assert response == LIST_OBJECTS_RESPONSE
@@ -270,7 +270,7 @@ def test_object_client_list_url_encoding(mocker):
 def test_object_client_create_directory_default(mocker):
     mocker.patch.object(ObjectClient, "_put_raw")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     client.create_directory(PROJECT_ID, "test-path")
 
     ObjectClient._put_raw.assert_called_once_with(
@@ -283,7 +283,7 @@ def test_object_client_create_directory_default(mocker):
 def test_object_client_create_directory(mocker, parents, expected_parent):
     mocker.patch.object(ObjectClient, "_put_raw")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     client.create_directory(PROJECT_ID, "test-path", parents=parents)
 
     ObjectClient._put_raw.assert_called_once_with(
@@ -295,7 +295,7 @@ def test_object_client_create_directory(mocker, parents, expected_parent):
 def test_object_client_create_directory_url_encoding(mocker):
     mocker.patch.object(ObjectClient, "_put_raw")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     client.create_directory(PROJECT_ID, "[1]")
 
     ObjectClient._put_raw.assert_called_once_with(
@@ -309,7 +309,7 @@ def test_object_client_create_directory_already_exists(mocker):
     exception = Conflict(mocker.Mock(), mocker.Mock(), error_code)
     mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     with pytest.raises(PathAlreadyExists, match="'test-path' already exists"):
         client.create_directory(PROJECT_ID, "test-path")
 
@@ -322,7 +322,7 @@ def test_object_client_create_directory_already_exists(mocker):
 def test_object_client_copy_default(mocker):
     mocker.patch.object(ObjectClient, "_put_raw")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     client.copy(PROJECT_ID, "source", "destination")
 
     ObjectClient._put_raw.assert_called_once_with(
@@ -334,7 +334,7 @@ def test_object_client_copy_default(mocker):
 def test_object_client_copy_url_encoding(mocker):
     mocker.patch.object(ObjectClient, "_put_raw")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     client.copy(PROJECT_ID, "source", "/[1]/")
 
     ObjectClient._put_raw.assert_called_once_with(
@@ -349,7 +349,7 @@ def test_object_client_copy_url_encoding(mocker):
 def test_object_client_copy(mocker, recursive, expected_recursive):
     mocker.patch.object(ObjectClient, "_put_raw")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     client.copy(PROJECT_ID, "source", "destination", recursive=recursive)
 
     ObjectClient._put_raw.assert_called_once_with(
@@ -363,7 +363,7 @@ def test_object_client_copy_source_not_found(mocker):
     exception = NotFound(mocker.Mock(), mocker.Mock(), error_code)
     mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     with pytest.raises(PathNotFound, match="'source' cannot be found"):
         client.copy(PROJECT_ID, "source", "destination")
 
@@ -373,7 +373,7 @@ def test_object_client_copy_source_is_a_directory(mocker):
     exception = BadRequest(mocker.Mock(), mocker.Mock(), error_code)
     mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     with pytest.raises(SourceIsADirectory, match="'source' is a directory"):
         client.copy(PROJECT_ID, "source", "destination")
 
@@ -382,7 +382,7 @@ def test_object_client_delete_default(mocker):
     path = "test-path"
     mocker.patch.object(ObjectClient, "_delete_raw")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     client.delete(PROJECT_ID, path)
 
     ObjectClient._delete_raw.assert_called_once_with(
@@ -395,7 +395,7 @@ def test_object_client_delete_url_encoding(mocker):
     path = "[1]"
     mocker.patch.object(ObjectClient, "_delete_raw")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     client.delete(PROJECT_ID, path)
 
     ObjectClient._delete_raw.assert_called_once_with(
@@ -411,7 +411,7 @@ def test_object_client_delete(mocker, recursive, expected_recursive):
     path = "test-path"
     mocker.patch.object(ObjectClient, "_delete_raw")
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     client.delete(PROJECT_ID, path, recursive=recursive)
 
     ObjectClient._delete_raw.assert_called_once_with(
@@ -426,7 +426,7 @@ def test_object_client_delete_path_not_found(mocker):
     exception = NotFound(mocker.Mock(), mocker.Mock(), error_code)
     mocker.patch.object(ObjectClient, "_delete_raw", side_effect=exception)
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     with pytest.raises(PathNotFound, match="'test-path' cannot be found"):
         client.delete(PROJECT_ID, path)
 
@@ -437,7 +437,7 @@ def test_object_client_delete_target_is_a_directory(mocker):
     exception = BadRequest(mocker.Mock(), mocker.Mock(), error_code)
     mocker.patch.object(ObjectClient, "_delete_raw", side_effect=exception)
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     with pytest.raises(TargetIsADirectory, match="'test-path' is a directory"):
         client.delete(PROJECT_ID, path)
 
@@ -450,7 +450,7 @@ def test_object_client_presign_download(mocker):
         "faculty.clients.object._SimplePresignResponseSchema"
     )
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     returned = client.presign_download(
         PROJECT_ID,
         "/path",
@@ -478,7 +478,7 @@ def test_object_client_presign_download_defaults(mocker):
         "faculty.clients.object._SimplePresignResponseSchema"
     )
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     returned = client.presign_download(PROJECT_ID, "/path")
 
     assert returned == SIMPLE_PRESIGN_RESPONSE.url
@@ -499,7 +499,7 @@ def test_object_client_presign_upload(mocker):
         "faculty.clients.object._PresignUploadResponseSchema"
     )
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     returned = client.presign_upload(PROJECT_ID, "/path")
 
     assert returned == PRESIGN_UPLOAD_RESPONSE_S3
@@ -520,7 +520,7 @@ def test_object_client_presign_upload_part(mocker):
         "faculty.clients.object._SimplePresignResponseSchema"
     )
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     returned = client.presign_upload_part(
         PROJECT_ID, "/path", "upload-id", part_number=2
     )
@@ -541,7 +541,7 @@ def test_object_client_complete_multipart_upload(mocker):
         "faculty.clients.object._CompleteMultipartUploadSchema"
     )
 
-    client = ObjectClient(mocker.Mock())
+    client = ObjectClient(mocker.Mock(), mocker.Mock())
     client.complete_multipart_upload(
         PROJECT_ID, "/path", "upload-id", [COMPLETED_UPLOAD_PART]
     )

@@ -59,11 +59,13 @@ class UserClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the user service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "flock"
+    SERVICE_NAME = "flock"
 
     def get_user(self, user_id):
         """Get information about a user.
