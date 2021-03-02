@@ -182,7 +182,7 @@ def test_server_client_create_shared(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
     schema_mock = mocker.patch("faculty.clients.server._ServerIdSchema")
 
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
 
     server_type = "jupyter"
     name = "test server"
@@ -225,7 +225,7 @@ def test_server_client_create_dedicated(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
     schema_mock = mocker.patch("faculty.clients.server._ServerIdSchema")
 
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
 
     server_type = "jupyter"
     name = "test server"
@@ -264,7 +264,7 @@ def test_server_client_create_minimal(mocker):
     mocker.patch.object(ServerClient, "_post", return_value=SERVER_ID)
     schema_mock = mocker.patch("faculty.clients.server._ServerIdSchema")
 
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
 
     server_type = "jupyter"
 
@@ -291,7 +291,7 @@ def test_server_client_get(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=SHARED_SERVER)
     schema_mock = mocker.patch("faculty.clients.server._ServerSchema")
 
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
 
     assert client.get(PROJECT_ID, SERVER_ID) == SHARED_SERVER
 
@@ -306,7 +306,7 @@ def test_server_client_list_for_user(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
     schema_mock = mocker.patch("faculty.clients.server._ServerSchema")
 
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
 
     assert client.list_for_user(USER_ID) == [SHARED_SERVER]
 
@@ -320,7 +320,7 @@ def test_server_client_list(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
     schema_mock = mocker.patch("faculty.clients.server._ServerSchema")
 
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
 
     assert client.list(PROJECT_ID) == [SHARED_SERVER]
 
@@ -336,7 +336,7 @@ def test_server_client_list_filter_name(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
     schema_mock = mocker.patch("faculty.clients.server._ServerSchema")
 
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
 
     assert client.list(PROJECT_ID, name="foo") == [SHARED_SERVER]
 
@@ -352,7 +352,7 @@ def test_server_client_list_all(mocker):
     mocker.patch.object(ServerClient, "_get", return_value=[SHARED_SERVER])
     schema_mock = mocker.patch("faculty.clients.server._ServerSchema")
 
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
 
     assert client.list_all() == [SHARED_SERVER]
 
@@ -365,7 +365,7 @@ def test_server_client_list_all(mocker):
 
 def test_server_client_delete(mocker):
     mocker.patch.object(ServerClient, "_delete_raw")
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
     client.delete(SERVER_ID)
 
     ServerClient._delete_raw.assert_called_once_with(
@@ -375,7 +375,7 @@ def test_server_client_delete(mocker):
 
 def test_server_client_apply_environment(mocker):
     mocker.patch.object(ServerClient, "_put_raw")
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
 
     client.apply_environment(SERVER_ID, ENVIRONMENT_ID)
 
@@ -388,7 +388,7 @@ def test_server_client_get_ssh_details(mocker):
     _get_mock = mocker.patch.object(ServerClient, "_get")
     schema_mock = mocker.patch("faculty.clients.server._SSHDetailsSchema")
 
-    client = ServerClient(mocker.Mock())
+    client = ServerClient(mocker.Mock(), mocker.Mock())
 
     assert (
         client.get_ssh_details(PROJECT_ID, SERVER_ID) == _get_mock.return_value

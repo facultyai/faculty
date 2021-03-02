@@ -19,7 +19,7 @@ from faculty.clients.user import GlobalRole
 def test_invite_user(mocker):
     mocker.patch.object(InvitationClient, "_post_raw")
 
-    client = InvitationClient(mocker.Mock())
+    client = InvitationClient(mocker.Mock(), mocker.Mock())
     client.invite_user(
         "test@email.xyz",
         global_roles=[
@@ -45,7 +45,7 @@ def test_invite_user(mocker):
 def test_invite_user_default_global_roles(mocker):
     mocker.patch.object(InvitationClient, "_post_raw")
 
-    client = InvitationClient(mocker.Mock())
+    client = InvitationClient(mocker.Mock(), mocker.Mock())
     client.invite_user("test@email.xyz")
 
     InvitationClient._post_raw.assert_called_once_with(
