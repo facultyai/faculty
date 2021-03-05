@@ -104,7 +104,7 @@ def test_report_client_list(mocker):
     mocker.patch.object(ReportClient, "_get", return_value=[REPORT])
     schema_mock = mocker.patch("faculty.clients.report._ReportSchema")
 
-    client = ReportClient(mocker.Mock())
+    client = ReportClient(mocker.Mock(), mocker.Mock())
 
     assert client.list(PROJECT_ID) == [REPORT]
 
@@ -119,7 +119,7 @@ def test_report_client_get(mocker):
     mocker.patch.object(ReportClient, "_get", return_value=REPORT)
     schema_mock = mocker.patch("faculty.clients.report._ReportSchema")
 
-    client = ReportClient(mocker.Mock())
+    client = ReportClient(mocker.Mock(), mocker.Mock())
 
     assert client.get(REPORT.id) == REPORT
 
@@ -136,7 +136,7 @@ def test_report_client_get_with_versions(mocker):
         "faculty.clients.report._ReportWithVersionsSchema"
     )
 
-    client = ReportClient(mocker.Mock())
+    client = ReportClient(mocker.Mock(), mocker.Mock())
 
     assert client.get_with_versions(REPORT.id) == VERSIONED_REPORT
 
@@ -151,7 +151,7 @@ def test_report_client_create(mocker):
     mocker.patch.object(ReportClient, "_post", return_value=REPORT)
     schema_mock = mocker.patch("faculty.clients.report._ReportSchema")
 
-    client = ReportClient(mocker.Mock())
+    client = ReportClient(mocker.Mock(), mocker.Mock())
 
     assert (
         client.create(
@@ -183,7 +183,7 @@ def test_report_client_create_version(mocker):
     mocker.patch.object(ReportClient, "_post", return_value=ACTIVE_VERSION)
     schema_mock = mocker.patch("faculty.clients.report._ReportVersionSchema")
 
-    client = ReportClient(mocker.Mock())
+    client = ReportClient(mocker.Mock(), mocker.Mock())
 
     assert (
         client.create_version(REPORT.id, "/test-notebook-path.ipynb", USER_ID)

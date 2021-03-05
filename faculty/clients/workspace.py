@@ -43,11 +43,13 @@ class WorkspaceClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the workspace service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "workspace"
+    SERVICE_NAME = "workspace"
 
     def list(self, project_id, prefix, depth):
         """List files in a project workspace.

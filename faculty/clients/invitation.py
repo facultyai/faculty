@@ -30,11 +30,13 @@ class InvitationClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the user creation and invitation service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "ivory"
+    SERVICE_NAME = "ivory"
 
     def invite_user(self, email, global_roles=None):
         """Invite a new user to Faculty by email

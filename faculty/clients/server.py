@@ -72,11 +72,13 @@ class ServerClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the server management service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "galleon"
+    SERVICE_NAME = "galleon"
 
     def create(
         self,

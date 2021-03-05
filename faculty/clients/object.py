@@ -94,11 +94,13 @@ class ObjectClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the object storage service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "hoard"
+    SERVICE_NAME = "hoard"
 
     def get(self, project_id, path):
         """Get metadata about a single object.

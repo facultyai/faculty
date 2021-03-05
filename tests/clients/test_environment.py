@@ -468,7 +468,7 @@ def test_environment_client_list(mocker):
         "faculty.clients.environment._EnvironmentSchema"
     )
 
-    client = EnvironmentClient(mocker.Mock())
+    client = EnvironmentClient(mocker.Mock(), mocker.Mock())
     assert client.list(PROJECT_ID) == [ENVIRONMENT]
 
     schema_mock.assert_called_once_with(many=True)
@@ -483,7 +483,7 @@ def test_environment_client_get(mocker):
         "faculty.clients.environment._EnvironmentSchema"
     )
 
-    client = EnvironmentClient(mocker.Mock())
+    client = EnvironmentClient(mocker.Mock(), mocker.Mock())
     assert client.get(PROJECT_ID, ENVIRONMENT_ID) == ENVIRONMENT
 
     schema_mock.assert_called_once_with()
@@ -501,7 +501,7 @@ def test_environment_client_update(mocker):
         return_value=ENVIRONMENT_CREATE_UPDATE_BODY,
     )
 
-    client = EnvironmentClient(mocker.Mock())
+    client = EnvironmentClient(mocker.Mock(), mocker.Mock())
     client.update(PROJECT_ID, ENVIRONMENT_ID, NAME, SPECIFICATION, DESCRIPTION)
 
     _EnvironmentCreateUpdateSchema.dump.assert_called_once_with(
@@ -526,7 +526,7 @@ def test_environment_client_create(mocker):
         "faculty.clients.environment._EnvironmentCreationResponseSchema"
     )
 
-    client = EnvironmentClient(mocker.Mock())
+    client = EnvironmentClient(mocker.Mock(), mocker.Mock())
     assert (
         client.create(PROJECT_ID, NAME, SPECIFICATION, description=DESCRIPTION)
         == ENVIRONMENT_CREATION_RESPONSE.id
@@ -544,7 +544,7 @@ def test_environment_client_create(mocker):
 def test_environment_client_delete(mocker):
     mocker.patch.object(EnvironmentClient, "_delete_raw", return_value=None)
 
-    client = EnvironmentClient(mocker.Mock())
+    client = EnvironmentClient(mocker.Mock(), mocker.Mock())
     client.delete(PROJECT_ID, ENVIRONMENT_ID)
 
     EnvironmentClient._delete_raw.assert_called_once_with(

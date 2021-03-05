@@ -114,7 +114,7 @@ def test_schemas_invalid(schema):
 def test_model_client_get(mocker):
     mocker.patch.object(ModelClient, "_get", return_value=MODEL)
     schema_mock = mocker.patch("faculty.clients.model._ModelSchema")
-    client = ModelClient(mocker.Mock())
+    client = ModelClient(mocker.Mock(), mocker.Mock())
 
     assert client.get(PROJECT_ID, MODEL_ID) == MODEL
 
@@ -128,7 +128,7 @@ def test_model_client_get(mocker):
 def test_model_client_list(mocker):
     mocker.patch.object(ModelClient, "_get", return_value=[MODEL])
     schema_mock = mocker.patch("faculty.clients.model._ModelSchema")
-    client = ModelClient(mocker.Mock())
+    client = ModelClient(mocker.Mock(), mocker.Mock())
 
     assert client.list(PROJECT_ID) == [MODEL]
 
@@ -141,7 +141,7 @@ def test_model_client_list(mocker):
 def test_model_client_get_version(mocker):
     mocker.patch.object(ModelClient, "_get", return_value=MODEL_VERSION)
     schema_mock = mocker.patch("faculty.clients.model._ModelVersionSchema")
-    client = ModelClient(mocker.Mock())
+    client = ModelClient(mocker.Mock(), mocker.Mock())
 
     assert (
         client.get_version(PROJECT_ID, MODEL_ID, VERSION_ID) == MODEL_VERSION
@@ -159,7 +159,7 @@ def test_model_client_get_version(mocker):
 def test_model_client_list_versions(mocker):
     mocker.patch.object(ModelClient, "_get", return_value=[MODEL_VERSION])
     schema_mock = mocker.patch("faculty.clients.model._ModelVersionSchema")
-    client = ModelClient(mocker.Mock())
+    client = ModelClient(mocker.Mock(), mocker.Mock())
 
     assert client.list_versions(PROJECT_ID, MODEL_ID) == [MODEL_VERSION]
 

@@ -87,11 +87,13 @@ class ClusterClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the cluster configuration service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "klostermann"
+    SERVICE_NAME = "klostermann"
 
     def list_single_tenanted_node_types(
         self,

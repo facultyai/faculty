@@ -77,7 +77,7 @@ def test_log_client_get_subrun_command_logs(mocker):
     mocker.patch.object(LogClient, "_get", return_value=LOG_PARTS_RESPONSE)
     schema_mock = mocker.patch("faculty.clients.log._LogPartsResponseSchema")
 
-    client = LogClient(mocker.Mock())
+    client = LogClient(mocker.Mock(), mocker.Mock())
     assert (
         client.get_subrun_command_logs(PROJECT_ID, JOB_ID, RUN_ID, SUBRUN_ID)
         == LOG_PARTS_RESPONSE.log_parts
@@ -96,7 +96,7 @@ def test_log_client_get_subrun_environment_step_logs(mocker):
     mocker.patch.object(LogClient, "_get", return_value=LOG_PARTS_RESPONSE)
     schema_mock = mocker.patch("faculty.clients.log._LogPartsResponseSchema")
 
-    client = LogClient(mocker.Mock())
+    client = LogClient(mocker.Mock(), mocker.Mock())
     assert (
         client.get_subrun_environment_step_logs(
             PROJECT_ID, JOB_ID, RUN_ID, SUBRUN_ID, ENVIRONMENT_STEP_ID

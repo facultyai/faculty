@@ -38,7 +38,7 @@ class DatasetsSecretsSchema(BaseSchema):
 
 class SecretClient(BaseClient):
 
-    _SERVICE_NAME = "secret-service"
+    SERVICE_NAME = "secret-service"
 
     def datasets_secrets(self, project_id):
         endpoint = "sfs/{}".format(project_id)

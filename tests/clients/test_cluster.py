@@ -140,7 +140,7 @@ def test_cluster_client_list_single_tenanted_node_types(
     mocker.patch.object(ClusterClient, "_get", return_value=[NODE_TYPE])
     schema_mock = mocker.patch("faculty.clients.cluster._NodeTypeSchema")
 
-    client = ClusterClient(mocker.Mock())
+    client = ClusterClient(mocker.Mock(), mocker.Mock())
     assert client.list_single_tenanted_node_types(**kwargs) == [NODE_TYPE]
 
     schema_mock.assert_called_once_with(many=True)
@@ -160,7 +160,7 @@ def test_cluster_client_configure_single_tenanted_node_type(
 ):
     mocker.patch.object(ClusterClient, "_put_raw")
 
-    client = ClusterClient(mocker.Mock())
+    client = ClusterClient(mocker.Mock(), mocker.Mock())
     client.configure_single_tenanted_node_type(
         NODE_TYPE.id,
         NODE_TYPE.name,
@@ -185,7 +185,7 @@ def test_cluster_client_configure_single_tenanted_node_type(
 def test_cluster_client_disable_single_tenanted_node_type(mocker):
     mocker.patch.object(ClusterClient, "_delete_raw")
 
-    client = ClusterClient(mocker.Mock())
+    client = ClusterClient(mocker.Mock(), mocker.Mock())
     client.disable_single_tenanted_node_type(NODE_TYPE.id)
 
     ClusterClient._delete_raw.assert_called_once_with(

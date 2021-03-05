@@ -103,7 +103,7 @@ def test_workspace_client_get(mocker):
     mocker.patch.object(WorkspaceClient, "_get", return_value=LIST_RESPONSE)
     schema_mock = mocker.patch("faculty.clients.workspace._ListResponseSchema")
 
-    client = WorkspaceClient(mocker.Mock())
+    client = WorkspaceClient(mocker.Mock(), mocker.Mock())
     assert client.list(
         PROJECT_ID, prefix="/path/to/test-directory/", depth=1
     ) == [DIRECTORY]

@@ -164,11 +164,13 @@ class JobClient(BaseClient):
 
     Parameters
     ----------
+    url : str
+        The URL of the job service.
     session : faculty.session.Session
-        The session to use to make requests
+        The session to use to make requests.
     """
 
-    _SERVICE_NAME = "steve"
+    SERVICE_NAME = "steve"
 
     def list(self, project_id):
         """List the jobs in a project.

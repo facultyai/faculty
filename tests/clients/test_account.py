@@ -69,7 +69,7 @@ def test_account_client_authenticated_account(mocker):
         "faculty.clients.account._AuthenticationResponseSchema"
     )
 
-    client = AccountClient(mocker.Mock())
+    client = AccountClient(mocker.Mock(), mocker.Mock())
 
     assert client.authenticated_account() == ACCOUNT
 
@@ -83,7 +83,7 @@ def test_account_client_authenticated_user_id(mocker):
         AccountClient, "authenticated_account", return_value=ACCOUNT
     )
 
-    client = AccountClient(mocker.Mock())
+    client = AccountClient(mocker.Mock(), mocker.Mock())
 
     assert client.authenticated_user_id() == USER_ID
 
@@ -95,7 +95,7 @@ def test_account_client_get(mocker):
 
     schema_mock = mocker.patch("faculty.clients.account._AccountSchema")
 
-    client = AccountClient(mocker.Mock())
+    client = AccountClient(mocker.Mock(), mocker.Mock())
 
     assert client.get(USER_ID) == ACCOUNT
 

@@ -72,7 +72,7 @@ def test_project_client_create(mocker):
     mocker.patch.object(ProjectClient, "_post", return_value=PROJECT)
     schema_mock = mocker.patch("faculty.clients.project._ProjectSchema")
 
-    client = ProjectClient(mocker.Mock())
+    client = ProjectClient(mocker.Mock(), mocker.Mock())
     assert client.create(PROJECT.owner_id, PROJECT.name) == PROJECT
 
     schema_mock.assert_called_once_with()
@@ -87,7 +87,7 @@ def test_project_client_get(mocker):
     mocker.patch.object(ProjectClient, "_get", return_value=PROJECT)
     schema_mock = mocker.patch("faculty.clients.project._ProjectSchema")
 
-    client = ProjectClient(mocker.Mock())
+    client = ProjectClient(mocker.Mock(), mocker.Mock())
     assert client.get(PROJECT.id) == PROJECT
 
     schema_mock.assert_called_once_with()
@@ -100,7 +100,7 @@ def test_project_client_get_by_owner_and_name(mocker):
     mocker.patch.object(ProjectClient, "_get", return_value=PROJECT)
     schema_mock = mocker.patch("faculty.clients.project._ProjectSchema")
 
-    client = ProjectClient(mocker.Mock())
+    client = ProjectClient(mocker.Mock(), mocker.Mock())
     assert client.get_by_owner_and_name(USER_ID, PROJECT.name) == PROJECT
 
     schema_mock.assert_called_once_with()
@@ -114,7 +114,7 @@ def test_project_client_list_accessible_by_user(mocker):
     mocker.patch.object(ProjectClient, "_get", return_value=[PROJECT])
     schema_mock = mocker.patch("faculty.clients.project._ProjectSchema")
 
-    client = ProjectClient(mocker.Mock())
+    client = ProjectClient(mocker.Mock(), mocker.Mock())
     assert client.list_accessible_by_user(USER_ID) == [PROJECT]
 
     schema_mock.assert_called_once_with(many=True)
@@ -132,7 +132,7 @@ def test_project_client_list_all(
     mocker.patch.object(ProjectClient, "_get", return_value=[PROJECT])
     schema_mock = mocker.patch("faculty.clients.project._ProjectSchema")
 
-    client = ProjectClient(mocker.Mock())
+    client = ProjectClient(mocker.Mock(), mocker.Mock())
     assert client.list_all(include_archived) == [PROJECT]
 
     schema_mock.assert_called_once_with(many=True)

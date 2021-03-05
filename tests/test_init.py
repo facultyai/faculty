@@ -32,12 +32,19 @@ def test_client(mocker):
 
     faculty.client("test-resource", **options)
 
-    get_session_mock.assert_called_once_with(**options)
     for_resource_mock.assert_called_once_with("test-resource")
+    get_session_mock.assert_called_once_with(**options)
 
-    returned_session = get_session_mock.return_value
     returned_class = for_resource_mock.return_value
-    returned_class.assert_called_once_with(returned_session)
+    returned_session = get_session_mock.return_value
+
+    returned_session.service_url.assert_called_once_with(
+        returned_class.SERVICE_NAME
+    )
+
+    returned_class.assert_called_once_with(
+        returned_session.service_url.return_value, returned_session
+    )
 
 
 def test_client_defaults(mocker):
@@ -46,6 +53,7 @@ def test_client_defaults(mocker):
 
     faculty.client("test-resource")
 
+    for_resource_mock.assert_called_once_with("test-resource")
     get_session_mock.assert_called_once_with(
         credentials_path=None,
         profile_name=None,
@@ -55,8 +63,14 @@ def test_client_defaults(mocker):
         client_secret=None,
         access_token_cache=None,
     )
-    for_resource_mock.assert_called_once_with("test-resource")
 
-    returned_session = get_session_mock.return_value
     returned_class = for_resource_mock.return_value
-    returned_class.assert_called_once_with(returned_session)
+    returned_session = get_session_mock.return_value
+
+    returned_session.service_url.assert_called_once_with(
+        returned_class.SERVICE_NAME
+    )
+
+    returned_class.assert_called_once_with(
+        returned_session.service_url.return_value, returned_session
+    )
