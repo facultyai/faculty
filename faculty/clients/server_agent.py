@@ -23,7 +23,7 @@ from marshmallow import fields, post_load
 from faculty.clients.base import BaseSchema, BaseClient
 
 @attrs
-class Hound(object):
+class ServerAgent(object):
     
     status = attrib()
     environments = attrib()
@@ -40,19 +40,20 @@ class EnvironmentExecutionStep(object):
     status = attrib()
     log_path = attrib()
 
-class HoundClient(BaseClient):
+class ServerAgentClient(BaseClient):
 
-    _SERVICE_NAME = ""
+    # _SERVICE_NAME = ""
 
     def latest_environment_execution(self):
         """Get the latest environment execution on the server."""
-        print("Placeholder")
+        return self._get("/execution/latest", _ExecutionSchema())
+    
 
 class _EnvironmentExecutionStepSchema(BaseSchema):
 
     command = fields.List(fields.String)
     status = fields.String()
-    log_path = fields.String()
+    log_path = fields.String(data_key="logUriPath")
 
     @post_load
     def make_environment_execution_step(self, data, **kwargs):
@@ -66,11 +67,11 @@ class _EnvironmentExecutionSchema(BaseSchema):
     def make_environment_execution(self, data, **kwargs):
         return EnvironmentExecution(**data)
 
-class _HoundSchema(BaseSchema):
+class _ExecutionSchema(BaseSchema):
 
     status = fields.String(required=True)
     environments = fields.List(fields.Nested(_EnvironmentExecutionSchema))
 
     @post_load
-    def make_hound(self, data, **kwargs):
-        return Hound(**data)
+    def make_execution(self, data, **kwargs):
+        return ServerAgent(**data)
