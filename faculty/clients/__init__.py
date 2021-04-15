@@ -47,7 +47,6 @@ CLIENT_FOR_RESOURCE = {
     "server": ServerClient,
     "user": UserClient,
     "workspace": WorkspaceClient,
-    "hound": ServerAgentClient,
 }
 
 
