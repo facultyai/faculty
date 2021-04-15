@@ -19,35 +19,130 @@ Interact with Hound.
 from attr import attrs, attrib
 
 from marshmallow import fields, post_load
+from contextlib import contextmanager
+import json
 
 from faculty.clients.base import BaseSchema, BaseClient
 
+SERVER_RESOURCES_EVENT = "@SSE/SERVER_RESOURCES_UPDATED"
+
+
 @attrs
-class ServerAgent(object):
-    
+class Execution(object):
+
     status = attrib()
     environments = attrib()
 
+
 @attrs
 class EnvironmentExecution(object):
-    
+
     steps = attrib()
+
 
 @attrs
 class EnvironmentExecutionStep(object):
-    
+
     command = attrib()
     status = attrib()
     log_path = attrib()
 
+
+@attrs
+class ServerSentEventMessage(object):
+
+    id_ = attrib()
+    event = attrib()
+    data = attrib()
+
+    @classmethod
+    def from_lines(cls, lines):
+        id_ = None
+        event = None
+        data_lines = []
+        for line in lines:
+            if line.startswith("id:"):
+                id_ = int(line[3:].strip())
+            elif line.startswith("event:"):
+                event = line[6:].strip()
+            elif line.startswith("data:"):
+                data_lines.append(line[5:].strip())
+            else:
+                raise ValueError("unexpected sse line: {}".format(line))
+        data = json.loads("\n".join(data_lines))
+        return _ServerSentEventMessageSchema().load(
+            {"id_": id_, "event": event, "data": data}
+        )
+
+
+@attrs
+class ServerResources(object):
+
+    milli_cpus = attrib()
+    memory_mb = attrib()
+
+
+@attrs
+class CpuUsage(object):
+    """Current CPU usage on a server."""
+
+    total = attrib()
+    used = attrib()
+
+
+@attrs
+class MemoryUsage(object):
+    """Current Memory usage on a server."""
+
+    total = attrib()
+    used = attrib()
+    cache = attrib()
+    rss = attrib()
+
+
 class ServerAgentClient(BaseClient):
-
-    # _SERVICE_NAME = ""
-
     def latest_environment_execution(self):
         """Get the latest environment execution on the server."""
         return self._get("/execution/latest", _ExecutionSchema())
-    
+
+    @contextmanager
+    def _stream(self, endpoint):
+        """Stream from a SSE endpoint.
+        Usage
+        -----
+        >>> with self._stream(endpoint) as stream:
+        ...     for sse in stream:
+        ...         print(sse.data)
+        """
+        response = self._get_raw(endpoint, stream=True)
+
+        def sse_stream_iterator():
+            buf = []
+            for line in response.iter_lines(decode_unicode=True):
+                if not line.strip():
+                    yield ServerSentEventMessage.from_lines(buf)
+                    buf = []
+                else:
+                    buf.append(line)
+
+        try:
+            yield sse_stream_iterator()
+        finally:
+            response.close()
+
+    def stream_server_events(self):
+        """Read from the server events stream."""
+        with self._stream("/events") as stream:
+            for message in stream:
+                yield message
+
+    def stream_server_resources(self):
+        """Stream the resources used by the server."""
+
+        for message in self.stream_server_events():
+            if message.event == SERVER_RESOURCES_EVENT:
+                yield _ServerResourcesSchema().load(message.data)
+
 
 class _EnvironmentExecutionStepSchema(BaseSchema):
 
@@ -59,6 +154,7 @@ class _EnvironmentExecutionStepSchema(BaseSchema):
     def make_environment_execution_step(self, data, **kwargs):
         return EnvironmentExecutionStep(**data)
 
+
 class _EnvironmentExecutionSchema(BaseSchema):
 
     steps = fields.List(fields.Nested(_EnvironmentExecutionStepSchema))
@@ -67,6 +163,7 @@ class _EnvironmentExecutionSchema(BaseSchema):
     def make_environment_execution(self, data, **kwargs):
         return EnvironmentExecution(**data)
 
+
 class _ExecutionSchema(BaseSchema):
 
     status = fields.String(required=True)
@@ -74,4 +171,47 @@ class _ExecutionSchema(BaseSchema):
 
     @post_load
     def make_execution(self, data, **kwargs):
-        return ServerAgent(**data)
+        return Execution(**data)
+
+
+class _CpuUsageSchema(BaseSchema):
+
+    total = fields.Integer()
+    used = fields.Integer()
+
+    @post_load
+    def make_cpu_usage_message(self, data, **kwargs):
+        return CpuUsage(**data)
+
+
+class _MemoryUsageSchema(BaseSchema):
+
+    total = fields.Number()
+    used = fields.Number()
+    cache = fields.Number()
+    rss = fields.Number()
+
+    @post_load
+    def make_memory_usage_message(self, data, **kwargs):
+        return MemoryUsage(**data)
+
+
+class _ServerResourcesSchema(BaseSchema):
+
+    milli_cpus = fields.Nested(_CpuUsageSchema, data_key="milliCpus")
+    memory_mb = fields.Nested(_MemoryUsageSchema, data_key="memoryMB")
+
+    @post_load
+    def make_server_resources(self, data, **kwargs):
+        return ServerResources(**data)
+
+
+class _ServerSentEventMessageSchema(BaseSchema):
+
+    id_ = fields.Integer()
+    event = fields.String()
+    data = fields.Dict()
+
+    @post_load
+    def make_server_sent_event_message(self, data, **kwargs):
+        return ServerSentEventMessage(**data)
