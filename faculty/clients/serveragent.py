@@ -30,22 +30,36 @@ SERVER_RESOURCES_EVENT = "@SSE/SERVER_RESOURCES_UPDATED"
 @attrs
 class Execution(object):
 
+    execution_id = attrib()
     status = attrib()
     environments = attrib()
+    started_at = attrib()
+    finished_at = attrib()
 
 
 @attrs
 class EnvironmentExecution(object):
 
+    environment_id = attrib()
     steps = attrib()
 
 
 @attrs
 class EnvironmentExecutionStep(object):
 
+    id = attrib()
     command = attrib()
     status = attrib()
+    started_at = attrib()
+    finished_at = attrib()
     log_path = attrib()
+
+
+@attrs
+class EnvironmentExecutionLog(object):
+
+    line_number = attrib()
+    content = attrib()
 
 
 @attrs
@@ -102,7 +116,7 @@ class ServerAgentClient(BaseClient):
             buf = []
             for line in response.iter_lines(decode_unicode=True):
                 if not line.strip():
-                    yield sse_message_from_lines(buf)
+                    yield _sse_message_from_lines(buf)
                     buf = []
                 else:
                     buf.append(line)
@@ -112,9 +126,9 @@ class ServerAgentClient(BaseClient):
         finally:
             response.close()
 
-    def stream_server_events(self):
+    def stream_server_events(self, endpoint):
         """Read from the server events stream."""
-        with self._stream("/events") as stream:
+        with self._stream(endpoint) as stream:
             for message in stream:
                 yield message
 
@@ -122,15 +136,40 @@ class ServerAgentClient(BaseClient):
         """Stream the resources used by the server."""
 
         schema = _ServerResourcesSchema()
-        for message in self.stream_server_events():
+        for message in self.stream_server_events("/events"):
             if message.event == SERVER_RESOURCES_EVENT:
                 yield schema.load(json.loads("\n".join(message.data)))
+
+    def stream_environment_logs(self, execution_id, environment_id):
+        """Read from the environment step logs."""
+        endpoint = "/execution/{}/executor/{}/logs".format(
+            execution_id, environment_id
+        )
+        schema = _EnvironmentExecutionLogSchema()
+        for message in self.stream_server_events(endpoint):
+            if message.event == "log":
+                for log in message.data:
+                    for line in json.loads(log):
+                        yield schema.load(line)
+
+
+class _EnvironmentExecutionLogSchema(BaseSchema):
+
+    line_number = fields.Integer(data_key="lineNumber", required=True)
+    content = fields.String(required=True)
+
+    @post_load
+    def make_environment_execution_step_log(self, data, **kwargs):
+        return EnvironmentExecutionLog(**data)
 
 
 class _EnvironmentExecutionStepSchema(BaseSchema):
 
+    id = fields.UUID(required=True)
     command = fields.List(fields.String(required=True), required=True)
     status = fields.String(required=True)
+    started_at = fields.DateTime(data_key="startedAt", required=True)
+    finished_at = fields.DateTime(data_key="finishedAt", required=True)
     log_path = fields.String(data_key="logUriPath", required=True)
 
     @post_load
@@ -140,6 +179,7 @@ class _EnvironmentExecutionStepSchema(BaseSchema):
 
 class _EnvironmentExecutionSchema(BaseSchema):
 
+    environment_id = fields.UUID(data_key="environmentId", required=True)
     steps = fields.List(
         fields.Nested(_EnvironmentExecutionStepSchema), required=True
     )
@@ -151,10 +191,13 @@ class _EnvironmentExecutionSchema(BaseSchema):
 
 class _ExecutionSchema(BaseSchema):
 
+    execution_id = fields.UUID(data_key="executionId", required=True)
     status = fields.String(required=True)
     environments = fields.List(
         fields.Nested(_EnvironmentExecutionSchema), required=True
     )
+    started_at = fields.DateTime(data_key="startedAt", required=True)
+    finished_at = fields.DateTime(data_key="finishedAt", required=True)
 
     @post_load
     def make_execution(self, data, **kwargs):
@@ -197,7 +240,7 @@ class _ServerResourcesSchema(BaseSchema):
         return ServerResources(**data)
 
 
-def sse_message_from_lines(lines):
+def _sse_message_from_lines(lines):
     id = None
     event = None
     data = []
