@@ -47,7 +47,7 @@ class EnvironmentExecution(object):
 @attrs
 class EnvironmentExecutionStep(object):
 
-    id = attrib()
+    step_id = attrib()
     command = attrib()
     status = attrib()
     started_at = attrib()
@@ -140,10 +140,10 @@ class ServerAgentClient(BaseClient):
             if message.event == SERVER_RESOURCES_EVENT:
                 yield schema.load(json.loads("\n".join(message.data)))
 
-    def stream_environment_logs(self, execution_id, environment_id):
+    def stream_environment_logs(self, execution_id, step_id):
         """Read from the environment step logs."""
         endpoint = "/execution/{}/executor/{}/logs".format(
-            execution_id, environment_id
+            execution_id, step_id
         )
         schema = _EnvironmentExecutionLogSchema()
         for message in self.stream_server_events(endpoint):
@@ -165,7 +165,7 @@ class _EnvironmentExecutionLogSchema(BaseSchema):
 
 class _EnvironmentExecutionStepSchema(BaseSchema):
 
-    id = fields.UUID(required=True)
+    step_id = fields.UUID(data_key="id", required=True)
     command = fields.List(fields.String(required=True), required=True)
     status = fields.String(required=True)
     started_at = fields.DateTime(data_key="startedAt", required=True)
