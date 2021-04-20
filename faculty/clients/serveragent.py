@@ -30,7 +30,7 @@ SERVER_RESOURCES_EVENT = "@SSE/SERVER_RESOURCES_UPDATED"
 @attrs
 class Execution(object):
 
-    execution_id = attrib()
+    id = attrib()
     status = attrib()
     environments = attrib()
     started_at = attrib()
@@ -40,14 +40,14 @@ class Execution(object):
 @attrs
 class EnvironmentExecution(object):
 
-    environment_id = attrib()
+    id = attrib()
     steps = attrib()
 
 
 @attrs
 class EnvironmentExecutionStep(object):
 
-    step_id = attrib()
+    id = attrib()
     command = attrib()
     status = attrib()
     started_at = attrib()
@@ -140,7 +140,7 @@ class ServerAgentClient(BaseClient):
             if message.event == SERVER_RESOURCES_EVENT:
                 yield schema.load(json.loads("\n".join(message.data)))
 
-    def stream_environment_logs(self, execution_id, step_id):
+    def stream_environment_execution_step_logs(self, execution_id, step_id):
         """Read from the environment step logs."""
         endpoint = "/execution/{}/executor/{}/logs".format(
             execution_id, step_id
@@ -165,7 +165,7 @@ class _EnvironmentExecutionLogSchema(BaseSchema):
 
 class _EnvironmentExecutionStepSchema(BaseSchema):
 
-    step_id = fields.UUID(data_key="id", required=True)
+    id = fields.UUID(required=True)
     command = fields.List(fields.String(required=True), required=True)
     status = fields.String(required=True)
     started_at = fields.DateTime(data_key="startedAt", required=True)
@@ -179,7 +179,7 @@ class _EnvironmentExecutionStepSchema(BaseSchema):
 
 class _EnvironmentExecutionSchema(BaseSchema):
 
-    environment_id = fields.UUID(data_key="environmentId", required=True)
+    id = fields.UUID(data_key="environmentId", required=True)
     steps = fields.List(
         fields.Nested(_EnvironmentExecutionStepSchema), required=True
     )
@@ -191,7 +191,7 @@ class _EnvironmentExecutionSchema(BaseSchema):
 
 class _ExecutionSchema(BaseSchema):
 
-    execution_id = fields.UUID(data_key="executionId", required=True)
+    id = fields.UUID(data_key="executionId", required=True)
     status = fields.String(required=True)
     environments = fields.List(
         fields.Nested(_EnvironmentExecutionSchema), required=True
