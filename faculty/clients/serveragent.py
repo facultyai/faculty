@@ -17,18 +17,48 @@ Interact with server agent.
 """
 from contextlib import contextmanager
 import json
+from enum import Enum
 
 from attr import attrs, attrib
 from marshmallow import fields, post_load
-import requests
+from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseSchema, BaseClient
 
 SERVER_RESOURCES_EVENT = "@SSE/SERVER_RESOURCES_UPDATED"
 
+class ExecutionStatus(Enum):
+    """The status of an environment execution."""
+    NOT_STARTED = "NOT_STARTED"
+    STARTED = "STARTED"
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
+
+class EnvironmentExecutionStepStatus(Enum):
+    """The status of an environment execution step."""
+    QUEUED = "QUEUED"
+    CANCELLED = "CANCELLED"
+    STARTED = "STARTED"
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
 
 @attrs
 class Execution(object):
+    """Server environment execution.
+    
+    Parameters
+    ----------
+    id : uuid.UUID
+        The ID of the execution.
+    status : enum.Enum
+        The status of the execution.
+    environments : list
+        list of EnvironmentExecution objects for each environment applied.
+    started_at : Optional[datetime]
+        startime of the execution.
+    finished_at : Optional[datetime]
+        endtime of the execution.
+    """
 
     id = attrib()
     status = attrib()
@@ -39,6 +69,15 @@ class Execution(object):
 
 @attrs
 class EnvironmentExecution(object):
+    """An environment executed on a server.
+    
+    Parameters
+    ----------
+    id : uuid.UUID
+        The ID of the environment.
+    steps : list
+        List of EnvironmentExecutionStep objects.
+    """
 
     id = attrib()
     steps = attrib()
@@ -46,17 +85,40 @@ class EnvironmentExecution(object):
 
 @attrs
 class EnvironmentExecutionStep(object):
+    """A single environment execution step on a server.
+    
+    Parameters
+    ----------
+    id : uuid.UUID
+        The ID of the environment step.
+    command : str
+        The command executed by the step.
+    status : enum.Enum
+        The status of the step execution.
+    started_at : Optional[datetime]
+        The start time of the execution step.
+    finished_at : Optional[datetime]
+        The finish time of the execution step.
+    """
 
     id = attrib()
     command = attrib()
     status = attrib()
     started_at = attrib()
     finished_at = attrib()
-    log_path = attrib()
 
 
 @attrs
-class EnvironmentExecutionLog(object):
+class EnvironmentExecutionStepLog(object):
+    """The log for an environment execution step.
+    
+    Parameters
+    ----------
+    line_number : int
+        The line number within the step log.
+    content : str
+        The content of the step log.
+    """
 
     line_number = attrib()
     content = attrib()
@@ -64,6 +126,18 @@ class EnvironmentExecutionLog(object):
 
 @attrs
 class ServerSentEventMessage(object):
+    """Server sent event message.
+
+    Parameters
+    ----------
+    id : uuid.UUID
+        The ID of the server sent event message.
+    event : str
+        The type of server sent event message.
+    data : 
+        The server sent event message data.
+    
+    """
 
     id = attrib()
     event = attrib()
@@ -72,7 +146,15 @@ class ServerSentEventMessage(object):
 
 @attrs
 class ServerResources(object):
-    """Current CPU and Memory usage on a server."""
+    """Information about current server resource usage.
+    
+    Parameters
+    ----------
+    milli_cpus : CpuUsage
+        current CPU utilisation.
+    memory_mb : MemoryUsage
+        current memory utilisation. 
+    """
 
     milli_cpus = attrib()
     memory_mb = attrib()
@@ -80,7 +162,15 @@ class ServerResources(object):
 
 @attrs
 class CpuUsage(object):
-    """Current CPU usage on a server."""
+    """Current CPU usage on a server.
+    
+    Parameters
+    ----------
+    total : int
+        total CPU resource.
+    used : int
+        currently utilised CPU resource.
+    """
 
     total = attrib()
     used = attrib()
@@ -88,7 +178,19 @@ class CpuUsage(object):
 
 @attrs
 class MemoryUsage(object):
-    """Current Memory usage on a server."""
+    """Current Memory usage on a server.
+    
+    Parameters
+    ----------
+    total : float
+        total memory resource.
+    used : float
+        current utilised memory resource.
+    cache : float
+        current cache memory usage.
+    rss: float
+        resident set size allocation. 
+    """
 
     total = attrib()
     used = attrib()
@@ -97,9 +199,81 @@ class MemoryUsage(object):
 
 
 class ServerAgentClient(BaseClient):
+    """Client for the Faculty server events service.
+
+    Build this client with a session directly.
+
+    >>> client = ServerAgenClient(url, session)
+
+    Parameters
+    ----------
+    url : str
+        The URL of the object storage service.
+    session : faculty.session.Session
+        The session to use to make requests.
+    """
     def latest_environment_execution(self):
-        """Get the latest environment execution on the server."""
+        """Get the latest environment execution on the server.
+        
+        Returns
+        -------
+        Execution
+            The latest environment execution on a server. 
+        """
         return self._get("/execution/latest", _ExecutionSchema())
+
+    def stream_server_events(self, endpoint):
+        """Read the server events stream from an endpoint.
+        
+        Parameters
+        ----------
+        endpoint : str
+            HTTP request endpoint.
+
+        Yields
+        ------
+        ServerSentEventMessage
+        """
+        with self._stream(endpoint) as stream:
+            for message in stream:
+                yield message
+
+    def stream_server_resources(self):
+        """Stream the resources used by the server.
+        
+        Yields
+        ------
+        ServerResources
+        """
+
+        schema = _ServerResourcesSchema()
+        for message in self.stream_server_events("/events"):
+            if message.event == SERVER_RESOURCES_EVENT:
+                yield schema.load(json.loads(message.data))
+
+    def stream_environment_execution_step_logs(self, execution_id, step_id):
+        """Read from the environment step logs.
+        
+        Parameters
+        ----------
+        execution_id : Execution.id
+            ID of the environment execution.
+        step_id : EnvironmentExecutionStep.id
+            ID of the environment execution step.
+
+        Yields
+        ------
+        EnvironmentExecutionStepLog
+
+        """
+        endpoint = "/execution/{}/executor/{}/logs".format(
+            execution_id, step_id
+        )
+        schema = _EnvironmentExecutionStepLogSchema()
+        for message in self.stream_server_events(endpoint):
+            if message.event == "log":
+                for line in json.loads(message.data):
+                    yield schema.load(line)
 
     @contextmanager
     def _stream(self, endpoint):
@@ -109,6 +283,15 @@ class ServerAgentClient(BaseClient):
         >>> with self._stream(endpoint) as stream:
         ...     for sse in stream:
         ...         print(sse.data)
+
+        Parameters
+        ----------
+        endpoint : str
+            HTTP request endpoint.
+        
+        Yields
+        ------
+        ServerSentEventMessage
         """
         response = self._get_raw(endpoint, stream=True)
 
@@ -126,51 +309,24 @@ class ServerAgentClient(BaseClient):
         finally:
             response.close()
 
-    def stream_server_events(self, endpoint):
-        """Read from the server events stream."""
-        with self._stream(endpoint) as stream:
-            for message in stream:
-                yield message
 
-    def stream_server_resources(self):
-        """Stream the resources used by the server."""
-
-        schema = _ServerResourcesSchema()
-        for message in self.stream_server_events("/events"):
-            if message.event == SERVER_RESOURCES_EVENT:
-                yield schema.load(json.loads("\n".join(message.data)))
-
-    def stream_environment_execution_step_logs(self, execution_id, step_id):
-        """Read from the environment step logs."""
-        endpoint = "/execution/{}/executor/{}/logs".format(
-            execution_id, step_id
-        )
-        schema = _EnvironmentExecutionLogSchema()
-        for message in self.stream_server_events(endpoint):
-            if message.event == "log":
-                for log in message.data:
-                    for line in json.loads(log):
-                        yield schema.load(line)
-
-
-class _EnvironmentExecutionLogSchema(BaseSchema):
+class _EnvironmentExecutionStepLogSchema(BaseSchema):
 
     line_number = fields.Integer(data_key="lineNumber", required=True)
     content = fields.String(required=True)
 
     @post_load
     def make_environment_execution_step_log(self, data, **kwargs):
-        return EnvironmentExecutionLog(**data)
+        return EnvironmentExecutionStepLog(**data)
 
 
 class _EnvironmentExecutionStepSchema(BaseSchema):
 
     id = fields.UUID(required=True)
     command = fields.List(fields.String(required=True), required=True)
-    status = fields.String(required=True)
-    started_at = fields.DateTime(data_key="startedAt", required=True)
-    finished_at = fields.DateTime(data_key="finishedAt", required=True)
-    log_path = fields.String(data_key="logUriPath", required=True)
+    status = EnumField(EnvironmentExecutionStepStatus, by_value=True, required=True)
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    finished_at = fields.DateTime(data_key="finishedAt", missing=None)
 
     @post_load
     def make_environment_execution_step(self, data, **kwargs):
@@ -192,12 +348,12 @@ class _EnvironmentExecutionSchema(BaseSchema):
 class _ExecutionSchema(BaseSchema):
 
     id = fields.UUID(data_key="executionId", required=True)
-    status = fields.String(required=True)
+    status = EnumField(ExecutionStatus, by_value=True, required=True)
     environments = fields.List(
         fields.Nested(_EnvironmentExecutionSchema), required=True
     )
-    started_at = fields.DateTime(data_key="startedAt", required=True)
-    finished_at = fields.DateTime(data_key="finishedAt", required=True)
+    started_at = fields.DateTime(data_key="startedAt", missing=None)
+    finished_at = fields.DateTime(data_key="finishedAt", missing=None)
 
     @post_load
     def make_execution(self, data, **kwargs):
@@ -241,6 +397,17 @@ class _ServerResourcesSchema(BaseSchema):
 
 
 def _sse_message_from_lines(lines):
+    """Parses server sent events stream.
+    
+    Parameters
+    ----------
+    lines : List[str]
+        Lines from server sent event endpoint.
+
+    Returns
+    -------
+    ServerSentEventMessage
+    """
     id = None
     event = None
     data = []
@@ -254,4 +421,4 @@ def _sse_message_from_lines(lines):
         else:
             raise ValueError("unexpected sse line: {}".format(line))
 
-    return ServerSentEventMessage(id, event, data)
+    return ServerSentEventMessage(id, event, "\n".join(data)) 
