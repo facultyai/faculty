@@ -37,8 +37,8 @@ from faculty.clients.serveragent import (
     ServerResources,
     _ServerResourcesSchema,
     ServerAgentClient,
-    ServerSentEventMessage,
 )
+from faculty.clients.base import ServerSentEventMessage
 
 CPU_USAGE = CpuUsage(
     total=200,
@@ -147,28 +147,6 @@ SSE_LOG_MESSAGES = [
     for _id in range(5)
 ]
 
-STREAM_RESPONSE = [
-    "id: 0",
-    "event: mock event",
-    "data: {}",
-    " ",
-    "id: 1", 
-    "event: mock event",
-    "data: {}"
-    " ",
-]
-SSE_MOCK_MESSAGES = [
-    ServerSentEventMessage(
-        id=0,
-        event="mock event",
-        data="{}", 
-    ),
-    ServerSentEventMessage(
-        id=1,
-        event="mock event",
-        data="{}", 
-    ),
-]
 
 def test_cpu_usage_schema():
     data = _CpuUsageSchema().load(CPU_USAGE_BODY)
@@ -215,25 +193,35 @@ def test_client_latest_environment_execution(mocker):
     client = ServerAgentClient(mocker.Mock(), mocker.Mock())
     assert client.latest_environment_execution() == EXECUTION
 
+
 def test_client_stream_server_events(mocker):
     stream_context = mocker.MagicMock()
     stream_context.__enter__.return_value = SSE_RESOURCE_MESSAGES
-    mocker.patch.object(ServerAgentClient, "_stream", return_value=stream_context)
+    mocker.patch.object(
+        ServerAgentClient, "_stream", return_value=stream_context
+    )
 
     client = ServerAgentClient(mocker.Mock(), mocker.Mock())
-    for a,b in zip(client.stream_server_events("endpoint"), SSE_RESOURCE_MESSAGES):
+    for a, b in zip(
+        client.stream_server_events("endpoint"), SSE_RESOURCE_MESSAGES
+    ):
         assert a == b
+
 
 def test_client_stream_server_resources(mocker):
     mocker.patch.object(
         ServerAgentClient,
         "stream_server_events",
-        return_value=SSE_RESOURCE_MESSAGES, 
+        return_value=SSE_RESOURCE_MESSAGES,
     )
 
     client = ServerAgentClient(mocker.Mock(), mocker.Mock())
-    for client_sse, mock_sse in zip(client.stream_server_resources(), SSE_RESOURCE_MESSAGES):
-        assert client_sse == _ServerResourcesSchema().load(json.loads(mock_sse.data))
+    for client_sse, mock_sse in zip(
+        client.stream_server_resources(), SSE_RESOURCE_MESSAGES
+    ):
+        assert client_sse == _ServerResourcesSchema().load(
+            json.loads(mock_sse.data)
+        )
 
 
 def test_client_stream_environment_execution_step_logs(mocker):
@@ -254,17 +242,3 @@ def test_client_stream_environment_execution_step_logs(mocker):
             assert client_line == _EnvironmentExecutionStepLogSchema().load(
                 mock_line
             )
-
-def test_client_stream(mocker):
-    response_content = mocker.Mock()
-    response_content.iter_lines.return_value = STREAM_RESPONSE
-    mocker.patch.object(
-        ServerAgentClient,
-        "_get_raw",
-        return_value=response_content,
-    )
-
-    client = ServerAgentClient(mocker.Mock(), mocker.Mock())
-    with client._stream("endpoint") as sse_stream:
-        for client_sse, mock_sse in zip(sse_stream, SSE_MOCK_MESSAGES):
-            assert client_sse == mock_sse

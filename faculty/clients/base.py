@@ -18,7 +18,10 @@ Common functionality of Faculty service clients.
 
 
 import requests
+from contextlib import contextmanager
+
 from marshmallow import Schema, fields, ValidationError, EXCLUDE
+from attr import attrs, attrib
 
 from faculty.clients.auth import FacultyAuth
 
@@ -216,6 +219,26 @@ class GatewayTimeout(HttpError):
     pass
 
 
+@attrs
+class ServerSentEventMessage(object):
+    """Server sent event message.
+
+    Parameters
+    ----------
+    id : uuid.UUID
+        The ID of the server sent event message.
+    event : str
+        The type of server sent event message.
+    data :
+        The server sent event message data.
+
+    """
+
+    id = attrib()
+    event = attrib()
+    data = attrib()
+
+
 HTTP_ERRORS = {
     400: BadRequest,
     401: Unauthorized,
@@ -308,6 +331,40 @@ class BaseClient(object):
         response = self._delete_raw(endpoint, **kwargs)
         return _deserialise_response(schema, response)
 
+    @contextmanager
+    def _stream(self, endpoint):
+        """Stream from a SSE endpoint.
+        Usage
+        -----
+        >>> with self._stream(endpoint) as stream:
+        ...     for sse in stream:
+        ...         print(sse.data)
+
+        Parameters
+        ----------
+        endpoint : str
+            HTTP request endpoint.
+
+        Yields
+        ------
+        ServerSentEventMessage
+        """
+        response = self._get_raw(endpoint, stream=True)
+
+        def sse_stream_iterator():
+            buf = []
+            for line in response.iter_lines(decode_unicode=True):
+                if not line.strip():
+                    yield _sse_message_from_lines(buf)
+                    buf = []
+                else:
+                    buf.append(line)
+
+        try:
+            yield sse_stream_iterator()
+        finally:
+            response.close()
+
 
 class BaseSchema(Schema):
     """Base class for marshmallow schemas in this library."""
@@ -334,3 +391,31 @@ def _check_status(response):
 def _deserialise_response(schema, response):
     response_json = response.json()
     return schema.load(response_json)
+
+
+def _sse_message_from_lines(lines):
+    """Parses server sent event stream.
+
+    Parameters
+    ----------
+    lines : List[str]
+        Lines from server sent event endpoint.
+
+    Returns
+    -------
+    ServerSentEventMessage
+    """
+    id = None
+    event = None
+    data = []
+    for line in lines:
+        if line.startswith("id:"):
+            id = int(line[3:].strip())
+        elif line.startswith("event:"):
+            event = line[6:].strip()
+        elif line.startswith("data:"):
+            data.append(line[5:].strip())
+        else:
+            raise ValueError("unexpected sse line: {}".format(line))
+
+    return ServerSentEventMessage(id, event, "\n".join(data))

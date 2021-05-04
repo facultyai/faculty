@@ -33,6 +33,7 @@ from faculty.clients.base import (
     ServiceUnavailable,
     Unauthorized,
     _ErrorSchema,
+    ServerSentEventMessage,
 )
 
 MOCK_SERVICE_URL = "https://test-service.example.com/"
@@ -57,6 +58,28 @@ BAD_RESPONSE_STATUSES = [
 ]
 
 HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
+
+STREAM_RESPONSE = [
+    "id: 0",
+    "event: mock event",
+    "data: {}",
+    " ",
+    "id: 1",
+    "event: mock event",
+    "data: {}" " ",
+]
+SSE_MOCK_MESSAGES = [
+    ServerSentEventMessage(
+        id=0,
+        event="mock event",
+        data="{}",
+    ),
+    ServerSentEventMessage(
+        id=1,
+        event="mock event",
+        data="{}",
+    ),
+]
 
 
 def test_error_schema():
@@ -182,6 +205,21 @@ def test_delete(requests_mock, session, patch_auth):
     response = client._delete(MOCK_ENDPOINT, DummySchema())
 
     assert response == DummyObject(foo="bar")
+
+
+def test_stream(mocker):
+    response_content = mocker.Mock()
+    response_content.iter_lines.return_value = STREAM_RESPONSE
+    mocker.patch.object(
+        BaseClient,
+        "_get_raw",
+        return_value=response_content,
+    )
+
+    client = BaseClient(mocker.Mock(), mocker.Mock())
+    with client._stream("endpoint") as sse_stream:
+        for client_sse, mock_sse in zip(sse_stream, SSE_MOCK_MESSAGES):
+            assert client_sse == mock_sse
 
 
 @pytest.mark.parametrize(

@@ -52,7 +52,7 @@ class Execution(object):
         The ID of the execution.
     status : enum.Enum
         The status of the execution.
-    environments : list
+    environments : List[EnvironmentExecution]
         list of EnvironmentExecution objects for each environment applied.
     started_at : Optional[datetime]
         startime of the execution.
@@ -75,7 +75,7 @@ class EnvironmentExecution(object):
     ----------
     id : uuid.UUID
         The ID of the environment.
-    steps : list
+    steps : List[EnvironmentExecutionStep]
         List of EnvironmentExecutionStep objects.
     """
 
@@ -91,7 +91,7 @@ class EnvironmentExecutionStep(object):
     ----------
     id : uuid.UUID
         The ID of the environment step.
-    command : str
+    command : List[str]
         The command executed by the step.
     status : enum.Enum
         The status of the step execution.
@@ -123,25 +123,6 @@ class EnvironmentExecutionStepLog(object):
     line_number = attrib()
     content = attrib()
 
-
-@attrs
-class ServerSentEventMessage(object):
-    """Server sent event message.
-
-    Parameters
-    ----------
-    id : uuid.UUID
-        The ID of the server sent event message.
-    event : str
-        The type of server sent event message.
-    data : 
-        The server sent event message data.
-    
-    """
-
-    id = attrib()
-    event = attrib()
-    data = attrib()
 
 
 @attrs
@@ -275,40 +256,7 @@ class ServerAgentClient(BaseClient):
                 for line in json.loads(message.data):
                     yield schema.load(line)
 
-    @contextmanager
-    def _stream(self, endpoint):
-        """Stream from a SSE endpoint.
-        Usage
-        -----
-        >>> with self._stream(endpoint) as stream:
-        ...     for sse in stream:
-        ...         print(sse.data)
-
-        Parameters
-        ----------
-        endpoint : str
-            HTTP request endpoint.
-        
-        Yields
-        ------
-        ServerSentEventMessage
-        """
-        response = self._get_raw(endpoint, stream=True)
-
-        def sse_stream_iterator():
-            buf = []
-            for line in response.iter_lines(decode_unicode=True):
-                if not line.strip():
-                    yield _sse_message_from_lines(buf)
-                    buf = []
-                else:
-                    buf.append(line)
-
-        try:
-            yield sse_stream_iterator()
-        finally:
-            response.close()
-
+    
 
 class _EnvironmentExecutionStepLogSchema(BaseSchema):
 
@@ -394,31 +342,3 @@ class _ServerResourcesSchema(BaseSchema):
     @post_load
     def make_server_resources(self, data, **kwargs):
         return ServerResources(**data)
-
-
-def _sse_message_from_lines(lines):
-    """Parses server sent events stream.
-    
-    Parameters
-    ----------
-    lines : List[str]
-        Lines from server sent event endpoint.
-
-    Returns
-    -------
-    ServerSentEventMessage
-    """
-    id = None
-    event = None
-    data = []
-    for line in lines:
-        if line.startswith("id:"):
-            id = int(line[3:].strip())
-        elif line.startswith("event:"):
-            event = line[6:].strip()
-        elif line.startswith("data:"):
-            data.append(line[5:].strip())
-        else:
-            raise ValueError("unexpected sse line: {}".format(line))
-
-    return ServerSentEventMessage(id, event, "\n".join(data)) 
