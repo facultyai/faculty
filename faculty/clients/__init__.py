@@ -28,7 +28,6 @@ from faculty.clients.secret import SecretClient
 from faculty.clients.server import ServerClient
 from faculty.clients.user import UserClient
 from faculty.clients.workspace import WorkspaceClient
-from faculty.clients.serveragent import ServerAgentClient
 
 
 CLIENT_FOR_RESOURCE = {

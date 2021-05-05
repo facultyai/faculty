@@ -66,7 +66,8 @@ STREAM_RESPONSE = [
     " ",
     "id: 1",
     "event: mock event",
-    "data: {}" " ",
+    "data: {}",
+    " ",
 ]
 SSE_MOCK_MESSAGES = [
     ServerSentEventMessage(
@@ -218,8 +219,8 @@ def test_stream(mocker):
 
     client = BaseClient(mocker.Mock(), mocker.Mock())
     with client._stream("endpoint") as sse_stream:
-        for client_sse, mock_sse in zip(sse_stream, SSE_MOCK_MESSAGES):
-            assert client_sse == mock_sse
+        messages = list(sse_stream)
+    assert messages == SSE_MOCK_MESSAGES
 
 
 @pytest.mark.parametrize(

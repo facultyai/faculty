@@ -16,7 +16,6 @@ import uuid
 from datetime import datetime
 import json
 
-import pytest
 from pytz import UTC
 
 from faculty.clients.serveragent import (

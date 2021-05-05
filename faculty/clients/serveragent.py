@@ -15,7 +15,6 @@
 """
 Interact with server agent.
 """
-from contextlib import contextmanager
 import json
 from enum import Enum
 
@@ -25,39 +24,42 @@ from marshmallow_enum import EnumField
 
 from faculty.clients.base import BaseSchema, BaseClient
 
-SERVER_RESOURCES_EVENT = "@SSE/SERVER_RESOURCES_UPDATED"
 
 class ExecutionStatus(Enum):
     """The status of an environment execution."""
+
     NOT_STARTED = "NOT_STARTED"
     STARTED = "STARTED"
     SUCCESS = "SUCCESS"
     FAILURE = "FAILURE"
 
+
 class EnvironmentExecutionStepStatus(Enum):
     """The status of an environment execution step."""
+
     QUEUED = "QUEUED"
     CANCELLED = "CANCELLED"
     STARTED = "STARTED"
     SUCCESS = "SUCCESS"
     FAILURE = "FAILURE"
 
+
 @attrs
 class Execution(object):
     """Server environment execution.
-    
+
     Parameters
     ----------
     id : uuid.UUID
         The ID of the execution.
-    status : enum.Enum
+    status : ExecutionStatus
         The status of the execution.
     environments : List[EnvironmentExecution]
         list of EnvironmentExecution objects for each environment applied.
     started_at : Optional[datetime]
-        startime of the execution.
+        Start time of the execution.
     finished_at : Optional[datetime]
-        endtime of the execution.
+        End time of the execution.
     """
 
     id = attrib()
@@ -70,7 +72,7 @@ class Execution(object):
 @attrs
 class EnvironmentExecution(object):
     """An environment executed on a server.
-    
+
     Parameters
     ----------
     id : uuid.UUID
@@ -86,19 +88,19 @@ class EnvironmentExecution(object):
 @attrs
 class EnvironmentExecutionStep(object):
     """A single environment execution step on a server.
-    
+
     Parameters
     ----------
     id : uuid.UUID
-        The ID of the environment step.
+        The ID of the environment execution step.
     command : List[str]
         The command executed by the step.
-    status : enum.Enum
-        The status of the step execution.
+    status : EnvironmentExecutionStepStatus
+        The status of the environment execution step.
     started_at : Optional[datetime]
-        The start time of the execution step.
+        The start time of the environment execution step.
     finished_at : Optional[datetime]
-        The finish time of the execution step.
+        The finish time of the environment execution step.
     """
 
     id = attrib()
@@ -110,31 +112,30 @@ class EnvironmentExecutionStep(object):
 
 @attrs
 class EnvironmentExecutionStepLog(object):
-    """The log for an environment execution step.
-    
+    """A single line of output from an environment execution step.
+
     Parameters
     ----------
     line_number : int
-        The line number within the step log.
+        The line number of this log line.
     content : str
-        The content of the step log.
+        The content of this log line.
     """
 
     line_number = attrib()
     content = attrib()
 
 
-
 @attrs
 class ServerResources(object):
     """Information about current server resource usage.
-    
+
     Parameters
     ----------
     milli_cpus : CpuUsage
-        current CPU utilisation.
+        Current CPU utilisation.
     memory_mb : MemoryUsage
-        current memory utilisation. 
+        Current memory utilisation.
     """
 
     milli_cpus = attrib()
@@ -144,13 +145,13 @@ class ServerResources(object):
 @attrs
 class CpuUsage(object):
     """Current CPU usage on a server.
-    
+
     Parameters
     ----------
     total : int
-        total CPU resource.
+        Total CPU resource, in milli CPUs.
     used : int
-        currently utilised CPU resource.
+        Currently utilised CPU resource, in milli CPUs.
     """
 
     total = attrib()
@@ -160,17 +161,17 @@ class CpuUsage(object):
 @attrs
 class MemoryUsage(object):
     """Current Memory usage on a server.
-    
+
     Parameters
     ----------
     total : float
-        total memory resource.
+        Total memory resource, in megabytes.
     used : float
-        current utilised memory resource.
+        Current utilised memory resource, in megabytes.
     cache : float
-        current cache memory usage.
+        Current cache memory usage, in megabytes.
     rss: float
-        resident set size allocation. 
+        Resident set size , in megabytes.
     """
 
     total = attrib()
@@ -182,30 +183,45 @@ class MemoryUsage(object):
 class ServerAgentClient(BaseClient):
     """Client for the Faculty server events service.
 
-    Build this client with a session directly.
+    Usage
+    -----
 
-    >>> client = ServerAgenClient(url, session)
+    This client needs to be constructed manually with a Faculty session and
+    the URL of the agent of the server you wish to access:
+
+    >>> import faculty
+    >>> import faculty.session
+    >>> from faculty.clients import ServerAgentClient
+    >>>
+    >>> server_client = faculty.client("server")
+    >>> server = server_client.get(project_id, server_id)
+    >>> [service] = [for service in server.services if service.name == "hound"]
+        url = "{}://{}:{}".format(service.scheme, service.host, service.port)
+    >>>
+    >>> session = faculty.session.get_session()
+    >>> server_agent_client = ServerAgentClient(url, session)
 
     Parameters
     ----------
     url : str
-        The URL of the object storage service.
+        The URL of the server agent's API.
     session : faculty.session.Session
         The session to use to make requests.
     """
+
     def latest_environment_execution(self):
         """Get the latest environment execution on the server.
-        
+
         Returns
         -------
         Execution
-            The latest environment execution on a server. 
+            The latest environment execution on a server.
         """
         return self._get("/execution/latest", _ExecutionSchema())
 
     def stream_server_events(self, endpoint):
         """Read the server events stream from an endpoint.
-        
+
         Parameters
         ----------
         endpoint : str
@@ -221,7 +237,7 @@ class ServerAgentClient(BaseClient):
 
     def stream_server_resources(self):
         """Stream the resources used by the server.
-        
+
         Yields
         ------
         ServerResources
@@ -229,23 +245,22 @@ class ServerAgentClient(BaseClient):
 
         schema = _ServerResourcesSchema()
         for message in self.stream_server_events("/events"):
-            if message.event == SERVER_RESOURCES_EVENT:
-                yield schema.load(json.loads(message.data))
+            if message.event == "@SSE/SERVER_RESOURCES_UPDATED":
+                yield schema.loads(message.data)
 
     def stream_environment_execution_step_logs(self, execution_id, step_id):
         """Read from the environment step logs.
-        
+
         Parameters
         ----------
-        execution_id : Execution.id
+        execution_id : uuid.UUID
             ID of the environment execution.
-        step_id : EnvironmentExecutionStep.id
+        step_id : uuid.UUID
             ID of the environment execution step.
 
         Yields
         ------
         EnvironmentExecutionStepLog
-
         """
         endpoint = "/execution/{}/executor/{}/logs".format(
             execution_id, step_id
@@ -256,7 +271,6 @@ class ServerAgentClient(BaseClient):
                 for line in json.loads(message.data):
                     yield schema.load(line)
 
-    
 
 class _EnvironmentExecutionStepLogSchema(BaseSchema):
 
@@ -271,8 +285,10 @@ class _EnvironmentExecutionStepLogSchema(BaseSchema):
 class _EnvironmentExecutionStepSchema(BaseSchema):
 
     id = fields.UUID(required=True)
-    command = fields.List(fields.String(required=True), required=True)
-    status = EnumField(EnvironmentExecutionStepStatus, by_value=True, required=True)
+    command = fields.List(fields.String(), required=True)
+    status = EnumField(
+        EnvironmentExecutionStepStatus, by_value=True, required=True
+    )
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     finished_at = fields.DateTime(data_key="finishedAt", missing=None)
 
@@ -284,9 +300,7 @@ class _EnvironmentExecutionStepSchema(BaseSchema):
 class _EnvironmentExecutionSchema(BaseSchema):
 
     id = fields.UUID(data_key="environmentId", required=True)
-    steps = fields.List(
-        fields.Nested(_EnvironmentExecutionStepSchema), required=True
-    )
+    steps = fields.List(fields.Nested(_EnvironmentExecutionStepSchema))
 
     @post_load
     def make_environment_execution(self, data, **kwargs):
@@ -297,9 +311,7 @@ class _ExecutionSchema(BaseSchema):
 
     id = fields.UUID(data_key="executionId", required=True)
     status = EnumField(ExecutionStatus, by_value=True, required=True)
-    environments = fields.List(
-        fields.Nested(_EnvironmentExecutionSchema), required=True
-    )
+    environments = fields.List(fields.Nested(_EnvironmentExecutionSchema))
     started_at = fields.DateTime(data_key="startedAt", missing=None)
     finished_at = fields.DateTime(data_key="finishedAt", missing=None)
 

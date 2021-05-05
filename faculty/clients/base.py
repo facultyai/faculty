@@ -229,7 +229,7 @@ class ServerSentEventMessage(object):
         The ID of the server sent event message.
     event : str
         The type of server sent event message.
-    data :
+    data : str
         The server sent event message data.
 
     """
@@ -334,6 +334,7 @@ class BaseClient(object):
     @contextmanager
     def _stream(self, endpoint):
         """Stream from a SSE endpoint.
+
         Usage
         -----
         >>> with self._stream(endpoint) as stream:
