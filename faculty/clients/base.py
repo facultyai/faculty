@@ -18,7 +18,6 @@ Common functionality of Faculty service clients.
 
 
 import requests
-from contextlib import contextmanager
 
 from marshmallow import Schema, fields, ValidationError, EXCLUDE
 from attr import attrs, attrib
@@ -331,15 +330,8 @@ class BaseClient(object):
         response = self._delete_raw(endpoint, **kwargs)
         return _deserialise_response(schema, response)
 
-    @contextmanager
-    def _stream(self, endpoint):
+    def _stream_server_sent_events(self, endpoint):
         """Stream from a SSE endpoint.
-
-        Usage
-        -----
-        >>> with self._stream(endpoint) as stream:
-        ...     for sse in stream:
-        ...         print(sse.data)
 
         Parameters
         ----------
@@ -361,10 +353,8 @@ class BaseClient(object):
                 else:
                     buf.append(line)
 
-        try:
-            yield sse_stream_iterator()
-        finally:
-            response.close()
+        with response:
+            yield from sse_stream_iterator()
 
 
 class BaseSchema(Schema):

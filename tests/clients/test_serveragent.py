@@ -19,8 +19,8 @@ import json
 from pytz import UTC
 
 from faculty.clients.serveragent import (
-    EnvironmentExecutionStepLog,
-    _EnvironmentExecutionStepLogSchema,
+    EnvironmentExecutionStepLogLine,
+    _EnvironmentExecutionStepLogLineSchema,
     EnvironmentExecutionStepStatus,
     EnvironmentExecutionStep,
     _EnvironmentExecutionStepSchema,
@@ -73,14 +73,14 @@ SERVER_RESOURCES_BODY = {
     "memoryMB": MEMORY_USAGE_BODY,
 }
 
-ENVIRONMENT_EXECUTION_STEP_LOG = EnvironmentExecutionStepLog(
+ENVIRONMENT_EXECUTION_STEP_LOG_LINE = EnvironmentExecutionStepLogLine(
     line_number=5,
     content="test content",
 )
 
-ENVIRONMENT_EXECUTION_STEP_LOG_BODY = {
-    "lineNumber": ENVIRONMENT_EXECUTION_STEP_LOG.line_number,
-    "content": ENVIRONMENT_EXECUTION_STEP_LOG.content,
+ENVIRONMENT_EXECUTION_STEP_LOG_LINE_BODY = {
+    "lineNumber": ENVIRONMENT_EXECUTION_STEP_LOG_LINE.line_number,
+    "content": ENVIRONMENT_EXECUTION_STEP_LOG_LINE.content,
 }
 
 STARTED_AT = datetime(2021, 4, 13, 13, 29, 6, 466633, tzinfo=UTC)
@@ -141,7 +141,9 @@ SSE_RESOURCE_MESSAGES = [
 SSE_LOG_EVENT = "log"
 SSE_LOG_MESSAGES = [
     ServerSentEventMessage(
-        _id, SSE_LOG_EVENT, json.dumps([ENVIRONMENT_EXECUTION_STEP_LOG_BODY])
+        _id,
+        SSE_LOG_EVENT,
+        json.dumps([ENVIRONMENT_EXECUTION_STEP_LOG_LINE_BODY]),
     )
     for _id in range(5)
 ]
@@ -163,10 +165,10 @@ def test_server_resources_schema():
 
 
 def test_environment_execution_step_log_schema():
-    data = _EnvironmentExecutionStepLogSchema().load(
-        ENVIRONMENT_EXECUTION_STEP_LOG_BODY
+    data = _EnvironmentExecutionStepLogLineSchema().load(
+        ENVIRONMENT_EXECUTION_STEP_LOG_LINE_BODY
     )
-    assert data == ENVIRONMENT_EXECUTION_STEP_LOG
+    assert data == ENVIRONMENT_EXECUTION_STEP_LOG_LINE
 
 
 def test_environment_execution_step_schema():
@@ -193,24 +195,10 @@ def test_client_latest_environment_execution(mocker):
     assert client.latest_environment_execution() == EXECUTION
 
 
-def test_client_stream_server_events(mocker):
-    stream_context = mocker.MagicMock()
-    stream_context.__enter__.return_value = SSE_RESOURCE_MESSAGES
-    mocker.patch.object(
-        ServerAgentClient, "_stream", return_value=stream_context
-    )
-
-    client = ServerAgentClient(mocker.Mock(), mocker.Mock())
-    for a, b in zip(
-        client.stream_server_events("endpoint"), SSE_RESOURCE_MESSAGES
-    ):
-        assert a == b
-
-
 def test_client_stream_server_resources(mocker):
     mocker.patch.object(
         ServerAgentClient,
-        "stream_server_events",
+        "_stream_server_sent_events",
         return_value=SSE_RESOURCE_MESSAGES,
     )
 
@@ -226,7 +214,7 @@ def test_client_stream_server_resources(mocker):
 def test_client_stream_environment_execution_step_logs(mocker):
     mocker.patch.object(
         ServerAgentClient,
-        "stream_server_events",
+        "_stream_server_sent_events",
         return_value=SSE_LOG_MESSAGES,
     )
 
@@ -238,6 +226,7 @@ def test_client_stream_environment_execution_step_logs(mocker):
         for client_line, mock_line in zip(
             client_logs, json.loads(mock_logs.data)
         ):
-            assert client_line == _EnvironmentExecutionStepLogSchema().load(
-                mock_line
+            assert (
+                client_line
+                == _EnvironmentExecutionStepLogLineSchema().load(mock_line)
             )

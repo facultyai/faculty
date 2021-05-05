@@ -208,9 +208,10 @@ def test_delete(requests_mock, session, patch_auth):
     assert response == DummyObject(foo="bar")
 
 
-def test_stream(mocker):
-    response_content = mocker.Mock()
+def test_stream_server_sent_events(mocker):
+    response_content = mocker.MagicMock()
     response_content.iter_lines.return_value = STREAM_RESPONSE
+    response_content.__enter__.return_value = STREAM_RESPONSE
     mocker.patch.object(
         BaseClient,
         "_get_raw",
@@ -218,8 +219,9 @@ def test_stream(mocker):
     )
 
     client = BaseClient(mocker.Mock(), mocker.Mock())
-    with client._stream("endpoint") as sse_stream:
-        messages = list(sse_stream)
+    messages = [
+        message for message in client._stream_server_sent_events("endpoint")
+    ]
     assert messages == SSE_MOCK_MESSAGES
 
 

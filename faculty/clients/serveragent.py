@@ -111,7 +111,7 @@ class EnvironmentExecutionStep(object):
 
 
 @attrs
-class EnvironmentExecutionStepLog(object):
+class EnvironmentExecutionStepLogLine(object):
     """A single line of output from an environment execution step.
 
     Parameters
@@ -219,22 +219,6 @@ class ServerAgentClient(BaseClient):
         """
         return self._get("/execution/latest", _ExecutionSchema())
 
-    def stream_server_events(self, endpoint):
-        """Read the server events stream from an endpoint.
-
-        Parameters
-        ----------
-        endpoint : str
-            HTTP request endpoint.
-
-        Yields
-        ------
-        ServerSentEventMessage
-        """
-        with self._stream(endpoint) as stream:
-            for message in stream:
-                yield message
-
     def stream_server_resources(self):
         """Stream the resources used by the server.
 
@@ -244,7 +228,7 @@ class ServerAgentClient(BaseClient):
         """
 
         schema = _ServerResourcesSchema()
-        for message in self.stream_server_events("/events"):
+        for message in self._stream_server_sent_events("/events"):
             if message.event == "@SSE/SERVER_RESOURCES_UPDATED":
                 yield schema.loads(message.data)
 
@@ -260,26 +244,26 @@ class ServerAgentClient(BaseClient):
 
         Yields
         ------
-        EnvironmentExecutionStepLog
+        EnvironmentExecutionStepLogLine
         """
         endpoint = "/execution/{}/executor/{}/logs".format(
             execution_id, step_id
         )
-        schema = _EnvironmentExecutionStepLogSchema()
-        for message in self.stream_server_events(endpoint):
+        schema = _EnvironmentExecutionStepLogLineSchema()
+        for message in self._stream_server_sent_events(endpoint):
             if message.event == "log":
                 for line in json.loads(message.data):
                     yield schema.load(line)
 
 
-class _EnvironmentExecutionStepLogSchema(BaseSchema):
+class _EnvironmentExecutionStepLogLineSchema(BaseSchema):
 
     line_number = fields.Integer(data_key="lineNumber", required=True)
     content = fields.String(required=True)
 
     @post_load
-    def make_environment_execution_step_log(self, data, **kwargs):
-        return EnvironmentExecutionStepLog(**data)
+    def make_environment_execution_step_log_line(self, data, **kwargs):
+        return EnvironmentExecutionStepLogLine(**data)
 
 
 class _EnvironmentExecutionStepSchema(BaseSchema):
