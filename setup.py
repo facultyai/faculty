@@ -35,6 +35,7 @@ setup(
     packages=find_packages(),
     use_scm_version={"version_scheme": "post-release"},
     setup_requires=["setuptools_scm"],
+    python_requires=">=3.6",
     install_requires=[
         "requests",
         "pytz",
