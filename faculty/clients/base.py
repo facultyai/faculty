@@ -385,7 +385,7 @@ def _deserialise_response(schema, response):
 
 
 def _sse_message_from_lines(lines):
-    """Parses server sent event stream.
+    """Parses a single message from a server sent event stream.
 
     Parameters
     ----------

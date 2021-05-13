@@ -196,7 +196,7 @@ class ServerAgentClient(BaseClient):
     >>> server_client = faculty.client("server")
     >>> server = server_client.get(project_id, server_id)
     >>> [service] = [for service in server.services if service.name == "hound"]
-        url = "{}://{}:{}".format(service.scheme, service.host, service.port)
+    >>> url = "{}://{}:{}".format(service.scheme, service.host, service.port)
     >>>
     >>> session = faculty.session.get_session()
     >>> server_agent_client = ServerAgentClient(url, session)
