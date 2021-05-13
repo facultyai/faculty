@@ -219,7 +219,6 @@ def test_stream_server_sent_events(mocker):
 
     client = BaseClient(mocker.Mock(), mocker.Mock())
     messages = list(client._stream_server_sent_events("endpoint"))
-    
     assert messages == SSE_MOCK_MESSAGES
 
 
