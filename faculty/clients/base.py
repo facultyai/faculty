@@ -18,7 +18,6 @@ Common functionality of Faculty service clients.
 
 
 import requests
-
 from marshmallow import Schema, fields, ValidationError, EXCLUDE
 from attr import attrs, attrib
 
@@ -230,7 +229,6 @@ class ServerSentEventMessage(object):
         The type of server sent event message.
     data : str
         The server sent event message data.
-
     """
 
     id = attrib()
