@@ -99,7 +99,7 @@ ENVIRONMENT_EXECUTION_STEP = EnvironmentExecutionStep(
 ENVIRONMENT_EXECUTION_STEP_BODY = {
     "id": str(ENVIRONMENT_EXECUTION_STEP.id),
     "command": ENVIRONMENT_EXECUTION_STEP.command,
-    "status": ENVIRONMENT_EXECUTION_STEP.status,
+    "status": "SUCCESS",
     "startedAt": STARTED_AT_STRING,
     "finishedAt": FINISHED_AT_STRING,
 }
@@ -124,7 +124,7 @@ EXECUTION = Execution(
 
 EXECUTION_BODY = {
     "executionId": str(EXECUTION.id),
-    "status": EXECUTION.status,
+    "status": "STARTED",
     "environments": [ENVIRONMENT_EXECUTION_BODY],
     "startedAt": STARTED_AT_STRING,
     "finishedAt": FINISHED_AT_STRING,
@@ -133,19 +133,19 @@ EXECUTION_BODY = {
 SSE_RESOURCE_EVENT = "@SSE/SERVER_RESOURCES_UPDATED"
 SSE_RESOURCE_MESSAGES = [
     ServerSentEventMessage(
-        _id, SSE_RESOURCE_EVENT, json.dumps(SERVER_RESOURCES_BODY)
+        id_, SSE_RESOURCE_EVENT, json.dumps(SERVER_RESOURCES_BODY)
     )
-    for _id in range(5)
+    for id_ in range(5)
 ]
 
 SSE_LOG_EVENT = "log"
 SSE_LOG_MESSAGES = [
     ServerSentEventMessage(
-        _id,
+        id_,
         SSE_LOG_EVENT,
         json.dumps([ENVIRONMENT_EXECUTION_STEP_LOG_LINE_BODY]),
     )
-    for _id in range(5)
+    for id_ in range(5)
 ]
 
 
@@ -203,12 +203,12 @@ def test_client_stream_server_resources(mocker):
     )
 
     client = ServerAgentClient(mocker.Mock(), mocker.Mock())
-    for client_sse, mock_sse in zip(
-        client.stream_server_resources(), SSE_RESOURCE_MESSAGES
-    ):
-        assert client_sse == _ServerResourcesSchema().load(
-            json.loads(mock_sse.data)
-        )
+    client_sse = list(client.stream_server_resources())
+    mock_sse = [
+        _ServerResourcesSchema().load(json.loads(message.data))
+        for message in SSE_RESOURCE_MESSAGES
+    ]
+    assert client_sse == mock_sse
 
 
 def test_client_stream_environment_execution_step_logs(mocker):
@@ -219,14 +219,14 @@ def test_client_stream_environment_execution_step_logs(mocker):
     )
 
     client = ServerAgentClient(mocker.Mock(), mocker.Mock())
-    client_logs = client.stream_environment_execution_step_logs(
-        "execution_id", "step_id"
+    client_log_lines = list(
+        client.stream_environment_execution_step_logs(
+            "execution_id", "step_id"
+        )
     )
-    for mock_logs in SSE_LOG_MESSAGES:
-        for client_line, mock_line in zip(
-            client_logs, json.loads(mock_logs.data)
-        ):
-            assert (
-                client_line
-                == _EnvironmentExecutionStepLogLineSchema().load(mock_line)
-            )
+    mock_log_lines = [
+        _EnvironmentExecutionStepLogLineSchema().load(line)
+        for message in SSE_LOG_MESSAGES
+        for line in json.loads(message.data)
+    ]
+    assert mock_log_lines == client_log_lines
