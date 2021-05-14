@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 
 import pytz
 import requests
-from six.moves import urllib
+import urllib
 
 import faculty.config
 from faculty.session.accesstoken import AccessToken, AccessTokenMemoryCache

@@ -21,7 +21,7 @@ import os
 import warnings
 from collections import namedtuple
 
-from six.moves.configparser import ConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser, NoSectionError, NoOptionError
 
 
 Profile = namedtuple(
