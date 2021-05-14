@@ -27,7 +27,7 @@ import faculty.config
 from faculty.session.accesstoken import AccessToken, AccessTokenMemoryCache
 
 
-class Session(object):
+class Session:
     """A session for connecting to Faculty services.
 
     This session encapsultates the configuration (address and authentication

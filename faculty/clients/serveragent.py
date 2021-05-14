@@ -45,7 +45,7 @@ class EnvironmentExecutionStepStatus(Enum):
 
 
 @attrs
-class Execution(object):
+class Execution:
     """Server environment execution.
 
     Parameters
@@ -70,7 +70,7 @@ class Execution(object):
 
 
 @attrs
-class EnvironmentExecution(object):
+class EnvironmentExecution:
     """An environment executed on a server.
 
     Parameters
@@ -86,7 +86,7 @@ class EnvironmentExecution(object):
 
 
 @attrs
-class EnvironmentExecutionStep(object):
+class EnvironmentExecutionStep:
     """A single environment execution step on a server.
 
     Parameters
@@ -111,7 +111,7 @@ class EnvironmentExecutionStep(object):
 
 
 @attrs
-class EnvironmentExecutionStepLogLine(object):
+class EnvironmentExecutionStepLogLine:
     """A single line of output from an environment execution step.
 
     Parameters
@@ -127,7 +127,7 @@ class EnvironmentExecutionStepLogLine(object):
 
 
 @attrs
-class ServerResources(object):
+class ServerResources:
     """Information about current server resource usage.
 
     Parameters
@@ -143,7 +143,7 @@ class ServerResources(object):
 
 
 @attrs
-class CpuUsage(object):
+class CpuUsage:
     """Current CPU usage on a server.
 
     Parameters
@@ -159,7 +159,7 @@ class CpuUsage(object):
 
 
 @attrs
-class MemoryUsage(object):
+class MemoryUsage:
     """Current Memory usage on a server.
 
     Parameters

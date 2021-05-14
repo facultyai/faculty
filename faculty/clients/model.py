@@ -24,7 +24,7 @@ from faculty.clients.base import BaseSchema, BaseClient
 
 
 @attrs
-class ExperimentModelSource(object):
+class ExperimentModelSource:
     """Description of the experiment used to generate a model in the registry.
 
     Parameters
@@ -40,7 +40,7 @@ class ExperimentModelSource(object):
 
 
 @attrs
-class ModelVersion(object):
+class ModelVersion:
     """A version of a model in the registry.
 
     Parameters
@@ -68,7 +68,7 @@ class ModelVersion(object):
 
 
 @attrs
-class Model(object):
+class Model:
     """A model in the registry.
 
     Parameters

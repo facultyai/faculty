@@ -218,7 +218,7 @@ class GatewayTimeout(HttpError):
 
 
 @attrs
-class ServerSentEventMessage(object):
+class ServerSentEventMessage:
     """Server sent event message.
 
     Parameters
@@ -250,7 +250,7 @@ HTTP_ERRORS = {
 }
 
 
-class BaseClient(object):
+class BaseClient:
     """Base class with core functionality for Faculty service clients."""
 
     SERVICE_NAME = None

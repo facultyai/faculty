@@ -30,7 +30,7 @@ from marshmallow import Schema, fields, post_load, ValidationError
 AccessToken = namedtuple("AccessToken", ["token", "expires_at"])
 
 
-class AccessTokenMemoryCache(object):
+class AccessTokenMemoryCache:
     """An in-memory cache for access tokens."""
 
     def __init__(self):
@@ -65,7 +65,7 @@ class AccessTokenMemoryCache(object):
         self._store[profile] = access_token
 
 
-class AccessTokenFileSystemCache(object):
+class AccessTokenFileSystemCache:
     """A disk-persisted cache for access tokens.
 
     Parameters
@@ -146,7 +146,7 @@ class _AccessTokenSchema(Schema):
         return AccessToken(**data)
 
 
-class _AccessTokenStore(object):
+class _AccessTokenStore:
     def __init__(self, tokens=None):
         self.tokens = tokens or {}
 

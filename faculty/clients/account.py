@@ -23,7 +23,7 @@ from faculty.clients.base import BaseSchema, BaseClient
 
 
 @attrs
-class Account(object):
+class Account:
     """A user account in Faculty.
 
     Parameters
@@ -42,7 +42,7 @@ class Account(object):
 
 
 @attrs
-class _AuthenticationResponse(object):
+class _AuthenticationResponse:
     account = attrib()
 
 
