@@ -19,7 +19,7 @@ Interact with Faculty datasets.
 
 from collections import namedtuple
 from enum import Enum
-from six.moves import urllib
+import urllib
 
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField

@@ -25,7 +25,7 @@ from attr import attrs, attrib
 
 
 @attrs
-class PlatformContext(object):
+class PlatformContext:
     """Information about the runtime context in Faculty platform.
 
     Parameters

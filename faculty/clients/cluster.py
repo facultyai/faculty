@@ -24,7 +24,7 @@ from faculty.clients.base import BaseSchema, BaseClient
 
 
 @attrs
-class NodeType(object):
+class NodeType:
     """A single tenanted node type in the platform.
 
     Parameters

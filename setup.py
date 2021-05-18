@@ -39,17 +39,8 @@ setup(
     install_requires=[
         "requests",
         "pytz",
-        "six",
-        "enum34; python_version<'3.4'",
-        # Install marshmallow with 'reco' (recommended) extras to ensure a
-        # compatible version of python-dateutil is available
         "attrs",
-        "marshmallow[reco]==3.0.0rc3; python_version<'3.5'",
-        "marshmallow; python_version>='3.5'",
+        "marshmallow",
         "marshmallow_enum",
-    ],
-    dependency_links=[
-        "git+https://github.com/marshmallow-code/marshmallow"
-        "@3.0.0rc3#egg=marshmallow"
     ],
 )

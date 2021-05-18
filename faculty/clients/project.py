@@ -24,7 +24,7 @@ from faculty.clients.base import BaseSchema, BaseClient
 
 
 @attrs
-class Project(object):
+class Project:
     """A project in Faculty.
 
     Parameters
