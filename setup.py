@@ -26,7 +26,7 @@ def load_readme():
 
 setup(
     name="faculty",
-    description="Python library for interacting with the Faculty platform.",
+    description="Python library for interacting with the Facult.",
     long_description=load_readme(),
     url="https://faculty.ai/products-services/platform/",
     author="Faculty",
