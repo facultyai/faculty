@@ -94,7 +94,7 @@ def glob(
         behaviour is to list all files.
     project_id : str, optional
         The project to list files from. You need to have access to this project
-        for it to work. Defaults to the project set by SHERLOCK_PROJECT_ID in
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
         your environment.
     show_hidden : bool, optional
         Include hidden files in the output. Defaults to False.
