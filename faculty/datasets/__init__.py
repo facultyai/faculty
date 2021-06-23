@@ -58,7 +58,7 @@ def ls(prefix="/", project_id=None, show_hidden=False, object_client=None):
     """
 
     project_id = project_id or get_context().project_id
-    object_client = object_client or ObjectClient(get_session())
+    object_client = object_client or _default_session_object_client()
 
     list_response = object_client.list(project_id, prefix)
     paths = [obj.path for obj in list_response.objects]
@@ -227,7 +227,7 @@ def put(local_path, project_path, project_id=None, object_client=None):
     """
 
     project_id = project_id or get_context().project_id
-    object_client = object_client or ObjectClient(get_session())
+    object_client = object_client or _default_session_object_client()
 
     if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
@@ -302,7 +302,7 @@ def get(project_path, local_path, project_id=None, object_client=None):
     """
 
     project_id = project_id or get_context().project_id
-    object_client = object_client or ObjectClient(get_session())
+    object_client = object_client or _default_session_object_client()
 
     if hasattr(os, "fspath"):
         local_path = os.fspath(local_path)
@@ -332,7 +332,7 @@ def mv(source_path, destination_path, project_id=None, object_client=None):
     """
 
     project_id = project_id or get_context().project_id
-    object_client = object_client or ObjectClient(get_session())
+    object_client = object_client or _default_session_object_client()
 
     if source_path == destination_path:
         return
@@ -381,7 +381,7 @@ def cp(
     """
 
     project_id = project_id or get_context().project_id
-    object_client = object_client or ObjectClient(get_session())
+    object_client = object_client or _default_session_object_client()
 
     _create_parent_directories(destination_path, project_id, object_client)
     object_client.copy(
@@ -410,7 +410,7 @@ def rm(project_path, project_id=None, recursive=False, object_client=None):
     """
 
     project_id = project_id or get_context().project_id
-    object_client = object_client or ObjectClient(get_session())
+    object_client = object_client or _default_session_object_client()
 
     object_client.delete(project_id, project_path, recursive=recursive)
 
@@ -480,7 +480,7 @@ def etag(project_path, project_id=None, object_client=None):
     """
 
     project_id = project_id or get_context().project_id
-    object_client = object_client or ObjectClient(get_session())
+    object_client = object_client or _default_session_object_client()
 
     object = object_client.get(project_id, project_path)
 
@@ -530,6 +530,12 @@ def open(project_path, mode="r", temp_dir=None, project_id=None, **kwargs):
             os.remove(local_path)
         if os.path.isdir(tmpdir):
             os.rmdir(tmpdir)
+
+
+def _default_session_object_client():
+    session = get_session()
+    url = session.service_url(ObjectClient.SERVICE_NAME)
+    return ObjectClient(url, session)
 
 
 def _rationalise_path(path):
