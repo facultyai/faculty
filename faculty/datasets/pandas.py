@@ -40,7 +40,11 @@ def read_csv(project_path, project_id=None, *args, **kwargs):
     """
 
     project_id = project_id or get_context().project_id
-    object_client = ObjectClient(get_session())
+
+    session = get_session()
+    url = session.service_url(ObjectClient.SERVICE_NAME)
+    object_client = ObjectClient(url, session)
+
     presigned_url = object_client.presign_download(project_id, project_path)
 
     return pandas.read_csv(presigned_url, *args, **kwargs)
@@ -68,7 +72,10 @@ def to_csv(dataframe, project_path, project_id=None, *args, **kwargs):
     """
 
     project_id = project_id or get_context().project_id
-    object_client = ObjectClient(get_session())
+
+    session = get_session()
+    url = session.service_url(ObjectClient.SERVICE_NAME)
+    object_client = ObjectClient(url, session)
 
     content = dataframe.to_csv(path_or_buf=None, *args, **kwargs)
 
