@@ -17,9 +17,9 @@ Configure and run Faculty jobs.
 """
 
 
-from collections import namedtuple
 from enum import Enum
 
+from attr import attrs, attrib
 from marshmallow import ValidationError, fields, post_load, validates_schema
 from marshmallow_enum import EnumField
 
@@ -82,75 +82,363 @@ class RunState(Enum):
     ERROR = "error"
 
 
-JobMetadata = namedtuple(
-    "JobMetadata",
-    ["name", "description", "author_id", "created_at", "last_updated_at"],
-)
-JobSummary = namedtuple("JobSummary", ["id", "metadata"])
-InstanceSize = namedtuple("InstanceSize", ["milli_cpus", "memory_mb"])
-JobParameter = namedtuple(
-    "JobParameter", ["name", "type", "default", "required"]
-)
-JobCommand = namedtuple("JobCommand", ["name", "parameters"])
-JobDefinition = namedtuple(
-    "JobDefinition",
-    [
-        "working_dir",
-        "command",
-        "image_type",
-        "environment_ids",
-        "instance_size_type",
-        "instance_size",
-        "max_runtime_seconds",
-    ],
-)
-Job = namedtuple("Job", ["id", "meta", "definition"])
+@attrs
+class JobMetadata:
+    """Metadata on a job in Faculty.
 
-EnvironmentStepExecution = namedtuple(
-    "EnvironmentStepExecution",
-    [
-        "environment_id",
-        "environment_step_id",
-        "environment_name",
-        "command",
-        "state",
-        "started_at",
-        "ended_at",
-    ],
-)
-SubrunSummary = namedtuple(
-    "Subrun", ["id", "subrun_number", "state", "started_at", "ended_at"]
-)
-Subrun = namedtuple(
-    "Subrun",
-    [
-        "id",
-        "subrun_number",
-        "state",
-        "started_at",
-        "ended_at",
-        "environment_step_executions",
-    ],
-)
-RunSummary = namedtuple(
-    "Run",
-    ["id", "run_number", "state", "submitted_at", "started_at", "ended_at"],
-)
-Run = namedtuple(
-    "Run",
-    [
-        "id",
-        "run_number",
-        "state",
-        "submitted_at",
-        "started_at",
-        "ended_at",
-        "subruns",
-    ],
-)
-Page = namedtuple("Page", ["start", "limit"])
-Pagination = namedtuple("Pagination", ["start", "size", "previous", "next"])
-ListRunsResponse = namedtuple("ListRunsResponse", ["runs", "pagination"])
+    Parameters
+    ----------
+    name : str
+        The name of the job.
+    description : str
+        A brief description of the job.
+    author_id : UUID
+        The user ID of the creator of the job.
+    created_at : datetime
+        The time when the job was created.
+    last_updated_at : datetime
+        The time when the job was last updated.
+    """
+
+    name = attrib()
+    description = attrib()
+    author_id = attrib()
+    created_at = attrib()
+    last_updated_at = attrib()
+
+
+@attrs
+class JobSummary:
+    """A concise representation of a job in Faculty.
+
+    Parameters
+    ----------
+    id : UUID
+        The ID of the job.
+    metadata : JobMetadata
+        The metadata of the job.
+    """
+
+    id = attrib()
+    metadata = attrib()
+
+
+@attrs
+class InstanceSize:
+    """The CPU and memory that a Faculty job is configured to use.
+
+    Parameters
+    ----------
+    milli_cpus : int
+        The allocation of CPU for a job, counted in thousandths of a CPU.
+    memory_mb : int
+        The allocation of memory for a job, counted in megabytes.
+    """
+
+    milli_cpus = attrib()
+    memory_mb = attrib()
+
+
+@attrs
+class JobParameter:
+    """A parameter of a Faculty job.
+
+    Parameters
+    ----------
+    name : str
+        The unique (for this job) name that identifies this parameter.
+    type : ParameterType
+        The type of this parameter.
+    default : str
+        The default value for this parameter.
+    required : bool
+        If True, this parameter must be set when submitting a run of the job.
+    """
+
+    name = attrib()
+    type = attrib()
+    default = attrib()
+    required = attrib()
+
+
+@attrs
+class JobCommand:
+    """The command to be run by a Faculty job, with associated parameters.
+
+    Parameters will be passed to the job as environment variables. They can be
+    used either by accessing them from your script directly or by relying on
+    shell variable interpolation.
+
+    For example, with the parameter named `batch_size`, you could read from the
+    environment inside your script with `os.environ`:
+
+    >>> import os
+    >>> batch_size = int(os.environ["batch_size"])
+
+    or you could use in the command like::
+
+       python myscript.py $batch_size
+
+    Parameters
+    ----------
+    name : str
+        The command to be run by the job, e.g. `python myscript.py`
+    parameters : List[JobParameter]
+        Any parameters for the job.
+    """
+
+    name = attrib()
+    parameters = attrib()
+
+
+@attrs
+class JobDefinition:
+    """The complete description of how to execute a Faculty job.
+
+    Parameters
+    ----------
+    working_dir : str
+        The working directory where the job is to be executed.
+    command : JobCommand
+        The command and parameters to be executed.
+    image_type : ImageType
+        The job image type to be used.
+    environment_ids : List[UUID]
+        A list of any Faculty environments to be applied before running the job
+        command.
+    instance_size_type : str
+        Either "custom", indicating that a server of `instance_size` should be
+        executed, or a supported instance type (e.g. "m5.xlarge").
+    instance_size : Optional[InstanceSize]
+        The CPU and memory to use when `instance_size_type` is "custom",
+        otherwise `None.`
+    max_runtime_seconds : int
+        The max execution time of the job, in seconds.
+    """
+
+    working_dir = attrib()
+    command = attrib()
+    image_type = attrib()
+    environment_ids = attrib()
+    instance_size_type = attrib()
+    instance_size = attrib()
+    max_runtime_seconds = attrib()
+
+
+@attrs
+class Job:
+    """A job in Faculty.
+
+    Parameters
+    ----------
+    id : UUID
+        The ID of the job.
+    meta : JobMetadata
+        The metadata of the job.
+    definition : JobDefinition
+        The description of how to execute the job.
+    """
+
+    id = attrib()
+    meta = attrib()
+    definition = attrib()
+
+
+@attrs
+class EnvironmentStepExecution:
+    """Information about one step in the execution of an environment.
+
+    Parameters
+    ----------
+    environment_id : UUID
+        The ID of the environment being applied.
+    environment_step_id : UUID
+        The ID of the environment step.
+    environment_name : str
+        The name of the environment being applied.
+    command : str
+        The command being executed to perform this environment step.
+    state : EnvironmentStepExecutionState
+        The current state of this environment step execution.
+    started_at : datetime
+        The time this step started executing.
+    ended_at : Optional[datetime]
+        If finished, the time this step ended.
+    """
+
+    environment_id = attrib()
+    environment_step_id = attrib()
+    environment_name = attrib()
+    command = attrib()
+    state = attrib()
+    started_at = attrib()
+    ended_at = attrib()
+
+
+@attrs
+class SubrunSummary:
+    """A concise representation of a subrun of a job.
+
+    Parameters
+    ----------
+    id : UUID
+        The ID of the subrun.
+    subrun_number : int
+        The position of this subrun within its parent run (numbering starts
+        from 1).
+    state : SubrunState
+        The current state of the subrun.
+    started_at : datetime
+        The time this subrun started executing.
+    ended_at : Optional[datetime]
+        If finished, the time this subrun ended.
+    """
+
+    id = attrib()
+    subrun_number = attrib()
+    state = attrib()
+    started_at = attrib()
+    ended_at = attrib()
+
+
+@attrs
+class Subrun:
+    """A subrun of a job.
+
+    Parameters
+    ----------
+    id : UUID
+        The ID of the subrun.
+    subrun_number : int
+        The position of this subrun within its parent run (numbering starts
+        from 1).
+    state : SubrunState
+        The current state of the subrun.
+    started_at : datetime
+        The time this subrun started executing.
+    ended_at : Optional[datetime]
+        If finished, the time this subrun ended.
+    environment_step_executions : List[EnvironmentStepExecution]
+        The environment steps run by this subrun.
+    """
+
+    id = attrib()
+    subrun_number = attrib()
+    state = attrib()
+    started_at = attrib()
+    ended_at = attrib()
+    environment_step_executions = attrib()
+
+
+@attrs
+class RunSummary:
+    """A concise representation of a run of a job.
+
+    Parameters
+    ----------
+    id : UUID
+        The ID of the run.
+    run_number : int
+        The number of this run. For each job, runs are numbered as increasing
+        integers starting from 1.
+    state : RunState
+        The current state of the run.
+    started_at : datetime
+        The time this run started executing.
+    ended_at : Optional[datetime]
+        If finished, the time this run ended.
+    """
+
+    id = attrib()
+    run_number = attrib()
+    state = attrib()
+    submitted_at = attrib()
+    started_at = attrib()
+    ended_at = attrib()
+
+
+@attrs
+class Run:
+    """A run of a job.
+
+    Parameters
+    ----------
+    id : UUID
+        The ID of the run.
+    run_number : int
+        The number of this run. For each job, runs are numbered as increasing
+        integers starting from 1.
+    state : RunState
+        The current state of the run.
+    started_at : datetime
+        The time this run started executing.
+    ended_at : Optional[datetime]
+        If finished, the time this run ended.
+    subruns : List[SubrunSummary]
+        The subruns of this run.
+    """
+
+    id = attrib()
+    run_number = attrib()
+    state = attrib()
+    submitted_at = attrib()
+    started_at = attrib()
+    ended_at = attrib()
+    subruns = attrib()
+
+
+@attrs
+class Page:
+    """A reference to a page of entities.
+
+    Parameters
+    ----------
+    start : int
+        The index of the first entity in the page.
+    limit : int
+        The maximum number of entities in the page.
+    """
+
+    start = attrib()
+    limit = attrib()
+
+
+@attrs
+class Pagination:
+    """A description of the pagination context of a returned set of entities.
+
+    Parameters
+    ----------
+    start : int
+        The index of the first entity in this page.
+    size : int
+        The number of entities in this page.
+    previous : Optional[Page]
+        Description of the previous page of entities, if any.
+    next : Optional[Page]
+        Description of the next page of entities, if any.
+    """
+
+    start = attrib()
+    size = attrib()
+    previous = attrib()
+    next = attrib()
+
+
+@attrs
+class ListRunsResponse:
+    """A paginated response of job runs.
+
+    Parameters
+    ----------
+    runs : List[Run]
+        The runs in this page.
+    pagination : Pagination
+        Information about this and neighbouring pages of runs.
+    """
+
+    runs = attrib()
+    pagination = attrib()
 
 
 class JobClient(BaseClient):
