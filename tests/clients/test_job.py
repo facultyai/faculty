@@ -124,7 +124,6 @@ JOB_DEFINITION = JobDefinition(
     working_dir="/project/subdir/",
     command=JOB_COMMAND,
     image_type=ImageType.PYTHON,
-    conda_environment="Python3",
     environment_ids=[str(ENVIRONMENT_ID)],
     instance_size_type="custom",
     instance_size=INSTANCE_SIZE,
@@ -134,7 +133,6 @@ JOB_DEFINITION_BODY = {
     "workingDir": JOB_DEFINITION.working_dir,
     "command": JOB_COMMAND_BODY,
     "imageType": JOB_DEFINITION.image_type.value,
-    "condaEnvironment": JOB_DEFINITION.conda_environment,
     "environmentIds": [str(ENVIRONMENT_ID)],
     "instanceSizeType": JOB_DEFINITION.instance_size_type,
     "instanceSize": INSTANCE_SIZE_BODY,
@@ -144,7 +142,6 @@ JOB_DEFINITION_ALTERNATIVE = JobDefinition(
     working_dir="/project/subdir/",
     command=JOB_COMMAND,
     image_type=ImageType.PYTHON,
-    conda_environment="Python3",
     environment_ids=[str(ENVIRONMENT_ID)],
     instance_size_type="m4.xlarge",
     instance_size=None,
@@ -154,7 +151,6 @@ JOB_DEFINITION_ALTERNATIVE_BODY = {
     "workingDir": JOB_DEFINITION.working_dir,
     "command": JOB_COMMAND_BODY,
     "imageType": JOB_DEFINITION.image_type.value,
-    "condaEnvironment": JOB_DEFINITION.conda_environment,
     "environmentIds": [str(ENVIRONMENT_ID)],
     "instanceSizeType": JOB_DEFINITION_ALTERNATIVE.instance_size_type,
     "instanceSize": None,
@@ -355,20 +351,6 @@ def test_job_definition_schema_invalid_instance_type(
     invalid_body = JOB_DEFINITION_BODY.copy()
     invalid_body["instanceSizeType"] = instance_size_type
     invalid_body["instanceSize"] = instance_size
-    with pytest.raises(ValidationError):
-        _JobDefinitionSchema().load(invalid_body)
-
-
-@pytest.mark.parametrize(
-    "image_type, conda_environment",
-    [(ImageType.PYTHON, None), (ImageType.R, "Python3")],
-)
-def test_job_definition_schema_invalid_image_type(
-    image_type, conda_environment
-):
-    invalid_body = JOB_DEFINITION_BODY.copy()
-    invalid_body["imageType"] = image_type
-    invalid_body["condaEnvironment"] = conda_environment
     with pytest.raises(ValidationError):
         _JobDefinitionSchema().load(invalid_body)
 

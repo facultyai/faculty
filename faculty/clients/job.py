@@ -98,7 +98,6 @@ JobDefinition = namedtuple(
         "working_dir",
         "command",
         "image_type",
-        "conda_environment",
         "environment_ids",
         "instance_size_type",
         "instance_size",
@@ -494,9 +493,6 @@ class _JobDefinitionSchema(BaseSchema):
     image_type = EnumField(
         ImageType, by_value=True, data_key="imageType", required=True
     )
-    conda_environment = fields.String(
-        data_key="condaEnvironment", missing=None
-    )
     environment_ids = fields.List(
         fields.String(), data_key="environmentIds", required=True
     )
@@ -509,20 +505,6 @@ class _JobDefinitionSchema(BaseSchema):
     max_runtime_seconds = fields.Integer(
         data_key="maxRuntimeSeconds", required=True
     )
-
-    @validates_schema
-    def validate_conda_environment(self, data, **kwargs):
-        image_is_r = data["image_type"] == ImageType.R
-        image_is_python = data["image_type"] == ImageType.PYTHON
-        conda_environment_set = data["conda_environment"] is not None
-        if image_is_r and conda_environment_set:
-            raise ValidationError(
-                "conda environment must only be set for Python images"
-            )
-        elif image_is_python and not conda_environment_set:
-            raise ValidationError(
-                "conda environment must be set for Python images"
-            )
 
     @validates_schema
     def validate_instance_size(self, data, **kwargs):
