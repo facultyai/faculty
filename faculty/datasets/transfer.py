@@ -207,7 +207,6 @@ def _s3_upload(
         allowed_methods=["PUT"],
     )
     session = requests.Session()
-    session.mount("http://", HTTPAdapter(max_retries=retries))
     session.mount("https://", HTTPAdapter(max_retries=retries))
 
     completed_parts = []
