@@ -42,6 +42,6 @@ setup(
         "attrs",
         "marshmallow",
         "marshmallow_enum",
-        "urllib3"
+        "urllib3",
     ],
 )
