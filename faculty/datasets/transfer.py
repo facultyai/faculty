@@ -204,7 +204,6 @@ def _s3_upload(
         backoff_factor=0.1,
         status=10,
         status_forcelist=[500, 502, 503, 504],
-        allowed_methods=["PUT"],
     )
     session = requests.Session()
     session.mount("https://", HTTPAdapter(max_retries=retries))
