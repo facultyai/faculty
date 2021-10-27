@@ -20,6 +20,9 @@ import math
 
 import requests
 
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
 from faculty.clients.object import CloudStorageProvider, CompletedUploadPart
 from faculty.datasets.util import DatasetsError
 
@@ -197,6 +200,16 @@ def _s3_upload(
     object_client, project_id, datasets_path, content, upload_id, chunk_size
 ):
 
+    #  See
+    #  https://aws.amazon.com/premiumsupport/knowledge-center/http-5xx-errors-s3
+    retries = Retry(
+        backoff_factor=0.1,
+        status=10,
+        status_forcelist=[500, 502, 503, 504],
+    )
+    session = requests.Session()
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+
     completed_parts = []
     for i, chunk in enumerate(_rechunk_data(content, chunk_size)):
 
@@ -206,7 +219,7 @@ def _s3_upload(
             project_id, datasets_path, upload_id, part_number
         )
 
-        upload_response = requests.put(chunk_url, data=chunk)
+        upload_response = session.put(chunk_url, data=chunk)
         upload_response.raise_for_status()
         completed_parts.append(
             CompletedUploadPart(
