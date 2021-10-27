@@ -203,7 +203,9 @@ def _s3_upload(
     #  See
     #  https://aws.amazon.com/premiumsupport/knowledge-center/http-5xx-errors-s3
     retries = Retry(
-        backoff_factor=0.1, status=10, status_forcelist=[500, 502, 503, 504],
+        backoff_factor=0.1,
+        status=10,
+        status_forcelist=[500, 502, 503, 504],
     )
     session = requests.Session()
     session.mount("https://", HTTPAdapter(max_retries=retries))
