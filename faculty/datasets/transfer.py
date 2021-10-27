@@ -200,6 +200,7 @@ def _s3_upload(
     object_client, project_id, datasets_path, content, upload_id, chunk_size
 ):
 
+    #  See https://aws.amazon.com/premiumsupport/knowledge-center/http-5xx-errors-s3/
     retries = Retry(
         backoff_factor=0.1,
         status=10,
