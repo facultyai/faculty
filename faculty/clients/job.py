@@ -619,7 +619,9 @@ class JobClient(BaseClient):
             ]
         }
 
-        compressed_payload = gzip.compress(json.dumps(payload).encode("utf-8"))
+        compressed_payload = gzip.compress(
+            json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        )
         headers = {
             "Content-Type": "application/json",
             "Content-Encoding": "gzip",
