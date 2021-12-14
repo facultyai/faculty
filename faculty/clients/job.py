@@ -18,6 +18,9 @@ Configure and run Faculty jobs.
 
 
 from enum import Enum
+from io import BytesIO
+import gzip
+import json
 
 from attr import attrs, attrib
 from marshmallow import ValidationError, fields, post_load, validates_schema
@@ -615,7 +618,16 @@ class JobClient(BaseClient):
                 for parameter_values in parameter_value_sets
             ]
         }
-        return self._post(endpoint, _RunIdSchema(), json=payload)
+
+        compressed_payload = gzip.compress(json.dumps(payload).encode("utf-8"))
+        headers = {
+            "Content-Type": "application/json",
+            "Content-Encoding": "gzip",
+        }
+
+        return self._post(
+            endpoint, _RunIdSchema(), headers=headers, data=compressed_payload
+        )
 
     def list_runs(self, project_id, job_id, start=None, limit=None):
         """List the runs of a job.
