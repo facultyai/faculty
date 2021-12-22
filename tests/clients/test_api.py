@@ -21,13 +21,8 @@ import pytest
 from dateutil.tz import UTC
 from marshmallow import ValidationError
 
-from faculty.clients.api import (
-    API,
-    APIClient,
-    APIKey,
-    _APIKeySchema,
-    _APISchema,
-)
+from faculty.clients.api import (API, APIClient, APIKey, _APIKeySchema,
+                                 _APISchema)
 
 ENVIRONMENT_ID = uuid.uuid4()
 OWNER_ID = uuid.uuid4()

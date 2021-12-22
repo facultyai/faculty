@@ -51,20 +51,19 @@ APIInstance = namedtuple(
 APIKey = namedtuple("APIKey", ["id", "material", "enabled", "label"])
 ServerType = namedtuple("ServerType", ["instance_size_type", "instance_size"])
 WSGIDefinition = namedtuple(
-    "CommandDefinition",
+    "WSGIDefinition",
     [
         "api_type",
         "working_directory",
-        "conda_environment",
         "module",
         "wsgi_object",
     ],
 )
 PlumberDefinition = namedtuple(
-    "PlumberDefinition", ["api_type", "working_director", "script_name"]
+    "PlumberDefinition", ["api_type", "working_directory", "script_name"]
 )
 ScriptDefinition = namedtuple(
-    "PlumberDefinition", ["api_type", "working_director", "script_name"]
+    "ScriptDefinition", ["api_type", "working_directory", "script_name"]
 )
 
 APIUpdate = namedtuple(
@@ -149,7 +148,7 @@ class InstanceSizeSchema(BaseSchema):
     memory_mb = fields.Integer(data_key="memoryMb", required=True)
 
 
-class APIType(Enum):
+class APIType(str, Enum):
     WSGI = "wsgi"
     SCRIPT = "script"
     PLUMBER = "plumber"
@@ -181,7 +180,6 @@ class CommandDefinitionSchema(BaseSchema):
     working_directory = fields.String(
         data_key="workingDirectory",
     )
-    conda_environment = fields.String(data_key="commandEnvironment")
     module = fields.String()
     wsgi_object = fields.String(data_key="wsgiObject")
     script_name = fields.String(data_key="scriptName")
@@ -287,56 +285,64 @@ class APIClient(BaseClient):
         project_id,
         api_definition,
         subdomain,
-        name=None,
-        description=None,
+        name="",
+        description="",
+        environment_ids=[],
+        default_server_size=None,
     ):
         """Create a new API.
 
         Parameters
         ----------
         project_id : uuid.UUID
-            The project to create the server in.
-
-        Returns
-        -------
+            The project to create the API in.
+        api_definition : CommandDefinition
+            The API's command definition: WSGI(Flask)/Plumber/Script(Custom).
+        subdomain : str
+            The subdomain where the API should run.
+        name : str
+            The API's name.
+        description : str
+            The API's description field.
+        environment_ids : List[uuid.UUID]
+            The environments to apply to the API's instances.
+        default_server_size : ServerType
+            The default server size to set
         """
-        payload = {"definition": api_definition}
-        payload["subdomain"] = subdomain
-        if name:
-            payload["name"] = name
-        if description:
-            payload["description"] = description
-        else:
-            description = ""
-
-        payload["environmentIds"] = []
-        payload["defaultServerSize"] = {
-            "instanceSizeType": "custom",
-            "instanceSize": {"milliCpus": 1000, "memoryMb": 4096},
+        payload = {
+            "definition": CommandDefinitionSchema().dump(api_definition)
         }
-        return self._post(
-            "/project/{}/api".format(project_id), _APISchema(), json=payload
+        payload["subdomain"] = subdomain
+        payload["name"] = name
+        payload["description"] = description
+
+        payload["environmentIds"] = environment_ids
+
+        # TODO: turn these into schema handling as well
+        if default_server_size is None:
+            default_server_size = {
+                "instanceSizeType": "custom",
+                "instanceSize": {"milliCpus": 1000, "memoryMb": 4096},
+            }
+        payload["defaultServerSize"] = default_server_size
+
+        return self._post_raw(
+            "/project/{}/api".format(project_id), json=payload
         )
 
     @staticmethod
     def flask_definition(working_directory, module, wsgi_object):
         return WSGIDefinition(
-            api_type="wsgi",
+            api_type=APIType.WSGI,
             working_directory=working_directory,
-            conda_environment="Python3",
             module=module,
             wsgi_object=wsgi_object,
         )
 
     @staticmethod
     def plumber_definition(working_directory, script_name):
-        def_dict = {
-            "api_type": "plumber",
-            "workingDirectory": working_directory,
-            "scriptName": script_name,
-        }
         return PlumberDefinition(
-            api_type="plumber",
+            api_type=APIType.PLUMBER,
             working_directory=working_directory,
             script_name=script_name,
         )
@@ -344,13 +350,13 @@ class APIClient(BaseClient):
     @staticmethod
     def script_definition(working_directory, script_name):
         return ScriptDefinition(
-            api_type="script",
+            api_type=APIType.SCRIPT,
             working_directory=working_directory,
             script_name=script_name,
         )
 
     def _get_current_api_definition(self, project_id, api_id):
-        self.get(project_id, api_id)
+        current_api = self.get(project_id, api_id)
         current_api = _APISchema().dump(current_api)
         return current_api
 
@@ -366,6 +372,7 @@ class APIClient(BaseClient):
         environment_ids=None,
         api_definition=None,
         server_type=None,
+        current_api=None,
     ):
         if not current_api:
             current_api = self._get_current_api_definition(project_id, api_id)
