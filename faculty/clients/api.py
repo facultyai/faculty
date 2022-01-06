@@ -15,251 +15,118 @@
 """
 Manage Faculty APIs.
 """
-from collections import namedtuple
+import uuid
+from datetime import datetime
 from enum import Enum
+from typing import List, Optional, Union
 
+from attr import define
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
+from faculty._oneofschema import OneOfSchema
 from faculty.clients.base import BaseClient, BaseSchema
-from faculty.clients.server import _ServerSchema as ServerSchema
-
-Instance = namedtuple("Instance", ["instance", "outdated", "key"])
-InstanceSize = namedtuple("InstanceSize", ["milli_cpus", "memory_mb"])
-DevInstance = namedtuple("DevInstance", ["instance", "key", "instance_id"])
-DevInstanceId = namedtuple("DevInstanceId", ["instance_id"])
-ResourceLimit = namedtuple(
-    "ResourceLimit",
-    [
-        "allowed_max_milli_cpus",
-        "allowed_max_memory_mb",
-        "remaining_milli_cpus",
-        "remaining_memory_mb",
-    ],
-)
-APIInstance = namedtuple(
-    "APIInstance",
-    [
-        "project_id",
-        "api_id",
-        "error_code",
-        "error",
-        "remaining_resource_limits",
-    ],
-)
-
-APIKey = namedtuple("APIKey", ["id", "material", "enabled", "label"])
-ServerType = namedtuple("ServerType", ["instance_size_type", "instance_size"])
-WSGIDefinition = namedtuple(
-    "WSGIDefinition",
-    [
-        "api_type",
-        "working_directory",
-        "module",
-        "wsgi_object",
-    ],
-)
-PlumberDefinition = namedtuple(
-    "PlumberDefinition", ["api_type", "working_directory", "script_name"]
-)
-ScriptDefinition = namedtuple(
-    "ScriptDefinition", ["api_type", "working_directory", "script_name"]
-)
-
-APIUpdate = namedtuple(
-    "APIUpdate", ["definition", "environment_ids", "default_server_size"]
-)
-
-APIDefinition = namedtuple(
-    "APIDefinition", ["name", "subdomain", "description", "last_updated_at"]
-)
-
-API = namedtuple(
-    "API",
-    [
-        "author_id",
-        "created_at",
-        "default_server_size",
-        "definition",
-        "deployment_status",
-        "description",
-        "dev_instances",
-        "environment_ids",
-        "id",
-        "last_deployed_at",
-        "last_deployed_by",
-        "name",
-        "prod_instances",
-        "prod_keys",
-        "subdomain",
-    ],
-)
-
-
-class _APIKeySchema(BaseSchema):
-    id = fields.UUID(data_key="keyId", required=True)
-    material = fields.String(required=True)
-    # Development instance keys do not have these fields
-    enabled = fields.Boolean(load_default=None)
-    label = fields.String(load_default=None)
-
-    @post_load
-    def make_apikey(self, data, **kwargs):
-        return APIKey(**data)
-
-
-class RemainingResourceLimitSchema(BaseSchema):
-    allowed_max_milli_cpus = fields.Integer(
-        data_key="allowedMaxMilliCpus", required=True
-    )
-    allowed_max_memory_mb = fields.Integer(
-        data_key="allowedMaxMemoryMb", required=True
-    )
-    remaining_milli_cpus = fields.Integer(
-        data_key="remainingMilliCpus", required=True
-    )
-    remaining_memory_mb = fields.Integer(
-        data_key="remaininigMemoryMb", required=True
-    )
-
-
-class DevInstanceIdSchema(BaseSchema):
-    instance_id = fields.UUID(data_key="instanceId")
-
-
-class APIInstanceResponseSchema(BaseSchema):
-    project_id = fields.UUID(data_key="projectId")
-    api_id = fields.UUID(data_key="apiId")
-    error_code = fields.String(data_key="errorCode")
-    error = fields.String()
-    remaining_resource_limits = fields.Nested(
-        RemainingResourceLimitSchema, data_key="remainingResourceLimits"
-    )
-
-
-class APIDevInstanceResponseSchema(APIInstanceResponseSchema):
-    instance = fields.Nested(DevInstanceIdSchema)
-    key = fields.Nested(_APIKeySchema)
-    instance_id = fields.UUID(data_key="instanceId")
-
-
-class InstanceSizeSchema(BaseSchema):
-    milli_cpus = fields.Integer(data_key="milliCpus", required=True)
-    memory_mb = fields.Integer(data_key="memoryMb", required=True)
-
-
-class APIType(str, Enum):
-    WSGI = "wsgi"
-    SCRIPT = "script"
-    PLUMBER = "plumber"
+from faculty.clients.job import InstanceSize, _InstanceSizeSchema
+from faculty.clients.server import Server, _ServerSchema
 
 
 class DeploymentStatus(Enum):
+    """An enumeration of possible API deployment statuses."""
+
     NOTDEPLOYED = "not-deployed"
     STARTING = "starting"
     DEPLOYED = "deployed"
     ERROR = "error"
 
 
-class InstanceSchema(BaseSchema):
-    instance = fields.Nested(ServerSchema, required=True)
-    outdated = fields.Boolean(required=True)
-    key = fields.Nested(
-        _APIKeySchema, load_default=None
-    )  # Production instances do not have this field
-
-    @post_load
-    def make_instance(self, data, **kwargs):
-        return Instance(**data)
+@define
+class DevInstance:
+    instance_id: uuid.UUID
 
 
-class CommandDefinitionSchema(BaseSchema):
-    api_type = EnumField(
-        APIType, by_value=True, required=True, data_key="type"
-    )
-    working_directory = fields.String(
-        data_key="workingDirectory",
-    )
-    module = fields.String()
-    wsgi_object = fields.String(data_key="wsgiObject")
-    script_name = fields.String(data_key="scriptName")
-
-    @post_load
-    def make_command_definition(self, data, **kwargs):
-        if data["api_type"] == "wsgi":
-            return WSGIDefinition(**data)
-        elif data["api_type"] == "script":
-            return ScriptDefinition(**data)
-        elif data["api_type"] == "plumber":
-            return PlumberDefinition(**data)
+@define
+class APIKey:
+    id: uuid.UUID
+    material: str
+    enabled: bool
+    label: str
 
 
-class ServerTypeSchema(BaseSchema):
-    instance_size_type = fields.String(
-        data_key="instanceSizeType", required=True
-    )
-    instance_size = fields.Nested(InstanceSizeSchema, data_key="instanceSize")
+@define
+class ServerType:
+    instance_size_type: str
+    instance_size: Optional[InstanceSize] = None
 
 
-class _APISchema(BaseSchema):
-    definition = fields.Nested(CommandDefinitionSchema, data_key="definition")
-    environment_ids = fields.List(fields.UUID(), data_key="environmentIds")
-    default_server_size = fields.Nested(
-        ServerTypeSchema, data_key="defaultServerSize"
-    )
-    name = fields.String(data_key="name")
-    subdomain = fields.String(data_key="subdomain")
-    description = fields.String(data_key="description")
-    last_updated_at = fields.DateTime(data_key="lastUpdatedAt")
-
-    id = fields.UUID(data_key="apiId", required=True)
-    author_id = fields.UUID(data_key="authorId", required=True)
-    created_at = fields.DateTime(data_key="createdAt", required=True)
-    last_deployed_at = fields.DateTime(
-        data_key="lastDeployedAt", load_default=None
-    )
-    last_deployed_by = fields.UUID(
-        data_key="lastDeployedBy", load_default=None
-    )
-    # The following fields do not exist in the response if all APIs are listed
-    # TODO: what would be the best way to handle these missing fields for Marshmallow
-    deployment_status = EnumField(
-        DeploymentStatus,
-        by_value=True,
-        data_key="deploymentStatus",
-        load_default=None,
-    )
-    prod_instances = fields.Nested(
-        InstanceSchema,
-        many=True,
-        data_key="prodInstances",
-        load_default=None,
-    )
-    prod_keys = fields.Nested(
-        _APIKeySchema,
-        many=True,
-        data_key="prodKeys",
-        load_default=None,
-    )
-    dev_instances = fields.Nested(
-        InstanceSchema,
-        many=True,
-        data_key="devInstances",
-        load_default=None,
-    )
-
-    @post_load
-    def make_api(self, data, **kwargs):
-        return API(**data)
+@define
+class WSGIDefinition:
+    working_directory: str
+    module: str
+    wsgi_object: str
+    last_updated_at: Optional[datetime] = None
 
 
-class ListAllAPISchema(BaseSchema):
-    apis = fields.Nested(_APISchema(many=True))
+@define
+class PlumberDefinition:
+    working_directory: str
+    script_name: str
+    last_updated_at: Optional[datetime] = None
 
-    @post_load
-    def make_list_apis(self, data, **kwargs):
-        # Flatten the API response
-        return data["apis"]
+
+@define
+class ScriptDefinition:
+    working_directory: str
+    script_name: str
+    last_updated_at: Optional[datetime] = None
+
+
+@define
+class Instance:
+    instance: Server
+    outdated: bool
+    key: APIKey
+
+
+@define
+class ProjectTemplateReference:
+    template_id: uuid.UUID
+    version_id: uuid.UUID
+
+
+@define
+class APIInstance:
+    api_id: uuid.UUID
+    instance_id: uuid.UUID
+    project_id: uuid.UUID
+
+
+@define
+class APIDevInstance:
+    api_id: uuid.UUID
+    instance: DevInstance
+    project_id: uuid.UUID
+    key: APIKey
+
+
+@define
+class API:
+    api_id: uuid.UUID
+    author_id: uuid.UUID
+    created_at: datetime
+    created_from_project_template: Optional[ProjectTemplateReference]
+    default_server_size: ServerType
+    definition: Union[WSGIDefinition, PlumberDefinition, ScriptDefinition]
+    deployment_status: DeploymentStatus
+    description: str
+    dev_instances: List[Instance]
+    environment_ids: List[uuid.UUID]
+    last_deployed_at: Optional[datetime]
+    last_deployed_by: Optional[uuid.UUID]
+    name: str
+    prod_instances: List[Instance]
+    prod_keys: List[APIKey]
+    project_id: uuid.UUID
+    subdomain: str
 
 
 class APIClient(BaseClient):
@@ -280,10 +147,58 @@ class APIClient(BaseClient):
 
     SERVICE_NAME = "aperture"
 
+    def list(self, project_id):
+        """List the APIs in a project.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project to list APIs in.
+
+        Returns
+        -------
+        List[API]
+            The APIs in the project.
+        """
+        endpoint = "/project/{}/api".format(project_id)
+        return self._get(endpoint, _APISchema(many=True))
+
+    def list_all(self):
+        """List all APIs on the Faculty deployment.
+
+        This method requires administrative privileges not available to most
+        users.
+
+        Returns
+        -------
+        List[API]
+            The APIs.
+        """
+        return self._get("/api", _ListAPIsResponseSchema())
+
+    def get(self, project_id, api_id):
+        """Get an API.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the API.
+        api_id : uuid.UUID
+            The ID of the API to get.
+
+        Returns
+        -------
+        API
+            The retrieved API.
+        """
+        return self._get(
+            "/project/{}/api/{}".format(project_id, api_id), _APISchema()
+        )
+
     def create(
         self,
         project_id,
-        api_definition,
+        command_definition,
         subdomain,
         name="",
         description="",
@@ -296,7 +211,7 @@ class APIClient(BaseClient):
         ----------
         project_id : uuid.UUID
             The project to create the API in.
-        api_definition : CommandDefinition
+        command_definition : CommandDefinition
             The API's command definition: WSGI(Flask)/Plumber/Script(Custom).
         subdomain : str
             The subdomain where the API should run.
@@ -308,112 +223,76 @@ class APIClient(BaseClient):
             The environments to apply to the API's instances.
         default_server_size : ServerType
             The default server size to set
-        """
-        payload = {
-            "definition": CommandDefinitionSchema().dump(api_definition)
-        }
-        payload["subdomain"] = subdomain
-        payload["name"] = name
-        payload["description"] = description
-
-        payload["environmentIds"] = environment_ids
-
-        # TODO: turn these into schema handling as well
-        if default_server_size is None:
-            default_server_size = {
-                "instanceSizeType": "custom",
-                "instanceSize": {"milliCpus": 1000, "memoryMb": 4096},
-            }
-        payload["defaultServerSize"] = default_server_size
-
-        return self._post_raw(
-            "/project/{}/api".format(project_id), json=payload
-        )
-
-    @staticmethod
-    def flask_definition(working_directory, module, wsgi_object):
-        return WSGIDefinition(
-            api_type=APIType.WSGI,
-            working_directory=working_directory,
-            module=module,
-            wsgi_object=wsgi_object,
-        )
-
-    @staticmethod
-    def plumber_definition(working_directory, script_name):
-        return PlumberDefinition(
-            api_type=APIType.PLUMBER,
-            working_directory=working_directory,
-            script_name=script_name,
-        )
-
-    @staticmethod
-    def script_definition(working_directory, script_name):
-        return ScriptDefinition(
-            api_type=APIType.SCRIPT,
-            working_directory=working_directory,
-            script_name=script_name,
-        )
-
-    def _get_current_api_definition(self, project_id, api_id):
-        current_api = self.get(project_id, api_id)
-        current_api = _APISchema().dump(current_api)
-        return current_api
-
-    def get(self, project_id, api_id):
-        return self._get(
-            "/project/{}/api/{}".format(project_id, api_id), _APISchema()
-        )
-
-    def update(
-        self,
-        project_id,
-        api_id,
-        environment_ids=None,
-        api_definition=None,
-        server_type=None,
-        current_api=None,
-    ):
-        if not current_api:
-            current_api = self._get_current_api_definition(project_id, api_id)
-        payload = {}
-        payload["defaultServerSize"] = current_api["defaultServerSize"]
-        payload["environmentIds"] = current_api["environmentIds"]
-        payload["definition"] = current_api["definition"]
-        if server_type:
-            payload["defaultServerSize"] = server_type
-        if environment_ids:
-            payload["environmentIds"] = environment_ids
-
-        if api_definition:
-            payload["definition"] = api_definition
-        endpoint = "/project/{}/api/{}/definition".format(project_id, api_id)
-        return self._put(endpoint, _APISchema(), json=payload)
-
-    def delete(self, project_id, api_id):
-        return self._delete_raw(
-            "/project/{}/api/{}".format(project_id, api_id)
-        )
-
-    def list(self, project_id):
-        """List APIs in a project.
-
-        Parameters
-        ----------
-        project_id : uuid.UUID
-            The project to list APIs in.
-        name : str, optional
-            If provided, only return APIs with this name.
 
         Returns
         -------
-        List[API]
-            The matching APIs.
+        API
+            The newly created API.
         """
-        endpoint = "/project/{}/api".format(project_id)
-        return self._get(endpoint, _APISchema(many=True))
+        if default_server_size is None:
+            default_server_size = ServerType(
+                instance_size_type="custom",
+                instance_size=InstanceSize(milli_cpus=1000, memory_mb=4000),
+            )
 
-    def create_production_key(self, project_id, api_id, label=None):
+        payload = {
+            "definition": _CommandDefinitionSchema().dump(command_definition),
+            "subdomain": subdomain,
+            "name": name,
+            "description": description,
+            "environmentIds": environment_ids,
+            "defaultServerSize": _ServerTypeSchema().dump(default_server_size),
+        }
+
+        return self._post(
+            "/project/{}/api".format(project_id), _APISchema(), json=payload
+        )
+
+    def update_definition(
+        self,
+        api,
+        command_definition=None,
+        default_server_size=None,
+        environment_ids=None,
+    ):
+        """Update an API's definition.
+
+        Parameters
+        ----------
+        api : API
+            The API to update.
+        command_definition : CommandDefinition
+            The API's command definition: WSGI(Flask)/Plumber/Script(Custom).
+            If None then no change.
+        environment_ids : List[uuid.UUID]
+            The environments to apply to the API's instances.
+            If None then no change.
+        default_server_size : ServerType
+            The default server size to set. If None then no change.
+
+        Returns
+        -------
+        API
+            A slimmed down version of the API definition
+        """
+        if command_definition is None:
+            command_definition = api.definition
+        if environment_ids is None:
+            environment_ids = api.environment_ids
+        if default_server_size is None:
+            default_server_size = api.default_server_size
+
+        payload = {
+            "defaultServerSize": _ServerTypeSchema().dump(default_server_size),
+            "definition": _CommandDefinitionSchema().dump(command_definition),
+            "environmentIds": environment_ids,
+        }
+        endpoint = "/project/{}/api/{}/definition".format(
+            api.project_id, api.api_id
+        )
+        return self._put(endpoint, _APISchema(), json=payload)
+
+    def create_production_key(self, project_id, api_id, label):
         """Create a production key for a given API.
 
         Parameters
@@ -422,8 +301,8 @@ class APIClient(BaseClient):
             The project where the API resides.
         api_id : uuid.UUID
             The API to create a new key in.
-        label : str, optional
-            If provided, set this value as the new key's label.
+        label : str
+            Set this value as the new key's label.
 
         Returns
         -------
@@ -431,8 +310,7 @@ class APIClient(BaseClient):
             The newly created key.
         """
         endpoint = "/project/{}/api/{}/key".format(project_id, api_id)
-        # TODO: maybe more sensible default, the UI doesn't allow empty name but the api accepts this
-        payload = {"label": label if label else ""}
+        payload = {"label": label}
         return self._post(endpoint, _APIKeySchema(), json=payload)
 
     def list_production_keys(self, project_id, api_id):
@@ -514,6 +392,17 @@ class APIClient(BaseClient):
         return self._put(endpoint, _APIKeySchema(), json=payload)
 
     def delete_production_key(self, project_id, api_id, key_id):
+        """Delete a specific production API key.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The project in which the API resides.
+        api_id : uuid.UUID
+            The API in which to the production key resides.
+        key_id : uuid.UUID
+            The key to delete.
+        """
         endpoint = "/project/{}/api/{}/key/{}".format(
             project_id, api_id, key_id
         )
@@ -523,113 +412,334 @@ class APIClient(BaseClient):
         self,
         project_id,
         api_id,
-        key_id,
-        server_type=None,
+        server_size,
         image_version=None,
-        current_api=None,
+        restart=False,
     ):
-        if not current_api:
-            current_api = self._get_current_api_definition(project_id, api_id)
-        payload = {
-            "instanceSizeType": current_api["instanceSizeType"],
-            "instanceSize": {
-                "milliCpus": current_api["instnaceSize"]["milliCpus"],
-                "memoryMb": current_api["instnaceSize"]["memoryMb"],
-            },
-        }
-        if server_type:
-            payload["instanceSizeType"] = server_type["instance_size_type"]
-            if server_type["instance_size"]:
-                instance_size = server_type["instance_size"]
-                payload["instanceSize"] = {
-                    "milliCpus": instance_size.milli_cpus,
-                    "memoryMb": instance_size.memory_mb,
-                }
-        if image_version:
-            payload["imageVersion"] = image_version
-        endpoint = "/project/{}/api/{}/prod/start".format(project_id, api_id)
-        return self._put(endpoint, APIInstanceResponseSchema(), json=payload)
+        """Start or restart an API.
 
-    def stop(self, project_id, api_id):
-        endpoint = "/project/{}/api/{}/prod/stop".format(project_id, api_id)
-        self._put(endpoint, APIInstanceResponseSchema())
-
-    def restart(
-        self,
-        project_id,
-        api_id,
-        key_id,
-        server_type=None,
-        image_version=None,
-        current_api=None,
-    ):
-        if not current_api:
-            current_api = self._get_current_api_definition(project_id, api_id)
-        payload = {
-            "instanceSizeType": current_api["instanceSizeType"],
-            "instanceSize": {
-                "milliCpus": current_api["instnaceSize"]["milliCpus"],
-                "memoryMb": current_api["instnaceSize"]["memoryMb"],
-            },
-        }
-        if server_type:
-            payload["instanceSizeType"] = server_type["instance_size_type"]
-            if server_type["instance_size"]:
-                instance_size = server_type["instance_size"]
-                payload["instanceSize"] = {
-                    "milliCpus": instance_size.milli_cpus,
-                    "memoryMb": instance_size.memory_mb,
-                }
-        if image_version:
-            payload["imageVersion"] = image_version
-        endpoint = "/project/{}/api/{}/prod/restart".format(project_id, api_id)
-        return self._put(endpoint, APIInstanceResponseSchema(), json=payload)
-
-    def reload(self, project_id, api_id):
-        endpoint = "/project/{}/api/{}/prod/reload".format(project_id, api_id)
-        self._put(endpoint, APIInstanceResponseSchema())
-
-    def start_dev(
-        self, project_id, api_id, key_id, server_type=None, image_version=None
-    ):
-
-        payload = {}
-        if server_type:
-            payload["instanceSizeType"] = server_type["instance_size_type"]
-            if server_type["instance_size"]:
-                instance_size = server_type["instance_size"]
-                payload["instanceSize"] = {
-                    "milliCpus": instance_size["milli_cpus"],
-                    "memoryMb": instance_size["memory_mb"],
-                }
-        if image_version:
-            payload["imageVersion"] = image_version
-        endpoint = "/project/{}/api/{}/dev/start".format(project_id, api_id)
-        return self._post(
-            endpoint, APIDevInstanceResponseSchema(), json=payload
-        )
-
-    def stop_dev(self, project_id, api_id, dev_instance_id):
-        endpoint = "/project/{}/api/{}/dev/{}".format(
-            project_id, api_id, dev_instance_id
-        )
-        self._delete(endpoint, APIDevInstanceResponseSchema())
-
-    def reload_dev(self, project_id, api_id, dev_instance_id):
-        endpoint = "/project/{}/api/{}/dev/{}/reload".format(
-            project_id, api_id, dev_instance_id
-        )
-        self._put(endpoint, APIDevInstanceResponseSchema())
-
-    def list_all(self):
-        """List all APIs on the Faculty deployment.
-
-        This method requires administrative privileges not available to most
-        users.
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the API.
+        api : API
+            The API to start or restart.
+        server_size : ServerType
+            The server size to start.
+        restart : bool, optional
+            If True, then restart an API rather than start. Default: False
 
         Returns
         -------
-        List[API]
-            The APIs.
+        APIInstance
+            Information on the started instance.
         """
-        return self._get("/api", ListAllAPISchema())
+        payload = _ServerTypeSchema().dump(server_size)
+        payload["imageVersion"] = image_version
+
+        action = "restart" if restart else "start"
+        endpoint = "/project/{}/api/{}/prod/{}".format(
+            project_id, api_id, action
+        )
+        return self._put(endpoint, _APIInstanceResponseSchema(), json=payload)
+
+    def stop(self, project_id, api_id):
+        """Stop an API.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the API.
+        api : API
+            The API to stop.
+
+        Returns
+        -------
+        APIInstance
+            Information on the stopped instance.
+        """
+        endpoint = "/project/{}/api/{}/prod/stop".format(project_id, api_id)
+        return self._put(endpoint, _APIInstanceResponseSchema())
+
+    def reload(self, project_id, api_id):
+        """Reload a deployed API.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the API.
+        api : API
+            The API to reaload.
+
+        Returns
+        -------
+        APIInstance
+            Information on the reloaded instance.
+        """
+        endpoint = "/project/{}/api/{}/prod/reload".format(project_id, api_id)
+        return self._put(endpoint, _APIInstanceResponseSchema())
+
+    def start_dev(
+        self,
+        project_id,
+        api_id,
+        server_size,
+        image_version=None,
+    ):
+        """Start a test/development instance for an API.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the API.
+        api : API
+            The API for which to start the test / development server.
+        server_size : ServerType
+            The server size to start.
+
+        Returns
+        -------
+        APIDevInstance
+            Information on the started dev API instance.
+        """
+        payload = _ServerTypeSchema().dump(server_size)
+        payload["imageVersion"] = image_version
+
+        endpoint = "/project/{}/api/{}/dev".format(project_id, api_id)
+        return self._post(
+            endpoint, _APIDevInstanceResponseSchema(), json=payload
+        )
+
+    def stop_dev(self, project_id, api_id, instance_id):
+        """Stop a test/development instance for an API.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the API.
+        api_id : uuid.UUID
+            The API for which to stop the test / development server.
+        instance_id : uuid.UUID
+            The ID of development instance to stop.
+
+        Returns
+        -------
+        APIInstance
+            Information on the deleted dev API instance.
+        """
+        endpoint = "/project/{}/api/{}/dev/{}".format(
+            project_id, api_id, instance_id
+        )
+        return self._delete(endpoint, _APIInstanceResponseSchema())
+
+    def reload_dev(self, project_id, api_id, instance_id):
+        """Reload a test/development instance for an API.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the API.
+        api_id : uuid.UUID
+            The API for which to reaload the test / development server.
+        instance_id : uuid.UUID
+            The ID of development instance to reload.
+
+        Returns
+        -------
+        APIInstance
+            Information on the reloaded dev API instance.
+        """
+        endpoint = "/project/{}/api/{}/dev/{}/reload".format(
+            project_id, api_id, instance_id
+        )
+        return self._put(endpoint, _APIInstanceResponseSchema())
+
+
+class _APIKeySchema(BaseSchema):
+    id = fields.UUID(data_key="keyId", required=True)
+    material = fields.String(required=True)
+    # Development instance keys do not have these fields
+    enabled = fields.Boolean(missing=None)
+    label = fields.String(missing=None)
+
+    @post_load
+    def make_apikey(self, data, **kwargs):
+        return APIKey(**data)
+
+
+class _DevInstanceSchema(BaseSchema):
+    instance_id = fields.UUID(data_key="instanceId")
+
+    @post_load
+    def make_dev_instance(self, data, **kwargs):
+        return DevInstance(**data)
+
+
+class _APIInstanceResponseSchema(BaseSchema):
+    api_id = fields.UUID(data_key="apiId")
+    instance_id = fields.UUID(data_key="instanceId", missing=None)
+    project_id = fields.UUID(data_key="projectId")
+
+    @post_load
+    def make_api_instance(self, data, **kwargs):
+        return APIInstance(**data)
+
+
+class _APIDevInstanceResponseSchema(BaseSchema):
+    api_id = fields.UUID(data_key="apiId")
+    instance = fields.Nested(_DevInstanceSchema)
+    project_id = fields.UUID(data_key="projectId")
+    key = fields.Nested(_APIKeySchema)
+
+    @post_load
+    def make_api_instance(self, data, **kwargs):
+        return APIDevInstance(**data)
+
+
+class _ProjectTemplateReferenceSchema(BaseSchema):
+    template_id = fields.UUID(data_key="templateId", required=True)
+    version_id = fields.UUID(data_key="versionId", required=True)
+
+    @post_load
+    def make_project_template(self, data, **kwargs):
+        return ProjectTemplateReference(**data)
+
+
+class _InstanceSchema(BaseSchema):
+    instance = fields.Nested(_ServerSchema, required=True)
+    outdated = fields.Boolean(required=True)
+    key = fields.Nested(
+        _APIKeySchema, load_default=None
+    )  # Production instances do not have this field
+
+    @post_load
+    def make_instance(self, data, **kwargs):
+        return Instance(**data)
+
+
+class _WSGIDefinitionSchema(BaseSchema):
+    working_directory = fields.String(
+        data_key="workingDirectory", required=True
+    )
+    module = fields.String(required=True)
+    wsgi_object = fields.String(data_key="wsgiObject", required=True)
+    last_updated_at = fields.DateTime(data_key="lastUpdatedAt")
+
+    @post_load
+    def make_wsgi_command_definition(self, data, **kwargs):
+        return WSGIDefinition(**data)
+
+
+class _PlumberDefinitionSchema(BaseSchema):
+    working_directory = fields.String(
+        data_key="workingDirectory", required=True
+    )
+    script_name = fields.String(data_key="scriptName", required=True)
+    last_updated_at = fields.DateTime(data_key="lastUpdatedAt")
+
+    @post_load
+    def make_plumber_command_definition(self, data, **kwargs):
+        return PlumberDefinition(**data)
+
+
+class _ScriptDefinitionSchema(BaseSchema):
+    working_directory = fields.String(
+        data_key="workingDirectory", required=True
+    )
+    script_name = fields.String(data_key="scriptName", required=True)
+    last_updated_at = fields.DateTime(data_key="lastUpdatedAt")
+
+    @post_load
+    def make_plumber_command_definition(self, data, **kwargs):
+        return ScriptDefinition(**data)
+
+
+class _CommandDefinitionSchema(OneOfSchema):
+    type_field = "type"
+    type_schemas = {
+        "wsgi": _WSGIDefinitionSchema,
+        "plumber": _PlumberDefinitionSchema,
+        "script": _ScriptDefinitionSchema,
+    }
+
+    def get_obj_type(self, obj):
+        if isinstance(obj, WSGIDefinition):
+            return "wsgi"
+        elif isinstance(obj, PlumberDefinition):
+            return "plumber"
+        elif isinstance(obj, ScriptDefinition):
+            return "script"
+        else:
+            raise Exception("Unknown object type: %s" % repr(obj))
+
+
+class _ServerTypeSchema(BaseSchema):
+    instance_size_type = fields.String(
+        data_key="instanceSizeType", required=True
+    )
+    instance_size = fields.Nested(
+        _InstanceSizeSchema, data_key="instanceSize", missing=None
+    )
+
+    @post_load
+    def make_server_type(self, data, **kwargs):
+        return ServerType(**data)
+
+
+class _APISchema(BaseSchema):
+    definition = fields.Nested(_CommandDefinitionSchema, required=True)
+    environment_ids = fields.List(fields.UUID(), data_key="environmentIds")
+    default_server_size = fields.Nested(
+        _ServerTypeSchema, data_key="defaultServerSize", missing=None
+    )
+    name = fields.String(missing=None)
+    subdomain = fields.String(missing=None)
+    description = fields.String(missing=None)
+    api_id = fields.UUID(data_key="apiId", required=True)
+    project_id = fields.UUID(data_key="projectId", required=True)
+    author_id = fields.UUID(data_key="authorId", missing=None)
+    created_at = fields.DateTime(data_key="createdAt", missing=None)
+    last_deployed_at = fields.DateTime(data_key="lastDeployedAt", missing=None)
+    last_deployed_by = fields.UUID(data_key="lastDeployedBy", missing=None)
+    deployment_status = EnumField(
+        DeploymentStatus,
+        by_value=True,
+        data_key="deploymentStatus",
+        missing=None,
+    )
+    prod_instances = fields.Nested(
+        _InstanceSchema,
+        many=True,
+        data_key="prodInstances",
+        missing=None,
+    )
+    prod_keys = fields.Nested(
+        _APIKeySchema,
+        many=True,
+        data_key="prodKeys",
+        missing=None,
+    )
+    dev_instances = fields.Nested(
+        _InstanceSchema,
+        many=True,
+        data_key="devInstances",
+        missing=None,
+    )
+    created_from_project_template = fields.Nested(
+        _ProjectTemplateReferenceSchema,
+        data_key="createdFromProjectTemplate",
+        missing=None,
+    )
+
+    @post_load
+    def make_api(self, data, **kwargs):
+        return API(**data)
+
+
+class _ListAPIsResponseSchema(BaseSchema):
+    apis = fields.Nested(_APISchema(many=True))
+
+    @post_load
+    def make_list_apis(self, data, **kwargs):
+        # Flatten the API response
+        return data["apis"]

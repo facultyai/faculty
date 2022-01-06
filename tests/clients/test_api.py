@@ -15,14 +15,16 @@
 
 import secrets
 import uuid
-from datetime import datetime
+from copy import deepcopy
 
 import pytest
-from dateutil.tz import UTC
 from marshmallow import ValidationError
 
-from faculty.clients.api import (API, APIClient, APIKey, _APIKeySchema,
-                                 _APISchema)
+from faculty.clients.api import (
+    APIClient,
+    APIKey,
+    _APIKeySchema,
+)
 
 ENVIRONMENT_ID = uuid.uuid4()
 OWNER_ID = uuid.uuid4()
@@ -63,7 +65,8 @@ def test_apikey_schema_invalid():
     [True, False],
 )
 def test_disable_production_key(mocker, key_starting_enabled):
-    disabled_prod_key = PROD_KEY._replace(enabled=key_starting_enabled)
+    disabled_prod_key = deepcopy(PROD_KEY)
+    disabled_prod_key.enabled = key_starting_enabled
 
     mocker.patch.object(APIClient, "_put", return_value=disabled_prod_key)
     schema_mock = mocker.patch("faculty.clients.api._APIKeySchema")
@@ -89,7 +92,8 @@ def test_disable_production_key(mocker, key_starting_enabled):
     [True, False],
 )
 def test_enable_production_key(mocker, key_starting_enabled):
-    disabled_prod_key = PROD_KEY._replace(enabled=key_starting_enabled)
+    disabled_prod_key = deepcopy(PROD_KEY)
+    disabled_prod_key.enabled = key_starting_enabled
 
     mocker.patch.object(APIClient, "_put", return_value=disabled_prod_key)
     schema_mock = mocker.patch("faculty.clients.api._APIKeySchema")
