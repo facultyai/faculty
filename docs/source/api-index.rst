@@ -19,6 +19,7 @@ Modules implementing clients:
    :toctree: api
 
    faculty.clients.account
+   faculty.clients.api
    faculty.clients.cluster
    faculty.clients.environment
    faculty.clients.experiment
