@@ -43,5 +43,6 @@ setup(
         "marshmallow",
         "marshmallow_enum",
         "urllib3",
+        "dataclasses; python_version<'3.7'",
     ],
 )

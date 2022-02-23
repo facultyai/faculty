@@ -16,11 +16,11 @@
 Manage Faculty APIs.
 """
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Union
 
-from attr import define
 from marshmallow import fields, post_load
 from marshmallow_enum import EnumField
 
@@ -39,12 +39,12 @@ class DeploymentStatus(Enum):
     ERROR = "error"
 
 
-@define
+@dataclass
 class DevInstance:
     instance_id: uuid.UUID
 
 
-@define
+@dataclass
 class APIKey:
     id: uuid.UUID
     material: str
@@ -52,13 +52,13 @@ class APIKey:
     label: str
 
 
-@define
+@dataclass
 class ServerType:
     instance_size_type: str
     instance_size: Optional[InstanceSize] = None
 
 
-@define
+@dataclass
 class WSGIDefinition:
     working_directory: str
     module: str
@@ -66,41 +66,41 @@ class WSGIDefinition:
     last_updated_at: Optional[datetime] = None
 
 
-@define
+@dataclass
 class PlumberDefinition:
     working_directory: str
     script_name: str
     last_updated_at: Optional[datetime] = None
 
 
-@define
+@dataclass
 class ScriptDefinition:
     working_directory: str
     script_name: str
     last_updated_at: Optional[datetime] = None
 
 
-@define
+@dataclass
 class Instance:
     instance: Server
     outdated: bool
     key: APIKey
 
 
-@define
+@dataclass
 class ProjectTemplateReference:
     template_id: uuid.UUID
     version_id: uuid.UUID
 
 
-@define
+@dataclass
 class APIInstance:
     api_id: uuid.UUID
     instance_id: uuid.UUID
     project_id: uuid.UUID
 
 
-@define
+@dataclass
 class APIDevInstance:
     api_id: uuid.UUID
     instance: DevInstance
@@ -108,7 +108,7 @@ class APIDevInstance:
     key: APIKey
 
 
-@define
+@dataclass
 class API:
     api_id: uuid.UUID
     author_id: uuid.UUID
