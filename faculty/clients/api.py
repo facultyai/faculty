@@ -30,10 +30,10 @@ from faculty.clients.job import InstanceSize, _InstanceSizeSchema
 from faculty.clients.server import Server, _ServerSchema
 
 
-class DeploymentStatus(Enum):
+class DeploymentStatus(str, Enum):
     """An enumeration of possible API deployment statuses."""
 
-    NOTDEPLOYED = "not-deployed"
+    NOT_DEPLOYED = "not-deployed"
     STARTING = "starting"
     DEPLOYED = "deployed"
     ERROR = "error"
