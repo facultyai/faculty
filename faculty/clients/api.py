@@ -63,21 +63,33 @@ class WSGIDefinition:
     working_directory: str
     module: str
     wsgi_object: str
-    last_updated_at: Optional[datetime] = None
+
+
+@dataclass
+class WSGIDefinitionResponse(WSGIDefinition):
+    last_updated_at: datetime
 
 
 @dataclass
 class PlumberDefinition:
     working_directory: str
     script_name: str
-    last_updated_at: Optional[datetime] = None
+
+
+@dataclass
+class PlumberDefinitionResponse(PlumberDefinition):
+    last_updated_at: datetime
 
 
 @dataclass
 class ScriptDefinition:
     working_directory: str
     script_name: str
-    last_updated_at: Optional[datetime] = None
+
+
+@dataclass
+class ScriptDefinitionResponse(ScriptDefinition):
+    last_updated_at: datetime
 
 
 @dataclass
@@ -110,23 +122,37 @@ class APIDevInstance:
 
 @dataclass
 class API:
+    name: str
+    description: str
+    definition: Union[WSGIDefinition, PlumberDefinition, ScriptDefinition]
+    environment_ids: List[uuid.UUID]
+    default_server_size: ServerType
+
+
+@dataclass
+class APIResponse(API):
+    # Override parent classes field
+    definition: Union[
+        WSGIDefinitionResponse,
+        PlumberDefinitionResponse,
+        ScriptDefinitionResponse,
+    ]
+    # New fields
     api_id: uuid.UUID
     author_id: uuid.UUID
     created_at: datetime
     created_from_project_template: Optional[ProjectTemplateReference]
-    default_server_size: ServerType
-    definition: Union[WSGIDefinition, PlumberDefinition, ScriptDefinition]
     deployment_status: DeploymentStatus
-    description: str
     dev_instances: List[Instance]
-    environment_ids: List[uuid.UUID]
     last_deployed_at: Optional[datetime]
     last_deployed_by: Optional[uuid.UUID]
-    name: str
     prod_instances: List[Instance]
     prod_keys: List[APIKey]
     project_id: uuid.UUID
     subdomain: str
+    created_from_project_template: Optional[ProjectTemplateReference]
+    last_deployed_at: datetime
+    last_deployed_by: uuid.UUID
 
 
 class APIClient(BaseClient):
@@ -157,11 +183,11 @@ class APIClient(BaseClient):
 
         Returns
         -------
-        List[API]
+        List[APIResponse]
             The APIs in the project.
         """
         endpoint = "/project/{}/api".format(project_id)
-        return self._get(endpoint, _APISchema(many=True))
+        return self._get(endpoint, _APIResponseSchema(many=True))
 
     def list_all(self):
         """List all APIs on the Faculty deployment.
@@ -171,7 +197,7 @@ class APIClient(BaseClient):
 
         Returns
         -------
-        List[API]
+        List[APIResponse]
             The APIs.
         """
         return self._get("/api", _ListAPIsResponseSchema())
@@ -188,11 +214,12 @@ class APIClient(BaseClient):
 
         Returns
         -------
-        API
+        APIResponse
             The retrieved API.
         """
         return self._get(
-            "/project/{}/api/{}".format(project_id, api_id), _APISchema()
+            "/project/{}/api/{}".format(project_id, api_id),
+            _APIResponseSchema(),
         )
 
     def create(
@@ -226,7 +253,7 @@ class APIClient(BaseClient):
 
         Returns
         -------
-        API
+        APIResponse
             The newly created API.
         """
         if default_server_size is None:
@@ -245,7 +272,9 @@ class APIClient(BaseClient):
         }
 
         return self._post(
-            "/project/{}/api".format(project_id), _APISchema(), json=payload
+            "/project/{}/api".format(project_id),
+            _APIResponseSchema(),
+            json=payload,
         )
 
     def update_definition(
@@ -623,11 +652,18 @@ class _WSGIDefinitionSchema(BaseSchema):
     )
     module = fields.String(required=True)
     wsgi_object = fields.String(data_key="wsgiObject", required=True)
-    last_updated_at = fields.DateTime(data_key="lastUpdatedAt")
 
     @post_load
     def make_wsgi_command_definition(self, data, **kwargs):
         return WSGIDefinition(**data)
+
+
+class _WSGIDefinitionResponseSchema(_WSGIDefinitionSchema):
+    last_updated_at = fields.DateTime(data_key="lastUpdatedAt", required=True)
+
+    @post_load
+    def make_wsgi_command_definition(self, data, **kwargs):
+        return WSGIDefinitionResponse(**data)
 
 
 class _PlumberDefinitionSchema(BaseSchema):
@@ -642,6 +678,14 @@ class _PlumberDefinitionSchema(BaseSchema):
         return PlumberDefinition(**data)
 
 
+class _PlumberDefinitionResponseSchema(_PlumberDefinitionSchema):
+    last_updated_at = fields.DateTime(data_key="lastUpdatedAt", required=True)
+
+    @post_load
+    def make_plumber_command_definition(self, data, **kwargs):
+        return PlumberDefinitionResponse(**data)
+
+
 class _ScriptDefinitionSchema(BaseSchema):
     working_directory = fields.String(
         data_key="workingDirectory", required=True
@@ -652,6 +696,14 @@ class _ScriptDefinitionSchema(BaseSchema):
     @post_load
     def make_plumber_command_definition(self, data, **kwargs):
         return ScriptDefinition(**data)
+
+
+class _ScriptDefinitionResponseSchema(_ScriptDefinitionSchema):
+    last_updated_at = fields.DateTime(data_key="lastUpdatedAt", required=True)
+
+    @post_load
+    def make_plumber_command_definition(self, data, **kwargs):
+        return ScriptDefinitionResponse(**data)
 
 
 class _CommandDefinitionSchema(OneOfSchema):
@@ -673,6 +725,25 @@ class _CommandDefinitionSchema(OneOfSchema):
             raise Exception("Unknown object type: %s" % repr(obj))
 
 
+class _CommandDefinitionResponseSchema(OneOfSchema):
+    type_field = "type"
+    type_schemas = {
+        "wsgi": _WSGIDefinitionResponseSchema,
+        "plumber": _PlumberDefinitionResponseSchema,
+        "script": _ScriptDefinitionResponseSchema,
+    }
+
+    def get_obj_type(self, obj):
+        if isinstance(obj, WSGIDefinitionResponse):
+            return "wsgi"
+        elif isinstance(obj, PlumberDefinitionResponse):
+            return "plumber"
+        elif isinstance(obj, ScriptDefinitionResponse):
+            return "script"
+        else:
+            raise Exception("Unknown object type: %s" % repr(obj))
+
+
 class _ServerTypeSchema(BaseSchema):
     instance_size_type = fields.String(
         data_key="instanceSizeType", required=True
@@ -687,20 +758,27 @@ class _ServerTypeSchema(BaseSchema):
 
 
 class _APISchema(BaseSchema):
+    name = fields.String(missing=None)
+    description = fields.String(missing=None)
     definition = fields.Nested(_CommandDefinitionSchema, required=True)
     environment_ids = fields.List(fields.UUID(), data_key="environmentIds")
     default_server_size = fields.Nested(
         _ServerTypeSchema, data_key="defaultServerSize", missing=None
     )
-    name = fields.String(missing=None)
+
+    @post_load
+    def make_api(self, data, **kwargs):
+        return API(**data)
+
+
+class _APIResponseSchema(_APISchema):
+    definition = fields.Nested(_CommandDefinitionResponseSchema, required=True)
     subdomain = fields.String(missing=None)
     description = fields.String(missing=None)
     api_id = fields.UUID(data_key="apiId", required=True)
     project_id = fields.UUID(data_key="projectId", required=True)
     author_id = fields.UUID(data_key="authorId", missing=None)
     created_at = fields.DateTime(data_key="createdAt", missing=None)
-    last_deployed_at = fields.DateTime(data_key="lastDeployedAt", missing=None)
-    last_deployed_by = fields.UUID(data_key="lastDeployedBy", missing=None)
     deployment_status = EnumField(
         DeploymentStatus,
         by_value=True,
@@ -731,13 +809,16 @@ class _APISchema(BaseSchema):
         missing=None,
     )
 
+    last_deployed_at = fields.DateTime(data_key="lastDeployedAt", missing=None)
+    last_deployed_by = fields.UUID(data_key="lastDeployedBy", missing=None)
+
     @post_load
     def make_api(self, data, **kwargs):
-        return API(**data)
+        return APIResponse(**data)
 
 
 class _ListAPIsResponseSchema(BaseSchema):
-    apis = fields.Nested(_APISchema(many=True))
+    apis = fields.Nested(_APIResponseSchema(many=True))
 
     @post_load
     def make_list_apis(self, data, **kwargs):
