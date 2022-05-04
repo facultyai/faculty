@@ -259,15 +259,15 @@ class APIClient(BaseClient):
 
         Parameters
         ----------
-        api : API
+        api : Union[API, APIResponse]
             The API to update.
-        command_definition : CommandDefinition
+        command_definition : Optional[CommandDefinition]
             The API's command definition: WSGI(Flask)/Plumber/Script(Custom).
             If None then no change.
-        environment_ids : List[uuid.UUID]
+        environment_ids : Optional[List[uuid.UUID]]
             The environments to apply to the API's instances.
             If None then no change.
-        default_server_size : ServerType
+        default_server_size : Optional[ServerType]
             The default server size to set. If None then no change.
 
         Returns
@@ -422,8 +422,8 @@ class APIClient(BaseClient):
         ----------
         project_id : uuid.UUID
             The ID of the project containing the API.
-        api : API
-            The API to start or restart.
+        api_id : uuid.UUID
+            The ID of the API to start or restart.
         server_size : ServerType
             The server size to start.
         restart : bool, optional
@@ -450,8 +450,8 @@ class APIClient(BaseClient):
         ----------
         project_id : uuid.UUID
             The ID of the project containing the API.
-        api : API
-            The API to stop.
+        api_id : uuid.UUID
+            The ID of the API to stop.
 
         Returns
         -------
@@ -468,8 +468,8 @@ class APIClient(BaseClient):
         ----------
         project_id : uuid.UUID
             The ID of the project containing the API.
-        api : API
-            The API to reaload.
+        api_id : uuid.UUID
+            The ID of the API to reload.
 
         Returns
         -------
@@ -540,7 +540,7 @@ class APIClient(BaseClient):
         project_id : uuid.UUID
             The ID of the project containing the API.
         api_id : uuid.UUID
-            The API for which to reaload the test / development server.
+            The API for which to reload the test / development server.
         instance_id : uuid.UUID
             The ID of development instance to reload.
 
