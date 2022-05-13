@@ -3,7 +3,3 @@ line-length = 79
 
 [tool.setuptools_scm]
 version_scheme = "post-release"
-
-[build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
-build-backend = "setuptools.build_meta"
