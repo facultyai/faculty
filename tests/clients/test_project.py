@@ -31,7 +31,6 @@ PROJECT = Project(
     id=uuid.uuid4(),
     name="test-project",
     owner_id=uuid.uuid4(),
-    archived_at=None,
 )
 PROJECT_BODY = {
     "projectId": str(PROJECT.id),
