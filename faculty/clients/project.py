@@ -43,7 +43,7 @@ class Project:
     id = attrib()
     name = attrib()
     owner_id = attrib()
-    archived_at = attrib()
+    archived_at = attrib(default=None)
 
 
 class ProjectClient(BaseClient):
