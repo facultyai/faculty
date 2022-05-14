@@ -90,7 +90,7 @@ class _FileNodeSchema(BaseSchema):
     last_modified = fields.DateTime(required=True)
     size = fields.Integer(required=True)
     truncated = fields.Boolean()
-    content = fields.Nested("self", many=True)
+    content = fields.Nested(lambda: _FileNodeSchema, many=True)
 
     @validates_schema
     def validate_type(self, data, **kwargs):

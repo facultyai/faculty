@@ -201,8 +201,8 @@ class ClusterClient(BaseClient):
 class _NodeTypeSchema(BaseSchema):
 
     id = fields.String(data_key="nodeTypeId", required=True)
-    name = fields.String(missing=None)
-    instance_group = fields.String(data_key="instanceGroup", missing=None)
+    name = fields.String(load_default=None)
+    instance_group = fields.String(data_key="instanceGroup", load_default=None)
     max_interactive_instances = fields.Integer(
         data_key="maxInteractiveInstances", required=True
     )
@@ -212,12 +212,12 @@ class _NodeTypeSchema(BaseSchema):
     milli_cpus = fields.Integer(data_key="milliCpus", required=True)
     memory_mb = fields.Integer(data_key="memoryMb", required=True)
     num_gpus = fields.Integer(data_key="numGpus", required=True)
-    gpu_name = fields.String(data_key="gpuName", missing=None)
+    gpu_name = fields.String(data_key="gpuName", load_default=None)
     cost_usd_per_hour = fields.Decimal(
         data_key="costUsdPerHour", required=True
     )
     spot_max_usd_per_hour = fields.Decimal(
-        data_key="spotMaxUsdPerHour", missing=None
+        data_key="spotMaxUsdPerHour", load_default=None
     )
 
     @post_load

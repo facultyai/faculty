@@ -161,7 +161,7 @@ class _ProjectSchema(BaseSchema):
     id = fields.UUID(data_key="projectId", required=True)
     name = fields.Str(required=True)
     owner_id = fields.UUID(data_key="ownerId", required=True)
-    archived_at = fields.DateTime(data_key="archivedAt", missing=None)
+    archived_at = fields.DateTime(data_key="archivedAt", load_default=None)
 
     @post_load
     def make_project(self, data, **kwargs):

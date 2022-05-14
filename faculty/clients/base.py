@@ -363,8 +363,8 @@ class BaseSchema(Schema):
 
 
 class _ErrorSchema(BaseSchema):
-    error = fields.String(missing=None)
-    error_code = fields.String(data_key="errorCode", missing=None)
+    error = fields.String(load_default=None)
+    error_code = fields.String(data_key="errorCode", load_default=None)
 
 
 def _check_status(response):

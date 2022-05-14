@@ -762,8 +762,8 @@ class _PageSchema(BaseSchema):
 class _PaginationSchema(BaseSchema):
     start = fields.Integer(required=True)
     size = fields.Integer(required=True)
-    previous = fields.Nested(_PageSchema, missing=None)
-    next = fields.Nested(_PageSchema, missing=None)
+    previous = fields.Nested(_PageSchema, load_default=None)
+    next = fields.Nested(_PageSchema, load_default=None)
 
     @post_load
     def make_pagination(self, data, **kwargs):
@@ -808,7 +808,7 @@ class _ExperimentSchema(BaseSchema):
     )
     created_at = fields.DateTime(data_key="createdAt", required=True)
     last_updated_at = fields.DateTime(data_key="lastUpdatedAt", required=True)
-    deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
+    deleted_at = fields.DateTime(data_key="deletedAt", load_default=None)
 
     @post_load
     def make_experiment(self, data, **kwargs):
@@ -820,14 +820,14 @@ class _ExperimentRunSchema(BaseSchema):
     run_number = fields.Integer(data_key="runNumber", required=True)
     experiment_id = fields.Integer(data_key="experimentId", required=True)
     name = fields.String(required=True)
-    parent_run_id = fields.UUID(data_key="parentRunId", missing=None)
+    parent_run_id = fields.UUID(data_key="parentRunId", load_default=None)
     artifact_location = fields.String(
         data_key="artifactLocation", required=True
     )
     status = EnumField(ExperimentRunStatus, by_value=True, required=True)
     started_at = fields.DateTime(data_key="startedAt", required=True)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
-    deleted_at = fields.DateTime(data_key="deletedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", load_default=None)
+    deleted_at = fields.DateTime(data_key="deletedAt", load_default=None)
     tags = fields.Nested(_TagSchema, many=True, required=True)
     params = fields.Nested(_ParamSchema, many=True, required=True)
     metrics = fields.Nested(_MetricSchema, many=True, required=True)
@@ -848,7 +848,7 @@ class _ExperimentRunDataSchema(BaseSchema):
 
 class _ExperimentRunInfoSchema(BaseSchema):
     status = EnumField(ExperimentRunStatus, by_value=True, required=True)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    ended_at = fields.DateTime(data_key="endedAt", load_default=None)
 
 
 class _ListExperimentRunsResponseSchema(BaseSchema):
@@ -881,7 +881,7 @@ class _ParamFilterValueField(fields.Field):
         elif isinstance(value, int) or isinstance(value, float):
             field = fields.Number()
         else:
-            self.fail("unsupported_type")
+            self.make_error("unsupported_type")
         return field._serialize(value, attr, obj, **kwargs)
 
 
@@ -1055,7 +1055,7 @@ class _SortSchema(_OneOfSchemaWithoutType):
 class _RunQuerySchema(BaseSchema):
     filter = _OptionalField(fields.Nested(_FilterSchema))
     sort = fields.List(fields.Nested(_SortSchema))
-    page = fields.Nested(_PageSchema, missing=None)
+    page = fields.Nested(_PageSchema, load_default=None)
 
 
 # Schemas for responses returned from API:
