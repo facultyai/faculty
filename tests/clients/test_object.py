@@ -378,6 +378,28 @@ def test_object_client_copy_source_is_a_directory(mocker):
         client.copy(PROJECT_ID, "source", "destination")
 
 
+def test_object_client_move_url_encoding(mocker):
+    mocker.patch.object(ObjectClient, "_put_raw")
+
+    client = ObjectClient(mocker.Mock())
+    client.move(PROJECT_ID, "source", "/[1]/")
+
+    ObjectClient._put_raw.assert_called_once_with(
+        "/project/{}/object-move/%5B1%5D/".format(PROJECT_ID),
+        params={"sourcePath": "source"},
+    )
+
+
+def test_object_client_move_source_not_found(mocker):
+    error_code = "source_path_not_found"
+    exception = NotFound(mocker.Mock(), mocker.Mock(), error_code)
+    mocker.patch.object(ObjectClient, "_put_raw", side_effect=exception)
+
+    client = ObjectClient(mocker.Mock())
+    with pytest.raises(PathNotFound, match="'source' cannot be found"):
+        client.move(PROJECT_ID, "source", "destination")
+
+
 def test_object_client_delete_default(mocker):
     path = "test-path"
     mocker.patch.object(ObjectClient, "_delete_raw")
