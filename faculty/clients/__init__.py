@@ -14,6 +14,7 @@
 
 
 from faculty.clients.account import AccountClient
+from faculty.clients.api import APIClient
 from faculty.clients.cluster import ClusterClient
 from faculty.clients.environment import EnvironmentClient
 from faculty.clients.experiment import ExperimentClient
@@ -32,6 +33,7 @@ from faculty.clients.workspace import WorkspaceClient
 
 CLIENT_FOR_RESOURCE = {
     "account": AccountClient,
+    "api": APIClient,
     "cluster": ClusterClient,
     "environment": EnvironmentClient,
     "experiment": ExperimentClient,
