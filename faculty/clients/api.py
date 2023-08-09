@@ -17,7 +17,7 @@ Manipulate Faculty APIs.
 """
 
 from attr import attrs, attrib
-from marshmallow import fields
+from marshmallow import fields, post_load
 
 from faculty.clients.base import BaseSchema, BaseClient
 
@@ -45,6 +45,10 @@ class _APIKeySchema(BaseSchema):
     label = fields.String(required=True)
     material = fields.String(required=True)
     enabled = fields.Boolean(required=True)
+
+    @post_load
+    def make_api_key(self, data, **kwargs):
+        return APIKey(**data)
 
 
 class APIClient(BaseClient):
