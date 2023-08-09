@@ -23,6 +23,16 @@ from faculty.clients.base import BaseSchema, BaseClient
 
 
 @attrs
+class API:
+    id = attrib()
+    project_id = attrib()
+    name = attrib()
+    description = attrib()
+    subdomain = attrib()
+    keys = attrib()
+
+
+@attrs
 class APIKey:
     """An authorization key for a Faculty API.
 
@@ -38,17 +48,6 @@ class APIKey:
     label = attrib()
     material = attrib()
     enabled = attrib()
-
-
-class _APIKeySchema(BaseSchema):
-    id = fields.UUID(data_key="keyId", required=True)
-    label = fields.String(required=True)
-    material = fields.String(required=True)
-    enabled = fields.Boolean(required=True)
-
-    @post_load
-    def make_api_key(self, data, **kwargs):
-        return APIKey(**data)
 
 
 class APIClient(BaseClient):
@@ -69,6 +68,24 @@ class APIClient(BaseClient):
 
     SERVICE_NAME = "aperture"
 
+    def get(self, project_id, api_id):
+        """Get information about an API.
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The ID of the project containing the API.
+        api_id : uuid.UUID
+            The ID of the API to get.
+
+        Returns
+        -------
+        API
+            The API.
+        """
+        endpoint = "/project/{}/api/{}".format(project_id, api_id)
+        return self._get(endpoint, _APISchema())
+
     def list_api_keys(self, project_id, api_id):
         """List the API keys for a given API.
 
@@ -86,3 +103,29 @@ class APIClient(BaseClient):
         """
         endpoint = "/project/{}/api/{}/key".format(project_id, api_id)
         return self._get(endpoint, _APIKeySchema(many=True))
+
+
+class _APIKeySchema(BaseSchema):
+    id = fields.UUID(data_key="keyId", required=True)
+    label = fields.String(required=True)
+    material = fields.String(required=True)
+    enabled = fields.Boolean(required=True)
+
+    @post_load
+    def make_api_key(self, data, **kwargs):
+        return APIKey(**data)
+
+
+class _APISchema(BaseSchema):
+    id = fields.UUID(data_key="apiId", required=True)
+    project_id = fields.UUID(data_key="projectId", required=True)
+    name = fields.String(required=True)
+    description = fields.String(required=True)
+    subdomain = fields.String(required=True)
+    keys = fields.Nested(
+        _APIKeySchema, data_key="prodKeys", many=True, required=True
+    )
+
+    @post_load
+    def make_api(self, data, **kwargs):
+        return API(**data)
