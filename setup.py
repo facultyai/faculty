@@ -34,7 +34,7 @@ setup(
     license="Apache Software License",
     packages=find_packages(),
     setup_requires=["setuptools_scm"],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=[
         "requests",
         "pytz",
