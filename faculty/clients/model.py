@@ -220,7 +220,7 @@ class _ModelSchema(BaseSchema):
     description = fields.String(required=True)
     user_ids = fields.List(fields.UUID, data_key="users", required=True)
     latest_version = fields.Nested(
-        _ModelVersionSchema, data_key="latestVersion", missing=None
+        _ModelVersionSchema, data_key="latestVersion", load_default=None
     )
 
     @post_load

@@ -788,7 +788,7 @@ class _JobDefinitionSchema(BaseSchema):
         data_key="instanceSizeType", required=True
     )
     instance_size = fields.Nested(
-        _InstanceSizeSchema, data_key="instanceSize", missing=None
+        _InstanceSizeSchema, data_key="instanceSize", load_default=None
     )
     max_runtime_seconds = fields.Integer(
         data_key="maxRuntimeSeconds", required=True
@@ -840,8 +840,8 @@ class _EnvironmentStepExecutionSchema(BaseSchema):
     state = EnumField(
         EnvironmentStepExecutionState, by_value=True, required=True
     )
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    started_at = fields.DateTime(data_key="startedAt", load_default=None)
+    ended_at = fields.DateTime(data_key="endedAt", load_default=None)
 
     @post_load
     def make_environment_step_execution(self, data, **kwargs):
@@ -852,8 +852,8 @@ class _SubrunSummarySchema(BaseSchema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
     state = EnumField(SubrunState, by_value=True, required=True)
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    started_at = fields.DateTime(data_key="startedAt", load_default=None)
+    ended_at = fields.DateTime(data_key="endedAt", load_default=None)
 
     @post_load
     def make_subrun_summary(self, data, **kwargs):
@@ -864,8 +864,8 @@ class _SubrunSchema(BaseSchema):
     id = fields.UUID(data_key="subrunId", required=True)
     subrun_number = fields.Integer(data_key="subrunNumber", required=True)
     state = EnumField(SubrunState, by_value=True, required=True)
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    started_at = fields.DateTime(data_key="startedAt", load_default=None)
+    ended_at = fields.DateTime(data_key="endedAt", load_default=None)
     environment_step_executions = fields.Nested(
         _EnvironmentStepExecutionSchema,
         data_key="environmentExecutionState",
@@ -883,8 +883,8 @@ class _RunSummarySchema(BaseSchema):
     run_number = fields.Integer(data_key="runNumber", required=True)
     state = EnumField(RunState, by_value=True, required=True)
     submitted_at = fields.DateTime(data_key="submittedAt", required=True)
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    started_at = fields.DateTime(data_key="startedAt", load_default=None)
+    ended_at = fields.DateTime(data_key="endedAt", load_default=None)
 
     @post_load
     def make_run_summary(self, data, **kwargs):
@@ -896,8 +896,8 @@ class _RunSchema(BaseSchema):
     run_number = fields.Integer(data_key="runNumber", required=True)
     state = EnumField(RunState, by_value=True, required=True)
     submitted_at = fields.DateTime(data_key="submittedAt", required=True)
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    ended_at = fields.DateTime(data_key="endedAt", missing=None)
+    started_at = fields.DateTime(data_key="startedAt", load_default=None)
+    ended_at = fields.DateTime(data_key="endedAt", load_default=None)
     subruns = fields.Nested(_SubrunSummarySchema, many=True, required=True)
 
     @post_load
@@ -925,8 +925,8 @@ class _PageSchema(BaseSchema):
 class _PaginationSchema(BaseSchema):
     start = fields.Integer(required=True)
     size = fields.Integer(required=True)
-    previous = fields.Nested(_PageSchema, missing=None)
-    next = fields.Nested(_PageSchema, missing=None)
+    previous = fields.Nested(_PageSchema, load_default=None)
+    next = fields.Nested(_PageSchema, load_default=None)
 
     @post_load
     def make_pagination(self, data, **kwargs):

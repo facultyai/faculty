@@ -39,7 +39,7 @@ setup(
         "requests",
         "pytz",
         "attrs",
-        "marshmallow",
+        "marshmallow>=3.13.0",
         "marshmallow_enum",
         "urllib3",
     ],

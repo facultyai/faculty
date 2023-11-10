@@ -273,8 +273,8 @@ class _EnvironmentExecutionStepSchema(BaseSchema):
     status = EnumField(
         EnvironmentExecutionStepStatus, by_value=True, required=True
     )
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    finished_at = fields.DateTime(data_key="finishedAt", missing=None)
+    started_at = fields.DateTime(data_key="startedAt", load_default=None)
+    finished_at = fields.DateTime(data_key="finishedAt", load_default=None)
 
     @post_load
     def make_environment_execution_step(self, data, **kwargs):
@@ -296,8 +296,8 @@ class _ExecutionSchema(BaseSchema):
     id = fields.UUID(data_key="executionId", required=True)
     status = EnumField(ExecutionStatus, by_value=True, required=True)
     environments = fields.List(fields.Nested(_EnvironmentExecutionSchema))
-    started_at = fields.DateTime(data_key="startedAt", missing=None)
-    finished_at = fields.DateTime(data_key="finishedAt", missing=None)
+    started_at = fields.DateTime(data_key="startedAt", load_default=None)
+    finished_at = fields.DateTime(data_key="finishedAt", load_default=None)
 
     @post_load
     def make_execution(self, data, **kwargs):

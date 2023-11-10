@@ -286,7 +286,7 @@ class _PipSchema(BaseSchema):
     extra_index_urls = fields.List(
         fields.String(),
         data_key="extraIndexUrls",
-        missing=list,
+        load_default=list,
     )
     packages = fields.List(
         fields.Nested(_PythonPackageSchema()), required=True
@@ -298,7 +298,7 @@ class _PipSchema(BaseSchema):
 
 
 class _CondaSchema(BaseSchema):
-    channels = fields.List(fields.String(), missing=list)
+    channels = fields.List(fields.String(), load_default=list)
     packages = fields.List(
         fields.Nested(_PythonPackageSchema()), required=True
     )
@@ -319,10 +319,10 @@ class _PythonEnvironmentSchema(BaseSchema):
 
 class _PythonSpecificationSchema(BaseSchema):
     python2 = fields.Nested(
-        _PythonEnvironmentSchema(), data_key="Python2", missing=None
+        _PythonEnvironmentSchema(), data_key="Python2", load_default=None
     )
     python3 = fields.Nested(
-        _PythonEnvironmentSchema(), data_key="Python3", missing=None
+        _PythonEnvironmentSchema(), data_key="Python3", load_default=None
     )
 
     @post_load
@@ -369,7 +369,7 @@ class _EnvironmentSchema(BaseSchema):
     id = fields.UUID(data_key="environmentId", required=True)
     project_id = fields.UUID(data_key="projectId", required=True)
     name = fields.String(required=True)
-    description = fields.String(missing=None)
+    description = fields.String(load_default=None)
     author_id = fields.UUID(data_key="authorId", required=True)
     created_at = fields.DateTime(data_key="createdAt", required=True)
     updated_at = fields.DateTime(data_key="updatedAt", required=True)
@@ -382,7 +382,7 @@ class _EnvironmentSchema(BaseSchema):
 
 class _EnvironmentCreateUpdateSchema(BaseSchema):
     name = fields.String(required=True)
-    description = fields.String(missing=None)
+    description = fields.String(load_default=None)
     specification = fields.Nested(_SpecificationSchema(), required=True)
 
     @post_load

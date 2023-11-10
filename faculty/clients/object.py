@@ -439,7 +439,9 @@ class _ObjectSchema(BaseSchema):
 
 class _ListObjectsResponseSchema(BaseSchema):
     objects = fields.List(fields.Nested(_ObjectSchema), required=True)
-    next_page_token = fields.String(data_key="nextPageToken", missing=None)
+    next_page_token = fields.String(
+        data_key="nextPageToken", load_default=None
+    )
 
     @post_load
     def make_list_objects_response(self, data, **kwargs):
@@ -456,8 +458,8 @@ class _SimplePresignResponseSchema(BaseSchema):
 
 class _PresignUploadResponseSchema(BaseSchema):
     provider = EnumField(CloudStorageProvider, by_value=True, required=True)
-    upload_id = fields.String(data_key="uploadId", missing=None)
-    url = fields.String(missing=None)
+    upload_id = fields.String(data_key="uploadId", load_default=None)
+    url = fields.String(load_default=None)
 
     @post_load
     def make_presign_upload_response(self, data, **kwargs):
