@@ -80,6 +80,52 @@ def ls(prefix="/", project_id=None, show_hidden=False, object_client=None):
         return non_hidden_paths
 
 
+def stat(prefix="/", project_id=None, show_hidden=False, object_client=None):
+    """Get the status metadata for the contents of project datasets.
+
+    Parameters
+    ----------
+    prefix : str, optional
+        List only files in the datasets matching this prefix. Default behaviour
+        is to list all files.
+    project_id : str, optional
+        The project to list files from. You need to have access to this project
+        for it to work. Defaults to the project set by FACULTY_PROJECT_ID in
+        your environment.
+    show_hidden : bool, optional
+        Include hidden files in the output. Defaults to False.
+    object_client : faculty.clients.object.ObjectClient, optional
+        Advanced - can be used to benefit from caching in chain interactions
+        with datasets.
+
+    Returns
+    -------
+    list
+        The list of file metadata from the project datasets.
+    """
+
+    project_id = project_id or get_context().project_id
+    object_client = object_client or ObjectClient(get_session())
+    list_response = object_client.list(project_id, prefix)
+
+    metadata = list_response.objects
+    while list_response.next_page_token is not None:
+        list_response = object_client.list(
+            project_id, prefix, list_response.next_page_token
+        )
+        metadata += list_response.objects
+
+    if not show_hidden:
+        metadata = [
+            data
+            for data in metadata
+            if not any(
+                element.startswith(".") for element in data.path.split("/")
+            )
+        ]
+    return metadata
+
+
 def glob(
     pattern, prefix="/", project_id=None, show_hidden=False, object_client=None
 ):
