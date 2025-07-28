@@ -241,6 +241,37 @@ class ObjectClient(BaseClient):
             else:
                 raise
 
+    def move(self, project_id, source, destination):
+        """Move objects in the store
+
+        Parameters
+        ----------
+        project_id : uuid.UUID
+            The project to move objects in.
+        source : str
+            Move object from this source path.
+        destination : str
+            Move object to this destination path.
+
+
+        Raises
+        ------
+        PathNotFound
+            When the source path does not exist or is not found.
+        """
+        url_encoded_destination = urllib.parse.quote(destination.lstrip("/"))
+
+        endpoint = "/project/{}/object-move/{}".format(
+            project_id, url_encoded_destination
+        )
+        params = {"sourcePath": source}
+
+        try:
+            self._put_raw(endpoint, params=params)
+        except NotFound as err:
+            if err.error_code == "source_path_not_found":
+                raise PathNotFound(source)
+
     def delete(self, project_id, path, recursive=False):
         """Delete objects in the store.
 

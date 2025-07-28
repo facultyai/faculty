@@ -337,19 +337,7 @@ def mv(source_path, destination_path, project_id=None, object_client=None):
     if source_path == destination_path:
         return
 
-    cp(
-        source_path,
-        destination_path,
-        project_id=project_id,
-        recursive=True,
-        object_client=object_client,
-    )
-    rm(
-        source_path,
-        project_id=project_id,
-        recursive=True,
-        object_client=object_client,
-    )
+    object_client.move(project_id, source_path, destination_path)
 
 
 def cp(

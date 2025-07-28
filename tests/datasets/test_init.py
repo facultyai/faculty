@@ -419,23 +419,9 @@ def test_rmdir_nonempty_directory(mocker, prefix):
 
 
 def test_mv(mocker, mock_client):
-    cp_mock = mocker.patch("faculty.datasets.cp")
-    rm_mock = mocker.patch("faculty.datasets.rm")
-
     datasets.mv("source-path", "destination-path", project_id=PROJECT_ID)
-
-    cp_mock.assert_called_once_with(
-        "source-path",
-        "destination-path",
-        project_id=PROJECT_ID,
-        recursive=True,
-        object_client=mock_client,
-    )
-    rm_mock.assert_called_once_with(
-        "source-path",
-        project_id=PROJECT_ID,
-        recursive=True,
-        object_client=mock_client,
+    mock_client.move.assert_called_once_with(
+        PROJECT_ID, "source-path", "destination-path"
     )
 
 
