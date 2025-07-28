@@ -39,7 +39,7 @@ setup(
         "requests",
         "pytz",
         "attrs",
-        "marshmallow<4",
+        "marshmallow<4",  # TODO: remove this limit once the code is migrated
         "marshmallow_enum",
         "urllib3",
     ],
